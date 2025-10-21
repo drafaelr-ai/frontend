@@ -72,3 +72,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
 .tabela-pagamentos th { font-weight: bold; }
 .form-add-obra { display: flex; gap: 10px; align-items: center; }
 .form-add-obra input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+/* --- ESTILOS PARA DELETAR OBRA --- */
+.card-obra {
+    position: relative; /* Para posicionar o botão de deletar */
+    padding-bottom: 40px; /* Espaço para não cobrir o texto do cliente */
+}
+
+.card-obra-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.delete-obra-btn {
+    background: none;
+    border: none;
+    font-size: 1.3em;
+    cursor: pointer;
+    color: var(--cor-vermelho);
+    padding: 0;
+    line-height: 1; /* Alinha melhor o ícone */
+}
+.delete-obra-btn:hover {
+    opacity: 0.7;
+}
+
+/* Área clicável para entrar na obra, evitando clique no botão */
+.card-obra p, .card-obra-click-area {
+    cursor: pointer;
+}
+.card-obra-click-area {
+    position: absolute;
+    top: 40px; /* Abaixo do header do card */
+    left: 0;
+    right: 0;
+    bottom: 0;
+}

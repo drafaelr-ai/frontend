@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = 'https://controle-backend-rxtt.onrender.com';
+const API_URL = 'https://controle-backend-rxtt.onrender.com'; // Sua URL do Render
 const getTodayString = () => { const today = new Date(); const offset = today.getTimezoneOffset(); const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000)); return todayWithOffset.toISOString().split('T')[0]; }
 const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; } return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
@@ -38,52 +38,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
     );
 };
 
-const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState(empreitada);
-    useEffect(() => { setFormData(empreitada); }, [empreitada]);
-    const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
-    const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
-    if (!empreitada) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            {!isEditing ? (
-                <div>
-                    <h2>{empreitada.nome}</h2>
-                    <p><strong>Responsável:</strong> {empreitada.responsavel}</p>
-                    <p><strong>Valor Global:</strong> {formatCurrency(empreitada.valor_global)}</p>
-                    <p><strong>Chave PIX:</strong> {empreitada.pix}</p>
-                    <hr />
-                    <h3>Histórico de Pagamentos</h3>
-                    <table className="tabela-pagamentos">
-                        <thead><tr><th>Data</th><th>Valor</th></tr></thead>
-                        <tbody>
-                            {empreitada.pagamentos.map((pag, index) => (
-                                <tr key={index}>
-                                    <td>{new Date(pag.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</td>
-                                    <td>{formatCurrency(pag.valor)}</td>
-                                </tr>
-                            ))}
-                            {empreitada.pagamentos.length === 0 && <tr><td colSpan="2">Nenhum pagamento realizado.</td></tr>}
-                        </tbody>
-                    </table>
-                    <div className="form-actions"><button type="button" onClick={() => setIsEditing(true)} className="submit-btn">Editar Empreitada</button></div>
-                </div>
-            ) : (
-                <form onSubmit={handleSubmit}>
-                    <h2>Editar Empreitada</h2>
-                    <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Valor Global (R$)</label><input type="number" step="0.01" name="valor_global" value={formData.valor_global} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix} onChange={handleChange} required /></div>
-                    <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
-                </form>
-            )}
-        </Modal>
-    );
-};
-
 // --- COMPONENTE PRINCIPAL DA APLICAÇÃO ---
 function App() {
     const [obras, setObras] = useState([]);
@@ -100,15 +54,7 @@ function App() {
 
     useEffect(() => { fetch(`${API_URL}/obras`).then(res => res.json()).then(data => setObras(data)).catch(console.error); }, []);
 
-    const fetchObraData = (obraId) => {
-        setIsLoading(true);
-        fetch(`${API_URL}/obras/${obraId}`).then(res => res.json()).then(data => {
-            setObraSelecionada(data.obra);
-            setLancamentos(data.lancamentos);
-            setEmpreitadas(data.empreitadas);
-            setSumarios(data.sumarios);
-        }).catch(console.error).finally(() => setIsLoading(false));
-    };
+    const fetchObraData = (obraId) => { setIsLoading(true); fetch(`${API_URL}/obras/${obraId}`).then(res => res.json()).then(data => { setObraSelecionada(data.obra); setLancamentos(data.lancamentos); setEmpreitadas(data.empreitadas); setSumarios(data.sumarios); }).catch(console.error).finally(() => setIsLoading(false)); };
     
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
     const handleAddObra = (e) => { e.preventDefault(); const nome = e.target.nome.value; const cliente = e.target.cliente.value; fetch(`${API_URL}/obras`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, cliente }) }).then(res => res.json()).then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); }); };
@@ -200,17 +146,8 @@ function App() {
                 </div>
             </div>
             
-            <div className="main-grid">
-                <div className="card-main">
-                    <div className="card-header"><h3>Pagamentos Pendentes</h3></div>
-                    <div className="lista-pendentes">{pagamentosPendentes.length > 0 ? pagamentosPendentes.map(lanc => (<div key={lanc.id} className="item-pendente"><div className="item-info"><span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span><small>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</small></div><div className="item-acao"><span className="item-valor">{formatCurrency(lanc.valor)}</span><button onClick={() => handleMarcarComoPago(lanc.id)} className="marcar-pago-btn">Marcar como Pago</button></div></div>)) : <p>Nenhum pagamento pendente.</p>}</div>
-                </div>
-                <div className="card-main">
-                    <div className="card-header"><h3>Total por Segmento</h3></div>
-                    <div className="lista-segmento">{Object.entries(sumarios.total_por_segmento).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div>
-                </div>
-            </div>
-
+            <div className="main-grid"><div className="card-main"><div className="card-header"><h3>Pagamentos Pendentes</h3></div><div className="lista-pendentes">{pagamentosPendentes.length > 0 ? pagamentosPendentes.map(lanc => (<div key={lanc.id} className="item-pendente"><div className="item-info"><span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span><small>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</small></div><div className="item-acao"><span className="item-valor">{formatCurrency(lanc.valor)}</span><button onClick={() => handleMarcarComoPago(lanc.id)} className="marcar-pago-btn">Marcar como Pago</button></div></div>)) : <p>Nenhum pagamento pendente.</p>}</div></div><div className="card-main"><div className="card-header"><h3>Total por Segmento</h3></div><div className="lista-segmento">{Object.entries(sumarios.total_por_segmento).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div></div></div>
+            
             <div className="card-full">
                 <div className="card-header"><h3>Histórico de Gastos</h3><div className="header-actions"><button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto</button><button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV</button><button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`)} className="export-btn pdf">PDF</button></div></div>
                 <table className="tabela-historico">
