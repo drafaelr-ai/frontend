@@ -72,3 +72,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
 .tabela-pagamentos th { font-weight: bold; }
 .form-add-obra { display: flex; gap: 10px; align-items: center; }
 .form-add-obra input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+.card-obra {
+    position: relative;
+}
+
+.card-obra .delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.card-obra .delete-btn:hover {
+    opacity: 1;
+    color: var(--cor-vermelho);
+}

@@ -111,14 +111,126 @@ function App() {
     };
     
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
-    const handleAddObra = (e) => { e.preventDefault(); const nome = e.target.nome.value; const cliente = e.target.cliente.value; fetch(`${API_URL}/obras`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, cliente }) }).then(res => res.json()).then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); }); };
+    const handleAddObra = (e) => { 
+        e.preventDefault(); 
+        const nome = e.target.nome.value; 
+        const cliente = e.target.cliente.value; 
+        fetch(`${API_URL}/obras`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ nome, cliente }) 
+        })
+        .then(res => res.json())
+        .then(novaObra => { 
+            setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); 
+            e.target.reset(); 
+        })
+        .catch(error => {
+            console.error('Erro ao adicionar obra:', error);
+            alert('Erro ao adicionar obra. Tente novamente.');
+        });
+    };
+    
+    const handleDeletarObra = (obraId, obraNome) => {
+        if (window.confirm(`Tem certeza que deseja excluir a obra "${obraNome}"?\n\nATENÇÃO: Todos os lançamentos e empreitadas serão perdidos!`)) {
+            fetch(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao deletar');
+                return res.json();
+            })
+            .then(() => {
+                setObras(prevObras => prevObras.filter(o => o.id !== obraId));
+                alert('Obra deletada com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao deletar a obra. Tente novamente.');
+            });
+        }
+    };
+    
     const handleMarcarComoPago = (lancamentoId) => fetch(`${API_URL}/lancamentos/${lancamentoId}/pago`, { method: 'PATCH' }).then(() => fetchObraData(obraSelecionada.id));
-    const handleDeletarLancamento = (lancamentoId) => { if (window.confirm("Tem certeza?")) { fetch(`${API_URL}/lancamentos/${lancamentoId}`, { method: 'DELETE' }).then(() => fetchObraData(obraSelecionada.id)); } };
-    const handleSaveEdit = (updatedLancamento) => { fetch(`${API_URL}/lancamentos/${updatedLancamento.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedLancamento) }).then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); }); };
-    const handleSaveLancamento = (e) => { e.preventDefault(); const formData = new FormData(e.target); const lancamentoData = Object.fromEntries(formData.entries()); lancamentoData.data = getTodayString(); fetch(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lancamentoData) }).then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); }); };
-    const handleSaveEmpreitada = (e) => { e.preventDefault(); const formData = new FormData(e.target); const empreitadaData = Object.fromEntries(formData.entries()); fetch(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(empreitadaData) }).then(() => { setAddEmpreitadaModalVisible(false); fetchObraData(obraSelecionada.id); }); };
-    const handleSaveEditEmpreitada = (updatedEmpreitada) => { fetch(`${API_URL}/empreitadas/${updatedEmpreitada.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedEmpreitada) }).then(() => { setViewingEmpreitada(null); fetchObraData(obraSelecionada.id); }); };
-    const handleAddPagamentoParcial = (e, empreitadaId) => { e.preventDefault(); const valorPagamento = e.target.valorPagamento.value; if (!valorPagamento) return; const pagamento = { valor: valorPagamento, data: getTodayString() }; fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pagamento) }).then(() => fetchObraData(obraSelecionada.id)); e.target.reset(); };
+    
+    const handleDeletarLancamento = (lancamentoId) => { 
+        if (window.confirm("Tem certeza que deseja excluir este lançamento?")) { 
+            fetch(`${API_URL}/lancamentos/${lancamentoId}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Erro ao deletar');
+                    return res.json();
+                })
+                .then(() => {
+                    fetchObraData(obraSelecionada.id);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao deletar o lançamento. Tente novamente.');
+                });
+        } 
+    };
+    
+    const handleSaveEdit = (updatedLancamento) => { 
+        fetch(`${API_URL}/lancamentos/${updatedLancamento.id}`, { 
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(updatedLancamento) 
+        }).then(() => { 
+            setEditingLancamento(null); 
+            fetchObraData(obraSelecionada.id); 
+        }); 
+    };
+    
+    const handleSaveLancamento = (e) => { 
+        e.preventDefault(); 
+        const formData = new FormData(e.target); 
+        const lancamentoData = Object.fromEntries(formData.entries()); 
+        lancamentoData.data = getTodayString(); 
+        fetch(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(lancamentoData) 
+        }).then(() => { 
+            setAddLancamentoModalVisible(false); 
+            fetchObraData(obraSelecionada.id); 
+        }); 
+    };
+    
+    const handleSaveEmpreitada = (e) => { 
+        e.preventDefault(); 
+        const formData = new FormData(e.target); 
+        const empreitadaData = Object.fromEntries(formData.entries()); 
+        fetch(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(empreitadaData) 
+        }).then(() => { 
+            setAddEmpreitadaModalVisible(false); 
+            fetchObraData(obraSelecionada.id); 
+        }); 
+    };
+    
+    const handleSaveEditEmpreitada = (updatedEmpreitada) => { 
+        fetch(`${API_URL}/empreitadas/${updatedEmpreitada.id}`, { 
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(updatedEmpreitada) 
+        }).then(() => { 
+            setViewingEmpreitada(null); 
+            fetchObraData(obraSelecionada.id); 
+        }); 
+    };
+    
+    const handleAddPagamentoParcial = (e, empreitadaId) => { 
+        e.preventDefault(); 
+        const valorPagamento = e.target.valorPagamento.value; 
+        if (!valorPagamento) return; 
+        const pagamento = { valor: valorPagamento, data: getTodayString() }; 
+        fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(pagamento) 
+        }).then(() => fetchObraData(obraSelecionada.id)); 
+        e.target.reset(); 
+    };
 
     // --- RENDERIZAÇÃO ---
     if (!obraSelecionada) {
@@ -134,7 +246,34 @@ function App() {
                     </form>
                 </div>
                 <div className="lista-obras">
-                    {obras.map(obra => (<div key={obra.id} className="card-obra" onClick={() => fetchObraData(obra.id)}><h3>{obra.nome}</h3><p>Cliente: {obra.cliente}</p></div>))}
+                    {obras.map(obra => (
+                        <div key={obra.id} className="card-obra" style={{position: 'relative'}}>
+                            <div onClick={() => fetchObraData(obra.id)} style={{cursor: 'pointer', paddingRight: '40px'}}>
+                                <h3>{obra.nome}</h3>
+                                <p>Cliente: {obra.cliente}</p>
+                            </div>
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletarObra(obra.id, obra.nome);
+                                }}
+                                className="acao-icon-btn delete-btn"
+                                style={{
+                                    position: 'absolute',
+                                    top: '15px',
+                                    right: '15px',
+                                    fontSize: '1.3em',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    opacity: 0.6
+                                }}
+                                title="Excluir Obra"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    ))}
                     {obras.length === 0 && <p>Nenhuma obra cadastrada ainda. Use o formulário acima para começar.</p>}
                 </div>
             </div>
