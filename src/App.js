@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = 'https://controle-backend-rxtt.onrender.com'; // Sua URL do Render
+const API_URL = 'https://controle-backend-rxtt.onrender.com';
 const getTodayString = () => { const today = new Date(); const offset = today.getTimezoneOffset(); const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000)); return todayWithOffset.toISOString().split('T')[0]; }
 const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; } return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
@@ -98,24 +98,11 @@ function App() {
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingEmpreitada, setViewingEmpreitada] = useState(null);
 
-    useEffect(() => { fetchObras(); }, []); // Busca obras ao carregar
-
-    const fetchObras = () => {
-         fetch(`${API_URL}/obras`)
-         .then(res => {
-             if (!res.ok) { throw new Error('Erro ao buscar obras'); }
-             return res.json();
-         })
-         .then(data => setObras(data))
-         .catch(error => console.error("Erro ao carregar obras:", error));
-    }
+    useEffect(() => { fetch(`${API_URL}/obras`).then(res => res.json()).then(data => setObras(data)).catch(console.error); }, []);
 
     const fetchObraData = (obraId) => {
         setIsLoading(true);
-        fetch(`${API_URL}/obras/${obraId}`).then(res => {
-            if (!res.ok) { throw new Error('Erro ao buscar detalhes da obra'); }
-            return res.json();
-        }).then(data => {
+        fetch(`${API_URL}/obras/${obraId}`).then(res => res.json()).then(data => {
             setObraSelecionada(data.obra);
             setLancamentos(data.lancamentos);
             setEmpreitadas(data.empreitadas);
@@ -125,7 +112,6 @@ function App() {
     
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
     const handleAddObra = (e) => { e.preventDefault(); const nome = e.target.nome.value; const cliente = e.target.cliente.value; fetch(`${API_URL}/obras`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, cliente }) }).then(res => res.json()).then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); }); };
-    const handleDeleteObra = (obraId, obraNome) => { if (window.confirm(`Tem certeza que deseja excluir a obra "${obraNome}" e TODOS os seus dados? Esta ação não pode ser desfeita.`)) { fetch(`${API_URL}/obras/${obraId}`, { method: 'DELETE' }).then(() => fetchObras()).catch(error => { console.error("Erro ao deletar obra:", error); alert("Erro ao deletar a obra."); }); } };
     const handleMarcarComoPago = (lancamentoId) => fetch(`${API_URL}/lancamentos/${lancamentoId}/pago`, { method: 'PATCH' }).then(() => fetchObraData(obraSelecionada.id));
     const handleDeletarLancamento = (lancamentoId) => { if (window.confirm("Tem certeza?")) { fetch(`${API_URL}/lancamentos/${lancamentoId}`, { method: 'DELETE' }).then(() => fetchObraData(obraSelecionada.id)); } };
     const handleSaveEdit = (updatedLancamento) => { fetch(`${API_URL}/lancamentos/${updatedLancamento.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedLancamento) }).then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); }); };
@@ -134,7 +120,7 @@ function App() {
     const handleSaveEditEmpreitada = (updatedEmpreitada) => { fetch(`${API_URL}/empreitadas/${updatedEmpreitada.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedEmpreitada) }).then(() => { setViewingEmpreitada(null); fetchObraData(obraSelecionada.id); }); };
     const handleAddPagamentoParcial = (e, empreitadaId) => { e.preventDefault(); const valorPagamento = e.target.valorPagamento.value; if (!valorPagamento) return; const pagamento = { valor: valorPagamento, data: getTodayString() }; fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pagamento) }).then(() => fetchObraData(obraSelecionada.id)); e.target.reset(); };
 
-    // --- RENDERIZAÇÃO DA LISTA DE OBRAS (COM BOTÃO DELETAR) ---
+    // --- RENDERIZAÇÃO ---
     if (!obraSelecionada) {
         return (
             <div className="container">
@@ -148,33 +134,19 @@ function App() {
                     </form>
                 </div>
                 <div className="lista-obras">
-                    {obras.map(obra => (
-                        <div key={obra.id} className="card-obra">
-                            <div className="card-obra-header">
-                                <h3 onClick={() => fetchObraData(obra.id)} style={{cursor: 'pointer', flexGrow: 1}}>{obra.nome}</h3>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteObra(obra.id, obra.nome); }}
-                                    className="delete-obra-btn"
-                                    title="Excluir Obra"
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                            <p onClick={() => fetchObraData(obra.id)} style={{cursor: 'pointer'}}>Cliente: {obra.cliente || 'Não informado'}</p>
-                        </div>
-                    ))}
+                    {obras.map(obra => (<div key={obra.id} className="card-obra" onClick={() => fetchObraData(obra.id)}><h3>{obra.nome}</h3><p>Cliente: {obra.cliente}</p></div>))}
                     {obras.length === 0 && <p>Nenhuma obra cadastrada ainda. Use o formulário acima para começar.</p>}
                 </div>
             </div>
         );
     }
 
-    // --- RENDERIZAÇÃO DO DASHBOARD ---
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
+    
     const pagamentosPendentes = lancamentos.filter(l => l.status === 'A Pagar');
+
     return (
         <div className="dashboard-container">
-            {/* --- MODAIS --- */}
             {editingLancamento && <EditLancamentoModal lancamento={editingLancamento} onClose={() => setEditingLancamento(null)} onSave={handleSaveEdit} />}
             {isAddEmpreitadaModalVisible && (
                 <Modal onClose={() => setAddEmpreitadaModalVisible(false)}>
@@ -197,14 +169,12 @@ function App() {
                         <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" required /></div>
                         <div className="form-group"><label>Tipo/Segmento</label><select name="tipo" defaultValue="Mão de Obra" required><option>Mão de Obra</option><option>Serviço</option><option>Material</option></select></div>
                         <div className="form-group"><label>Status</label><select name="status" defaultValue="A Pagar" required><option>A Pagar</option><option>Pago</option></select></div>
-                        {/* Data é adicionada automaticamente na função handleSaveLancamento */}
                         <div className="form-actions"><button type="button" onClick={() => setAddLancamentoModalVisible(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
                     </form>
                 </Modal>
             )}
             {viewingEmpreitada && <EmpreitadaDetailsModal empreitada={viewingEmpreitada} onClose={() => setViewingEmpreitada(null)} onSave={handleSaveEditEmpreitada} />}
 
-            {/* --- CONTEÚDO DO DASHBOARD --- */}
             <header className="dashboard-header"><div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente}</p></div><button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button></header>
             <div className="kpi-grid"><div className="kpi-card total-geral"><span>Total Geral</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div><div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div><div className="kpi-card total-a-pagar"><span>Total a Pagar</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2><small>{pagamentosPendentes.length} pendência(s)</small></div></div>
             
@@ -230,8 +200,17 @@ function App() {
                 </div>
             </div>
             
-            <div className="main-grid"><div className="card-main"><div className="card-header"><h3>Pagamentos Pendentes</h3></div><div className="lista-pendentes">{pagamentosPendentes.length > 0 ? pagamentosPendentes.map(lanc => (<div key={lanc.id} className="item-pendente"><div className="item-info"><span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span><small>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</small></div><div className="item-acao"><span className="item-valor">{formatCurrency(lanc.valor)}</span><button onClick={() => handleMarcarComoPago(lanc.id)} className="marcar-pago-btn">Marcar como Pago</button></div></div>)) : <p>Nenhum pagamento pendente.</p>}</div></div><div className="card-main"><div className="card-header"><h3>Total por Segmento</h3></div><div className="lista-segmento">{Object.entries(sumarios.total_por_segmento).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div></div></div>
-            
+            <div className="main-grid">
+                <div className="card-main">
+                    <div className="card-header"><h3>Pagamentos Pendentes</h3></div>
+                    <div className="lista-pendentes">{pagamentosPendentes.length > 0 ? pagamentosPendentes.map(lanc => (<div key={lanc.id} className="item-pendente"><div className="item-info"><span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span><small>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</small></div><div className="item-acao"><span className="item-valor">{formatCurrency(lanc.valor)}</span><button onClick={() => handleMarcarComoPago(lanc.id)} className="marcar-pago-btn">Marcar como Pago</button></div></div>)) : <p>Nenhum pagamento pendente.</p>}</div>
+                </div>
+                <div className="card-main">
+                    <div className="card-header"><h3>Total por Segmento</h3></div>
+                    <div className="lista-segmento">{Object.entries(sumarios.total_por_segmento).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div>
+                </div>
+            </div>
+
             <div className="card-full">
                 <div className="card-header"><h3>Histórico de Gastos</h3><div className="header-actions"><button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto</button><button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV</button><button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`)} className="export-btn pdf">PDF</button></div></div>
                 <table className="tabela-historico">
