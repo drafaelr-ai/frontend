@@ -63,6 +63,25 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
             });
         }
     };
+
+    const handleDeletarEmpreitada = () => {
+        if (window.confirm(`Tem certeza que deseja excluir a empreitada "${empreitada.nome}"?\n\nTodos os pagamentos serão perdidos!`)) {
+            fetch(`${API_URL}/empreitadas/${empreitada.id}`, { 
+                method: 'DELETE' 
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao deletar');
+                return res.json();
+            })
+            .then(() => {
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao deletar a empreitada. Tente novamente.');
+            });
+        }
+    };
     
     if (!empreitada) return null;
 
@@ -70,19 +89,35 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
         <Modal onClose={onClose}>
             {!isEditing ? (
                 <div>
-                    <h2>{empreitada.nome}</h2>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <h2>{empreitada.nome}</h2>
+                        <button 
+                            onClick={handleDeletarEmpreitada}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '1.5em',
+                                color: '#dc3545',
+                                padding: '5px'
+                            }}
+                            title="Excluir Empreitada"
+                        >
+                            🗑️
+                        </button>
+                    </div>
                     <p><strong>Responsável:</strong> {empreitada.responsavel}</p>
                     <p><strong>Valor Global:</strong> {formatCurrency(empreitada.valor_global)}</p>
                     <p><strong>Chave PIX:</strong> {empreitada.pix}</p>
                     <hr />
                     <h3>Histórico de Pagamentos</h3>
-                    <table className="tabela-pagamentos">
+                    <table className="tabela-pagamentos" style={{width: '100%'}}>
                         <thead>
                             <tr>
                                 <th>Data</th>
                                 <th>Valor</th>
                                 <th>Status</th>
-                                <th>Ações</th>
+                                <th style={{width: '80px'}}>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -113,7 +148,8 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                                                 border: 'none',
                                                 cursor: 'pointer',
                                                 fontSize: '1.2em',
-                                                padding: '5px'
+                                                padding: '5px',
+                                                color: '#dc3545'
                                             }}
                                         >
                                             🗑️
@@ -123,12 +159,12 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                             ))}
                             {empreitada.pagamentos.length === 0 && (
                                 <tr>
-                                    <td colSpan="4">Nenhum pagamento realizado.</td>
+                                    <td colSpan="4" style={{textAlign: 'center'}}>Nenhum pagamento realizado.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-                    <div className="form-actions">
+                    <div className="form-actions" style={{marginTop: '20px'}}>
                         <button type="button" onClick={() => setIsEditing(true)} className="submit-btn">
                             Editar Empreitada
                         </button>
