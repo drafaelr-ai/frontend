@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = 'https://backend-production-78c9.up.railway.app';
+const API_URL = 'https://backend-production-78c9.up.railway.app'; 
 const getTodayString = () => { const today = new Date(); const offset = today.getTimezoneOffset(); const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000)); return todayWithOffset.toISOString().split('T')[0]; }
 const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; } return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
