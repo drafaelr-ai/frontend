@@ -57,15 +57,16 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                     <hr />
                     <h3>Histórico de Pagamentos</h3>
                     <table className="tabela-pagamentos">
-                        <thead><tr><th>Data</th><th>Valor</th></tr></thead>
+                        <thead><tr><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
                         <tbody>
                             {empreitada.pagamentos.map((pag, index) => (
                                 <tr key={index}>
                                     <td>{new Date(pag.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</td>
                                     <td>{formatCurrency(pag.valor)}</td>
+                                    <td><span className={`status ${pag.status === 'Pago' ? 'pago' : ''}`}>{pag.status}</span></td>
                                 </tr>
                             ))}
-                            {empreitada.pagamentos.length === 0 && <tr><td colSpan="2">Nenhum pagamento realizado.</td></tr>}
+                            {empreitada.pagamentos.length === 0 && <tr><td colSpan="3">Nenhum pagamento realizado.</td></tr>}
                         </tbody>
                     </table>
                     <div className="form-actions"><button type="button" onClick={() => setIsEditing(true)} className="submit-btn">Editar Empreitada</button></div>
@@ -221,9 +222,14 @@ function App() {
     
     const handleAddPagamentoParcial = (e, empreitadaId) => { 
         e.preventDefault(); 
-        const valorPagamento = e.target.valorPagamento.value; 
+        const valorPagamento = e.target.valorPagamento.value;
+        const statusPagamento = e.target.statusPagamento.value;
         if (!valorPagamento) return; 
-        const pagamento = { valor: valorPagamento, data: getTodayString() }; 
+        const pagamento = { 
+            valor: valorPagamento, 
+            data: getTodayString(),
+            status: statusPagamento
+        }; 
         fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
@@ -321,7 +327,7 @@ function App() {
                  <div className="card-header"><h3>Empreitadas</h3><button className="acao-btn add-btn" onClick={() => setAddEmpreitadaModalVisible(true)}>+ Nova Empreitada</button></div>
                 <div className="lista-empreitadas">
                     {empreitadas.length > 0 ? empreitadas.map(emp => {
-                        const valorPago = emp.pagamentos.reduce((total, pag) => total + pag.valor, 0);
+                        const valorPago = emp.pagamentos.filter(p => p.status === 'Pago').reduce((total, pag) => total + pag.valor, 0);
                         const progresso = emp.valor_global > 0 ? (valorPago / emp.valor_global) * 100 : 0;
                         return (
                             <div key={emp.id} className="card-empreitada-item" onClick={() => setViewingEmpreitada(emp)}>
@@ -330,7 +336,23 @@ function App() {
                                 <div className="progress-bar-container"><div className="progress-bar" style={{ width: `${progresso}%` }}></div></div>
                                 <div className="empreitada-sumario"><span>Pago: {formatCurrency(valorPago)}</span><span>Restante: {formatCurrency(emp.valor_global - valorPago)}</span><span>{progresso.toFixed(1)}%</span></div>
                                 <form onSubmit={(e) => handleAddPagamentoParcial(e, emp.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                    <input type="number" step="0.01" name="valorPagamento" placeholder="Adicionar Pagamento Parcial" required/>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        name="valorPagamento" 
+                                        placeholder="Valor do Pagamento" 
+                                        required
+                                        style={{flex: 2}}
+                                    />
+                                    <select 
+                                        name="statusPagamento" 
+                                        defaultValue="Pago" 
+                                        required
+                                        style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
+                                    >
+                                        <option value="Pago">Pago</option>
+                                        <option value="A Pagar">A Pagar</option>
+                                    </select>
                                     <button type="submit">Adicionar</button>
                                 </form>
                             </div>
