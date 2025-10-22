@@ -44,6 +44,26 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
     useEffect(() => { setFormData(empreitada); }, [empreitada]);
     const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
+    
+    const handleDeletarPagamento = (pagamentoId) => {
+        if (window.confirm("Tem certeza que deseja excluir este pagamento?")) {
+            fetch(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, { 
+                method: 'DELETE' 
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao deletar');
+                return res.json();
+            })
+            .then(() => {
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao deletar o pagamento. Tente novamente.');
+            });
+        }
+    };
+    
     if (!empreitada) return null;
 
     return (
@@ -57,19 +77,62 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                     <hr />
                     <h3>Histórico de Pagamentos</h3>
                     <table className="tabela-pagamentos">
-                        <thead><tr><th>Data</th><th>Valor</th><th>Status</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            {empreitada.pagamentos.map((pag, index) => (
-                                <tr key={index}>
+                            {empreitada.pagamentos.map((pag) => (
+                                <tr key={pag.id}>
                                     <td>{new Date(pag.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</td>
                                     <td>{formatCurrency(pag.valor)}</td>
-                                    <td><span className={`status ${pag.status === 'Pago' ? 'pago' : ''}`}>{pag.status}</span></td>
+                                    <td>
+                                        <span style={{
+                                            backgroundColor: pag.status === 'Pago' ? '#28a745' : '#dc3545',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '0.8em',
+                                            fontWeight: '500',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {pag.status}
+                                        </span>
+                                    </td>
+                                    <td style={{textAlign: 'center'}}>
+                                        <button 
+                                            onClick={() => handleDeletarPagamento(pag.id)}
+                                            className="acao-icon-btn delete-btn"
+                                            title="Excluir Pagamento"
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '1.2em',
+                                                padding: '5px'
+                                            }}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
-                            {empreitada.pagamentos.length === 0 && <tr><td colSpan="3">Nenhum pagamento realizado.</td></tr>}
+                            {empreitada.pagamentos.length === 0 && (
+                                <tr>
+                                    <td colSpan="4">Nenhum pagamento realizado.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
-                    <div className="form-actions"><button type="button" onClick={() => setIsEditing(true)} className="submit-btn">Editar Empreitada</button></div>
+                    <div className="form-actions">
+                        <button type="button" onClick={() => setIsEditing(true)} className="submit-btn">
+                            Editar Empreitada
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit}>
