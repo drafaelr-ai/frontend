@@ -477,7 +477,7 @@ function App() {
                     <thead><tr><th>Data</th><th>Descrição</th><th>Segmento</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
                     <tbody>{lancamentos.map(lanc => (<tr key={lanc.id}><td>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</td><td>{lanc.descricao}</td><td>{lanc.tipo}</td><td className="status-cell">{lanc.status === 'A Pagar' ? (<button onClick={() => handleMarcarComoPago(lanc.id)} className="quick-pay-btn" title="Marcar como Pago">A Pagar ✓</button>) : (<span className="status pago">Pago</span>)}</td><td>{formatCurrency(lanc.valor)}</td><td className="acoes-cell"><button onClick={() => setEditingLancamento(lanc)} className="acao-icon-btn edit-btn" title="Editar">✏️</button><button onClick={() => handleDeletarLancamento(lanc.id)} className="acao-icon-btn delete-btn" title="Excluir">🗑️</button></td></tr>))}</tbody>
                 </table>
-            </div>
+            </div> 
         </div>
     );
 } 
