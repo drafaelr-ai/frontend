@@ -7,7 +7,7 @@ const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; 
 
 // --- COMPONENTES DE MODAL (POP-UP) ---
 const Modal = ({ children, onClose }) => (
-    <div className="modal-overlay" onClick={onClose}> 
+    <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button onClick={onClose} className="close-modal-btn">&times;</button>
             {children}
@@ -51,7 +51,7 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
     useEffect(() => { setFormData(empreitada); }, [empreitada]);
     const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
-    
+
     const handleDeletarPagamento = (pagamentoId) => {
         // NOTA: window.confirm foi substituído por uma lógica que não usa alert/confirm
         // Em um app real, usaríamos um modal de confirmação.
@@ -59,8 +59,8 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
         // Vamos manter o confirm por enquanto, mas ciente da restrição.
         // if (window.confirm("Tem certeza que deseja excluir este pagamento?")) {
         console.log("Solicitando deleção de pagamento (ID:", pagamentoId, "). Idealmente, use um modal de confirmação.");
-        fetch(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, { 
-            method: 'DELETE' 
+        fetch(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, {
+            method: 'DELETE'
         })
         .then(res => {
             if (!res.ok) throw new Error('Erro ao deletar');
@@ -79,8 +79,8 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
     const handleDeletarEmpreitada = () => {
         // if (window.confirm(`Tem certeza que deseja excluir a empreitada "${empreitada.nome}"?\n\nTodos os pagamentos serão perdidos!`)) {
         console.log("Solicitando deleção de empreitada. Idealmente, use um modal.");
-        fetch(`${API_URL}/empreitadas/${empreitada.id}`, { 
-            method: 'DELETE' 
+        fetch(`${API_URL}/empreitadas/${empreitada.id}`, {
+            method: 'DELETE'
         })
         .then(res => {
             if (!res.ok) throw new Error('Erro ao deletar');
@@ -95,7 +95,7 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
         });
         // }
     };
-    
+
     if (!empreitada) return null;
 
     return (
@@ -104,7 +104,7 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                 <div>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>{empreitada.nome}</h2>
-                        <button 
+                        <button
                             onClick={handleDeletarEmpreitada}
                             style={{
                                 background: 'none',
@@ -152,7 +152,7 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave }) => {
                                         </span>
                                     </td>
                                     <td style={{textAlign: 'center'}}>
-                                        <button 
+                                        <button
                                             onClick={() => handleDeletarPagamento(pag.id)}
                                             className="acao-icon-btn delete-btn"
                                             title="Excluir Pagamento"
@@ -205,14 +205,14 @@ function App() {
     const [empreitadas, setEmpreitadas] = useState([]);
     const [sumarios, setSumarios] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddEmpreitadaModalVisible, setAddEmpreitadaModalVisible] = useState(false);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingEmpreitada, setViewingEmpreitada] = useState(null);
 
     // Efeito para buscar obras na montagem do componente
-    useEffect(() => { 
+    useEffect(() => {
         console.log("Buscando lista de obras...");
         fetch(`${API_URL}/obras`)
             .then(res => {
@@ -226,7 +226,7 @@ function App() {
             .catch(error => {
                 console.error("Erro ao buscar obras:", error);
                 // alert("Falha ao carregar obras. Verifique o backend."); // Evitar alert
-            }); 
+            });
     }, []);
 
     const fetchObraData = (obraId) => {
@@ -250,33 +250,33 @@ function App() {
             })
             .finally(() => setIsLoading(false));
     };
-    
+
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
-    const handleAddObra = (e) => { 
-        e.preventDefault(); 
-        const nome = e.target.nome.value; 
-        const cliente = e.target.cliente.value; 
+    const handleAddObra = (e) => {
+        e.preventDefault();
+        const nome = e.target.nome.value;
+        const cliente = e.target.cliente.value;
         console.log("Adicionando nova obra:", { nome, cliente });
-        fetch(`${API_URL}/obras`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ nome, cliente }) 
+        fetch(`${API_URL}/obras`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, cliente })
         })
         .then(res => {
             if (!res.ok) throw new Error('Erro ao adicionar obra');
             return res.json();
         })
-        .then(novaObra => { 
+        .then(novaObra => {
             console.log("Obra adicionada:", novaObra);
-            setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); 
-            e.target.reset(); 
+            setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome)));
+            e.target.reset();
         })
         .catch(error => {
             console.error('Erro ao adicionar obra:', error);
             // alert('Erro ao adicionar obra. Tente novamente.'); // Evitar alert
         });
     };
-    
+
     const handleDeletarObra = (obraId, obraNome) => {
         // if (window.confirm(`Tem certeza que deseja excluir a obra "${obraNome}"?\n\nATENÇÃO: Todos os lançamentos e empreitadas serão perdidos!`)) {
         console.log(`Solicitando deleção da obra ID: ${obraId}. Idealmente, use um modal.`);
@@ -296,16 +296,16 @@ function App() {
         });
         // }
     };
-    
+
     const handleMarcarComoPago = (lancamentoId) => {
         console.log("Marcando como pago:", lancamentoId);
         fetch(`${API_URL}/lancamentos/${lancamentoId}/pago`, { method: 'PATCH' })
             .then(() => fetchObraData(obraSelecionada.id))
             .catch(error => console.error("Erro ao marcar como pago:", error));
     };
-    
-    const handleDeletarLancamento = (lancamentoId) => { 
-        // if (window.confirm("Tem certeza que deseja excluir este lançamento?")) { 
+
+    const handleDeletarLancamento = (lancamentoId) => {
+        // if (window.confirm("Tem certeza que deseja excluir este lançamento?")) {
         console.log("Deletando lançamento:", lancamentoId);
         fetch(`${API_URL}/lancamentos/${lancamentoId}`, { method: 'DELETE' })
             .then(res => {
@@ -319,82 +319,85 @@ function App() {
                 console.error('Erro:', error);
                 // alert('Erro ao deletar o lançamento. Tente novamente.'); // Evitar alert
             });
-        // } 
+        // }
     };
-    
-    const handleSaveEdit = (updatedLancamento) => { 
+
+    const handleSaveEdit = (updatedLancamento) => {
         console.log("Salvando edição do lançamento:", updatedLancamento.id);
-        fetch(`${API_URL}/lancamentos/${updatedLancamento.id}`, { 
-            method: 'PUT', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(updatedLancamento) 
-        }).then(() => { 
-            setEditingLancamento(null); 
-            fetchObraData(obraSelecionada.id); 
-        }).catch(error => console.error("Erro ao salvar edição:", error)); 
+        fetch(`${API_URL}/lancamentos/${updatedLancamento.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedLancamento)
+        }).then(() => {
+            setEditingLancamento(null);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => console.error("Erro ao salvar edição:", error));
     };
-    
-    const handleSaveLancamento = (e) => { 
-        e.preventDefault(); 
-        const formData = new FormData(e.target); 
-        const lancamentoData = Object.fromEntries(formData.entries()); 
+
+    const handleSaveLancamento = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const lancamentoData = Object.fromEntries(formData.entries());
         lancamentoData.data = getTodayString(); // Define a data no momento do salvamento
         console.log("Salvando novo lançamento:", lancamentoData);
-        fetch(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(lancamentoData) 
-        }).then(() => { 
-            setAddLancamentoModalVisible(false); 
-            fetchObraData(obraSelecionada.id); 
-        }).catch(error => console.error("Erro ao salvar lançamento:", error)); 
+        fetch(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(lancamentoData)
+        }).then(() => {
+            setAddLancamentoModalVisible(false);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => {
+            console.error("Erro ao salvar lançamento:", error);
+            // alert("Erro ao salvar o gasto. Tente novamente."); // Evitar alert
+        });
     };
-    
-    const handleSaveEmpreitada = (e) => { 
-        e.preventDefault(); 
-        const formData = new FormData(e.target); 
-        const empreitadaData = Object.fromEntries(formData.entries()); 
+
+    const handleSaveEmpreitada = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const empreitadaData = Object.fromEntries(formData.entries());
         console.log("Salvando nova empreitada:", empreitadaData);
-        fetch(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(empreitadaData) 
-        }).then(() => { 
-            setAddEmpreitadaModalVisible(false); 
-            fetchObraData(obraSelecionada.id); 
-        }).catch(error => console.error("Erro ao salvar empreitada:", error)); 
+        fetch(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(empreitadaData)
+        }).then(() => {
+            setAddEmpreitadaModalVisible(false);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => console.error("Erro ao salvar empreitada:", error));
     };
-    
-    const handleSaveEditEmpreitada = (updatedEmpreitada) => { 
+
+    const handleSaveEditEmpreitada = (updatedEmpreitada) => {
         console.log("Salvando edição da empreitada:", updatedEmpreitada.id);
-        fetch(`${API_URL}/empreitadas/${updatedEmpreitada.id}`, { 
-            method: 'PUT', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(updatedEmpreitada) 
-        }).then(() => { 
-            setViewingEmpreitada(null); 
-            fetchObraData(obraSelecionada.id); 
-        }).catch(error => console.error("Erro ao salvar edição da empreitada:", error)); 
+        fetch(`${API_URL}/empreitadas/${updatedEmpreitada.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedEmpreitada)
+        }).then(() => {
+            setViewingEmpreitada(null);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => console.error("Erro ao salvar edição da empreitada:", error));
     };
-    
-    const handleAddPagamentoParcial = (e, empreitadaId) => { 
-        e.preventDefault(); 
+
+    const handleAddPagamentoParcial = (e, empreitadaId) => {
+        e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
         const statusPagamento = e.target.statusPagamento.value;
-        if (!valorPagamento) return; 
-        const pagamento = { 
-            valor: valorPagamento, 
+        if (!valorPagamento) return;
+        const pagamento = {
+            valor: valorPagamento,
             data: getTodayString(),
             status: statusPagamento
-        }; 
+        };
         console.log("Adicionando pagamento parcial:", pagamento);
-        fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify(pagamento) 
+        fetch(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pagamento)
         }).then(() => fetchObraData(obraSelecionada.id))
-        .catch(error => console.error("Erro ao adicionar pagamento:", error)); 
-        e.target.reset(); 
+        .catch(error => console.error("Erro ao adicionar pagamento:", error));
+        e.target.reset();
     };
 
     // --- RENDERIZAÇÃO ---
@@ -418,7 +421,7 @@ function App() {
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleDeletarObra(obra.id, obra.nome);
@@ -449,7 +452,7 @@ function App() {
     }
 
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
-    
+
     const pagamentosPendentes = lancamentos.filter(l => l.status === 'A Pagar');
 
     return (
@@ -492,10 +495,10 @@ function App() {
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header"><div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente}</p></div><button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button></header>
-            
+
             {/* --- KPIs --- */}
             <div className="kpi-grid"><div className="kpi-card total-geral"><span>Total Geral</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div><div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div><div className="kpi-card total-a-pagar"><span>Total a Pagar</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2><small>{pagamentosPendentes.length} pendência(s)</small></div></div>
-            
+
             {/* --- Empreitadas --- */}
             <div className="card-full">
                  <div className="card-header"><h3>Empreitadas</h3><button className="acao-btn add-btn" onClick={() => setAddEmpreitadaModalVisible(true)}>+ Nova Empreitada</button></div>
@@ -510,17 +513,17 @@ function App() {
                                 <div className="progress-bar-container"><div className="progress-bar" style={{ width: `${progresso}%` }}></div></div>
                                 <div className="empreitada-sumario"><span>Pago: {formatCurrency(valorPago)}</span><span>Restante: {formatCurrency(emp.valor_global - valorPago)}</span><span>{progresso.toFixed(1)}%</span></div>
                                 <form onSubmit={(e) => handleAddPagamentoParcial(e, emp.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        name="valorPagamento" 
-                                        placeholder="Valor do Pagamento" 
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="valorPagamento"
+                                        placeholder="Valor do Pagamento"
                                         required
                                         style={{flex: 2}}
                                     />
-                                    <select 
-                                        name="statusPagamento" 
-                                        defaultValue="Pago" 
+                                    <select
+                                        name="statusPagamento"
+                                        defaultValue="Pago"
                                         required
                                         style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
                                     >
@@ -534,7 +537,7 @@ function App() {
                     }) : <p>Nenhuma empreitada cadastrada.</p>}
                 </div>
             </div>
-            
+
             {/* --- Grid Principal (Pendentes e Segmentos) --- */}
             <div className="main-grid">
                 <div className="card-main">
@@ -554,10 +557,10 @@ function App() {
                     <thead><tr><th>Data</th><th>Descrição</th><th>Segmento</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
                     <tbody>{lancamentos.map(lanc => (<tr key={lanc.id}><td>{new Date(lanc.data + 'T03:00:00Z').toLocaleDateString('pt-BR')}</td><td>{lanc.descricao}</td><td>{lanc.tipo}</td><td className="status-cell">{lanc.status === 'A Pagar' ? (<button onClick={() => handleMarcarComoPago(lanc.id)} className="quick-pay-btn" title="Marcar como Pago">A Pagar ✓</button>) : (<span className="status pago">Pago</span>)}</td><td>{formatCurrency(lanc.valor)}</td><td className="acoes-cell"><button onClick={() => setEditingLancamento(lanc)} className="acao-icon-btn edit-btn" title="Editar">✏️</button><button onClick={() => handleDeletarLancamento(lanc.id)} className="acao-icon-btn delete-btn" title="Excluir">🗑️</button></td></tr>))}</tbody>
                 </table>
-            </div> 
+            </div>
         </div>
     );
-} 
+}
 
 export default App;
 
