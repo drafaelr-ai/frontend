@@ -7,7 +7,7 @@ const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; 
 
 // --- COMPONENTES DE MODAL (POP-UP) ---
 const Modal = ({ children, onClose }) => (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose}> 
         <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button onClick={onClose} className="close-modal-btn">&times;</button>
             {children}
