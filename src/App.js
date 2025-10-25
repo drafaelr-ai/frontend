@@ -3,7 +3,7 @@ import './App.css';
 
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 const getTodayString = () => { const today = new Date(); const offset = today.getTimezoneOffset(); const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000)); return todayWithOffset.toISOString().split('T')[0]; }
-const formatCurrency = (value) => { if (typeof value !== 'number') { value = 0; } return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+const formatCurrency = (value) => { if (typeof value !== 'number' || isNaN(value)) { value = 0; } return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
 // --- COMPONENTES DE MODAL (POP-UP) ---
 const Modal = ({ children, onClose }) => (
@@ -133,6 +133,9 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
 
     if (!empreitada) return null;
 
+    // Garante que pagamentos é um array antes de tentar usar .map ou .length
+    const safePagamentos = Array.isArray(empreitada.pagamentos) ? empreitada.pagamentos : [];
+
     return (
         <Modal onClose={onClose}>
             {!isEditing ? (
@@ -170,8 +173,8 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                             </tr>
                         </thead>
                         <tbody>
-                            {empreitada.pagamentos && empreitada.pagamentos.length > 0 ? (
-                                empreitada.pagamentos.map((pag) => (
+                            {safePagamentos.length > 0 ? (
+                                safePagamentos.map((pag) => (
                                     <tr key={pag.id}>
                                         {/* Adiciona + 'T00:00:00' para tentar evitar problemas de fuso */}
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
@@ -554,9 +557,13 @@ function App() {
 
      // --- LÓGICA PARA COMBINAR HISTÓRICO ---
      const historicoCompleto = useMemo(() => {
+         console.log("Recalculando histórico completo...");
          // Garante que lancamentos e empreitadas são arrays antes de mapear
          const safeLancamentos = Array.isArray(lancamentos) ? lancamentos : [];
          const safeEmpreitadas = Array.isArray(empreitadas) ? empreitadas : [];
+         console.log("Lançamentos base:", safeLancamentos);
+         console.log("Empreitadas base:", safeEmpreitadas);
+
 
          // 1. Mapeia os lançamentos gerais
          const gastosGerais = safeLancamentos.map(lanc => ({
@@ -583,14 +590,15 @@ function App() {
 
          // 3. Combina
          const combinado = [...gastosGerais, ...pagamentosEmpreitada];
+         console.log("Histórico combinado (antes de ordenar):", combinado);
+
 
          // 4. Ordena por data (mais recente primeiro)
          combinado.sort((a, b) => {
-             const dateA = a.data ? new Date(a.data) : new Date(0);
+             const dateA = a.data ? new Date(a.data) : new Date(0); // Usa T00:00:00?
              const dateB = b.data ? new Date(b.data) : new Date(0);
-             // Se as datas forem iguais, ordena por ID (ou uniqueId) para estabilidade
+             // Se as datas forem iguais, ordena por uniqueId para estabilidade
              if (dateB - dateA === 0) {
-                 // IDs numéricos (lancamentos) vêm antes de IDs de string (empreitadas) para desempate
                  const idA = a.uniqueId;
                  const idB = b.uniqueId;
                  if (idA < idB) return -1;
@@ -599,9 +607,60 @@ function App() {
              }
              return dateB - dateA;
          });
+         console.log("Histórico combinado (ordenado):", combinado);
 
          return combinado;
      }, [lancamentos, empreitadas]); // Dependências
+
+      // --- LÓGICA PARA PAGAMENTOS PENDENTES (COMBINADO) ---
+      const pagamentosPendentesCombinados = useMemo(() => {
+          console.log("Recalculando pagamentos pendentes combinados...");
+          // Garante que lancamentos e empreitadas são arrays
+          const safeLancamentos = Array.isArray(lancamentos) ? lancamentos : [];
+          const safeEmpreitadas = Array.isArray(empreitadas) ? empreitadas : [];
+
+          // 1. Filtra lançamentos gerais pendentes
+          const pendentesGerais = safeLancamentos
+              .filter(l => l.status === 'A Pagar')
+              .map(lanc => ({
+                  ...lanc,
+                  isEmpreitadaPayment: false,
+                  uniqueId: `lanc-${lanc.id}` // ID único
+              }));
+
+          // 2. Filtra pagamentos de empreitadas pendentes
+          const pendentesEmpreitada = safeEmpreitadas.flatMap(emp =>
+              (Array.isArray(emp.pagamentos) ? emp.pagamentos : [])
+              .filter(pag => pag.status === 'A Pagar')
+              .map(pag => ({
+                  id: pag.id,
+                  data: pag.data,
+                  valor: pag.valor,
+                  status: pag.status,
+                  descricao: `Pag. Pendente: ${emp.nome || 'Empreitada s/ nome'}`, // Descrição específica
+                  tipo: 'Empreitada',
+                  pix: emp.pix || '',
+                  isEmpreitadaPayment: true,
+                  uniqueId: `emp-pag-${pag.id}` // ID único
+              }))
+          );
+
+          // 3. Combina
+          const combinado = [...pendentesGerais, ...pendentesEmpreitada];
+          console.log("Pendentes combinados (antes de ordenar):", combinado);
+
+
+          // 4. Ordena por data (mais recente primeiro)
+          combinado.sort((a, b) => {
+              const dateA = a.data ? new Date(a.data) : new Date(0); // Usa T00:00:00?
+              const dateB = b.data ? new Date(b.data) : new Date(0);
+              return dateB - dateA;
+          });
+          console.log("Pendentes combinados (ordenados):", combinado);
+
+
+          return combinado;
+      }, [lancamentos, empreitadas]); // Dependências
 
 
     // --- RENDERIZAÇÃO ---
@@ -659,8 +718,8 @@ function App() {
 
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
 
-    // Usar apenas lancamentos originais (e que são array) para a lista de pagamentos pendentes
-    const pagamentosPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : []).filter(l => l.status === 'A Pagar');
+    // Usar apenas lancamentos originais (e que são array) para a contagem no KPI
+    const contagemPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : []).filter(l => l.status === 'A Pagar').length;
 
     return (
         <div className="dashboard-container">
@@ -717,7 +776,8 @@ function App() {
                  <div className="kpi-grid">
                      <div className="kpi-card total-geral"><span>Total Geral</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
                      <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     <div className="kpi-card total-a-pagar"><span>Total a Pagar</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2><small>{pagamentosPendentesGerais.length} pendência(s) gerais</small></div>
+                     {/* Atualiza o KPI 'Total a Pagar' para usar a contagem da lista combinada */}
+                     <div className="kpi-card total-a-pagar"><span>Total a Pagar</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2><small>{pagamentosPendentesCombinados.length} pendência(s) totais</small></div>
                  </div>
              )}
 
@@ -770,22 +830,27 @@ function App() {
              {sumarios && sumarios.total_por_segmento && ( // Exibe apenas se sumarios e total_por_segmento existirem
                  <div className="main-grid">
                      <div className="card-main">
-                         <div className="card-header"><h3>Pagamentos Pendentes (Gerais)</h3></div>
-                         {/* Usar pagamentosPendentesGerais que filtra apenas dos lancamentos */}
-                         <div className="lista-pendentes">{pagamentosPendentesGerais.length > 0 ? pagamentosPendentesGerais.map(lanc => (
-                            <div key={lanc.id} className="item-pendente">
+                          {/* Atualiza o título */}
+                         <div className="card-header"><h3>Pagamentos Pendentes (Gerais e Empreitadas)</h3></div>
+                         {/* Usa a nova lista combinada pagamentosPendentesCombinados */}
+                         <div className="lista-pendentes">{pagamentosPendentesCombinados.length > 0 ? pagamentosPendentesCombinados.map(item => (
+                            <div key={item.uniqueId} className="item-pendente">
                                 <div className="item-info">
-                                    <span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span>
-                                     {/* Adiciona + 'T00:00:00' para tentar evitar problemas de fuso */}
-                                    <small>{lanc.data ? new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</small>
+                                     {/* Mostra a descrição (pode ser do gasto ou do pagamento da empreitada) */}
+                                    <span className="item-descricao">{item.descricao} - {item.tipo}</span>
+                                    <small>{item.data ? new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</small>
                                 </div>
                                 <div className="item-acao">
-                                    <span className="item-valor">{formatCurrency(lanc.valor)}</span>
-                                    {/* Passa o ID original */}
-                                    <button onClick={() => handleMarcarComoPago(`lanc-${lanc.id}`)} className="marcar-pago-btn">Marcar como Pago</button> {/* Passa uniqueId */}
+                                    <span className="item-valor">{formatCurrency(item.valor)}</span>
+                                    {/* Mostra o botão "Marcar como Pago" apenas para gastos gerais */}
+                                    {!item.isEmpreitadaPayment ? (
+                                        <button onClick={() => handleMarcarComoPago(item.uniqueId)} className="marcar-pago-btn">Marcar como Pago</button>
+                                     ) : (
+                                         <span style={{fontSize: '0.8em', color: '#6c757d'}}>(Empreitada)</span> // Indica que é de empreitada
+                                     )}
                                 </div>
                              </div>
-                         )) : <p>Nenhum pagamento geral pendente.</p>}</div>
+                         )) : <p>Nenhum pagamento pendente no momento.</p>}</div>
                      </div> {/* Fechamento do card-main Pagamentos Pendentes */}
                      <div className="card-main">
                          <div className="card-header"><h3>Total por Segmento (Geral)</h3></div>
