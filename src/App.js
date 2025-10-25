@@ -242,6 +242,7 @@ function App() {
     const [lancamentos, setLancamentos] = useState([]); // Gastos gerais
     const [empreitadas, setEmpreitadas] = useState([]); // Empreitadas e seus pagamentos
     const [sumarios, setSumarios] = useState(null);
+    const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const [editingLancamento, setEditingLancamento] = useState(null);
@@ -288,6 +289,7 @@ function App() {
                 }));
                 setEmpreitadas(empreitadasComPagamentosArray);
                 setSumarios(data.sumarios || null); // Define sumarios ou null
+                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
             })
             .catch(error => {
                 console.error(`Erro ao buscar dados da obra ${obraId}:`, error);
@@ -803,41 +805,68 @@ function App() {
                     <thead><tr><th>Data</th><th>Descrição</th><th>Segmento</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
                      {/* Alterado para usar historicoCompleto */}
                     <tbody>
-                         {/* Adiciona verificação para garantir que historicoCompleto é um array */}
-                        {(Array.isArray(historicoCompleto) ? historicoCompleto : []).map(item => (
-                        <tr key={item.uniqueId}> {/* Usar uniqueId */}
-                            {/* Adiciona + 'T00:00:00' para tentar evitar problemas de fuso */}
-                            <td>{item.data ? new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data Inválida'}</td>
-                            <td>{item.descricao}</td>
-                            <td>{item.tipo}</td>
-                            <td className="status-cell">
-                                {/* Botão "A Pagar" clicável só para lançamentos gerais */}
-                                {item.status === 'A Pagar' && !item.isEmpreitadaPayment ? (
-                                    <button onClick={() => handleMarcarComoPago(item.uniqueId)} className="quick-pay-btn" title="Marcar como Pago">A Pagar ✓</button>
-                                ) : (
-                                     // Span para Pagamentos de Empreitada (mesmo se 'A Pagar') ou Lançamentos Pagos
-                                    <span className={`status ${item.status === 'Pago' ? 'pago' : 'a-pagar'}`} // Adiciona classe 'a-pagar' se necessário
-                                        style={{ backgroundColor: item.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)' }}>
-                                        {item.status}
-                                    </span>
-                                )}
-                            </td>
-                            <td>{formatCurrency(item.valor)}</td>
-                            <td className="acoes-cell">
-                                 {/* Botões de Ação só para lançamentos gerais */}
-                                {!item.isEmpreitadaPayment ? (
-                                    <>
-                                        {/* Passa o objeto 'item' completo */}
-                                        <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar">✏️</button>
-                                        {/* Passa o uniqueId para deletar */}
-                                        <button onClick={() => handleDeletarLancamento(item.uniqueId)} className="acao-icon-btn delete-btn" title="Excluir">🗑️</button>
-                                    </>
-                                ) : (
-                                     <span title="Gerenciado na seção Empreitadas">-</span> // Indicador para pagamentos de empreitada
-                                )}
-                            </td>
-                        </tr>
-                    ))}</tbody>
+    {historicoUnificado.map(item => (
+        <tr key={item.id}>
+            <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+            <td>
+                {item.descricao}
+                {item.tipo_registro === 'pagamento_empreitada' && (
+                    <span style={{
+                        marginLeft: '8px',
+                        padding: '2px 6px',
+                        backgroundColor: '#17a2b8',
+                        color: 'white',
+                        borderRadius: '4px',
+                        fontSize: '0.75em',
+                        fontWeight: '500'
+                    }}>
+                        EMPREITADA
+                    </span>
+                )}
+            </td>
+            <td>{item.tipo}</td>
+            <td className="status-cell">
+                {item.status === 'A Pagar' ? (
+                    <button 
+                        onClick={() => handleMarcarComoPago(item.id)} 
+                        className="quick-pay-btn" 
+                        title="Marcar como Pago"
+                        disabled={item.tipo_registro === 'pagamento_empreitada'}
+                    >
+                        A Pagar ✓
+                    </button>
+                ) : (
+                    <span className="status pago">Pago</span>
+                )}
+            </td>
+            <td>{formatCurrency(item.valor)}</td>
+            <td className="acoes-cell">
+                {item.tipo_registro === 'lancamento' ? (
+                    <>
+                        <button 
+                            onClick={() => handleEditLancamento(item)} 
+                            className="acao-icon-btn edit-btn" 
+                            title="Editar"
+                        >
+                            ✏️
+                        </button>
+                        <button 
+                            onClick={() => handleDeletarLancamento(item.id)} 
+                            className="acao-icon-btn delete-btn" 
+                            title="Excluir"
+                        >
+                            🗑️
+                        </button>
+                    </>
+                ) : (
+                    <span style={{fontSize: '0.85em', color: '#666'}}>
+                        Ver na empreitada
+                    </span>
+                )}
+            </td>
+        </tr>
+    ))}
+</tbody>
                 </table>
                  {/* Adiciona mensagem se histórico estiver vazio */}
                  {(Array.isArray(historicoCompleto) ? historicoCompleto : []).length === 0 && (
