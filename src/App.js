@@ -84,6 +84,33 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
     const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
 
+    // NOVA FUNÇÃO para alterar o status do pagamento
+    const handleTogglePagamentoStatus = (pagamentoId) => {
+        console.log(`Alterando status do pagamento de empreitada ID: ${pagamentoId}`);
+        fetch(`${API_URL}/pagamentos_empreitada/${pagamentoId}/toggle_status`, {
+            method: 'PATCH'
+        })
+        .then(res => {
+            if (!res.ok) {
+                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao alterar status') });
+            }
+            return res.json();
+        })
+        .then(() => {
+             // Recarrega os dados da obra para atualizar o modal e as listas
+             if (fetchObraData && obraId) {
+                 fetchObraData(obraId);
+             } else {
+                 window.location.reload(); // Fallback
+             }
+        })
+        .catch(error => {
+            console.error('Erro ao alterar status do pagamento:', error);
+            // alert(`Erro ao alterar status: ${error.message}`); // Evitar alert
+        });
+    };
+
+
     const handleDeletarPagamento = (pagamentoId) => {
         console.log("Solicitando deleção de pagamento (ID:", pagamentoId, "). Idealmente, use um modal de confirmação.");
         fetch(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, {
@@ -97,7 +124,7 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
             // Recarrega os dados da obra atual após deletar pagamento
              if (fetchObraData && obraId) {
                  fetchObraData(obraId); // Chama a função para recarregar
-                 onClose(); // Fecha o modal após a ação
+                 // Não fecha o modal aqui, apenas atualiza
              } else {
                  window.location.reload(); // Fallback
              }
@@ -179,19 +206,28 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                                         {/* Adiciona + 'T00:00:00' para tentar evitar problemas de fuso */}
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
                                         <td>{formatCurrency(pag.valor)}</td>
-                                        <td>
-                                            <span style={{
-                                                backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)',
-                                                color: 'white',
-                                                padding: '4px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.8em',
-                                                fontWeight: '500',
-                                                textTransform: 'uppercase'
-                                            }}>
-                                                {pag.status}
-                                            </span>
+                                        {/* ALTERADO: Status agora é um botão clicável */}
+                                        <td className="status-cell">
+                                            <button
+                                                onClick={() => handleTogglePagamentoStatus(pag.id)}
+                                                className={`status-btn-empreitada ${pag.status === 'Pago' ? 'pago' : 'a-pagar'}`}
+                                                title={`Clique para marcar como ${pag.status === 'Pago' ? 'A Pagar' : 'Pago'}`}
+                                                style={{
+                                                    backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)',
+                                                    color: 'white',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.8em',
+                                                    fontWeight: '500',
+                                                    textTransform: 'uppercase',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {pag.status} {pag.status === 'A Pagar' ? '✓' : ''}
+                                            </button>
                                         </td>
+                                        {/* FIM DA ALTERAÇÃO */}
                                         <td style={{textAlign: 'center'}}>
                                             <button
                                                 onClick={() => handleDeletarPagamento(pag.id)}
@@ -291,6 +327,19 @@ function App() {
                 }));
                 setEmpreitadas(empreitadasComPagamentosArray);
                 setSumarios(data.sumarios || null); // Define sumarios ou null
+
+                 // Se o modal de detalhes da empreitada estiver aberto, atualiza seus dados
+                 if (viewingEmpreitada) {
+                     const empreitadaAtualizada = empreitadasComPagamentosArray.find(emp => emp.id === viewingEmpreitada.id);
+                     if (empreitadaAtualizada) {
+                         // Atualiza o estado que controla o modal aberto
+                         setViewingEmpreitada(prev => ({...prev, ...empreitadaAtualizada}));
+                     } else {
+                         // Se a empreitada foi deletada enquanto o modal estava aberto
+                         setViewingEmpreitada(null);
+                     }
+                 }
+
             })
             .catch(error => {
                 console.error(`Erro ao buscar dados da obra ${obraId}:`, error);
@@ -359,8 +408,8 @@ function App() {
         const actualId = String(itemId).split('-').pop(); // Extrai o ID numérico
 
         if (isPayment) {
-            console.log("Tentativa de marcar pagamento de empreitada como pago (não implementado diretamente na tabela histórica):", actualId);
-            // Pagamentos de empreitada não são marcados como pagos aqui
+            console.log("Tentativa de marcar pagamento de empreitada como pago (usar botão específico no modal):", actualId);
+            // Pagamentos de empreitada são marcados/desmarcados no modal
         } else {
              // Lógica original para lançamentos gerais (usa o ID numérico)
             console.log("Marcando lançamento geral como pago:", actualId);
@@ -508,7 +557,7 @@ function App() {
             return res.json();
         })
         .then(() => {
-            setViewingEmpreitada(null);
+            setViewingEmpreitada(null); // Fecha o modal após salvar
             fetchObraData(obraSelecionada.id);
         }).catch(error => console.error("Erro ao salvar edição da empreitada:", error));
     };
@@ -584,9 +633,10 @@ function App() {
                  tipo: 'Empreitada',
                  pix: emp.pix || '',
                  isEmpreitadaPayment: true,
-                 uniqueId: `emp-pag-${pag.id}`
+                 uniqueId: `emp-pag-${pag.id}` // ID único combinando empreitada e pagamento
              }))
          );
+
 
          // 3. Combina
          const combinado = [...gastosGerais, ...pagamentosEmpreitada];
@@ -595,14 +645,14 @@ function App() {
 
          // 4. Ordena por data (mais recente primeiro)
          combinado.sort((a, b) => {
-             const dateA = a.data ? new Date(a.data) : new Date(0); // Usa T00:00:00?
-             const dateB = b.data ? new Date(b.data) : new Date(0);
+             const dateA = a.data ? new Date(a.data + 'T00:00:00') : new Date(0); // Adiciona T00:00:00
+             const dateB = b.data ? new Date(b.data + 'T00:00:00') : new Date(0); // Adiciona T00:00:00
              // Se as datas forem iguais, ordena por uniqueId para estabilidade
              if (dateB - dateA === 0) {
                  const idA = a.uniqueId;
                  const idB = b.uniqueId;
-                 if (idA < idB) return -1;
-                 if (idA > idB) return 1;
+                 if (idA < idB) return 1; // Ordem decrescente para IDs se data igual (opcional)
+                 if (idA > idB) return -1;
                  return 0;
              }
              return dateB - dateA;
@@ -652,8 +702,8 @@ function App() {
 
           // 4. Ordena por data (mais recente primeiro)
           combinado.sort((a, b) => {
-              const dateA = a.data ? new Date(a.data) : new Date(0); // Usa T00:00:00?
-              const dateB = b.data ? new Date(b.data) : new Date(0);
+              const dateA = a.data ? new Date(a.data + 'T00:00:00') : new Date(0); // Adiciona T00:00:00
+              const dateB = b.data ? new Date(b.data + 'T00:00:00') : new Date(0); // Adiciona T00:00:00
               return dateB - dateA;
           });
           console.log("Pendentes combinados (ordenados):", combinado);
@@ -718,7 +768,7 @@ function App() {
 
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
 
-    // Usar apenas lancamentos originais (e que são array) para a contagem no KPI
+    // Usar apenas lancamentos originais (e que são array) para a contagem no KPI de pendentes gerais
     const contagemPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : []).filter(l => l.status === 'A Pagar').length;
 
     return (
@@ -914,4 +964,3 @@ function App() {
 }
 
 export default App;
-
