@@ -7,9 +7,9 @@ import React, { useEffect, useMemo, useState } from "react";
  * ============================
  */
 const API_URL =
-  process.env.REACT_APP_API_URL ||
-  process.env.VITE_API_URL ||
-  "https://SEU_BACKEND.up.railway.app";
+     process.env.REACT_APP_API_URL ||
+     process.env.VITE_API_URL ||
+     "https://backend-production-78c9.up.railway.app";
 
 /**
  * ============================
