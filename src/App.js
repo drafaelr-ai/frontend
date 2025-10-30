@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useContext, createContext } from '
 import './App.css';
 
 // --- CONFIGURAÇÃO INICIAL ---
-const API_URL = '[https://backend-production-78c9.up.railway.app](https://backend-production-78c9.up.railway.app)';
+const API_URL = 'https://backend-production-78c9.up.railway.app';
 
 // Helper para formatar BRL
 const formatCurrency = (value) => {
@@ -19,16 +19,12 @@ const getTodayString = () => {
 };
 
 // --- HELPER DA API (NOVO) ---
-// Esta função agora faz TODOS os seus fetches
-// 1. Pega o token do localStorage
-// 2. Adiciona o header "Authorization: Bearer ..."
-// 3. Se receber um erro 401 (Token inválido/expirado), força o logout
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
     
     const headers = {
         ...options.headers,
-        'Content-Type': 'application/json', // Garante que o Content-Type está setado
+        'Content-Type': 'application/json', 
     };
 
     if (token) {
@@ -38,12 +34,9 @@ const fetchWithAuth = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
 
     if (response.status === 401) {
-        // Token inválido ou expirado
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        // Recarrega a página, forçando o usuário para a tela de login
         window.location.reload(); 
-        // Retorna uma promessa rejeitada para parar a execução do código que chamou
         throw new Error('Sessão expirada. Faça o login novamente.');
     }
 
@@ -52,13 +45,12 @@ const fetchWithAuth = async (url, options = {}) => {
 
 
 // --- CONTEXTO DE AUTENTICAÇÃO (NOVO) ---
-// Isso permite que todos os componentes saibam quem está logado
 const AuthContext = createContext(null);
 const useAuth = () => useContext(AuthContext);
 
 // --- COMPONENTE DE LOGIN (NOVO) ---
 const LoginScreen = () => {
-    const { login } = useAuth(); // Pega a função 'login' do nosso contexto
+    const { login } = useAuth(); 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -76,22 +68,23 @@ const LoginScreen = () => {
         })
         .then(res => {
             if (!res.ok) {
+                // Tenta ler o erro do backend, senão mostra mensagem padrão
                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido'); });
             }
             return res.json();
         })
         .then(data => {
-            // 'data' aqui é { access_token: "...", user: {...} }
-            login(data); // Chama a função do AuthContext para salvar o usuário
+            login(data); 
         })
         .catch(err => {
             console.error("Erro no login:", err);
-            setError("Credenciais inválidas. Verifique seu usuário e senha.");
+            // Mostra a mensagem de erro vinda do backend (ex: "Credenciais inválidas")
+            setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
             setIsLoading(false);
         });
     };
 
-    // Estilos inline simples para a tela de login
+    // (Estilos do Login... inalterados)
     const loginStyles = {
         container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f2f5' },
         card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', minWidth: '300px' },
@@ -133,7 +126,7 @@ const LoginScreen = () => {
 };
 
 
-// --- SEUS COMPONENTES DE MODAL (Quase inalterados) ---
+// --- COMPONENTES DE MODAL (Existentes) ---
 const Modal = ({ children, onClose }) => (
     <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -144,6 +137,7 @@ const Modal = ({ children, onClose }) => (
 );
 
 const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
+    // ... (código inalterado)
     const [formData, setFormData] = useState({});
     useEffect(() => {
          if (lancamento) {
@@ -161,11 +155,9 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
              setFormData({});
          }
      }, [lancamento]);
-
     const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
     if (!lancamento) return null;
-
     return (
         <Modal onClose={onClose}>
             <h2>Editar Lançamento</h2>
@@ -189,82 +181,47 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
     );
 };
 
-// MODAL DE DETALHES DA EMPREITADA (COM PERMISSÕES)
 const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, obraId }) => {
-    // Pega o usuário do contexto
+    // ... (código inalterado, com permissões)
     const { user } = useAuth();
-    
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
      useEffect(() => {
          if (empreitada) {
-             setFormData({
-                 ...empreitada,
-                 valor_global: empreitada.valor_global || 0
-             });
+             setFormData({ ...empreitada, valor_global: empreitada.valor_global || 0 });
          } else {
              setFormData({});
          }
      }, [empreitada]);
-
     const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
-
     const handleDeletarPagamento = (pagamentoId) => {
-        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, {
-            method: 'DELETE'
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Erro ao deletar');
-            return res.json();
-        })
+        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
+        .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
-             if (fetchObraData && obraId) {
-                 fetchObraData(obraId); 
-                 onClose();
-             } else {
-                 window.location.reload();
-             }
+             if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
+             else { window.location.reload(); }
         })
         .catch(error => console.error('Erro:', error));
     };
-
     const handleDeletarEmpreitada = () => {
-        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}`, {
-            method: 'DELETE'
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Erro ao deletar');
-            return res.json();
-        })
+        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}`, { method: 'DELETE' })
+        .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
-             if (fetchObraData && obraId) {
-                 fetchObraData(obraId);
-                 onClose();
-             } else {
-                 window.location.reload();
-             }
+             if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
+             else { window.location.reload(); }
         })
         .catch(error => console.error('Erro:', error));
     };
-
     if (!empreitada) return null;
-
     return (
         <Modal onClose={onClose}>
             {!isEditing ? (
                 <div>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>{empreitada.nome}</h2>
-                        {/* --- PERMISSÃO: Apenas Admin pode deletar empreitada --- */}
                         {user.role === 'administrador' && (
-                            <button
-                                onClick={handleDeletarEmpreitada}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }}
-                                title="Excluir Empreitada"
-                            >
-                                🗑️
-                            </button>
+                            <button onClick={handleDeletarEmpreitada} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }} title="Excluir Empreitada" > 🗑️ </button>
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {empreitada.responsavel || 'N/A'}</p>
@@ -278,7 +235,6 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                                 <th>Data</th>
                                 <th>Valor</th>
                                 <th>Status</th>
-                                {/* --- PERMISSÃO: Esconde coluna de Ações se não for Admin --- */}
                                 {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
                             </tr>
                         </thead>
@@ -289,29 +245,13 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
-                                            <span style={{
-                                                backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)',
-                                                color: 'white',
-                                                padding: '4px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.8em',
-                                                fontWeight: '500',
-                                                textTransform: 'uppercase'
-                                            }}>
+                                            <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
                                                 {pag.status}
                                             </span>
                                         </td>
-                                        {/* --- PERMISSÃO: Apenas Admin pode deletar pagamento --- */}
                                         {user.role === 'administrador' && (
                                             <td style={{textAlign: 'center'}}>
-                                                <button
-                                                    onClick={() => handleDeletarPagamento(pag.id)}
-                                                    className="acao-icon-btn delete-btn"
-                                                    title="Excluir Pagamento"
-                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }}
-                                                >
-                                                    🗑️
-                                                </button>
+                                                <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
                                             </td>
                                         )}
                                     </tr>
@@ -323,12 +263,9 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                             )}
                         </tbody>
                     </table>
-                    {/* --- PERMISSÃO: Admin e Master podem editar --- */}
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <div className="form-actions" style={{marginTop: '20px'}}>
-                            <button type="button" onClick={() => setIsEditing(true)} className="submit-btn">
-                                Editar Empreitada
-                            </button>
+                            <button type="button" onClick={() => setIsEditing(true)} className="submit-btn"> Editar Empreitada </button>
                         </div>
                     )}
                 </div>
@@ -346,9 +283,257 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
     );
 };
 
-// --- COMPONENTE DO DASHBOARD (Seu App.js antigo, agora renomeado) ---
+
+// --- NOVOS MODAIS DE ADMINISTRAÇÃO ---
+
+// Modal para editar permissões de UM usuário
+const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
+    const [selectedObraIds, setSelectedObraIds] = useState(new Set());
+    const [isLoading, setIsLoading] = useState(true);
+
+    // 1. Busca as permissões atuais do usuário
+    useEffect(() => {
+        if (userToEdit) {
+            fetchWithAuth(`${API_URL}/admin/users/${userToEdit.id}/permissions`)
+                .then(res => res.json())
+                .then(data => {
+                    // data.obra_ids é [1, 5, 12]
+                    setSelectedObraIds(new Set(data.obra_ids));
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar permissões:", err);
+                    setIsLoading(false);
+                });
+        }
+    }, [userToEdit]);
+
+    // 2. Manipula o clique no checkbox
+    const handleCheckboxChange = (obraId) => {
+        setSelectedObraIds(prevSet => {
+            const newSet = new Set(prevSet);
+            if (newSet.has(obraId)) {
+                newSet.delete(obraId);
+            } else {
+                newSet.add(obraId);
+            }
+            return newSet;
+        });
+    };
+
+    // 3. Salva as novas permissões
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const obra_ids = Array.from(selectedObraIds);
+        onSave(userToEdit.id, obra_ids);
+    };
+
+    if (isLoading) {
+        return <Modal onClose={onClose}><div className="loading-screen">Carregando permissões...</div></Modal>;
+    }
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Editar Permissões: {userToEdit.username}</h2>
+            <p>Nível: <strong>{userToEdit.role}</strong></p>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Selecione as obras que este usuário pode ver:</label>
+                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '4px' }}>
+                        {allObras.length > 0 ? allObras.map(obra => (
+                            <div key={obra.id}>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedObraIds.has(obra.id)}
+                                        onChange={() => handleCheckboxChange(obra.id)}
+                                    />
+                                    {obra.nome}
+                                </label>
+                            </div>
+                        )) : <p>Nenhuma obra cadastrada para atribuir.</p>}
+                    </div>
+                </div>
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Permissões</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal principal do Painel de Admin
+const AdminPanelModal = ({ allObras, onClose }) => {
+    const [users, setUsers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [userToEdit, setUserToEdit] = useState(null); // Qual usuário estamos editando
+
+    // Formulário de Novo Usuário
+    const [newUsername, setNewUsername] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [newRole, setNewRole] = useState('comum');
+
+    // 1. Busca todos os usuários
+    const fetchUsers = () => {
+        setIsLoading(true);
+        fetchWithAuth(`${API_URL}/admin/users`)
+            .then(res => res.json())
+            .then(data => {
+                setUsers(Array.isArray(data) ? data : []);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Erro ao buscar usuários:", err);
+                setError("Falha ao carregar usuários.");
+                setIsLoading(false);
+            });
+    };
+
+    // Roda o fetchUsers quando o modal abre
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    // 2. Cria um novo usuário
+    const handleCreateUser = (e) => {
+        e.preventDefault();
+        setError(null);
+        
+        if (newRole === 'administrador') {
+            setError("Não é possível criar outro administrador por aqui.");
+            return;
+        }
+
+        fetchWithAuth(`${API_URL}/admin/users`, {
+            method: 'POST',
+            body: JSON.stringify({
+                username: newUsername,
+                password: newPassword,
+                role: newRole
+            })
+        })
+        .then(res => {
+            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
+            return res.json();
+        })
+        .then(newUser => {
+            setUsers(prevUsers => [...prevUsers, newUser]); // Adiciona o novo usuário à lista
+            setNewUsername('');
+            setNewPassword('');
+            setNewRole('comum');
+        })
+        .catch(err => {
+            console.error("Erro ao criar usuário:", err);
+            setError(err.message);
+        });
+    };
+
+    // 3. Salva as permissões (chamado pelo modal filho)
+    const handleSavePermissions = (userId, obra_ids) => {
+        fetchWithAuth(`${API_URL}/admin/users/${userId}/permissions`, {
+            method: 'PUT',
+            body: JSON.stringify({ obra_ids })
+        })
+        .then(res => {
+            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro ao salvar') });
+            return res.json();
+        })
+        .then(() => {
+            setUserToEdit(null); // Fecha o modal de permissões
+        })
+        .catch(err => {
+            console.error("Erro ao salvar permissões:", err);
+            setError(err.message); // Mostra o erro no painel de admin
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            {/* Modal de Permissões (só aparece se userToEdit for selecionado) */}
+            {userToEdit && (
+                <UserPermissionsModal
+                    userToEdit={userToEdit}
+                    allObras={allObras}
+                    onClose={() => setUserToEdit(null)}
+                    onSave={handleSavePermissions}
+                />
+            )}
+
+            <div style={{opacity: userToEdit ? 0.1 : 1}}> {/* Ofusca o painel principal ao editar permissões */}
+                <h2>Painel de Administração</h2>
+                
+                {/* Seção de Criar Novo Usuário */}
+                <div className="card-full" style={{ background: '#f8f9fa' }}>
+                    <h3>Criar Novo Usuário</h3>
+                    <form onSubmit={handleCreateUser} className="form-add-obra">
+                        <input
+                            type="text"
+                            placeholder="Usuário (ou e-mail)"
+                            value={newUsername}
+                            onChange={(e) => setNewUsername(e.target.value)}
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Senha Temporária"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                        />
+                        <select
+                            value={newRole}
+                            onChange={(e) => setNewRole(e.target.value)}
+                        >
+                            <option value="comum">Usuário Comum (Visualizar)</option>
+                            <option value="master">Usuário Master (Editar)</option>
+                        </select>
+                        <button type="submit" className="submit-btn" style={{flexGrow: 0}}>Criar</button>
+                    </form>
+                    {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
+                </div>
+
+                {/* Seção de Listar Usuários */}
+                <h3 style={{marginTop: '30px'}}>Usuários Existentes</h3>
+                {isLoading ? <p>Carregando usuários...</p> : (
+                    <table className="tabela-historico">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Nível</th>
+                                <th style={{textAlign: 'center'}}>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map(user => (
+                                <tr key={user.id}>
+                                    <td>{user.username}</td>
+                                    <td>{user.role}</td>
+                                    <td style={{textAlign: 'center'}}>
+                                        <button 
+                                            className="acao-btn" 
+                                            style={{backgroundColor: '#17a2b8', color: 'white'}}
+                                            onClick={() => setUserToEdit(user)}
+                                        >
+                                            Editar Permissões
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </Modal>
+    );
+};
+
+// ----------------------------------------------------
+
+
+// --- COMPONENTE DO DASHBOARD (Seu App.js antigo) ---
 function Dashboard() {
-    // Pega o usuário e a função de logout do Contexto de Autenticação
     const { user, logout } = useAuth();
 
     const [obras, setObras] = useState([]);
@@ -359,10 +544,15 @@ function Dashboard() {
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Modais do Dashboard
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddEmpreitadaModalVisible, setAddEmpreitadaModalVisible] = useState(false);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingEmpreitada, setViewingEmpreitada] = useState(null);
+    
+    // --- NOVO: Modal de Admin ---
+    const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
+
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -374,22 +564,21 @@ function Dashboard() {
             })
             .then(data => {
                 console.log("Obras recebidas:", data);
+                // Salva todas as obras. O AdminPanel vai usar isso.
                 setObras(Array.isArray(data) ? data : []);
             })
             .catch(error => {
                 console.error("Erro ao buscar obras:", error);
                 setObras([]);
             });
-    }, []); // Dependência vazia, roda apenas uma vez
+    }, []); 
 
     const fetchObraData = (obraId) => {
+        // ... (código inalterado)
         setIsLoading(true);
         console.log(`Buscando dados da obra ID: ${obraId}`);
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
                 console.log("Dados da obra recebidos:", data);
                 setObraSelecionada(data.obra || null);
@@ -402,126 +591,66 @@ function Dashboard() {
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
             })
-            .catch(error => {
-                console.error(`Erro ao buscar dados da obra ${obraId}:`, error);
-                setObraSelecionada(null);
-                setLancamentos([]);
-                setEmpreitadas([]);
-                setSumarios(null);
-            })
+            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setEmpreitadas([]); setSumarios(null); })
             .finally(() => setIsLoading(false));
     };
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
+    // (Todas as funções de CRUD permanecem inalteradas)
 
     const handleAddObra = (e) => {
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
-        console.log("Adicionando nova obra:", { nome, cliente });
         fetchWithAuth(`${API_URL}/obras`, {
             method: 'POST',
             body: JSON.stringify({ nome, cliente })
         })
-        .then(res => {
-            if (!res.ok) {
-                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao adicionar obra') });
-            }
-            return res.json();
-        })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao adicionar obra') }); } return res.json(); })
         .then(novaObra => {
-            console.log("Obra adicionada:", novaObra);
             setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome)));
             e.target.reset();
         })
         .catch(error => console.error('Erro ao adicionar obra:', error));
     };
-
     const handleDeletarObra = (obraId, obraNome) => {
-        console.log(`Solicitando deleção da obra ID: ${obraId}.`);
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
-        .then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao deletar obra') });
-            }
-            return res.json();
-        })
-        .then(() => {
-            console.log("Obra deletada:", obraId);
-            setObras(prevObras => prevObras.filter(o => o.id !== obraId));
-        })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao deletar obra') }); } return res.json(); })
+        .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => console.error('Erro ao deletar obra:', error));
     };
-
     const handleMarcarComoPago = (itemId) => {
         const isPayment = String(itemId).startsWith('emp-pag-');
         const actualId = String(itemId).split('-').pop(); 
-
-        if (isPayment) {
-            // Não implementado aqui (ainda)
-        } else {
-             console.log("Marcando lançamento geral como pago:", actualId);
+        if (!isPayment) {
              fetchWithAuth(`${API_URL}/lancamentos/${actualId}/pago`, { method: 'PATCH' })
-                 .then(res => {
-                     if (!res.ok) {
-                         return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao marcar como pago') });
-                     }
-                     return res.json();
-                 })
+                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
                  .then(() => fetchObraData(obraSelecionada.id))
                  .catch(error => console.error("Erro ao marcar como pago:", error));
         }
     };
-
-
     const handleDeletarLancamento = (itemId) => {
          const isPayment = String(itemId).startsWith('emp-pag-');
          const actualId = String(itemId).split('-').pop();
-
-        if (isPayment) {
-             // Não implementado aqui (ainda)
-        } else {
-            console.log("Deletando lançamento geral:", actualId);
+        if (!isPayment) {
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao deletar lançamento') });
-                    }
-                    return res.json();
-                })
-                .then(() => {
-                    fetchObraData(obraSelecionada.id);
-                })
+                .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+                .then(() => { fetchObraData(obraSelecionada.id); })
                 .catch(error => console.error('Erro ao deletar lançamento:', error));
         }
     };
-
     const handleEditLancamento = (item) => {
-        if (item.isEmpreitadaPayment) {
-             console.log("Edição de pagamento de empreitada deve ser feita no modal da empreitada:", item.uniqueId);
-        } else {
-            setEditingLancamento(item);
-        }
+        if (!item.isEmpreitadaPayment) { setEditingLancamento(item); }
     };
-
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { ...updatedLancamento, valor: parseFloat(updatedLancamento.valor) || 0 };
-        console.log("Salvando edição do lançamento:", dataToSend.id);
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
-        }).then(res => {
-             if (!res.ok) {
-                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar edição') });
-             }
-             return res.json();
-         })
-        .then(() => {
-            setEditingLancamento(null);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar edição:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar edição:", error));
     };
-
     const handleSaveLancamento = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -529,22 +658,13 @@ function Dashboard() {
         lancamentoData.data = getTodayString();
         lancamentoData.valor = parseFloat(lancamentoData.valor) || 0;
         lancamentoData.pix = lancamentoData.pix || null;
-        console.log("Salvando novo lançamento:", lancamentoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
-        }).then(res => {
-             if (!res.ok) {
-                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar lançamento') });
-             }
-             return res.json();
-        })
-        .then(() => {
-            setAddLancamentoModalVisible(false);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar lançamento:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar lançamento:", error));
     };
-
     const handleSaveEmpreitada = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -552,133 +672,75 @@ function Dashboard() {
         empreitadaData.valor_global = parseFloat(empreitadaData.valor_global) || 0;
         empreitadaData.responsavel = empreitadaData.responsavel || null;
         empreitadaData.pix = empreitadaData.pix || null;
-        console.log("Salvando nova empreitada:", empreitadaData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, {
             method: 'POST',
             body: JSON.stringify(empreitadaData)
-        }).then(res => {
-             if (!res.ok) {
-                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar empreitada') });
-             }
-             return res.json();
-        })
-        .then(() => {
-            setAddEmpreitadaModalVisible(false);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar empreitada:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        .then(() => { setAddEmpreitadaModalVisible(false); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar empreitada:", error));
     };
-
     const handleSaveEditEmpreitada = (updatedEmpreitada) => {
-        const dataToSend = {
-            ...updatedEmpreitada,
-            valor_global: parseFloat(updatedEmpreitada.valor_global) || 0,
-            responsavel: updatedEmpreitada.responsavel || null,
-            pix: updatedEmpreitada.pix || null
-        };
-        console.log("Salvando edição da empreitada:", dataToSend.id);
+        const dataToSend = { ...updatedEmpreitada, valor_global: parseFloat(updatedEmpreitada.valor_global) || 0, responsavel: updatedEmpreitada.responsavel || null, pix: updatedEmpreitada.pix || null };
         fetchWithAuth(`${API_URL}/empreitadas/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
-        }).then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar edição da empreitada') });
-            }
-            return res.json();
-        })
-        .then(() => {
-            setViewingEmpreitada(null);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar edição da empreitada:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        .then(() => { setViewingEmpreitada(null); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar edição da empreitada:", error));
     };
-
     const handleAddPagamentoParcial = (e, empreitadaId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
         const statusPagamento = e.target.statusPagamento.value;
         if (!valorPagamento) return;
-        const pagamento = {
-            valor: parseFloat(valorPagamento) || 0,
-            data: getTodayString(),
-            status: statusPagamento
-        };
-        console.log("Adicionando pagamento parcial:", pagamento);
+        const pagamento = { valor: parseFloat(valorPagamento) || 0, data: getTodayString(), status: statusPagamento };
         fetchWithAuth(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, {
             method: 'POST',
             body: JSON.stringify(pagamento)
-        }).then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao adicionar pagamento') });
-            }
-            return res.json();
-        })
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
         .then((empreitadaAtualizada) => {
-             setEmpreitadas(prevEmpreitadas =>
-                 prevEmpreitadas.map(emp =>
-                     emp.id === empreitadaId ? empreitadaAtualizada : emp
-                 )
-             );
-             if (viewingEmpreitada && viewingEmpreitada.id === empreitadaId) {
-                 setViewingEmpreitada(empreitadaAtualizada);
-             }
+             setEmpreitadas(prevEmpreitadas => prevEmpreitadas.map(emp => emp.id === empreitadaId ? empreitadaAtualizada : emp));
+             if (viewingEmpreitada && viewingEmpreitada.id === empreitadaId) { setViewingEmpreitada(empreitadaAtualizada); }
              e.target.reset();
              fetchObraData(obraSelecionada.id);
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
 
-     // Lógica do histórico permanece a mesma
-     const historicoCompleto = useMemo(() => {
-         const safeLancamentos = Array.isArray(lancamentos) ? lancamentos : [];
-         const safeEmpreitadas = Array.isArray(empreitadas) ? empreitadas : [];
-         const gastosGerais = safeLancamentos.map(lanc => ({
-             ...lanc,
-             isEmpreitadaPayment: false,
-             uniqueId: `lanc-${lanc.id}`
-         }));
-         const pagamentosEmpreitada = safeEmpreitadas.flatMap(emp =>
-             (Array.isArray(emp.pagamentos) ? emp.pagamentos : []).map(pag => ({
-                 id: pag.id,
-                 data: pag.data,
-                 valor: pag.valor,
-                 status: pag.status,
-                 descricao: `Pagamento: ${emp.nome || 'Empreitada s/ nome'}`,
-                 tipo: 'Empreitada',
-                 pix: emp.pix || '',
-                 isEmpreitadaPayment: true,
-                 uniqueId: `emp-pag-${pag.id}`
-             }))
-         );
-         const combinado = [...gastosGerais, ...pagamentosEmpreitada];
-         combinado.sort((a, b) => {
-             const dateA = a.data ? new Date(a.data) : new Date(0);
-             const dateB = b.data ? new Date(b.data) : new Date(0);
-             if (dateB - dateA === 0) {
-                 const idA = a.uniqueId;
-                 const idB = b.uniqueId;
-                 if (idA < idB) return -1;
-                 if (idA > idB) return 1;
-                 return 0;
-             }
-             return dateB - dateA;
-         });
-
-         return combinado;
-     }, [lancamentos, empreitadas]);
-
-
     // --- RENDERIZAÇÃO ---
     
-    // TELA DE SELEÇÃO DE OBRAS (COM PERMISSÕES)
+    // TELA DE SELEÇÃO DE OBRAS
     if (!obraSelecionada) {
+        
+        // NOVO: Filtrar as obras que o usuário pode ver. Admin vê todas.
+        const obrasVisiveis = (user.role === 'administrador') 
+            ? obras 
+            : obras.filter(obra => user.obras_permitidas?.includes(obra.id)); // <-- Esta lógica de permissão vem do backend
+        // (Nota: A lista de obras_permitidas não está no objeto 'user' ainda, precisamos ajustar isso)
+        // Para o AdminPanel funcionar, usamos `obras` (lista completa)
+        // Para o usuário ver, usamos `obras` (lista já filtrada pelo backend na rota /obras)
+
         return (
             <div className="container">
+                {/* NOVO: Modal de Admin */}
+                {isAdminPanelVisible && <AdminPanelModal 
+                    allObras={obras} // Passa TODAS as obras para o admin poder atribuir
+                    onClose={() => setAdminPanelVisible(false)} 
+                />}
+                
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
-                    {/* --- NOVO: Botão de Logout --- */}
-                    <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+                    <div className="header-actions">
+                        {/* --- NOVO: Botão do Painel de Admin --- */}
+                        {user.role === 'administrador' && (
+                            <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
+                                Gerenciar Usuários
+                            </button>
+                        )}
+                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+                    </div>
                 </header>
 
-                {/* --- PERMISSÃO: Apenas Admin pode cadastrar obras --- */}
                 {user.role === 'administrador' && (
                     <div className="card-full">
                         <h3>Cadastrar Nova Obra</h3>
@@ -690,6 +752,7 @@ function Dashboard() {
                     </div>
                 )}
                 <div className="lista-obras">
+                    {/* Agora, a lista de obras já vem filtrada do backend! */}
                     {obras.length > 0 ? (
                         obras.map(obra => (
                             <div key={obra.id} className="card-obra" style={{position: 'relative'}}>
@@ -697,13 +760,9 @@ function Dashboard() {
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente || 'N/A'}</p>
                                 </div>
-                                {/* --- PERMISSÃO: Apenas Admin pode deletar obras --- */}
                                 {user.role === 'administrador' && (
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeletarObra(obra.id, obra.nome);
-                                        }}
+                                        onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
                                         className="acao-icon-btn delete-btn"
                                         style={{ position: 'absolute', top: '15px', right: '15px', fontSize: '1.3em', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6 }}
                                         title="Excluir Obra"
@@ -726,7 +785,7 @@ function Dashboard() {
 
     const pagamentosPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : []).filter(l => l.status === 'A Pagar');
 
-    // TELA PRINCIPAL DO DASHBOARD (COM PERMISSÕES)
+    // TELA PRINCIPAL DO DASHBOARD
     return (
         <div className="dashboard-container">
             {/* --- Modais --- */}
@@ -771,8 +830,7 @@ function Dashboard() {
                                      obraId={obraSelecionada.id}
                                  />}
 
-
-            {/* --- Cabeçalho (com botão de Sair) --- */}
+            {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
                 <div>
@@ -791,11 +849,10 @@ function Dashboard() {
              )}
 
 
-            {/* --- Empreitadas (com permissões) --- */}
+            {/* --- Empreitadas --- */}
             <div className="card-full">
                  <div className="card-header">
                     <h3>Empreitadas</h3>
-                    {/* --- PERMISSÃO: Admin e Master podem adicionar --- */}
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <button className="acao-btn add-btn" onClick={() => setAddEmpreitadaModalVisible(true)}>+ Nova Empreitada</button>
                     )}
@@ -814,7 +871,6 @@ function Dashboard() {
                                     <div className="progress-bar-container"><div className="progress-bar" style={{ width: `${progresso}%` }}></div></div>
                                     <div className="empreitada-sumario"><span>Pago: {formatCurrency(valorPago)}</span><span>Restante: {formatCurrency(valorGlobalNum - valorPago)}</span><span>{progresso.toFixed(1)}%</span></div>
                                 </div>
-                                {/* --- PERMISSÃO: Admin e Master podem adicionar pagamento --- */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoParcial(e, emp.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                         <input type="number" step="0.01" name="valorPagamento" placeholder="Valor do Pagamento" required style={{flex: 2}} />
@@ -845,7 +901,6 @@ function Dashboard() {
                                 </div>
                                 <div className="item-acao">
                                     <span className="item-valor">{formatCurrency(lanc.valor)}</span>
-                                    {/* --- PERMISSÃO: Admin e Master podem marcar como pago --- */}
                                     {(user.role === 'administrador' || user.role === 'master') && (
                                         <button onClick={() => handleMarcarComoPago(`lanc-${lanc.id}`)} className="marcar-pago-btn">Marcar como Pago</button>
                                     )}
@@ -861,11 +916,10 @@ function Dashboard() {
              )}
 
 
-            {/* --- Histórico de Gastos (com permissões) --- */}
+            {/* --- Histórico de Gastos --- */}
             <div className="card-full">
                 <div className="card-header"><h3>Histórico Completo (Gastos e Pag. Empreitadas)</h3>
                     <div className="header-actions">
-                        {/* --- PERMISSÃO: Admin e Master podem adicionar gasto --- */}
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
                         )}
@@ -876,9 +930,8 @@ function Dashboard() {
                 <table className="tabela-historico">
                     <thead><tr><th>Data</th><th>Descrição</th><th>Segmento</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
                     <tbody>
-                        {/* Usando o histórico unificado que vem do backend */}
                         {historicoUnificado.map(item => (
-                            <tr key={item.id}> {/* item.id agora é 'lanc-1' ou 'emp-pag-1' */}
+                            <tr key={item.id}>
                                 <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                 <td>
                                     {item.descricao}
@@ -891,7 +944,6 @@ function Dashboard() {
                                 <td>{item.tipo}</td>
                                 <td className="status-cell">
                                     {item.status === 'A Pagar' ? (
-                                        /* --- PERMISSÃO: Admin e Master podem pagar --- */
                                         (user.role === 'administrador' || user.role === 'master') ? (
                                             <button 
                                                 onClick={() => handleMarcarComoPago(item.id)} 
@@ -912,7 +964,6 @@ function Dashboard() {
                                 <td className="acoes-cell">
                                     {item.tipo_registro === 'lancamento' ? (
                                         <>
-                                            {/* --- PERMISSÃO: Admin e Master podem editar --- */}
                                             {(user.role === 'administrador' || user.role === 'master') && (
                                                 <button 
                                                     onClick={() => handleEditLancamento(item)} 
@@ -922,7 +973,6 @@ function Dashboard() {
                                                     ✏️
                                                 </button>
                                             )}
-                                            {/* --- PERMISSÃO: Apenas Admin pode deletar --- */}
                                             {user.role === 'administrador' && (
                                                 <button 
                                                     onClick={() => handleDeletarLancamento(item.id)} 
@@ -952,14 +1002,11 @@ function Dashboard() {
 }
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
-// Este é o novo componente 'App' principal
-// Ele gerencia o estado de autenticação e decide qual tela mostrar
 function App() {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); // Adiciona estado de carregamento
+    const [isLoading, setIsLoading] = useState(true); 
 
-    // Efeito para verificar o localStorage na inicialização
     useEffect(() => {
         try {
             const savedToken = localStorage.getItem('token');
@@ -971,23 +1018,19 @@ function App() {
             }
         } catch (error) {
             console.error("Falha ao carregar dados de autenticação:", error);
-            // Limpa em caso de dados corrompidos
             localStorage.removeItem('token');
             localStorage.removeItem('user');
         }
-        setIsLoading(false); // Termina o carregamento
+        setIsLoading(false); 
     }, []);
 
-    // Função de Login
     const login = (data) => {
-        // data = { access_token, user }
         setToken(data.access_token);
         setUser(data.user);
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
     };
 
-    // Função de Logout
     const logout = () => {
         setToken(null);
         setUser(null);
@@ -995,12 +1038,10 @@ function App() {
         localStorage.removeItem('user');
     };
 
-    // Se estiver carregando (verificando o token), mostra uma tela em branco
     if (isLoading) {
         return <div className="loading-screen">Carregando...</div>;
     }
 
-    // O Provider "fornece" o usuário, token, login e logout para todos os componentes filhos
     return (
         <AuthContext.Provider value={{ user, token, login, logout }}>
             {user ? <Dashboard /> : <LoginScreen />}
