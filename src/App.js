@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useContext, createContext } from '
 import './App.css';
 
 // --- CONFIGURAÇÃO INICIAL ---
-const API_URL = 'https://backend-production-78c9.up.railway.app';
+const API_URL = '[https://backend-production-78c9.up.railway.app](https://backend-production-78c9.up.railway.app)';
 
 // Helper para formatar BRL
 const formatCurrency = (value) => {
@@ -170,7 +170,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
         <Modal onClose={onClose}>
             <h2>Editar Lançamento</h2>
             <form onSubmit={handleSubmit}>
-                {/* ... (Formulário do modal de edição de lançamento inalterado) ... */}
                 <div className="form-group"><label>Data</label><input type="date" name="data" value={formData.data || ''} onChange={handleChange} required /></div>
                 <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
                 <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
@@ -212,7 +211,6 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
 
     const handleDeletarPagamento = (pagamentoId) => {
-        // ... (lógica fetchWithAuth) ...
         fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, {
             method: 'DELETE'
         })
@@ -232,7 +230,6 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
     };
 
     const handleDeletarEmpreitada = () => {
-        // ... (lógica fetchWithAuth) ...
         fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}`, {
             method: 'DELETE'
         })
@@ -270,7 +267,6 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                             </button>
                         )}
                     </div>
-                    {/* ... (Resto do modal de detalhes) ... */}
                     <p><strong>Responsável:</strong> {empreitada.responsavel || 'N/A'}</p>
                     <p><strong>Valor Global:</strong> {formatCurrency(empreitada.valor_global)}</p>
                     <p><strong>Chave PIX:</strong> {empreitada.pix || 'N/A'}</p>
@@ -338,7 +334,6 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                 </div>
             ) : (
                 <form onSubmit={handleSubmit}>
-                    {/* ... (Formulário de edição de empreitada inalterado) ... */}
                     <h2>Editar Empreitada</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
@@ -372,7 +367,6 @@ function Dashboard() {
     // Efeito para buscar obras
     useEffect(() => {
         console.log("Buscando lista de obras...");
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras`)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -391,7 +385,6 @@ function Dashboard() {
     const fetchObraData = (obraId) => {
         setIsLoading(true);
         console.log(`Buscando dados da obra ID: ${obraId}`);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -420,14 +413,12 @@ function Dashboard() {
     };
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
-    // (Todas as funções de CRUD agora usam 'fetchWithAuth')
 
     const handleAddObra = (e) => {
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
         console.log("Adicionando nova obra:", { nome, cliente });
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras`, {
             method: 'POST',
             body: JSON.stringify({ nome, cliente })
@@ -448,7 +439,6 @@ function Dashboard() {
 
     const handleDeletarObra = (obraId, obraNome) => {
         console.log(`Solicitando deleção da obra ID: ${obraId}.`);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => {
             if (!res.ok) {
@@ -471,7 +461,6 @@ function Dashboard() {
             // Não implementado aqui (ainda)
         } else {
              console.log("Marcando lançamento geral como pago:", actualId);
-             // --- API ATUALIZADA ---
              fetchWithAuth(`${API_URL}/lancamentos/${actualId}/pago`, { method: 'PATCH' })
                  .then(res => {
                      if (!res.ok) {
@@ -493,7 +482,6 @@ function Dashboard() {
              // Não implementado aqui (ainda)
         } else {
             console.log("Deletando lançamento geral:", actualId);
-            // --- API ATUALIZADA ---
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => {
                     if (!res.ok) {
@@ -519,7 +507,6 @@ function Dashboard() {
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { ...updatedLancamento, valor: parseFloat(updatedLancamento.valor) || 0 };
         console.log("Salvando edição do lançamento:", dataToSend.id);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -543,7 +530,6 @@ function Dashboard() {
         lancamentoData.valor = parseFloat(lancamentoData.valor) || 0;
         lancamentoData.pix = lancamentoData.pix || null;
         console.log("Salvando novo lançamento:", lancamentoData);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
@@ -567,7 +553,6 @@ function Dashboard() {
         empreitadaData.responsavel = empreitadaData.responsavel || null;
         empreitadaData.pix = empreitadaData.pix || null;
         console.log("Salvando nova empreitada:", empreitadaData);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, {
             method: 'POST',
             body: JSON.stringify(empreitadaData)
@@ -591,7 +576,6 @@ function Dashboard() {
             pix: updatedEmpreitada.pix || null
         };
         console.log("Salvando edição da empreitada:", dataToSend.id);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/empreitadas/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -618,7 +602,6 @@ function Dashboard() {
             status: statusPagamento
         };
         console.log("Adicionando pagamento parcial:", pagamento);
-        // --- API ATUALIZADA ---
         fetchWithAuth(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, {
             method: 'POST',
             body: JSON.stringify(pagamento)
@@ -752,7 +735,6 @@ function Dashboard() {
                 <Modal onClose={() => setAddEmpreitadaModalVisible(false)}>
                     <h2>Cadastrar Nova Empreitada</h2>
                     <form onSubmit={handleSaveEmpreitada}>
-                        {/* ... (Formulário de nova empreitada) ... */}
                         <div className="form-group"><label>Descrição da Contratação</label><input type="text" name="nome" placeholder="Ex: Serviço de Pintura" required /></div>
                         <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" placeholder="Ex: Carlos (Pintor)" /></div>
                         <div className="form-group"><label>Valor Global (R$)</label><input type="number" step="0.01" name="valor_global" placeholder="10000.00" required /></div>
@@ -765,7 +747,6 @@ function Dashboard() {
                 <Modal onClose={() => setAddLancamentoModalVisible(false)}>
                     <h2>Adicionar Novo Gasto</h2>
                     <form onSubmit={handleSaveLancamento}>
-                        {/* ... (Formulário de novo gasto) ... */}
                         <div className="form-group"><label>Descrição</label><input type="text" name="descricao" required /></div>
                         <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" /></div>
                         <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" required /></div>
