@@ -728,10 +728,13 @@ function Dashboard() {
             body: JSON.stringify(pagamento)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then((servicoAtualizado) => {
-             setServicos(prevServicos => prevServicos.map(serv => serv.id === servicoId ? servicoAtualizado : serv));
+             // --- CORREÇÃO DO BUG: Remove a atualização de estado 'setServicos' ---
+             // A linha abaixo estava causando o bug de "nada acontece"
+             // setServicos(prevServicos => prevServicos.map(serv => serv.id === servicoId ? servicoAtualizado : serv));
+             
              if (viewingServico && viewingServico.id === servicoId) { setViewingServico(servicoAtualizado); }
              e.target.reset(); 
-             fetchObraData(obraSelecionada.id);
+             fetchObraData(obraSelecionada.id); // <-- Apenas esta linha é necessária
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
@@ -812,7 +815,7 @@ function Dashboard() {
                 lancamento={editingLancamento} 
                 onClose={() => setEditingLancamento(null)} 
                 onSave={handleSaveEdit}
-                servicos={servicos} // <-- Passa a lista de serviços para o modal
+                servicos={servicos} 
             />}
             
             {isAddServicoModalVisible && (
@@ -826,7 +829,7 @@ function Dashboard() {
                 <AddLancamentoModal
                     onClose={() => setAddLancamentoModalVisible(false)}
                     onSave={handleSaveLancamento}
-                    servicos={servicos} // <-- Passa a lista de serviços
+                    servicos={servicos} 
                 />
             )}
             
@@ -899,8 +902,9 @@ function Dashboard() {
                                     {/* Material (Totalizador) */}
                                     <div style={{marginTop: '5px'}}>
                                         <small>Material (Gasto Total): {formatCurrency(valorPagoMat)}</small>
-                                        <div className="progress-bar-container">
-                                            <div className="progress-bar" style={{ width: `100%`, backgroundColor: 'var(--cor-verde)' }}></div>
+                                        {/* --- CORREÇÃO: Removida a barra verde 100% --- */}
+                                        <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
+                                            {/* (Barra vazia, apenas para estética) */}
                                         </div>
                                     </div>
                                 </div>
