@@ -4,6 +4,35 @@ import './App.css';
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
+// # <--- MUDANÇA AQUI (Novo Componente Helper)
+// Helper para exibir a prioridade
+const PrioridadeBadge = ({ prioridade }) => {
+    let p = parseInt(prioridade, 10) || 0;
+    if (p === 0) {
+        return <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>;
+    }
+    
+    let color = '#6c757d'; // 1-2 (Baixa)
+    if (p === 3) color = '#007bff'; // 3 (Média)
+    if (p === 4) color = '#ffc107'; // 4 (Alta)
+    if (p === 5) color = '#dc3545'; // 5 (Urgente)
+
+    const style = {
+        backgroundColor: color,
+        color: 'white',
+        padding: '3px 8px',
+        borderRadius: '12px',
+        fontSize: '0.8em',
+        fontWeight: 'bold',
+        display: 'inline-block',
+        minWidth: '10px',
+        textAlign: 'center'
+    };
+    return <span style={style}>{p}</span>;
+};
+// --- FIM DA MUDANÇA ---
+
+
 // Helper para formatar BRL
 const formatCurrency = (value) => {
     if (typeof value !== 'number') { value = 0; }
@@ -146,6 +175,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
+// # <--- MUDANÇA AQUI (Modal de Edição)
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -162,6 +192,9 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
              }
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
 
+             // MUDANÇA: Adiciona prioridade ao form
+             initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
+
              setFormData(initialData);
          } else {
              setFormData({});
@@ -177,6 +210,10 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         if (name === 'servico_id') {
             finalValue = value ? parseInt(value, 10) : ''; 
         }
+        // MUDANÇA: Trata o campo prioridade
+        if (name === 'prioridade') {
+            finalValue = value ? parseInt(value, 10) : 0;
+        }
         setFormData(prev => ({ ...prev, [name]: finalValue })); 
     };
     
@@ -184,7 +221,9 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         e.preventDefault(); 
         const dataToSend = {
             ...formData,
-            servico_id: formData.servico_id || null 
+            servico_id: formData.servico_id || null,
+            // MUDANÇA: Garante que prioridade é um número
+            prioridade: parseInt(formData.prioridade, 10) || 0
         };
         onSave(dataToSend); 
     };
@@ -213,6 +252,19 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                     </select>
                 </div>
 
+                {/* MUDANÇA: Novo campo de Prioridade */}
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select name="prioridade" value={formData.prioridade || 0} onChange={handleChange}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+
                 <div className="form-group"><label>Tipo/Segmento</label>
                     <select name="tipo" value={formData.tipo || 'Mão de Obra'} onChange={handleChange} required>
                         <option>Mão de Obra</option>
@@ -227,6 +279,8 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         </Modal>
     );
 };
+// --- FIM DA MUDANÇA ---
+
 
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
@@ -718,6 +772,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
+    // # <--- MUDANÇA AQUI (Item D - Lógica da Função)
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -725,13 +780,18 @@ function Dashboard() {
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
         
+        // MUDANÇA: Pega o valor da prioridade
+        const prioridadePagamento = e.target.prioridadePagamento.value; 
+        
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
         const pagamento = {
             valor: parseFloat(valorPagamento) || 0,
             data: dataPagamento, 
             status: statusPagamento,
-            tipo_pagamento: tipoPagamento
+            tipo_pagamento: tipoPagamento,
+            // MUDANÇA: Envia a prioridade
+            prioridade: parseInt(prioridadePagamento, 10) || 0 
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
         fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
@@ -744,6 +804,8 @@ function Dashboard() {
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
+    // --- FIM DA MUDANÇA ---
+
 
     // --- RENDERIZAÇÃO ---
     
@@ -850,6 +912,7 @@ function Dashboard() {
                 />
             )}
             
+            {/* # <--- MUDANÇA AQUI (Modal de Adicionar Gasto) --- */}
             {isAddLancamentoModalVisible && (
                 <AddLancamentoModal
                     onClose={() => setAddLancamentoModalVisible(false)}
@@ -857,6 +920,7 @@ function Dashboard() {
                     servicos={servicos} 
                 />
             )}
+            {/* --- FIM DA MUDANÇA --- */}
             
              {viewingServico && <ServicoDetailsModal
                                      servico={viewingServico}
@@ -930,10 +994,22 @@ function Dashboard() {
                                     </div>
                                 </div>
                                 
+                                {/* # <--- MUDANÇA AQUI (Item D - Formulário Inline) --- */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                         <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
                                         <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
+                                        
+                                        {/* MUDANÇA: Novo select de Prioridade */}
+                                        <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                            <option value="0">P: 0</option>
+                                            <option value="1">P: 1</option>
+                                            <option value="2">P: 2</option>
+                                            <option value="3">P: 3</option>
+                                            <option value="4">P: 4</option>
+                                            <option value="5">P: 5</option>
+                                        </select>
+                                        
                                         <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                             <option value="">Tipo...</option>
                                             <option value="mao_de_obra">Mão de Obra</option>
@@ -946,6 +1022,7 @@ function Dashboard() {
                                         <button type="submit" style={{flex: 1}}>Adic.</button>
                                     </form>
                                 )}
+                                {/* --- FIM DA MUDANÇA --- */}
                             </div>
                         );
                     }) : <p>Nenhum serviço cadastrado.</p>}
@@ -980,7 +1057,7 @@ function Dashboard() {
              )}
 
 
-            {/* --- Histórico de Gastos --- */}
+            {/* # <--- MUDANÇA AQUI (Item E - Tabela de Histórico) --- */}
             <div className="card-full">
                 <div className="card-header"><h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
                     <div className="header-actions">
@@ -992,7 +1069,18 @@ function Dashboard() {
                     </div>
                 </div>
                 <table className="tabela-historico">
-                    <thead><tr><th>Data</th><th>Descrição</th><th>Segmento</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
+                    {/* MUDANÇA: Cabeçalho da tabela com 7 colunas */}
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Segmento</th>
+                            <th>Prior.</th> {/* Nova Coluna */}
+                            <th>Status</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {historicoUnificado.map(item => (
                             <tr key={item.id}>
@@ -1006,6 +1094,12 @@ function Dashboard() {
                                     )}
                                 </td>
                                 <td>{item.tipo}</td>
+                                
+                                {/* MUDANÇA: Nova célula de Prioridade */}
+                                <td className="status-cell">
+                                    <PrioridadeBadge prioridade={item.prioridade} />
+                                </td>
+
                                 <td className="status-cell">
                                     {item.status === 'A Pagar' ? (
                                         (user.role === 'administrador' || user.role === 'master') ? (
@@ -1059,6 +1153,7 @@ function Dashboard() {
                      <p style={{ textAlign: 'center', marginTop: '15px' }}>Nenhum gasto ou pagamento registrado.</p>
                  )}
             </div>
+            {/* --- FIM DA MUDANÇA --- */}
         </div>
     );
 }
@@ -1118,7 +1213,7 @@ const AddServicoModal = ({ onClose, onSave }) => {
     );
 };
 
-// --- NOVO: Modal "Adicionar Gasto Geral" ---
+// # <--- MUDANÇA AQUI (Modal de Adicionar Gasto) ---
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
@@ -1127,6 +1222,9 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [tipo, setTipo] = useState('Material'); // Padrão Material
     const [status, setStatus] = useState('A Pagar');
     const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+    
+    // MUDANÇA: Novo state para prioridade
+    const [prioridade, setPrioridade] = useState(0); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1137,6 +1235,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
             valor: parseFloat(valor) || 0,
             tipo,
             status,
+            prioridade: parseInt(prioridade, 10) || 0, // MUDANÇA: Envia prioridade
             servico_id: servicoId ? parseInt(servicoId, 10) : null // Envia null se for "Nenhum"
         });
     };
@@ -1162,6 +1261,19 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                     </select>
                 </div>
                 
+                {/* MUDANÇA: Novo campo de Prioridade */}
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+
                 <div className="form-group"><label>Tipo/Segmento</label>
                     <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
                         <option>Material</option>
@@ -1181,6 +1293,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
         </Modal>
     );
 };
+// --- FIM DA MUDANÇA ---
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
