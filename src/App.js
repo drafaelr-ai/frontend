@@ -807,12 +807,14 @@ function Dashboard() {
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente || 'N/A'}</p>
                                     
-                                    {/* --- NOVOS KPIs RENDERIZADOS --- */}
+                                    {/* --- *** KPIs MODIFICADOS *** --- */}
                                     <div className="obra-kpi-summary">
                                         <div>
-                                            <span>Total Gasto</span>
-                                            {/* Usamos obra.total_geral que veio do backend */}
-                                            <strong>{formatCurrency(obra.total_geral)}</strong>
+                                            <span>Total Pago</span>
+                                            {/* Usamos obra.total_pago que veio do backend */}
+                                            <strong style={{ color: 'var(--cor-acento)' }}> {/* Verde */}
+                                                {formatCurrency(obra.total_pago)}
+                                            </strong>
                                         </div>
                                         <div>
                                             <span>Em Aberto</span>
@@ -822,7 +824,7 @@ function Dashboard() {
                                             </strong>
                                         </div>
                                     </div>
-                                    {/* --- FIM DOS NOVOS KPIs --- */}
+                                    {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
 
                                 </div>
                             </div>
@@ -887,7 +889,7 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- CORREÇÃO: KPIs com todos os 3 valores --- */}
+            {/* --- KPIs (Esta parte está correta para sua lógica) --- */}
              {sumarios && (
                  <div className="kpi-grid">
                      <div className="kpi-card total-geral"><span>Total Geral (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
@@ -910,7 +912,7 @@ function Dashboard() {
                         
                         const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
                         
-                        // --- CORREÇÃO: Totais de MO e Material agora incluem TODOS os status (Pago + A Pagar) ---
+                        // --- Totais de MO e Material (Pago + A Pagar) ---
                         
                         // Mão de Obra (Orçado)
                         const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
@@ -941,7 +943,6 @@ function Dashboard() {
                                     {/* Material (Totalizador) */}
                                     <div style={{marginTop: '5px'}}>
                                         <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
-                                        {/* --- CORREÇÃO: Removida a barra verde 100% --- */}
                                         <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
                                             {/* (Barra vazia, apenas para estética) */}
                                         </div>
