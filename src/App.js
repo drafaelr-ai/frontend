@@ -4,7 +4,6 @@ import './App.css';
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
-// # <--- MUDANÇA (Novo Componente Helper)
 // Helper para exibir a prioridade
 const PrioridadeBadge = ({ prioridade }) => {
     let p = parseInt(prioridade, 10) || 0;
@@ -30,7 +29,6 @@ const PrioridadeBadge = ({ prioridade }) => {
     };
     return <span style={style}>{p}</span>;
 };
-// --- FIM DA MUDANÇA ---
 
 
 // Helper para formatar BRL
@@ -175,7 +173,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// # <--- MUDANÇA (Modal de Edição com Prioridade)
+// Modal de Edição (com Prioridade)
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -191,10 +189,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                  }
              }
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
-
-             // MUDANÇA: Adiciona prioridade ao form
              initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
-
              setFormData(initialData);
          } else {
              setFormData({});
@@ -210,7 +205,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         if (name === 'servico_id') {
             finalValue = value ? parseInt(value, 10) : ''; 
         }
-        // MUDANÇA: Trata o campo prioridade
         if (name === 'prioridade') {
             finalValue = value ? parseInt(value, 10) : 0;
         }
@@ -222,7 +216,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         const dataToSend = {
             ...formData,
             servico_id: formData.servico_id || null,
-            // MUDANÇA: Garante que prioridade é um número
             prioridade: parseInt(formData.prioridade, 10) || 0
         };
         onSave(dataToSend); 
@@ -252,7 +245,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                     </select>
                 </div>
 
-                {/* MUDANÇA: Novo campo de Prioridade */}
                 <div className="form-group">
                     <label>Prioridade</label>
                     <select name="prioridade" value={formData.prioridade || 0} onChange={handleChange}>
@@ -279,8 +271,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         </Modal>
     );
 };
-// --- FIM DA MUDANÇA ---
-
 
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
@@ -622,15 +612,39 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 };
 // ----------------------------------------------------
 
-// # <--- MUDANÇA (Novo Modal de Exportação)
-// --- NOVO: Modal "Exportar Relatório Geral" ---
+// Modal "Exportar Relatório Geral" (com fetchWithAuth)
 const ExportReportModal = ({ onClose }) => {
     const [selectedPriority, setSelectedPriority] = useState('todas');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleGenerate = () => {
-        // Abre o link da API com o filtro de prioridade
-        window.open(`${API_URL}/export/pdf_pendentes_todas_obras?prioridade=${selectedPriority}`);
-        onClose(); // Fecha o modal
+        setIsLoading(true);
+        setError(null);
+
+        const url = `${API_URL}/export/pdf_pendentes_todas_obras?prioridade=${selectedPriority}`;
+
+        fetchWithAuth(url)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Falha ao gerar o relatório.');
+                }
+                return res.blob(); // Pega os dados como um Blob (arquivo)
+            })
+            .then(blob => {
+                // Cria uma URL local no navegador para o arquivo que baixamos
+                const fileURL = URL.createObjectURL(blob);
+                // Manda o navegador abrir essa URL local em uma nova aba
+                window.open(fileURL);
+                
+                setIsLoading(false);
+                onClose(); // Fecha o modal
+            })
+            .catch(err => {
+                console.error("Erro ao gerar PDF:", err);
+                setError(err.message || "Não foi possível gerar o PDF.");
+                setIsLoading(false);
+            });
     };
 
     return (
@@ -651,15 +665,17 @@ const ExportReportModal = ({ onClose }) => {
                 </div>
                 
                 <div className="form-actions" style={{ marginTop: '30px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn pdf">Gerar PDF</button>
+                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isLoading}>Cancelar</button>
+                    <button type="submit" className="submit-btn pdf" disabled={isLoading}>
+                        {isLoading ? 'Gerando...' : 'Gerar PDF'}
+                    </button>
                 </div>
+                {error && <p style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}
             </form>
         </Modal>
     );
 };
 // ----------------------------------------------------
-// --- FIM DA MUDANÇA ---
 
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
@@ -677,13 +693,12 @@ function Dashboard() {
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingServico, setViewingServico] = useState(null);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
+    
+    // States dos Novos Recursos
+    const [isExportModalVisible, setExportModalVisible] = useState(false);
+    const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
-
-    // # <--- MUDANÇA (Novo State para o Modal de Exportação)
-    const [isExportModalVisible, setExportModalVisible] = useState(false);
-    
-    // --- FIM DA MUDANÇA ---
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -710,9 +725,10 @@ function Dashboard() {
                 setServicos(servicosComPagamentosArray);
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
+                // Novo: Seta os orçamentos
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
             })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); })
+            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
             .finally(() => setIsLoading(false));
     };
 
@@ -770,22 +786,20 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // # <--- MUDANÇA (Correção no handleSaveEdit)
+    // Correção: Usando 'lancamento_id'
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
             valor: parseFloat(updatedLancamento.valor) || 0,
             servico_id: updatedLancamento.servico_id || null 
         };
-        // V CORREÇÃO AQUI v
-        fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.lancamento_id}`, { // <--- CORRIGIDO
+        fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.lancamento_id}`, { 
             method: 'PUT',
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
-    // --- FIM DA MUDANÇA ---
     
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
@@ -814,36 +828,6 @@ function Dashboard() {
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
-        const handleSaveOrcamento = (orcamentoData) => {
-        console.log("Salvando novo orçamento:", orcamentoData);
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
-            method: 'POST',
-            body: JSON.stringify(orcamentoData)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-            setAddOrcamentoModalVisible(false);
-            fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao salvar orçamento:", error));
-    };
-    
-    const handleAprovarOrcamento = (orcamentoId) => {
-        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao aprovar orçamento:", error));
-    };
-    
-    const handleRejeitarOrcamento = (orcamentoId) => {
-        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao rejeitar orçamento:", error));
-    };
         fetchWithAuth(`${API_URL}/servicos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -852,41 +836,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // # <--- MUDANÇA (Lógica da Função com Prioridade)
-    const handleAddPagamentoServico = (e, servicoId) => {
-        e.preventDefault();
-        const valorPagamento = e.target.valorPagamento.value;
-        const statusPagamento = e.target.statusPagamento.value;
-        const tipoPagamento = e.target.tipoPagamento.value;
-        const dataPagamento = e.target.dataPagamento.value; 
-        
-        // MUDANÇA: Pega o valor da prioridade
-        const prioridadePagamento = e.target.prioridadePagamento.value; 
-        
-        if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
-        
-        const pagamento = {
-            valor: parseFloat(valorPagamento) || 0,
-            data: dataPagamento, 
-            status: statusPagamento,
-            tipo_pagamento: tipoPagamento,
-            // MUDANÇA: Envia a prioridade
-            prioridade: parseInt(prioridadePagamento, 10) || 0 
-        };
-        console.log("Adicionando pagamento de serviço:", pagamento);
-        fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
-            method: 'POST',
-            body: JSON.stringify(pagamento)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             e.target.reset(); 
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao adicionar pagamento:", error));
-    };
-   // [App.js] - Cole este bloco dentro de function Dashboard()
-    // ... (logo após as outras funções 'handle...')
-
+    // Handlers dos Orçamentos
     const handleSaveOrcamento = (orcamentoData) => {
         console.log("Salvando novo orçamento:", orcamentoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
@@ -918,18 +868,66 @@ function Dashboard() {
         .catch(error => console.error("Erro ao rejeitar orçamento:", error));
     };
 
-    // --- RENDERIZAÇÃO ---
-    
-    // TELA DE SELEÇÃO DE OBRAS
-    if (!obraSelecionada) {
-    // ... (o resto do seu código) 
-    // --- FIM DA MUDANÇA ---
+    // Handler do PDF da Obra (com fetchWithAuth)
+    const handleExportObraPDF = () => {
+        if (!obraSelecionada) return;
+        
+        setIsExportingPDF(true);
+        const url = `${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`;
+
+        fetchWithAuth(url)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Falha ao gerar o PDF da obra.');
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL);
+                setIsExportingPDF(false);
+            })
+            .catch(err => {
+                console.error("Erro ao gerar PDF da obra:", err);
+                alert("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
+                setIsExportingPDF(false);
+            });
+    };
+
+    // Handler de Pagamento de Serviço (com Prioridade)
+    const handleAddPagamentoServico = (e, servicoId) => {
+        e.preventDefault();
+        const valorPagamento = e.target.valorPagamento.value;
+        const statusPagamento = e.target.statusPagamento.value;
+        const tipoPagamento = e.target.tipoPagamento.value;
+        const dataPagamento = e.target.dataPagamento.value; 
+        const prioridadePagamento = e.target.prioridadePagamento.value; 
+        
+        if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
+        
+        const pagamento = {
+            valor: parseFloat(valorPagamento) || 0,
+            data: dataPagamento, 
+            status: statusPagamento,
+            tipo_pagamento: tipoPagamento,
+            prioridade: parseInt(prioridadePagamento, 10) || 0 
+        };
+        console.log("Adicionando pagamento de serviço:", pagamento);
+        fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
+            method: 'POST',
+            body: JSON.stringify(pagamento)
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+             e.target.reset(); 
+             fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao adicionar pagamento:", error));
+    };
 
 
     // --- RENDERIZAÇÃO ---
     
-    // # <--- MUDANÇA (Tela de Obras com Botão de Exportar)
-    // TELA DE SELEÇÃO DE OBRAS
+    // TELA DE SELEÇÃO DE OBRAS (com Botão de Relatório Geral)
     if (!obraSelecionada) {
         return (
             <div className="container">
@@ -938,7 +936,6 @@ function Dashboard() {
                     onClose={() => setAdminPanelVisible(false)} 
                 />}
                 
-                {/* MUDANÇA: Renderiza o novo modal de exportação */}
                 {isExportModalVisible && <ExportReportModal 
                     onClose={() => setExportModalVisible(false)} 
                 />}
@@ -947,7 +944,6 @@ function Dashboard() {
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
                     
-                        {/* MUDANÇA: Adiciona o novo botão de Relatório */}
                         <button 
                             onClick={() => setExportModalVisible(true)} 
                             className="export-btn pdf" 
@@ -1021,7 +1017,6 @@ function Dashboard() {
             </div>
         );
     }
-    // --- FIM DA MUDANÇA ---
 
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
@@ -1037,21 +1032,10 @@ function Dashboard() {
             {editingLancamento && <EditLancamentoModal 
                 lancamento={editingLancamento} 
                 onClose={() => setEditingLancamento(null)} 
-                onSave={handleSaveEdit} 
+                onSave={handleSaveEdit}
                 servicos={servicos} 
             />}
-            {isAddOrcamentoModalVisible && (
-                <AddOrcamentoModal
-                    onClose={() => setAddOrcamentoModalVisible(false)}
-                    onSave={handleSaveOrcamento}
-                    servicos={servicos}
-                />
-            )}
-            {/* --- Cabeçalho --- */}
-            {/* ... (cabeçalho do dashboard) ... */}
-
-            {/* --- *** KPIs *** --- */}
-            {/* ... (kpi-grid) ... */}
+            
             {isAddServicoModalVisible && (
                 <AddServicoModal
                     onClose={() => setAddServicoModalVisible(false)}
@@ -1059,7 +1043,6 @@ function Dashboard() {
                 />
             )}
             
-            {/* # <--- MUDANÇA (Modal de Adicionar Gasto) --- */}
             {isAddLancamentoModalVisible && (
                 <AddLancamentoModal
                     onClose={() => setAddLancamentoModalVisible(false)}
@@ -1067,15 +1050,23 @@ function Dashboard() {
                     servicos={servicos} 
                 />
             )}
-            {/* --- FIM DA MUDANÇA --- */}
             
-             {viewingServico && <ServicoDetailsModal
+            {viewingServico && <ServicoDetailsModal
                                      servico={viewingServico}
                                      onClose={() => setViewingServico(null)}
                                      onSave={handleSaveEditServico}
                                      fetchObraData={fetchObraData}
                                      obraId={obraSelecionada.id}
                                  />}
+
+            {/* Novo: Modal de Orçamentos */}
+            {isAddOrcamentoModalVisible && (
+                <AddOrcamentoModal
+                    onClose={() => setAddOrcamentoModalVisible(false)}
+                    onSave={handleSaveOrcamento}
+                    servicos={servicos}
+                />
+            )}
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
@@ -1086,76 +1077,76 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- *** KPIs (REVERTIDO PARA 3 CARDS) *** --- */}
+            {/* --- *** KPIs *** --- */}
              {sumarios && (
                  <div className="kpi-grid">
                      <div className="kpi-card total-geral"><span>Total Comprometido (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
                      <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     {/* KPI VERMELHO MODIFICADO */}
                      <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
-             
              {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
-{/* <--- ADICIONE ESTA NOVA TABELA DE ORÇAMENTOS AQUI (antes dos Serviços) --- */}
-<div className="card-full">
-    <div className="card-header">
-        <h3>Orçamentos para Aprovação</h3>
-        {(user.role === 'administrador' || user.role === 'master') && (
-            <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
-        )}
-    </div>
-    <table className="tabela-historico">
-        <thead>
-            <tr>
-                <th>Descrição</th>
-                <th>Fornecedor</th>
-                <th>Segmento</th>
-                <th>Serviço</th>
-                <th>Valor</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {orcamentos.length > 0 ? orcamentos.map(orc => (
-                <tr key={orc.id}>
-                    <td>{orc.descricao}</td>
-                    <td>{orc.fornecedor || 'N/A'}</td>
-                    <td>{orc.tipo}</td>
-                    <td>{orc.servico_nome || 'Geral'}</td>
-                    <td>{formatCurrency(orc.valor)}</td>
-                    <td className="acoes-cell" style={{display: 'flex', gap: '5px'}}>
-                        {(user.role === 'administrador' || user.role === 'master') && (
-                            <>
-                                <button 
-                                    onClick={() => handleRejeitarOrcamento(orc.id)} 
-                                    className="acao-btn" 
-                                    title="Rejeitar"
-                                    style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
-                                >
-                                    Rejeitar
-                                </button>
-                                <button 
-                                    onClick={() => handleAprovarOrcamento(orc.id)} 
-                                    className="acao-btn" 
-                                    title="Aprovar"
-                                    style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
-                                >
-                                    Aprovar
-                                </button>
-                            </>
+
+
+            {/* Novo: Tabela de Orçamentos */}
+            <div className="card-full">
+                <div className="card-header">
+                    <h3>Orçamentos para Aprovação</h3>
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
+                    )}
+                </div>
+                <table className="tabela-historico">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Fornecedor</th>
+                            <th>Segmento</th>
+                            <th>Serviço</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orcamentos.length > 0 ? orcamentos.map(orc => (
+                            <tr key={orc.id}>
+                                <td>{orc.descricao}</td>
+                                <td>{orc.fornecedor || 'N/A'}</td>
+                                <td>{orc.tipo}</td>
+                                <td>{orc.servico_nome || 'Geral'}</td>
+                                <td>{formatCurrency(orc.valor)}</td>
+                                <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                    {(user.role === 'administrador' || user.role === 'master') && (
+                                        <>
+                                            <button 
+                                                onClick={() => handleRejeitarOrcamento(orc.id)} 
+                                                className="acao-btn" 
+                                                title="Rejeitar"
+                                                style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
+                                            >
+                                                Rejeitar
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAprovarOrcamento(orc.id)} 
+                                                className="acao-btn" 
+                                                title="Aprovar"
+                                                style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
+                                            >
+                                                Aprovar
+                                            </button>
+                                        </>
+                                    )}
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr>
+                                <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
+                            </tr>
                         )}
-                    </td>
-                </tr>
-            )) : (
-                <tr>
-                    <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
-                </tr>
-            )}
-        </tbody>
-    </table>
-</div>
-{/* --- FIM DA NOVA TABELA --- */}
+                    </tbody>
+                </table>
+            </div>
+
 
             {/* --- Serviços (ex-Empreitadas) --- */}
             <div className="card-full">
@@ -1200,13 +1191,11 @@ function Dashboard() {
                                     </div>
                                 </div>
                                 
-                                {/* # <--- MUDANÇA (Formulário Inline com Prioridade) --- */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                         <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
                                         <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
                                         
-                                        {/* MUDANÇA: Novo select de Prioridade */}
                                         <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                             <option value="0">P: 0</option>
                                             <option value="1">P: 1</option>
@@ -1228,7 +1217,6 @@ function Dashboard() {
                                         <button type="submit" style={{flex: 1}}>Adic.</button>
                                     </form>
                                 )}
-                                {/* --- FIM DA MUDANÇA --- */}
                             </div>
                         );
                     }) : <p>Nenhum serviço cadastrado.</p>}
@@ -1263,25 +1251,33 @@ function Dashboard() {
              )}
 
 
-            {/* # <--- MUDANÇA (Tabela de Histórico com Prioridade Condicional) --- */}
+            {/* --- Histórico de Gastos (com PDF corrigido e Prioridade) --- */}
             <div className="card-full">
-                <div className="card-header"><h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
+                <div className="card-header">
+                    <h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
                     <div className="header-actions">
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
                         )}
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
-                        <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`)} className="export-btn pdf">PDF (Pendentes)</button>
+                        
+                        {/* Correção: Botão de PDF com fetchWithAuth */}
+                        <button 
+                            onClick={handleExportObraPDF} 
+                            className="export-btn pdf"
+                            disabled={isExportingPDF}
+                        >
+                            {isExportingPDF ? 'Gerando...' : 'PDF (Pendentes)'}
+                        </button>
                     </div>
                 </div>
                 <table className="tabela-historico">
-                    {/* MUDANÇA: Cabeçalho da tabela com 7 colunas */}
                     <thead>
                         <tr>
                             <th>Data</th>
                             <th>Descrição</th>
                             <th>Segmento</th>
-                            <th>Prior.</th> {/* Nova Coluna */}
+                            <th>Prior.</th>
                             <th>Status</th>
                             <th>Valor</th>
                             <th>Ações</th>
@@ -1301,7 +1297,7 @@ function Dashboard() {
                                 </td>
                                 <td>{item.tipo}</td>
                                 
-                                {/* MUDANÇA: Nova célula de Prioridade (agora condicional) */}
+                                {/* Correção: Prioridade condicional (só se 'A Pagar') */}
                                 <td className="status-cell">
                                     {item.status === 'A Pagar' ? (
                                         <PrioridadeBadge prioridade={item.prioridade} />
@@ -1363,11 +1359,142 @@ function Dashboard() {
                      <p style={{ textAlign: 'center', marginTop: '15px' }}>Nenhum gasto ou pagamento registrado.</p>
                  )}
             </div>
-            {/* --- FIM DA MUDANÇA --- */}
         </div>
     );
-}}
-// [App.js] - Adicione este NOVO componente modal
+}
+
+// --- NOVO: Modal "Adicionar Serviço" ---
+const AddServicoModal = ({ onClose, onSave }) => {
+    // Campos do formulário
+    const [nome, setNome] = useState('');
+    const [responsavel, setResponsavel] = useState('');
+    const [pix, setPix] = useState('');
+    const [valorMO, setValorMO] = useState(0); // Apenas Mão de Obra
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        let servicoData = {
+            nome,
+            responsavel: responsavel || null,
+            pix: pix || null,
+            valor_global_mao_de_obra: valorMO,
+        };
+        
+        onSave(servicoData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Cadastrar Novo Serviço</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição do Serviço</label>
+                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
+                </div>
+                <div className="form-group">
+                    <label>Responsável</label>
+                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
+                </div>
+                <div className="form-group">
+                    <label>Dados de Pagamento (PIX)</label>
+                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
+                </div>
+                
+                <hr />
+
+                <div className="form-group">
+                    <label>Valor Orçado - Mão de Obra (R$)</label>
+                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
+                    <small>O custo de material será a soma dos lançamentos de material vinculados a este serviço.</small>
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Serviço</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// --- NOVO: Modal "Adicionar Gasto Geral" (com Prioridade) ---
+const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
+    const [data, setData] = useState(getTodayString());
+    const [descricao, setDescricao] = useState('');
+    const [pix, setPix] = useState('');
+    const [valor, setValor] = useState(0);
+    const [tipo, setTipo] = useState('Material'); // Padrão Material
+    const [status, setStatus] = useState('A Pagar');
+    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+    const [prioridade, setPrioridade] = useState(0); 
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            data,
+            descricao,
+            pix: pix || null,
+            valor: parseFloat(valor) || 0,
+            tipo,
+            status,
+            prioridade: parseInt(prioridade, 10) || 0,
+            servico_id: servicoId ? parseInt(servicoId, 10) : null
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Adicionar Novo Gasto</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Data</label>
+                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                </div>
+                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
+                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
+                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                <div className="form-group"><label>Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                        <option>A Pagar</option>
+                        <option>Pago</option>
+                    </select>
+                </div>
+                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
+            </form>
+        </Modal>
+    );
+};
 
 // --- NOVO: Modal "Adicionar Orçamento" ---
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
@@ -1439,144 +1566,6 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
         </Modal>
     );
 };
-// --- FIM DO NOVO MODAL ---
-
-// --- NOVO: Modal "Adicionar Serviço" ---
-const AddServicoModal = ({ onClose, onSave }) => {
-    // Campos do formulário
-    const [nome, setNome] = useState('');
-    const [responsavel, setResponsavel] = useState('');
-    const [pix, setPix] = useState('');
-    const [valorMO, setValorMO] = useState(0); // Apenas Mão de Obra
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        let servicoData = {
-            nome,
-            responsavel: responsavel || null,
-            pix: pix || null,
-            valor_global_mao_de_obra: valorMO,
-        };
-        
-        onSave(servicoData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Cadastrar Novo Serviço</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição do Serviço</label>
-                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
-                </div>
-                <div className="form-group">
-                    <label>Responsável</label>
-                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
-                </div>
-                <div className="form-group">
-                    <label>Dados de Pagamento (PIX)</label>
-                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
-                </div>
-                
-                <hr />
-
-                <div className="form-group">
-                    <label>Valor Orçado - Mão de Obra (R$)</label>
-                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
-                    <small>O custo de material será a soma dos lançamentos de material vinculados a este serviço.</small>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Serviço</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// # <--- MUDANÇA (Modal de Adicionar Gasto com Prioridade) ---
-const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
-    const [data, setData] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(0);
-    const [tipo, setTipo] = useState('Material'); // Padrão Material
-    const [status, setStatus] = useState('A Pagar');
-    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
-    
-    // MUDANÇA: Novo state para prioridade
-    const [prioridade, setPrioridade] = useState(0); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            data,
-            descricao,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0,
-            tipo,
-            status,
-            prioridade: parseInt(prioridade, 10) || 0, // MUDANÇA: Envia prioridade
-            servico_id: servicoId ? parseInt(servicoId, 10) : null // Envia null se for "Nenhum"
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Adicionar Novo Gasto</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                {/* MUDANÇA: Novo campo de Prioridade */}
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                <div className="form-group"><label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option>A Pagar</option>
-                        <option>Pago</option>
-                    </select>
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-            </form>
-        </Modal>
-    );
-};
-// --- FIM DA MUDANÇA ---
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
