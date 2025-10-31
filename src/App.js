@@ -50,7 +50,6 @@ const useAuth = () => useContext(AuthContext);
 
 // --- COMPONENTE DE LOGIN ---
 const LoginScreen = () => {
-    // ... (Código do LoginScreen inalterado) ...
     const { login } = useAuth(); 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -134,7 +133,6 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// --- MUDANÇA: Modal de Lançamento agora aceita lista de serviços e data ---
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -149,7 +147,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                      initialData.data = '';
                  }
              }
-             // Garante que servico_id seja nulo ou número
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
 
              setFormData(initialData);
@@ -165,7 +162,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
             finalValue = parseFloat(value) || 0;
         }
         if (name === 'servico_id') {
-            finalValue = value ? parseInt(value, 10) : ''; // Guarda como número ou string vazia
+            finalValue = value ? parseInt(value, 10) : ''; 
         }
         setFormData(prev => ({ ...prev, [name]: finalValue })); 
     };
@@ -174,7 +171,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         e.preventDefault(); 
         const dataToSend = {
             ...formData,
-            servico_id: formData.servico_id || null // Envia null se estiver vazio
+            servico_id: formData.servico_id || null 
         };
         onSave(dataToSend); 
     };
@@ -185,7 +182,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         <Modal onClose={onClose}>
             <h2>Editar Lançamento</h2>
             <form onSubmit={handleSubmit}>
-                {/* --- MUDANÇA: Campo de Data --- */}
                 <div className="form-group">
                     <label>Data</label>
                     <input type="date" name="data" value={formData.data || ''} onChange={handleChange} required />
@@ -195,7 +191,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                 <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required /></div>
                 
-                {/* --- MUDANÇA: Campo Vincular ao Serviço --- */}
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
                         <option value="">Nenhum (Gasto Geral)</option>
@@ -220,9 +215,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     );
 };
 
-// --- MUDANÇA: Modal de Serviço (ex-Empreitada) ---
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
-    // ... (Código de permissão e estado inalterado) ...
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
@@ -247,7 +240,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
 
     const handleDeletarPagamento = (pagamentoId) => {
-        // ... (código inalterado) ...
         fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
@@ -258,7 +250,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
     };
 
     const handleDeletarServico = () => {
-        // ... (código inalterado) ...
         fetchWithAuth(`${API_URL}/servicos/${servico.id}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
@@ -270,7 +261,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    // Cálculos de pagamento (agora inclui gastos vinculados)
     const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
     const totalPagoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
 
@@ -288,7 +278,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    {/* --- MUDANÇA: Mostra apenas o orçado de MO e o total gasto de Material --- */}
                     <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Pago: {formatCurrency(totalPagoMO)})</p>
                     <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalPagoMat)}</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
@@ -341,7 +330,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <h2>Editar Serviço</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    {/* --- MUDANÇA: Apenas MO é editável --- */}
                     <div className="form-group"><label>Valor Orçado - Mão de Obra (R$)</label><input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                     <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
@@ -576,14 +564,14 @@ function Dashboard() {
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
-    const [servicos, setServicos] = useState([]); // <-- MUDANÇA
+    const [servicos, setServicos] = useState([]);
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [editingLancamento, setEditingLancamento] = useState(null);
-    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false); // <-- MUDANÇA
+    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
-    const [viewingServico, setViewingServico] = useState(null); // <-- MUDANÇA
+    const [viewingServico, setViewingServico] = useState(null);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
 
     // Efeito para buscar obras
@@ -604,7 +592,6 @@ function Dashboard() {
                 console.log("Dados da obra recebidos:", data);
                 setObraSelecionada(data.obra || null);
                 setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
-                // --- MUDANÇA: 'empreitadas' -> 'servicos' ---
                 const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
                     ...serv,
                     pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
@@ -634,7 +621,6 @@ function Dashboard() {
         .catch(error => console.error('Erro ao deletar obra:', error));
     };
     
-    // --- MUDANÇA: handleMarcarComoPago agora entende 'serv-pag-' ---
     const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
@@ -672,12 +658,11 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // --- MUDANÇA: handleSaveEdit agora envia servico_id ---
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
             valor: parseFloat(updatedLancamento.valor) || 0,
-            servico_id: updatedLancamento.servico_id || null // Garante que é null se for vazio
+            servico_id: updatedLancamento.servico_id || null 
         };
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
@@ -687,7 +672,6 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
     
-    // --- MUDANÇA: handleSaveLancamento agora passa objeto ---
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
@@ -723,19 +707,18 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // --- MUDANÇA: handleAddPagamentoServico agora aceita data ---
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
-        const dataPagamento = e.target.dataPagamento.value; // <-- Data personalizada
+        const dataPagamento = e.target.dataPagamento.value; 
         
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
         const pagamento = {
             valor: parseFloat(valorPagamento) || 0,
-            data: dataPagamento, // <-- Data personalizada
+            data: dataPagamento, 
             status: statusPagamento,
             tipo_pagamento: tipoPagamento
         };
@@ -864,11 +847,12 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- KPIs (Simplificados) --- */}
+            {/* --- CORREÇÃO: KPIs com todos os 3 valores --- */}
              {sumarios && (
                  <div className="kpi-grid">
+                     <div className="kpi-card total-geral"><span>Total Geral (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
                      <div className="kpi-card total-pago"><span>Total Pago (Todos)</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     {/* KPIs de Total Geral e A Pagar foram removidos por complexidade, como discutido */}
+                     <div className="kpi-card total-a-pagar"><span>Total em Aberto (A Pagar)</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2></div>
                  </div>
              )}
 
@@ -924,7 +908,6 @@ function Dashboard() {
                                 {/* Formulário de Pagamento Rápido */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                        {/* --- MUDANÇA: Campo de Data --- */}
                                         <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
                                         <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
                                         <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
@@ -1146,7 +1129,6 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
                 <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
                 
-                {/* --- MUDANÇA: Vincular ao Serviço --- */}
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
                         <option value="">Nenhum (Gasto Geral)</option>
@@ -1225,4 +1207,4 @@ function App() {
     );
 }
 
-export default App; 
+export default App;
