@@ -14,7 +14,7 @@ const PrioridadeBadge = ({ prioridade }) => {
     let color = '#6c757d'; // 1-2 (Baixa)
     if (p === 3) color = '#007bff'; // 3 (Média)
     if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Pagamento imediato)
+    if (p === 5) color = '#dc3545'; // 5 (Urgente)
 
     const style = {
         backgroundColor: color,
@@ -252,8 +252,8 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4 (Alta)</option>
-                        <option value="5">5 (Pagamento imediato)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
                     </select>
                 </div>
 
@@ -655,8 +655,8 @@ const ExportReportModal = ({ onClose }) => {
                     <label>Filtrar por Prioridade</label>
                     <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
                         <option value="todas">Todas as Pendências</option>
-                        <option value="5">Prioridade 5 (Pagamento imediato)</option>
-                        <option value="4">Prioridade 4 (Alta)</option>
+                        <option value="5">Prioridade 5 (Urgente)</option>
+                        <option value="4">Prioridade 4</option>
                         <option value="3">Prioridade 3 (Média)</option>
                         <option value="2">Prioridade 2</option>
                         <option value="1">Prioridade 1</option>
@@ -677,7 +677,7 @@ const ExportReportModal = ({ onClose }) => {
 };
 // ----------------------------------------------------
 
-// <--- NOVO MODAL PARA EDITAR APENAS A PRIORIDADE ---
+// Modal para Editar Apenas a Prioridade de Pagamentos de Serviço
 const EditPrioridadeModal = ({ item, onClose, onSave }) => {
     const [prioridade, setPrioridade] = useState(0);
 
@@ -709,8 +709,8 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4 (Alta)</option>
-                        <option value="5">5 (Pagamento imediato)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
                     </select>
                 </div>
                 <div className="form-actions">
@@ -740,14 +740,13 @@ function Dashboard() {
     const [viewingServico, setViewingServico] = useState(null);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
     
-    // States dos Novos Recursos
     const [isExportModalVisible, setExportModalVisible] = useState(false);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
-
-    // <--- NOVO STATE PARA O MODAL DE PRIORIDADE
+    
+    // State para o novo modal de Prioridade
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
 
 
@@ -976,7 +975,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
 
-    // <--- NOVA FUNÇÃO PARA SALVAR PRIORIDADE DO SERVIÇO
+    // Nova Função para salvar Prioridade do Pag. Serviço
     const handleSaveServicoPrioridade = (novaPrioridade) => {
         if (!editingServicoPrioridade) return;
 
@@ -1094,9 +1093,17 @@ function Dashboard() {
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
 
-    // Filtra apenas pagamentos "A Pagar" de Lançamentos Gerais (não vinculados)
-    const pagamentosPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : [])
-        .filter(l => l.status === 'A Pagar' && !l.servico_id);
+    // <--- MUDANÇA: Lógica de filtro movida para aqui
+    const itemsAPagar = useMemo(() => 
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
+        [historicoUnificado]
+    );
+    const itemsPagos = useMemo(() => 
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
+        [historicoUnificado]
+    );
+    // --- FIM DA MUDANÇA ---
+
 
     // TELA PRINCIPAL DO DASHBOARD
     return (
@@ -1140,7 +1147,6 @@ function Dashboard() {
                 />
             )}
 
-            {/* <--- NOVO MODAL DE PRIORIDADE RENDERIZADO */}
             {editingServicoPrioridade && (
                 <EditPrioridadeModal
                     item={editingServicoPrioridade}
@@ -1315,44 +1321,16 @@ function Dashboard() {
                 )}
             </div> 
 
-            {/* --- Grid Principal (Apenas Lançamentos Gerais) --- */}
-             {sumarios && sumarios.total_por_segmento_geral && (
-                 <div className="main-grid">
-                     <div className="card-main">
-                         <div className="card-header"><h3>Pagamentos Pendentes (Gerais)</h3></div>
-                         <div className="lista-pendentes">{pagamentosPendentesGerais.length > 0 ? pagamentosPendentesGerais.map(lanc => (
-                            <div key={lanc.id} className="item-pendente">
-                                <div className="item-info">
-                                    <span className="item-descricao">{lanc.descricao} - {lanc.tipo}</span>
-                                    <small>{lanc.data ? new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</small>
-                                </div>
-                                <div className="item-acao">
-                                    <span className="item-valor">{formatCurrency(lanc.valor)}</span>
-                                    {(user.role === 'administrador' || user.role === 'master') && (
-                                        <button onClick={() => handleMarcarComoPago(`lanc-${lanc.id}`)} className="marcar-pago-btn">Marcar como Pago</button>
-                                    )}
-                                </div>
-                             </div>
-                         )) : <p>Nenhum pagamento geral pendente.</p>}</div>
-                     </div>
-                     <div className="card-main">
-                         <div className="card-header"><h3>Total por Segmento (Geral)</h3></div>
-                         <div className="lista-segmento">{Object.entries(sumarios.total_por_segmento_geral).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div>
-                     </div>
-                 </div>
-             )}
+            {/* <--- MUDANÇA: Bloco "main-grid" removido --- */}
 
-
-            {/* --- Histórico de Gastos (com PDF corrigido e Prioridade) --- */}
+            {/* <--- MUDANÇA: Nova Tabela de Pendências --- */}
             <div className="card-full">
                 <div className="card-header">
-                    <h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
+                    <h3>Pendências (A Pagar)</h3>
                     <div className="header-actions">
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
                         )}
-                        <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
-                        
                         <button 
                             onClick={handleExportObraPDF} 
                             className="export-btn pdf"
@@ -1375,7 +1353,7 @@ function Dashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {historicoUnificado.map(item => (
+                        {itemsAPagar.length > 0 ? itemsAPagar.map(item => (
                             <tr key={item.id}>
                                 <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                 <td>
@@ -1387,69 +1365,113 @@ function Dashboard() {
                                     )}
                                 </td>
                                 <td>{item.tipo}</td>
-                                
                                 <td className="status-cell">
-                                    {item.status === 'A Pagar' ? (
-                                        <PrioridadeBadge prioridade={item.prioridade} />
-                                    ) : (
-                                        <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
-                                    )}
+                                    <PrioridadeBadge prioridade={item.prioridade} />
                                 </td>
-
                                 <td className="status-cell">
-                                    {item.status === 'A Pagar' ? (
-                                        (user.role === 'administrador' || user.role === 'master') ? (
-                                            <button 
-                                                onClick={() => handleMarcarComoPago(item.id)}
-                                                className="quick-pay-btn" 
-                                                title="Marcar como Pago"
-                                            >
-                                                A Pagar ✓
-                                            </button>
-                                        ) : (
-                                            <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
-                                        )
-                                    ) : (
-                                        (user.role === 'administrador' || user.role === 'master') ? (
-                                            <button 
-                                                onClick={() => handleMarcarComoPago(item.id)}
-                                                className="quick-pay-btn"
-                                                style={{backgroundColor: 'var(--cor-acento)'}}
-                                                title="Marcar como A Pagar"
-                                            >
-                                                Pago ⮎
-                                            </button>
-                                        ) : (
-                                            <span className="status pago">Pago</span>
-                                        )
-                                    )}
+                                    <button 
+                                        onClick={() => handleMarcarComoPago(item.id)}
+                                        className="quick-pay-btn" 
+                                        title="Marcar como Pago"
+                                    >
+                                        A Pagar ✓
+                                    </button>
                                 </td>
                                 <td>{formatCurrency(item.valor)}</td>
                                 <td className="acoes-cell">
-                                    {/* <--- MUDANÇA: Lógica de Edição --- */}
                                     {(user.role === 'administrador' || user.role === 'master') ? (
                                         item.tipo_registro === 'lancamento' ? (
-                                            // Botão de Edição Completa para Lançamentos
                                             <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
                                         ) : (
-                                            // Botão de Edição de Prioridade para Pag. Serviço
                                             <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
                                         )
                                     ) : null}
-
-                                    {/* Botão de Deletar (apenas para Lançamentos e Admins) */}
                                     {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
                                         <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
                                     )}
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan="7" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
-                 {(Array.isArray(historicoUnificado) ? historicoUnificado : []).length === 0 && (
-                     <p style={{ textAlign: 'center', marginTop: '15px' }}>Nenhum gasto ou pagamento registrado.</p>
-                 )}
             </div>
+            {/* --- FIM DA NOVA TABELA --- */}
+
+
+            {/* <--- MUDANÇA: Tabela de Histórico (agora somente Pagos) --- */}
+            <div className="card-full">
+                <div className="card-header">
+                    <h3>Histórico de Pagamentos (Pagos)</h3>
+                    <div className="header-actions">
+                        <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
+                        {/* Botão de PDF movido para a tabela de pendências */}
+                    </div>
+                </div>
+                <table className="tabela-historico">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Segmento</th>
+                            <th>Prior.</th>
+                            <th>Status</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {itemsPagos.length > 0 ? itemsPagos.map(item => (
+                            <tr key={item.id}>
+                                <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                <td>
+                                    {item.descricao}
+                                    {item.tipo_registro === 'pagamento_servico' && (
+                                        <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                            SERVIÇO
+                                        </span>
+                                    )}
+                                </td>
+                                <td>{item.tipo}</td>
+                                <td className="status-cell">
+                                    <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
+                                </td>
+                                <td className="status-cell">
+                                    <button 
+                                        onClick={() => handleMarcarComoPago(item.id)}
+                                        className="quick-pay-btn"
+                                        style={{backgroundColor: 'var(--cor-acento)'}}
+                                        title="Marcar como A Pagar"
+                                    >
+                                        Pago ⮎
+                                    </button>
+                                </td>
+                                <td>{formatCurrency(item.valor)}</td>
+                                <td className="acoes-cell">
+                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                        item.tipo_registro === 'lancamento' ? (
+                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                        ) : (
+                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                        )
+                                    ) : null}
+                                    {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
+                                        <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
+                                    )}
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr>
+                                <td colSpan="7" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {/* --- FIM DA MUDANÇA --- */}
         </div>
     );
 }
@@ -1562,8 +1584,8 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4 (Alta)</option>
-                        <option value="5">5 (Pagamento imediato)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
                     </select>
                 </div>
 
