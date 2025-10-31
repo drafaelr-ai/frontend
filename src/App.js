@@ -14,7 +14,7 @@ const PrioridadeBadge = ({ prioridade }) => {
     let color = '#6c757d'; // 1-2 (Baixa)
     if (p === 3) color = '#007bff'; // 3 (Média)
     if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Urgente)
+    if (p === 5) color = '#dc3545'; // 5 (Pagamento imediato)
 
     const style = {
         backgroundColor: color,
@@ -253,7 +253,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
                         <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
+                        <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
 
@@ -655,7 +655,7 @@ const ExportReportModal = ({ onClose }) => {
                     <label>Filtrar por Prioridade</label>
                     <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
                         <option value="todas">Todas as Pendências</option>
-                        <option value="5">Prioridade 5 (Urgente)</option>
+                        <option value="5">Prioridade 5 (Pagamento imediato)</option>
                         <option value="4">Prioridade 4</option>
                         <option value="3">Prioridade 3 (Média)</option>
                         <option value="2">Prioridade 2</option>
@@ -710,7 +710,7 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
                         <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
+                        <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
                 <div className="form-actions">
@@ -1563,7 +1563,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
                         <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
+                        <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
 
