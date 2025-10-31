@@ -18,7 +18,7 @@ const getTodayString = () => {
     return todayWithOffset.toISOString().split('T')[0];
 };
 
-// --- HELPER DA API (NOVO) ---
+// --- HELPER DA API ---
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
     
@@ -44,11 +44,11 @@ const fetchWithAuth = async (url, options = {}) => {
 };
 
 
-// --- CONTEXTO DE AUTENTICAÇÃO (NOVO) ---
+// --- CONTEXTO DE AUTENTICAÇÃO ---
 const AuthContext = createContext(null);
 const useAuth = () => useContext(AuthContext);
 
-// --- COMPONENTE DE LOGIN (NOVO) ---
+// --- COMPONENTE DE LOGIN ---
 const LoginScreen = () => {
     const { login } = useAuth(); 
     const [username, setUsername] = useState('');
@@ -68,7 +68,6 @@ const LoginScreen = () => {
         })
         .then(res => {
             if (!res.ok) {
-                // Tenta ler o erro do backend, senão mostra mensagem padrão
                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido'); });
             }
             return res.json();
@@ -78,7 +77,6 @@ const LoginScreen = () => {
         })
         .catch(err => {
             console.error("Erro no login:", err);
-            // Mostra a mensagem de erro vinda do backend (ex: "Credenciais inválidas")
             setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
             setIsLoading(false);
         });
@@ -181,22 +179,35 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
     );
 };
 
-const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, obraId }) => {
-    // ... (código inalterado, com permissões)
+// --- MUDANÇA: Modal de Empreitada renomeado para Servico ---
+const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
+    
      useEffect(() => {
-         if (empreitada) {
-             setFormData({ ...empreitada, valor_global: empreitada.valor_global || 0 });
+         if (servico) {
+             setFormData({
+                 ...servico,
+                 valor_global_mao_de_obra: servico.valor_global_mao_de_obra || 0,
+                 valor_global_material: servico.valor_global_material || 0,
+             });
          } else {
              setFormData({});
          }
-     }, [empreitada]);
-    const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor_global' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
+     }, [servico]);
+
+    const handleChange = (e) => { 
+        const { name, value } = e.target; 
+        const finalValue = (name === 'valor_global_mao_de_obra' || name === 'valor_global_material') ? parseFloat(value) || 0 : value; 
+        setFormData(prev => ({ ...prev, [name]: finalValue })); 
+    };
+    
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
+
     const handleDeletarPagamento = (pagamentoId) => {
-        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
+        // --- MUDANÇA: Rota atualizada ---
+        fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
              if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
@@ -204,8 +215,10 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
         })
         .catch(error => console.error('Erro:', error));
     };
-    const handleDeletarEmpreitada = () => {
-        fetchWithAuth(`${API_URL}/empreitadas/${empreitada.id}`, { method: 'DELETE' })
+
+    const handleDeletarServico = () => {
+        // --- MUDANÇA: Rota atualizada ---
+        fetchWithAuth(`${API_URL}/servicos/${servico.id}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
              if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
@@ -213,36 +226,48 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
         })
         .catch(error => console.error('Erro:', error));
     };
-    if (!empreitada) return null;
+
+    if (!servico) return null;
+    
+    // --- MUDANÇA: Cálculos de pagamento separados por tipo ---
+    const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
+    const pagamentosMat = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
+    
+    const totalPagoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0);
+    const totalPagoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0);
+
     return (
         <Modal onClose={onClose}>
             {!isEditing ? (
                 <div>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h2>{empreitada.nome}</h2>
+                        <h2>{servico.nome}</h2>
                         {user.role === 'administrador' && (
-                            <button onClick={handleDeletarEmpreitada} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }} title="Excluir Empreitada" > 🗑️ </button>
+                            <button onClick={handleDeletarServico} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }} title="Excluir Serviço" > 🗑️ </button>
                         )}
                     </div>
-                    <p><strong>Responsável:</strong> {empreitada.responsavel || 'N/A'}</p>
-                    <p><strong>Valor Global:</strong> {formatCurrency(empreitada.valor_global)}</p>
-                    <p><strong>Chave PIX:</strong> {empreitada.pix || 'N/A'}</p>
+                    <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
+                    <p><strong>Valor Total Mão de Obra:</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Pago: {formatCurrency(totalPagoMO)})</p>
+                    <p><strong>Valor Total Material:</strong> {formatCurrency(servico.valor_global_material)} (Pago: {formatCurrency(totalPagoMat)})</p>
+                    <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos</h3>
                     <table className="tabela-pagamentos" style={{width: '100%'}}>
                         <thead>
                             <tr>
                                 <th>Data</th>
+                                <th>Tipo</th> {/* NOVO */}
                                 <th>Valor</th>
                                 <th>Status</th>
                                 {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {empreitada.pagamentos && empreitada.pagamentos.length > 0 ? (
-                                empreitada.pagamentos.map((pag) => (
+                            {servico.pagamentos && servico.pagamentos.length > 0 ? (
+                                servico.pagamentos.map((pag) => (
                                     <tr key={pag.id}>
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
+                                        <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td> {/* NOVO */}
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
                                             <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
@@ -258,23 +283,25 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
                                 ))
                              ) : (
                                 <tr>
-                                    <td colSpan={user.role === 'administrador' ? 4 : 3} style={{textAlign: 'center'}}>Nenhum pagamento realizado.</td>
+                                    <td colSpan={user.role === 'administrador' ? 5 : 4} style={{textAlign: 'center'}}>Nenhum pagamento realizado.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <div className="form-actions" style={{marginTop: '20px'}}>
-                            <button type="button" onClick={() => setIsEditing(true)} className="submit-btn"> Editar Empreitada </button>
+                            <button type="button" onClick={() => setIsEditing(true)} className="submit-btn"> Editar Serviço </button>
                         </div>
                     )}
                 </div>
             ) : (
                 <form onSubmit={handleSubmit}>
-                    <h2>Editar Empreitada</h2>
+                    <h2>Editar Serviço</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Valor Global (R$)</label><input type="number" step="0.01" name="valor_global" value={formData.valor_global || 0} onChange={handleChange} required /></div>
+                    {/* --- MUDANÇA: Campos de valor separados --- */}
+                    <div className="form-group"><label>Valor Mão de Obra (R$)</label><input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} required /></div>
+                    <div className="form-group"><label>Valor Material (R$)</label><input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || 0} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                     <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
                 </form>
@@ -284,20 +311,16 @@ const EmpreitadaDetailsModal = ({ empreitada, onClose, onSave, fetchObraData, ob
 };
 
 
-// --- NOVOS MODAIS DE ADMINISTRAÇÃO ---
-
-// Modal para editar permissões de UM usuário
+// --- MODAIS DE ADMINISTRAÇÃO (Inalterados) ---
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
+    // ... (código inalterado)
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
-
-    // 1. Busca as permissões atuais do usuário
     useEffect(() => {
         if (userToEdit) {
             fetchWithAuth(`${API_URL}/admin/users/${userToEdit.id}/permissions`)
                 .then(res => res.json())
                 .then(data => {
-                    // data.obra_ids é [1, 5, 12]
                     setSelectedObraIds(new Set(data.obra_ids));
                     setIsLoading(false);
                 })
@@ -307,8 +330,6 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                 });
         }
     }, [userToEdit]);
-
-    // 2. Manipula o clique no checkbox
     const handleCheckboxChange = (obraId) => {
         setSelectedObraIds(prevSet => {
             const newSet = new Set(prevSet);
@@ -320,18 +341,14 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
             return newSet;
         });
     };
-
-    // 3. Salva as novas permissões
     const handleSubmit = (e) => {
         e.preventDefault();
         const obra_ids = Array.from(selectedObraIds);
         onSave(userToEdit.id, obra_ids);
     };
-
     if (isLoading) {
         return <Modal onClose={onClose}><div className="loading-screen">Carregando permissões...</div></Modal>;
     }
-
     return (
         <Modal onClose={onClose}>
             <h2>Editar Permissões: {userToEdit.username}</h2>
@@ -363,19 +380,15 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
     );
 };
 
-// Modal principal do Painel de Admin
 const AdminPanelModal = ({ allObras, onClose }) => {
+    // ... (código inalterado)
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [userToEdit, setUserToEdit] = useState(null); // Qual usuário estamos editando
-
-    // Formulário de Novo Usuário
+    const [userToEdit, setUserToEdit] = useState(null);
     const [newUsername, setNewUsername] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState('comum');
-
-    // 1. Busca todos os usuários
     const fetchUsers = () => {
         setIsLoading(true);
         fetchWithAuth(`${API_URL}/admin/users`)
@@ -390,22 +403,16 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                 setIsLoading(false);
             });
     };
-
-    // Roda o fetchUsers quando o modal abre
     useEffect(() => {
         fetchUsers();
     }, []);
-
-    // 2. Cria um novo usuário
     const handleCreateUser = (e) => {
         e.preventDefault();
         setError(null);
-        
         if (newRole === 'administrador') {
             setError("Não é possível criar outro administrador por aqui.");
             return;
         }
-
         fetchWithAuth(`${API_URL}/admin/users`, {
             method: 'POST',
             body: JSON.stringify({
@@ -419,7 +426,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             return res.json();
         })
         .then(newUser => {
-            setUsers(prevUsers => [...prevUsers, newUser]); // Adiciona o novo usuário à lista
+            setUsers(prevUsers => [...prevUsers, newUser]);
             setNewUsername('');
             setNewPassword('');
             setNewRole('comum');
@@ -429,8 +436,6 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setError(err.message);
         });
     };
-
-    // 3. Salva as permissões (chamado pelo modal filho)
     const handleSavePermissions = (userId, obra_ids) => {
         fetchWithAuth(`${API_URL}/admin/users/${userId}/permissions`, {
             method: 'PUT',
@@ -441,17 +446,15 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             return res.json();
         })
         .then(() => {
-            setUserToEdit(null); // Fecha o modal de permissões
+            setUserToEdit(null); 
         })
         .catch(err => {
             console.error("Erro ao salvar permissões:", err);
-            setError(err.message); // Mostra o erro no painel de admin
+            setError(err.message); 
         });
     };
-
     return (
         <Modal onClose={onClose}>
-            {/* Modal de Permissões (só aparece se userToEdit for selecionado) */}
             {userToEdit && (
                 <UserPermissionsModal
                     userToEdit={userToEdit}
@@ -460,11 +463,8 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                     onSave={handleSavePermissions}
                 />
             )}
-
-            <div style={{opacity: userToEdit ? 0.1 : 1}}> {/* Ofusca o painel principal ao editar permissões */}
+            <div style={{opacity: userToEdit ? 0.1 : 1}}>
                 <h2>Painel de Administração</h2>
-                
-                {/* Seção de Criar Novo Usuário */}
                 <div className="card-full" style={{ background: '#f8f9fa' }}>
                     <h3>Criar Novo Usuário</h3>
                     <form onSubmit={handleCreateUser} className="form-add-obra">
@@ -493,8 +493,6 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                     </form>
                     {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
                 </div>
-
-                {/* Seção de Listar Usuários */}
                 <h3 style={{marginTop: '30px'}}>Usuários Existentes</h3>
                 {isLoading ? <p>Carregando usuários...</p> : (
                     <table className="tabela-historico">
@@ -528,29 +526,30 @@ const AdminPanelModal = ({ allObras, onClose }) => {
         </Modal>
     );
 };
-
 // ----------------------------------------------------
 
 
-// --- COMPONENTE DO DASHBOARD (Seu App.js antigo) ---
+// --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
 
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
-    const [empreitadas, setEmpreitadas] = useState([]);
+    // --- MUDANÇA: 'empreitadas' -> 'servicos' ---
+    const [servicos, setServicos] = useState([]);
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // Modais do Dashboard
     const [editingLancamento, setEditingLancamento] = useState(null);
-    const [isAddEmpreitadaModalVisible, setAddEmpreitadaModalVisible] = useState(false);
+    // --- MUDANÇA: 'AddEmpreitada' -> 'AddServico' ---
+    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
-    const [viewingEmpreitada, setViewingEmpreitada] = useState(null);
+    const [viewingServico, setViewingServico] = useState(null);
     
-    // --- NOVO: Modal de Admin ---
+    // Modal de Admin
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
 
 
@@ -558,23 +557,15 @@ function Dashboard() {
     useEffect(() => {
         console.log("Buscando lista de obras...");
         fetchWithAuth(`${API_URL}/obras`)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
                 console.log("Obras recebidas:", data);
-                // Salva todas as obras. O AdminPanel vai usar isso.
                 setObras(Array.isArray(data) ? data : []);
             })
-            .catch(error => {
-                console.error("Erro ao buscar obras:", error);
-                setObras([]);
-            });
+            .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
     }, []); 
 
     const fetchObraData = (obraId) => {
-        // ... (código inalterado)
         setIsLoading(true);
         console.log(`Buscando dados da obra ID: ${obraId}`);
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
@@ -583,22 +574,23 @@ function Dashboard() {
                 console.log("Dados da obra recebidos:", data);
                 setObraSelecionada(data.obra || null);
                 setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
-                const empreitadasComPagamentosArray = (Array.isArray(data.empreitadas) ? data.empreitadas : []).map(emp => ({
-                    ...emp,
-                    pagamentos: Array.isArray(emp.pagamentos) ? emp.pagamentos : []
+                // --- MUDANÇA: 'empreitadas' -> 'servicos' ---
+                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
+                    ...serv,
+                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
                 }));
-                setEmpreitadas(empreitadasComPagamentosArray);
+                setServicos(servicosComPagamentosArray);
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
             })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setEmpreitadas([]); setSumarios(null); })
+            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); })
             .finally(() => setIsLoading(false));
     };
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
-    // (Todas as funções de CRUD permanecem inalteradas)
 
     const handleAddObra = (e) => {
+        // ... (código inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
@@ -606,7 +598,7 @@ function Dashboard() {
             method: 'POST',
             body: JSON.stringify({ nome, cliente })
         })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao adicionar obra') }); } return res.json(); })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(novaObra => {
             setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome)));
             e.target.reset();
@@ -614,44 +606,77 @@ function Dashboard() {
         .catch(error => console.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao deletar obra') }); } return res.json(); })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => console.error('Erro ao deletar obra:', error));
     };
+    
+    // --- MUDANÇA: handleMarcarComoPago agora entende 'serv-pag-' ---
     const handleMarcarComoPago = (itemId) => {
-        const isPayment = String(itemId).startsWith('emp-pag-');
+        const isLancamento = String(itemId).startsWith('lanc-');
+        const isServicoPag = String(itemId).startsWith('serv-pag-');
         const actualId = String(itemId).split('-').pop(); 
-        if (!isPayment) {
-             fetchWithAuth(`${API_URL}/lancamentos/${actualId}/pago`, { method: 'PATCH' })
-                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
-                 .then(() => fetchObraData(obraSelecionada.id))
-                 .catch(error => console.error("Erro ao marcar como pago:", error));
+
+        let url = '';
+        if (isLancamento) {
+            url = `${API_URL}/lancamentos/${actualId}/pago`;
+        } else if (isServicoPag) {
+            url = `${API_URL}/servicos/pagamentos/${actualId}/status`;
+        } else {
+            return; // ID desconhecido
         }
+
+        console.log("Alternando status para:", itemId);
+        fetchWithAuth(url, { method: 'PATCH' })
+             .then(res => {
+                 if (!res.ok) {
+                     return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
+                 }
+                 return res.json();
+             })
+             .then(() => fetchObraData(obraSelecionada.id)) // Recarrega tudo
+             .catch(error => console.error("Erro ao marcar como pago:", error));
     };
+
+
     const handleDeletarLancamento = (itemId) => {
-         const isPayment = String(itemId).startsWith('emp-pag-');
+         // Esta função agora só lida com 'lanc-'
+         const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
-        if (!isPayment) {
+
+        if (isLancamento) {
+            console.log("Deletando lançamento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
-                .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+                .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
                 .catch(error => console.error('Erro ao deletar lançamento:', error));
         }
+        // Deleção de pagamentos de serviço é feita no ServicoDetailsModal
     };
+    
     const handleEditLancamento = (item) => {
-        if (!item.isEmpreitadaPayment) { setEditingLancamento(item); }
+        // Esta função só lida com lançamentos
+        if (item.tipo_registro === 'lancamento') { 
+            setEditingLancamento(item); 
+        }
+        // Edição de serviços é feita no ServicoDetailsModal
     };
+    
     const handleSaveEdit = (updatedLancamento) => {
+        // ... (código inalterado)
         const dataToSend = { ...updatedLancamento, valor: parseFloat(updatedLancamento.valor) || 0 };
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
+    
     const handleSaveLancamento = (e) => {
+        // ... (código inalterado)
         e.preventDefault();
         const formData = new FormData(e.target);
         const lancamentoData = Object.fromEntries(formData.entries());
@@ -661,47 +686,85 @@ function Dashboard() {
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar lançamento:", error));
     };
-    const handleSaveEmpreitada = (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const empreitadaData = Object.fromEntries(formData.entries());
-        empreitadaData.valor_global = parseFloat(empreitadaData.valor_global) || 0;
-        empreitadaData.responsavel = empreitadaData.responsavel || null;
-        empreitadaData.pix = empreitadaData.pix || null;
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/empreitadas`, {
+
+    // --- MUDANÇA: 'handleSaveEmpreitada' -> 'handleSaveServico' ---
+    const handleSaveServico = (servicoData) => {
+        console.log("Salvando novo serviço:", servicoData);
+        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos`, {
             method: 'POST',
-            body: JSON.stringify(empreitadaData)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
-        .then(() => { setAddEmpreitadaModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar empreitada:", error));
+            body: JSON.stringify(servicoData)
+        }).then(res => {
+             if (!res.ok) {
+                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar serviço') });
+             }
+             return res.json();
+        })
+        .then(() => {
+            setAddServicoModalVisible(false);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => console.error("Erro ao salvar serviço:", error));
     };
-    const handleSaveEditEmpreitada = (updatedEmpreitada) => {
-        const dataToSend = { ...updatedEmpreitada, valor_global: parseFloat(updatedEmpreitada.valor_global) || 0, responsavel: updatedEmpreitada.responsavel || null, pix: updatedEmpreitada.pix || null };
-        fetchWithAuth(`${API_URL}/empreitadas/${dataToSend.id}`, {
+
+    // --- MUDANÇA: 'handleSaveEditEmpreitada' -> 'handleSaveEditServico' ---
+    const handleSaveEditServico = (updatedServico) => {
+        const dataToSend = {
+            ...updatedServico,
+            valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
+            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0,
+            responsavel: updatedServico.responsavel || null,
+            pix: updatedServico.pix || null
+        };
+        console.log("Salvando edição do serviço:", dataToSend.id);
+        fetchWithAuth(`${API_URL}/servicos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
-        .then(() => { setViewingEmpreitada(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar edição da empreitada:", error));
+        }).then(res => {
+            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } 
+            return res.json();
+        })
+        .then(() => {
+            setViewingServico(null);
+            fetchObraData(obraSelecionada.id);
+        }).catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
-    const handleAddPagamentoParcial = (e, empreitadaId) => {
+
+    // --- MUDANÇA: 'handleAddPagamentoParcial' -> 'handleAddPagamentoServico' ---
+    const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
         const statusPagamento = e.target.statusPagamento.value;
-        if (!valorPagamento) return;
-        const pagamento = { valor: parseFloat(valorPagamento) || 0, data: getTodayString(), status: statusPagamento };
-        fetchWithAuth(`${API_URL}/empreitadas/${empreitadaId}/pagamentos`, {
+        const tipoPagamento = e.target.tipoPagamento.value; // NOVO
+        
+        if (!valorPagamento || !tipoPagamento) return;
+        
+        const pagamento = {
+            valor: parseFloat(valorPagamento) || 0,
+            data: getTodayString(),
+            status: statusPagamento,
+            tipo_pagamento: tipoPagamento // NOVO
+        };
+        console.log("Adicionando pagamento de serviço:", pagamento);
+        fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
             method: 'POST',
             body: JSON.stringify(pagamento)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); } return res.json(); })
-        .then((empreitadaAtualizada) => {
-             setEmpreitadas(prevEmpreitadas => prevEmpreitadas.map(emp => emp.id === empreitadaId ? empreitadaAtualizada : emp));
-             if (viewingEmpreitada && viewingEmpreitada.id === empreitadaId) { setViewingEmpreitada(empreitadaAtualizada); }
-             e.target.reset();
+        }).then(res => {
+            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); }
+            return res.json(); 
+        })
+        .then((servicoAtualizado) => {
+             setServicos(prevServicos =>
+                 prevServicos.map(serv =>
+                     serv.id === servicoId ? servicoAtualizado : serv
+                 )
+             );
+             if (viewingServico && viewingServico.id === servicoId) {
+                 setViewingServico(servicoAtualizado);
+             }
+             e.target.reset(); 
              fetchObraData(obraSelecionada.id);
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
@@ -709,29 +772,18 @@ function Dashboard() {
 
     // --- RENDERIZAÇÃO ---
     
-    // TELA DE SELEÇÃO DE OBRAS
+    // TELA DE SELEÇÃO DE OBRAS (Inalterada)
     if (!obraSelecionada) {
-        
-        // NOVO: Filtrar as obras que o usuário pode ver. Admin vê todas.
-        const obrasVisiveis = (user.role === 'administrador') 
-            ? obras 
-            : obras.filter(obra => user.obras_permitidas?.includes(obra.id)); // <-- Esta lógica de permissão vem do backend
-        // (Nota: A lista de obras_permitidas não está no objeto 'user' ainda, precisamos ajustar isso)
-        // Para o AdminPanel funcionar, usamos `obras` (lista completa)
-        // Para o usuário ver, usamos `obras` (lista já filtrada pelo backend na rota /obras)
-
         return (
             <div className="container">
-                {/* NOVO: Modal de Admin */}
                 {isAdminPanelVisible && <AdminPanelModal 
-                    allObras={obras} // Passa TODAS as obras para o admin poder atribuir
+                    allObras={obras}
                     onClose={() => setAdminPanelVisible(false)} 
                 />}
                 
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
-                        {/* --- NOVO: Botão do Painel de Admin --- */}
                         {user.role === 'administrador' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
                                 Gerenciar Usuários
@@ -752,7 +804,6 @@ function Dashboard() {
                     </div>
                 )}
                 <div className="lista-obras">
-                    {/* Agora, a lista de obras já vem filtrada do backend! */}
                     {obras.length > 0 ? (
                         obras.map(obra => (
                             <div key={obra.id} className="card-obra" style={{position: 'relative'}}>
@@ -790,18 +841,15 @@ function Dashboard() {
         <div className="dashboard-container">
             {/* --- Modais --- */}
             {editingLancamento && <EditLancamentoModal lancamento={editingLancamento} onClose={() => setEditingLancamento(null)} onSave={handleSaveEdit} />}
-            {isAddEmpreitadaModalVisible && (
-                <Modal onClose={() => setAddEmpreitadaModalVisible(false)}>
-                    <h2>Cadastrar Nova Empreitada</h2>
-                    <form onSubmit={handleSaveEmpreitada}>
-                        <div className="form-group"><label>Descrição da Contratação</label><input type="text" name="nome" placeholder="Ex: Serviço de Pintura" required /></div>
-                        <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" placeholder="Ex: Carlos (Pintor)" /></div>
-                        <div className="form-group"><label>Valor Global (R$)</label><input type="number" step="0.01" name="valor_global" placeholder="10000.00" required /></div>
-                        <div className="form-group"><label>Dados de Pagamento (PIX)</label><input type="text" name="pix" placeholder="Email, Celular, etc." /></div>
-                        <div className="form-actions"><button type="button" onClick={() => setAddEmpreitadaModalVisible(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Empreitada</button></div>
-                    </form>
-                </Modal>
+            
+            {/* --- MUDANÇA: Modal de "AddServico" --- */}
+            {isAddServicoModalVisible && (
+                <AddServicoModal
+                    onClose={() => setAddServicoModalVisible(false)}
+                    onSave={handleSaveServico}
+                />
             )}
+            
             {isAddLancamentoModalVisible && (
                 <Modal onClose={() => setAddLancamentoModalVisible(false)}>
                     <h2>Adicionar Novo Gasto</h2>
@@ -822,13 +870,14 @@ function Dashboard() {
                     </form>
                 </Modal>
             )}
-             {viewingEmpreitada && <EmpreitadaDetailsModal
-                                     empreitada={viewingEmpreitada}
-                                     onClose={() => setViewingEmpreitada(null)}
-                                     onSave={handleSaveEditEmpreitada}
+             {viewingServico && <ServicoDetailsModal
+                                     servico={viewingServico}
+                                     onClose={() => setViewingServico(null)}
+                                     onSave={handleSaveEditServico}
                                      fetchObraData={fetchObraData}
                                      obraId={obraSelecionada.id}
                                  />}
+
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
@@ -849,31 +898,69 @@ function Dashboard() {
              )}
 
 
-            {/* --- Empreitadas --- */}
+            {/* --- MUDANÇA: 'Empreitadas' -> 'Serviços' --- */}
             <div className="card-full">
                  <div className="card-header">
-                    <h3>Empreitadas</h3>
+                    <h3>Serviços (Planilha de Custos)</h3>
                     {(user.role === 'administrador' || user.role === 'master') && (
-                        <button className="acao-btn add-btn" onClick={() => setAddEmpreitadaModalVisible(true)}>+ Nova Empreitada</button>
+                        <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
                     )}
                 </div>
-                <div className="lista-empreitadas">
-                    {(Array.isArray(empreitadas) ? empreitadas : []).length > 0 ? (Array.isArray(empreitadas) ? empreitadas : []).map(emp => {
-                        const safePagamentos = Array.isArray(emp.pagamentos) ? emp.pagamentos : [];
-                        const valorPago = safePagamentos.filter(p => p.status === 'Pago').reduce((total, pag) => total + (pag.valor || 0), 0);
-                        const valorGlobalNum = emp.valor_global || 0;
-                        const progresso = valorGlobalNum > 0 ? (valorPago / valorGlobalNum) * 100 : 0;
+                <div className="lista-empreitadas"> {/* (CSS class 'lista-empreitadas' mantida por estilo) */}
+                    {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
+                        
+                        // --- MUDANÇA: Cálculo de pagamento separado ---
+                        const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
+                        
+                        // Mão de Obra
+                        const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
+                        const valorPagoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0);
+                        const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
+                        const progressoMO = valorGlobalMO > 0 ? (valorPagoMO / valorGlobalMO) * 100 : 0;
+
+                        // Material
+                        const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
+                        const valorPagoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0);
+                        const valorGlobalMat = serv.valor_global_material || 0;
+                        const progressoMat = valorGlobalMat > 0 ? (valorPagoMat / valorGlobalMat) * 100 : 0;
+                        
                         return (
-                            <div key={emp.id} className="card-empreitada-item">
-                                <div onClick={() => setViewingEmpreitada(emp)}>
-                                    <div className="empreitada-header"><h4>{emp.nome}</h4><span>{formatCurrency(valorGlobalNum)}</span></div>
-                                    <small>Responsável: {emp.responsavel || 'N/A'}</small>
-                                    <div className="progress-bar-container"><div className="progress-bar" style={{ width: `${progresso}%` }}></div></div>
-                                    <div className="empreitada-sumario"><span>Pago: {formatCurrency(valorPago)}</span><span>Restante: {formatCurrency(valorGlobalNum - valorPago)}</span><span>{progresso.toFixed(1)}%</span></div>
+                            <div key={serv.id} className="card-empreitada-item"> {/* (CSS class mantida) */}
+                                <div onClick={() => setViewingServico(serv)}>
+                                    <div className="empreitada-header">
+                                        <h4>{serv.nome}</h4>
+                                        {/* Mostra o valor total (MO+Mat) que vem do backend */}
+                                        <span>{formatCurrency(serv.valor_global_total)}</span>
+                                    </div>
+                                    <small>Responsável: {serv.responsavel || 'N/A'}</small>
+                                    
+                                    {/* --- MUDANÇA: Duas barras de progresso --- */}
+                                    <div style={{marginTop: '10px'}}>
+                                        <small>Mão de Obra: {formatCurrency(valorPagoMO)} / {formatCurrency(valorGlobalMO)}</small>
+                                        <div className="progress-bar-container">
+                                            <div className="progress-bar" style={{ width: `${progressoMO}%`, backgroundColor: 'var(--cor-azul)' }}></div>
+                                        </div>
+                                    </div>
+                                    <div style={{marginTop: '5px'}}>
+                                        <small>Material: {formatCurrency(valorPagoMat)} / {formatCurrency(valorGlobalMat)}</small>
+                                        <div className="progress-bar-container">
+                                            <div className="progress-bar" style={{ width: `${progressoMat}%`, backgroundColor: 'var(--cor-verde)' }}></div>
+                                        </div>
+                                    </div>
                                 </div>
+                                
+                                {/* --- MUDANÇA: Formulário de Pagamento Atualizado --- */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
-                                    <form onSubmit={(e) => handleAddPagamentoParcial(e, emp.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                        <input type="number" step="0.01" name="valorPagamento" placeholder="Valor do Pagamento" required style={{flex: 2}} />
+                                    <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
+                                        <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 2}} />
+                                        
+                                        {/* Seletor de Tipo de Pagamento */}
+                                        <select name="tipoPagamento" required style={{flex: 2, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                            <option value="">Tipo...</option>
+                                            <option value="mao_de_obra">Mão de Obra</option>
+                                            <option value="material">Material</option>
+                                        </select>
+                                        
                                         <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                             <option value="Pago">Pago</option>
                                             <option value="A Pagar">A Pagar</option>
@@ -883,9 +970,9 @@ function Dashboard() {
                                 )}
                             </div>
                         );
-                    }) : <p>Nenhuma empreitada cadastrada.</p>}
-                </div>
-            </div>
+                    }) : <p>Nenhum serviço cadastrado.</p>}
+                </div> 
+            </div> 
 
 
             {/* --- Grid Principal (Pendentes e Segmentos) --- */}
@@ -916,9 +1003,9 @@ function Dashboard() {
              )}
 
 
-            {/* --- Histórico de Gastos --- */}
+            {/* --- MUDANÇA: Histórico de Gastos Atualizado --- */}
             <div className="card-full">
-                <div className="card-header"><h3>Histórico Completo (Gastos e Pag. Empreitadas)</h3>
+                <div className="card-header"><h3>Histórico Completo (Gastos e Pag. Serviços)</h3>
                     <div className="header-actions">
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
@@ -935,9 +1022,9 @@ function Dashboard() {
                                 <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                 <td>
                                     {item.descricao}
-                                    {item.tipo_registro === 'pagamento_empreitada' && (
+                                    {item.tipo_registro === 'pagamento_servico' && (
                                         <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: '#17a2b8', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                            EMPREITADA
+                                            SERVIÇO
                                         </span>
                                     )}
                                 </td>
@@ -946,10 +1033,9 @@ function Dashboard() {
                                     {item.status === 'A Pagar' ? (
                                         (user.role === 'administrador' || user.role === 'master') ? (
                                             <button 
-                                                onClick={() => handleMarcarComoPago(item.id)} 
+                                                onClick={() => handleMarcarComoPago(item.id)} // item.id pode ser 'lanc-1' ou 'serv-pag-1'
                                                 className="quick-pay-btn" 
-                                                title="Marcar como Pago"
-                                                disabled={item.tipo_registro === 'pagamento_empreitada'}
+                                                title={item.status === 'A Pagar' ? "Marcar como Pago" : "Marcar como A Pagar"}
                                             >
                                                 A Pagar ✓
                                             </button>
@@ -957,7 +1043,19 @@ function Dashboard() {
                                             <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
                                         )
                                     ) : (
-                                        <span className="status pago">Pago</span>
+                                        // --- MUDANÇA: Permite clicar em "Pago" para reverter ---
+                                        (user.role === 'administrador' || user.role === 'master') ? (
+                                            <button 
+                                                onClick={() => handleMarcarComoPago(item.id)}
+                                                className="quick-pay-btn"
+                                                style={{backgroundColor: 'var(--cor-verde)'}}
+                                                title={item.status === 'A Pagar' ? "Marcar como Pago" : "Marcar como A Pagar"}
+                                            >
+                                                Pago ⮎
+                                            </button>
+                                        ) : (
+                                            <span className="status pago">Pago</span>
+                                        )
                                     )}
                                 </td>
                                 <td>{formatCurrency(item.valor)}</td>
@@ -965,27 +1063,15 @@ function Dashboard() {
                                     {item.tipo_registro === 'lancamento' ? (
                                         <>
                                             {(user.role === 'administrador' || user.role === 'master') && (
-                                                <button 
-                                                    onClick={() => handleEditLancamento(item)} 
-                                                    className="acao-icon-btn edit-btn" 
-                                                    title="Editar"
-                                                >
-                                                    ✏️
-                                                </button>
+                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar" > ✏️ </button>
                                             )}
                                             {user.role === 'administrador' && (
-                                                <button 
-                                                    onClick={() => handleDeletarLancamento(item.id)} 
-                                                    className="acao-icon-btn delete-btn" 
-                                                    title="Excluir"
-                                                >
-                                                    🗑️
-                                                </button>
+                                                <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
                                             )}
                                         </>
                                     ) : (
                                         <span style={{fontSize: '0.85em', color: '#666'}}>
-                                            Ver na empreitada
+                                            Ver no serviço
                                         </span>
                                     )}
                                 </td>
@@ -1000,6 +1086,99 @@ function Dashboard() {
         </div>
     );
 }
+
+// --- NOVO: Modal "Adicionar Serviço" ---
+const AddServicoModal = ({ onClose, onSave }) => {
+    // Controla qual formulário mostrar
+    const [rateioTipo, setRateioTipo] = useState('empreita'); // 'empreita' ou 'detalhado'
+    
+    // Campos do formulário
+    const [nome, setNome] = useState('');
+    const [responsavel, setResponsavel] = useState('');
+    const [pix, setPix] = useState('');
+    const [valorUnico, setValorUnico] = useState(0);
+    const [valorMO, setValorMO] = useState(0);
+    const [valorMat, setValorMat] = useState(0);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        let servicoData = {
+            nome,
+            responsavel: responsavel || null,
+            pix: pix || null,
+            valor_global_mao_de_obra: 0,
+            valor_global_material: 0
+        };
+
+        if (rateioTipo === 'empreita') {
+            // Se for empreita, 100% do valor vai para Mão de Obra
+            servicoData.valor_global_mao_de_obra = valorUnico;
+        } else {
+            // Se for detalhado, usa os valores separados
+            servicoData.valor_global_mao_de_obra = valorMO;
+            servicoData.valor_global_material = valorMat;
+        }
+        
+        onSave(servicoData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Cadastrar Novo Serviço</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição do Serviço</label>
+                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
+                </div>
+                <div className="form-group">
+                    <label>Responsável</label>
+                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
+                </div>
+                <div className="form-group">
+                    <label>Dados de Pagamento (PIX)</label>
+                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
+                </div>
+                
+                <hr />
+
+                {/* Seletor de Tipo de Rateio */}
+                <div className="form-group">
+                    <label>Tipo de Rateio de Custo</label>
+                    <select value={rateioTipo} onChange={(e) => setRateioTipo(e.target.value)}>
+                        <option value="empreita">Empreita (Valor Único)</option>
+                        <option value="detalhado">Detalhado (Mão de Obra + Material)</option>
+                    </select>
+                </div>
+
+                {/* Campos de Valor Condicionais */}
+                {rateioTipo === 'empreita' ? (
+                    <div className="form-group">
+                        <label>Valor Global (R$)</label>
+                        <input type="number" step="0.01" value={valorUnico} onChange={(e) => setValorUnico(parseFloat(e.target.value) || 0)} required />
+                    </div>
+                ) : (
+                    <>
+                        <div className="form-group">
+                            <label>Valor Mão de Obra (R$)</label>
+                            <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
+                        </div>
+                        <div className="form-group">
+                            <label>Valor Material (R$)</label>
+                            <input type="number" step="0.01" value={valorMat} onChange={(e) => setValorMat(parseFloat(e.target.value) || 0)} required />
+                        </div>
+                    </>
+                )}
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Serviço</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
 function App() {
