@@ -261,11 +261,12 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
-    const totalPagoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
+    // --- CORREÇÃO: Cálculos de gasto total (Pago + A Pagar) ---
+    const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra');
+    const totalGastoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
 
-    const pagamentosMat = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
-    const totalPagoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
+    const pagamentosMat = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'material');
+    const totalGastoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
 
     return (
         <Modal onClose={onClose}>
@@ -278,8 +279,9 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Pago: {formatCurrency(totalPagoMO)})</p>
-                    <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalPagoMat)}</p>
+                    {/* --- CORREÇÃO: Mostra Gasto Total vs Orçado --- */}
+                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Gasto Total: {formatCurrency(totalGastoMO)})</p>
+                    <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalGastoMat)}</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
@@ -727,14 +729,10 @@ function Dashboard() {
             method: 'POST',
             body: JSON.stringify(pagamento)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then((servicoAtualizado) => {
-             // --- CORREÇÃO DO BUG: Remove a atualização de estado 'setServicos' ---
-             // A linha abaixo estava causando o bug de "nada acontece"
-             // setServicos(prevServicos => prevServicos.map(serv => serv.id === servicoId ? servicoAtualizado : serv));
-             
-             if (viewingServico && viewingServico.id === servicoId) { setViewingServico(servicoAtualizado); }
+        .then(() => {
+             // --- CORREÇÃO DO BUG: Apenas recarrega os dados ---
              e.target.reset(); 
-             fetchObraData(obraSelecionada.id); // <-- Apenas esta linha é necessária
+             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
@@ -873,15 +871,17 @@ function Dashboard() {
                         
                         const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
                         
+                        // --- CORREÇÃO: Totais de MO e Material agora incluem TODOS os status (Pago + A Pagar) ---
+                        
                         // Mão de Obra (Orçado)
-                        const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
-                        const valorPagoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
+                        const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
+                        const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
                         const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
-                        const progressoMO = valorGlobalMO > 0 ? (valorPagoMO / valorGlobalMO) * 100 : 0;
+                        const progressoMO = valorGlobalMO > 0 ? (valorGastoTotalMO / valorGlobalMO) * 100 : 0;
 
                         // Material (Somatório)
-                        const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
-                        const valorPagoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
+                        const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
+                        const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                         
                         return (
                             <div key={serv.id} className="card-empreitada-item">
@@ -894,14 +894,14 @@ function Dashboard() {
                                     
                                     {/* Mão de Obra (Barra de Progresso) */}
                                     <div style={{marginTop: '10px'}}>
-                                        <small>Mão de Obra: {formatCurrency(valorPagoMO)} / {formatCurrency(valorGlobalMO)}</small>
+                                        <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
                                         <div className="progress-bar-container">
                                             <div className="progress-bar" style={{ width: `${progressoMO}%`, backgroundColor: 'var(--cor-azul)' }}></div>
                                         </div>
                                     </div>
                                     {/* Material (Totalizador) */}
                                     <div style={{marginTop: '5px'}}>
-                                        <small>Material (Gasto Total): {formatCurrency(valorPagoMat)}</small>
+                                        <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
                                         {/* --- CORREÇÃO: Removida a barra verde 100% --- */}
                                         <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
                                             {/* (Barra vazia, apenas para estética) */}
