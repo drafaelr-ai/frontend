@@ -884,6 +884,45 @@ function Dashboard() {
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
+   // [App.js] - Cole este bloco dentro de function Dashboard()
+    // ... (logo após as outras funções 'handle...')
+
+    const handleSaveOrcamento = (orcamentoData) => {
+        console.log("Salvando novo orçamento:", orcamentoData);
+        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
+            method: 'POST',
+            body: JSON.stringify(orcamentoData)
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+            setAddOrcamentoModalVisible(false);
+            fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao salvar orçamento:", error));
+    };
+    
+    const handleAprovarOrcamento = (orcamentoId) => {
+        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+             fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao aprovar orçamento:", error));
+    };
+    
+    const handleRejeitarOrcamento = (orcamentoId) => {
+        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+             fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao rejeitar orçamento:", error));
+    };
+
+    // --- RENDERIZAÇÃO ---
+    
+    // TELA DE SELEÇÃO DE OBRAS
+    if (!obraSelecionada) {
+    // ... (o resto do seu código) 
     // --- FIM DA MUDANÇA ---
 
 
@@ -1327,7 +1366,7 @@ function Dashboard() {
             {/* --- FIM DA MUDANÇA --- */}
         </div>
     );
-}
+}}
 // [App.js] - Adicione este NOVO componente modal
 
 // --- NOVO: Modal "Adicionar Orçamento" ---
