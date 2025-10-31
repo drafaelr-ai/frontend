@@ -83,18 +83,34 @@ const LoginScreen = () => {
     };
 
     const loginStyles = {
-        container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f2f5' },
-        card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', minWidth: '300px' },
+        container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--cor-fundo)' }, // MODIFICADO
+        card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: 'var(--sombra-card)', minWidth: '300px' }, // MODIFICADO
         form: { display: 'flex', flexDirection: 'column', gap: '15px' },
         input: { padding: '12px', fontSize: '1em', border: '1px solid #ccc', borderRadius: '4px' },
-        button: { padding: '12px', fontSize: '1em', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-        error: { color: '#dc3545', textAlign: 'center', marginTop: '10px' }
+        
+        // --- NOVO ESTILO H1 ---
+        h1: {
+            textAlign: 'center',
+            margin: 0,
+            marginBottom: '30px', /* Mais espaço */
+            color: 'var(--cor-primaria)', /* Cor primária */
+            fontSize: '3em',
+            fontWeight: '700',
+            fontFamily: 'Segoe UI, sans-serif'
+        },
+        // --- FIM DO NOVO ---
+
+        button: { padding: '12px', fontSize: '1em', background: 'var(--cor-primaria)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }, // MODIFICADO
+        error: { color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '10px' } // MODIFICADO
     };
 
     return (
         <div style={loginStyles.container}>
             <div style={loginStyles.card}>
-                <h2 style={{ textAlign: 'center', margin: 0, marginBottom: '20px' }}>Controle de Obra</h2>
+                
+                {/* --- MODIFICADO DE H2 PARA H1 --- */}
+                <h1 style={loginStyles.h1}>Obraly</h1>
+
                 <form onSubmit={handleLogin} style={loginStyles.form}>
                     <input
                         type="text"
@@ -303,7 +319,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                         <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
-                                            <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
+                                            <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-acento)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
                                                 {pag.status}
                                             </span>
                                         </td>
@@ -772,24 +788,47 @@ function Dashboard() {
                 )}
                 <div className="lista-obras">
                     {obras.length > 0 ? (
+                        
+                        // --- INÍCIO DA MODIFICAÇÃO NO .map() ---
                         obras.map(obra => (
-                            <div key={obra.id} className="card-obra" style={{position: 'relative'}}>
-                                <div onClick={() => fetchObraData(obra.id)} style={{cursor: 'pointer', paddingRight: '40px'}}>
-                                    <h3>{obra.nome}</h3>
-                                    <p>Cliente: {obra.cliente || 'N/A'}</p>
-                                </div>
+                            <div key={obra.id} className="card-obra">
+                                
                                 {user.role === 'administrador' && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                        className="acao-icon-btn delete-btn"
-                                        style={{ position: 'absolute', top: '15px', right: '15px', fontSize: '1.3em', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6 }}
+                                        className="card-obra-delete-btn" // Classe CSS atualizada
                                         title="Excluir Obra"
                                     >
                                         🗑️
                                     </button>
                                 )}
+                                
+                                <div onClick={() => fetchObraData(obra.id)} className="card-obra-content">
+                                    <h3>{obra.nome}</h3>
+                                    <p>Cliente: {obra.cliente || 'N/A'}</p>
+                                    
+                                    {/* --- NOVOS KPIs RENDERIZADOS --- */}
+                                    <div className="obra-kpi-summary">
+                                        <div>
+                                            <span>Total Gasto</span>
+                                            {/* Usamos obra.total_geral que veio do backend */}
+                                            <strong>{formatCurrency(obra.total_geral)}</strong>
+                                        </div>
+                                        <div>
+                                            <span>Em Aberto</span>
+                                            {/* Usamos obra.total_a_pagar que veio do backend */}
+                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
+                                                {formatCurrency(obra.total_a_pagar)}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                    {/* --- FIM DOS NOVOS KPIs --- */}
+
+                                </div>
                             </div>
                         ))
+                        // --- FIM DA MODIFICAÇÃO NO .map() ---
+
                     ) : (
                         <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma. Fale com o administrador.</p>
                     )}
@@ -885,7 +924,7 @@ function Dashboard() {
                         
                         return (
                             <div key={serv.id} className="card-empreitada-item">
-                                <div onClick={() => setViewingServico(serv)}>
+                                <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
                                     <div className="empreitada-header">
                                         <h4>{serv.nome}</h4>
                                         <span>Orçado (MO): {formatCurrency(valorGlobalMO)}</span>
@@ -896,7 +935,7 @@ function Dashboard() {
                                     <div style={{marginTop: '10px'}}>
                                         <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
                                         <div className="progress-bar-container">
-                                            <div className="progress-bar" style={{ width: `${progressoMO}%`, backgroundColor: 'var(--cor-azul)' }}></div>
+                                            <div className="progress-bar" style={{ width: `${progressoMO}%` }}></div>
                                         </div>
                                     </div>
                                     {/* Material (Totalizador) */}
@@ -980,7 +1019,7 @@ function Dashboard() {
                                 <td>
                                     {item.descricao}
                                     {item.tipo_registro === 'pagamento_servico' && (
-                                        <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: '#17a2b8', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                        <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
                                             SERVIÇO
                                         </span>
                                     )}
@@ -1004,7 +1043,7 @@ function Dashboard() {
                                             <button 
                                                 onClick={() => handleMarcarComoPago(item.id)}
                                                 className="quick-pay-btn"
-                                                style={{backgroundColor: 'var(--cor-verde)'}}
+                                                style={{backgroundColor: 'var(--cor-acento)'}}
                                                 title="Marcar como A Pagar"
                                             >
                                                 Pago ⮎
