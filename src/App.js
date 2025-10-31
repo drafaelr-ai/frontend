@@ -252,7 +252,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
+                        <option value="4">4 (Alta)</option>
                         <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
@@ -656,7 +656,7 @@ const ExportReportModal = ({ onClose }) => {
                     <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
                         <option value="todas">Todas as Pendências</option>
                         <option value="5">Prioridade 5 (Pagamento imediato)</option>
-                        <option value="4">Prioridade 4</option>
+                        <option value="4">Prioridade 4 (Alta)</option>
                         <option value="3">Prioridade 3 (Média)</option>
                         <option value="2">Prioridade 2</option>
                         <option value="1">Prioridade 1</option>
@@ -709,7 +709,7 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
+                        <option value="4">4 (Alta)</option>
                         <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
@@ -1562,7 +1562,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
+                        <option value="4">4 (Alta)</option>
                         <option value="5">5 (Pagamento imediato)</option>
                     </select>
                 </div>
