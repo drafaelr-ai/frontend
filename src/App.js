@@ -83,32 +83,29 @@ const LoginScreen = () => {
     };
 
     const loginStyles = {
-        container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--cor-fundo)' }, // MODIFICADO
-        card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: 'var(--sombra-card)', minWidth: '300px' }, // MODIFICADO
+        container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--cor-fundo)' },
+        card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: 'var(--sombra-card)', minWidth: '300px' },
         form: { display: 'flex', flexDirection: 'column', gap: '15px' },
         input: { padding: '12px', fontSize: '1em', border: '1px solid #ccc', borderRadius: '4px' },
         
-        // --- NOVO ESTILO H1 ---
         h1: {
             textAlign: 'center',
             margin: 0,
-            marginBottom: '30px', /* Mais espaço */
-            color: 'var(--cor-primaria)', /* Cor primária */
+            marginBottom: '30px', 
+            color: 'var(--cor-primaria)', 
             fontSize: '3em',
             fontWeight: '700',
             fontFamily: 'Segoe UI, sans-serif'
         },
-        // --- FIM DO NOVO ---
 
-        button: { padding: '12px', fontSize: '1em', background: 'var(--cor-primaria)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }, // MODIFICADO
-        error: { color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '10px' } // MODIFICADO
+        button: { padding: '12px', fontSize: '1em', background: 'var(--cor-primaria)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+        error: { color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '10px' }
     };
 
     return (
         <div style={loginStyles.container}>
             <div style={loginStyles.card}>
                 
-                {/* --- MODIFICADO DE H2 PARA H1 --- */}
                 <h1 style={loginStyles.h1}>Obraly</h1>
 
                 <form onSubmit={handleLogin} style={loginStyles.form}>
@@ -277,7 +274,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    // --- CORREÇÃO: Cálculos de gasto total (Pago + A Pagar) ---
     const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra');
     const totalGastoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
 
@@ -295,7 +291,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    {/* --- CORREÇÃO: Mostra Gasto Total vs Orçado --- */}
                     <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Gasto Total: {formatCurrency(totalGastoMO)})</p>
                     <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalGastoMat)}</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
@@ -360,7 +355,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
 // --- MODAIS DE ADMINISTRAÇÃO (Inalterados) ---
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
-    // ... (código inalterado) ...
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
@@ -428,7 +422,6 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
 };
 
 const AdminPanelModal = ({ allObras, onClose }) => {
-    // ... (código inalterado) ...
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -746,7 +739,6 @@ function Dashboard() {
             body: JSON.stringify(pagamento)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
-             // --- CORREÇÃO DO BUG: Apenas recarrega os dados ---
              e.target.reset(); 
              fetchObraData(obraSelecionada.id); 
         })
@@ -789,14 +781,13 @@ function Dashboard() {
                 <div className="lista-obras">
                     {obras.length > 0 ? (
                         
-                        // --- INÍCIO DA MODIFICAÇÃO NO .map() ---
                         obras.map(obra => (
                             <div key={obra.id} className="card-obra">
                                 
                                 {user.role === 'administrador' && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                        className="card-obra-delete-btn" // Classe CSS atualizada
+                                        className="card-obra-delete-btn"
                                         title="Excluir Obra"
                                     >
                                         🗑️
@@ -807,29 +798,24 @@ function Dashboard() {
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente || 'N/A'}</p>
                                     
-                                    {/* --- *** KPIs MODIFICADOS (Tela Inicial) *** --- */}
                                     <div className="obra-kpi-summary">
                                         <div>
                                             <span>Total Pago</span>
-                                            {/* Usamos obra.total_pago que veio do backend */}
-                                            <strong style={{ color: 'var(--cor-acento)' }}> {/* Verde */}
+                                            <strong style={{ color: 'var(--cor-acento)' }}>
                                                 {formatCurrency(obra.total_pago)}
                                             </strong>
                                         </div>
                                         <div>
                                             <span>Restante (Orçamento)</span>
-                                            {/* Usamos obra.total_a_pagar que veio do backend */}
                                             <strong style={{ color: 'var(--cor-vermelho)' }}>
                                                 {formatCurrency(obra.total_a_pagar)}
                                             </strong>
                                         </div>
                                     </div>
-                                    {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
 
                                 </div>
                             </div>
                         ))
-                        // --- FIM DA MODIFICAÇÃO NO .map() ---
 
                     ) : (
                         <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma. Fale com o administrador.</p>
@@ -889,13 +875,11 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- *** KPIs MODIFICADOS (4 CARDS) *** --- */}
+            {/* --- *** KPIs (REVERTIDO PARA 3 CARDS) *** --- */}
              {sumarios && (
                  <div className="kpi-grid">
                      <div className="kpi-card total-geral"><span>Total Comprometido (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
                      <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     {/* NOVO KPI "Liberado" */}
-                     <div className="kpi-card liberado-pagamento"><span>Liberado p/ Pagamento (A Pagar)</span><h2>{formatCurrency(sumarios.total_liberado_pagamento)}</h2></div>
                      {/* KPI VERMELHO MODIFICADO */}
                      <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
@@ -916,15 +900,11 @@ function Dashboard() {
                         
                         const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
                         
-                        // --- Totais de MO e Material (Pago + A Pagar) ---
-                        
-                        // Mão de Obra (Orçado)
                         const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
                         const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
                         const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
                         const progressoMO = valorGlobalMO > 0 ? (valorGastoTotalMO / valorGlobalMO) * 100 : 0;
 
-                        // Material (Somatório)
                         const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
                         const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                         
@@ -937,23 +917,19 @@ function Dashboard() {
                                     </div>
                                     <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                     
-                                    {/* Mão de Obra (Barra de Progresso) */}
                                     <div style={{marginTop: '10px'}}>
                                         <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
                                         <div className="progress-bar-container">
                                             <div className="progress-bar" style={{ width: `${progressoMO}%` }}></div>
                                         </div>
                                     </div>
-                                    {/* Material (Totalizador) */}
                                     <div style={{marginTop: '5px'}}>
                                         <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
                                         <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
-                                            {/* (Barra vazia, apenas para estética) */}
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {/* Formulário de Pagamento Rápido */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                         <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
