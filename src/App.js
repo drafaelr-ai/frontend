@@ -677,6 +677,52 @@ const ExportReportModal = ({ onClose }) => {
 };
 // ----------------------------------------------------
 
+// <--- NOVO MODAL PARA EDITAR APENAS A PRIORIDADE ---
+const EditPrioridadeModal = ({ item, onClose, onSave }) => {
+    const [prioridade, setPrioridade] = useState(0);
+
+    useEffect(() => {
+        if (item) {
+            setPrioridade(item.prioridade || 0);
+        }
+    }, [item]);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(parseInt(prioridade, 10));
+    };
+    
+    if (!item) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Editar Prioridade</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Item</label>
+                    <input type="text" value={item.descricao} readOnly disabled />
+                </div>
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Prioridade</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+// ----------------------------------------------------
+
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
@@ -699,9 +745,11 @@ function Dashboard() {
     const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
-    
-    // <--- MUDANÇA: State para recolher serviços
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
+
+    // <--- NOVO STATE PARA O MODAL DE PRIORIDADE
+    const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
+
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -728,7 +776,6 @@ function Dashboard() {
                 setServicos(servicosComPagamentosArray);
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
-                // Seta os orçamentos
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
@@ -789,7 +836,6 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // Correção: Usando 'lancamento_id'
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
@@ -850,7 +896,10 @@ function Dashboard() {
             setAddOrcamentoModalVisible(false);
             fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao salvar orçamento:", error));
+        .catch(error => {
+            console.error("Erro ao salvar orçamento:", error);
+            alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+        });
     };
     
     const handleAprovarOrcamento = (orcamentoId) => {
@@ -925,6 +974,27 @@ function Dashboard() {
              fetchObraData(obraSelecionada.id); 
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
+    };
+
+    // <--- NOVA FUNÇÃO PARA SALVAR PRIORIDADE DO SERVIÇO
+    const handleSaveServicoPrioridade = (novaPrioridade) => {
+        if (!editingServicoPrioridade) return;
+
+        const pagamentoId = editingServicoPrioridade.pagamento_id;
+        
+        fetchWithAuth(`${API_URL}/servicos/pagamentos/${pagamentoId}/prioridade`, {
+            method: 'PATCH',
+            body: JSON.stringify({ prioridade: novaPrioridade })
+        })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+            setEditingServicoPrioridade(null); // Fecha o modal
+            fetchObraData(obraSelecionada.id); // Recarrega os dados
+        })
+        .catch(error => {
+            console.error("Erro ao salvar prioridade do serviço:", error);
+            alert(`Erro ao salvar prioridade: ${error.message}`);
+        });
     };
 
 
@@ -1062,12 +1132,20 @@ function Dashboard() {
                                      obraId={obraSelecionada.id}
                                  />}
 
-            {/* Novo: Modal de Orçamentos */}
             {isAddOrcamentoModalVisible && (
                 <AddOrcamentoModal
                     onClose={() => setAddOrcamentoModalVisible(false)}
                     onSave={handleSaveOrcamento}
                     servicos={servicos}
+                />
+            )}
+
+            {/* <--- NOVO MODAL DE PRIORIDADE RENDERIZADO */}
+            {editingServicoPrioridade && (
+                <EditPrioridadeModal
+                    item={editingServicoPrioridade}
+                    onClose={() => setEditingServicoPrioridade(null)}
+                    onSave={handleSaveServicoPrioridade}
                 />
             )}
 
@@ -1088,8 +1166,6 @@ function Dashboard() {
                      <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
-             {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
-
 
             {/* Novo: Tabela de Orçamentos */}
             <div className="card-full">
@@ -1151,11 +1227,11 @@ function Dashboard() {
             </div>
 
 
-            {/* <--- MUDANÇA: Card de Serviços Colapsável --- */}
+            {/* Card de Serviços Colapsável */}
             <div className="card-full">
                  <div className="card-header">
                     <h3>Serviços (Planilha de Custos)</h3>
-                    <div className="header-actions"> {/* Agrupador para os botões */}
+                    <div className="header-actions">
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
                         )}
@@ -1238,7 +1314,6 @@ function Dashboard() {
                     </div> 
                 )}
             </div> 
-            {/* --- FIM DA MUDANÇA --- */}
 
             {/* --- Grid Principal (Apenas Lançamentos Gerais) --- */}
              {sumarios && sumarios.total_por_segmento_geral && (
@@ -1351,19 +1426,20 @@ function Dashboard() {
                                 </td>
                                 <td>{formatCurrency(item.valor)}</td>
                                 <td className="acoes-cell">
-                                    {item.tipo_registro === 'lancamento' ? (
-                                        <>
-                                            {(user.role === 'administrador' || user.role === 'master') && (
-                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar" > ✏️ </button>
-                                            )}
-                                            {user.role === 'administrador' && (
-                                                <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <span style={{fontSize: '0.85em', color: '#666'}}>
-                                            Ver no serviço
-                                        </span>
+                                    {/* <--- MUDANÇA: Lógica de Edição --- */}
+                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                        item.tipo_registro === 'lancamento' ? (
+                                            // Botão de Edição Completa para Lançamentos
+                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                        ) : (
+                                            // Botão de Edição de Prioridade para Pag. Serviço
+                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                        )
+                                    ) : null}
+
+                                    {/* Botão de Deletar (apenas para Lançamentos e Admins) */}
+                                    {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
+                                        <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
                                     )}
                                 </td>
                             </tr>
