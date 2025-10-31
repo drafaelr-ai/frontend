@@ -847,8 +847,13 @@ function Dashboard() {
             setAddOrcamentoModalVisible(false);
             fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao salvar orçamento:", error));
-    };
+        .catch(error => {
+            console.error("Erro ao salvar orçamento:", error);
+            // <--- MUDANÇA AQUI
+            alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+        });
+};
+
     
     const handleAprovarOrcamento = (orcamentoId) => {
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
