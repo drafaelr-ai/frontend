@@ -807,7 +807,7 @@ function Dashboard() {
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente || 'N/A'}</p>
                                     
-                                    {/* --- *** KPIs MODIFICADOS *** --- */}
+                                    {/* --- *** KPIs MODIFICADOS (Tela Inicial) *** --- */}
                                     <div className="obra-kpi-summary">
                                         <div>
                                             <span>Total Pago</span>
@@ -817,7 +817,7 @@ function Dashboard() {
                                             </strong>
                                         </div>
                                         <div>
-                                            <span>Em Aberto</span>
+                                            <span>Restante (Orçamento)</span>
                                             {/* Usamos obra.total_a_pagar que veio do backend */}
                                             <strong style={{ color: 'var(--cor-vermelho)' }}>
                                                 {formatCurrency(obra.total_a_pagar)}
@@ -889,14 +889,18 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- KPIs (Esta parte está correta para sua lógica) --- */}
+            {/* --- *** KPIs MODIFICADOS (4 CARDS) *** --- */}
              {sumarios && (
                  <div className="kpi-grid">
-                     <div className="kpi-card total-geral"><span>Total Geral (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
-                     <div className="kpi-card total-pago"><span>Total Pago (Todos)</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     <div className="kpi-card total-a-pagar"><span>Total em Aberto (A Pagar)</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2></div>
+                     <div className="kpi-card total-geral"><span>Total Comprometido (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
+                     <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
+                     {/* NOVO KPI "Liberado" */}
+                     <div className="kpi-card liberado-pagamento"><span>Liberado p/ Pagamento (A Pagar)</span><h2>{formatCurrency(sumarios.total_liberado_pagamento)}</h2></div>
+                     {/* KPI VERMELHO MODIFICADO */}
+                     <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
+             {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
 
 
             {/* --- Serviços (ex-Empreitadas) --- */}

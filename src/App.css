@@ -1,5 +1,3 @@
-/* Substitua todo o conteúdo do App.css por este */
-
 :root {
     /* NOVA PALETA "OBRALY" */
     --cor-fundo: #f4f7f6; /* Um cinza muito claro e limpo */
@@ -16,6 +14,7 @@
     /* Cores de Status */
     --cor-vermelho: #ef4444; /* Vermelho mais moderno */
     --cor-info: #3b82f6; /* Azul para informação */
+    --cor-aviso: #f59e0b; /* NOVO: Laranja/Amarelo para "Liberado" */
 
     /* Sombra moderna */
     --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
@@ -97,6 +96,7 @@ body {
 .kpi-card.total-geral { background: var(--cor-primaria); } /* Índigo */
 .kpi-card.total-pago { background: var(--cor-acento); } /* Verde */
 .kpi-card.total-a-pagar { background: var(--cor-vermelho); }
+.kpi-card.liberado-pagamento { background: var(--cor-aviso); } /* NOVO */
 
 .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
 .card-main, .card-full { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); margin-bottom: 20px; }
