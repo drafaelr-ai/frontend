@@ -723,19 +723,24 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
+    // ...dentro de function Dashboard()
+    // ...dentro de function Dashboard()
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
             valor: parseFloat(updatedLancamento.valor) || 0,
             servico_id: updatedLancamento.servico_id || null 
         };
-        fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
+        // V CORREÇÃO AQUI v
+        fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.lancamento_id}`, { // <--- CORRIGIDO
             method: 'PUT',
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
+// ...
+// ...
     
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
@@ -1094,10 +1099,14 @@ function Dashboard() {
                                     )}
                                 </td>
                                 <td>{item.tipo}</td>
-                                
-                                {/* MUDANÇA: Nova célula de Prioridade */}
+                            
+                                {/* MUDANÇA: Nova célula de Prioridade (agora condicional) */}
                                 <td className="status-cell">
-                                    <PrioridadeBadge prioridade={item.prioridade} />
+                                    {item.status === 'A Pagar' ? (
+                                        <PrioridadeBadge prioridade={item.prioridade} />
+                                    ) : (
+                                        <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
+                                    )}
                                 </td>
 
                                 <td className="status-cell">
