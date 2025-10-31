@@ -672,8 +672,13 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
+    // --- MUDANÇA: handleSaveEdit agora envia servico_id ---
     const handleSaveEdit = (updatedLancamento) => {
-        const dataToSend = { ...updatedLancamento, valor: parseFloat(updatedLancamento.valor) || 0 };
+        const dataToSend = { 
+            ...updatedLancamento, 
+            valor: parseFloat(updatedLancamento.valor) || 0,
+            servico_id: updatedLancamento.servico_id || null // Garante que é null se for vazio
+        };
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -682,6 +687,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
     
+    // --- MUDANÇA: handleSaveLancamento agora passa objeto ---
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
@@ -717,6 +723,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
+    // --- MUDANÇA: handleAddPagamentoServico agora aceita data ---
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -832,7 +839,6 @@ function Dashboard() {
                 />
             )}
             
-            {/* --- MUDANÇA: Modal "Novo Gasto" agora aceita serviços e data --- */}
             {isAddLancamentoModalVisible && (
                 <AddLancamentoModal
                     onClose={() => setAddLancamentoModalVisible(false)}
@@ -895,8 +901,7 @@ function Dashboard() {
                                 <div onClick={() => setViewingServico(serv)}>
                                     <div className="empreitada-header">
                                         <h4>{serv.nome}</h4>
-                                        {/* Mostra o valor total ORÇADO (só MO) */}
-                                        <span>{formatCurrency(valorGlobalMO)}</span>
+                                        <span>Orçado (MO): {formatCurrency(valorGlobalMO)}</span>
                                     </div>
                                     <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                     
@@ -1219,3 +1224,5 @@ function App() {
         </AuthContext.Provider>
     );
 }
+
+export default App;
