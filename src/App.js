@@ -173,7 +173,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// Modal de Edição (com Prioridade)
+// <--- MUDANÇA: Modal de Edição (com Fornecedor)
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -190,6 +190,10 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
              }
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
              initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
+             
+             // <--- MUDANÇA: Adicionado Fornecedor
+             initialData.fornecedor = initialData.fornecedor || ''; 
+
              setFormData(initialData);
          } else {
              setFormData({});
@@ -216,7 +220,8 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         const dataToSend = {
             ...formData,
             servico_id: formData.servico_id || null,
-            prioridade: parseInt(formData.prioridade, 10) || 0
+            prioridade: parseInt(formData.prioridade, 10) || 0,
+            fornecedor: formData.fornecedor || null // <--- MUDANÇA
         };
         onSave(dataToSend); 
     };
@@ -233,6 +238,13 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 </div>
                 
                 <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
+                
+                {/* <--- MUDANÇA: Adicionado campo Fornecedor */}
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
+                </div>
+
                 <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                 <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required /></div>
                 
@@ -345,6 +357,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                             <tr>
                                 <th>Data</th>
                                 <th>Tipo</th>
+                                <th>Fornecedor</th> {/* <--- MUDANÇA */}
                                 <th>Valor</th>
                                 <th>Status</th>
                                 {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
@@ -356,6 +369,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                     <tr key={pag.id}>
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
                                         <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
+                                        <td>{pag.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
                                             <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-acento)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
@@ -371,7 +385,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                 ))
                              ) : (
                                 <tr>
-                                    <td colSpan={user.role === 'administrador' ? 5 : 4} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
+                                    <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -749,7 +763,7 @@ function Dashboard() {
     // State para o novo modal de Prioridade
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
 
-    // <--- CORREÇÃO: useMemo movido para o topo da função
+    // Filtros de 'A Pagar' e 'Pagos'
     const itemsAPagar = useMemo(() => 
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
         [historicoUnificado]
@@ -758,7 +772,6 @@ function Dashboard() {
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
         [historicoUnificado]
     );
-    // --- FIM DA CORREÇÃO ---
 
 
     // Efeito para buscar obras
@@ -956,7 +969,7 @@ function Dashboard() {
             });
     };
 
-    // Handler de Pagamento de Serviço (com Prioridade)
+    // <--- MUDANÇA: Handler de Pagamento de Serviço (com Fornecedor)
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -964,6 +977,7 @@ function Dashboard() {
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
         const prioridadePagamento = e.target.prioridadePagamento.value; 
+        const fornecedor = e.target.fornecedor.value; // <--- MUDANÇA
         
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
@@ -972,7 +986,8 @@ function Dashboard() {
             data: dataPagamento, 
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
-            prioridade: parseInt(prioridadePagamento, 10) || 0 
+            prioridade: parseInt(prioridadePagamento, 10) || 0,
+            fornecedor: fornecedor || null // <--- MUDANÇA
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
         fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
@@ -1288,9 +1303,11 @@ function Dashboard() {
                                         </div>
                                     </div>
                                     
+                                    {/* <--- MUDANÇA: Adicionado campo Fornecedor ao form inline */}
                                     {(user.role === 'administrador' || user.role === 'master') && (
                                         <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                             <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
+                                            <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.5}} />
                                             <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
                                             
                                             <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
@@ -1321,7 +1338,7 @@ function Dashboard() {
                 )}
             </div> 
 
-            {/* <--- MUDANÇA: Nova Tabela de Pendências --- */}
+            {/* Tabela de Pendências (A Pagar) */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Pendências (A Pagar)</h3>
@@ -1343,6 +1360,7 @@ function Dashboard() {
                         <tr>
                             <th>Data</th>
                             <th>Descrição</th>
+                            <th>Fornecedor</th> {/* <--- MUDANÇA */}
                             <th>Segmento</th>
                             <th>Prior.</th>
                             <th>Status</th>
@@ -1362,6 +1380,7 @@ function Dashboard() {
                                         </span>
                                     )}
                                 </td>
+                                <td>{item.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
                                 <td>{item.tipo}</td>
                                 <td className="status-cell">
                                     <PrioridadeBadge prioridade={item.prioridade} />
@@ -1395,7 +1414,7 @@ function Dashboard() {
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td>
+                                <td colSpan="8" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td> {/* <--- MUDANÇA (colspan=8) */}
                             </tr>
                         )}
                     </tbody>
@@ -1404,13 +1423,12 @@ function Dashboard() {
             {/* --- FIM DA NOVA TABELA --- */}
 
 
-            {/* <--- MUDANÇA: Tabela de Histórico (agora somente Pagos) --- */}
+            {/* Tabela de Histórico (agora somente Pagos) */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Histórico de Pagamentos (Pagos)</h3>
                     <div className="header-actions">
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
-                        {/* Botão de PDF movido para a tabela de pendências */}
                     </div>
                 </div>
                 <table className="tabela-historico">
@@ -1418,6 +1436,7 @@ function Dashboard() {
                         <tr>
                             <th>Data</th>
                             <th>Descrição</th>
+                            <th>Fornecedor</th> {/* <--- MUDANÇA */}
                             <th>Segmento</th>
                             <th>Prior.</th>
                             <th>Status</th>
@@ -1437,6 +1456,7 @@ function Dashboard() {
                                         </span>
                                     )}
                                 </td>
+                                <td>{item.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
                                 <td>{item.tipo}</td>
                                 <td className="status-cell">
                                     <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
@@ -1471,24 +1491,22 @@ function Dashboard() {
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan="7" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td>
+                                <td colSpan="8" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td> {/* <--- MUDANÇA (colspan=8) */}
                             </tr>
                         )}
                     </tbody>
                 </table>
             </div>
-            {/* --- FIM DA MUDANÇA --- */}
         </div>
     );
 }
 
-// --- NOVO: Modal "Adicionar Serviço" ---
+// Modal "Adicionar Serviço"
 const AddServicoModal = ({ onClose, onSave }) => {
-    // Campos do formulário
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
-    const [valorMO, setValorMO] = useState(0); // Apenas Mão de Obra
+    const [valorMO, setValorMO] = useState(0); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1537,15 +1555,16 @@ const AddServicoModal = ({ onClose, onSave }) => {
     );
 };
 
-// --- NOVO: Modal "Adicionar Gasto Geral" (com Prioridade) ---
+// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (com Fornecedor) ---
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
+    const [fornecedor, setFornecedor] = useState(''); // <--- MUDANÇA
     const [pix, setPix] = useState('');
     const [valor, setValor] = useState(0);
-    const [tipo, setTipo] = useState('Material'); // Padrão Material
+    const [tipo, setTipo] = useState('Material');
     const [status, setStatus] = useState('A Pagar');
-    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+    const [servicoId, setServicoId] = useState('');
     const [prioridade, setPrioridade] = useState(0); 
 
     const handleSubmit = (e) => {
@@ -1553,6 +1572,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
         onSave({
             data,
             descricao,
+            fornecedor: fornecedor || null, // <--- MUDANÇA
             pix: pix || null,
             valor: parseFloat(valor) || 0,
             tipo,
@@ -1571,6 +1591,13 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                     <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
                 </div>
                 <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
+                
+                {/* <--- MUDANÇA: Campo Fornecedor Adicionado */}
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                </div>
+
                 <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
                 <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
                 
@@ -1615,14 +1642,14 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// --- NOVO: Modal "Adicionar Orçamento" ---
+// Modal "Adicionar Orçamento"
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
     const [valor, setValor] = useState(0);
     const [dadosPagamento, setDadosPagamento] = useState('');
-    const [tipo, setTipo] = useState('Material'); // Padrão Material
-    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+    const [tipo, setTipo] = useState('Material'); 
+    const [servicoId, setServicoId] = useState(''); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
