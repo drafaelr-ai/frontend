@@ -4,7 +4,7 @@ import './App.css';
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
-// # <--- MUDANÇA AQUI (Novo Componente Helper)
+// # <--- MUDANÇA (Novo Componente Helper)
 // Helper para exibir a prioridade
 const PrioridadeBadge = ({ prioridade }) => {
     let p = parseInt(prioridade, 10) || 0;
@@ -175,7 +175,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// # <--- MUDANÇA AQUI (Modal de Edição)
+// # <--- MUDANÇA (Modal de Edição com Prioridade)
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -407,7 +407,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 };
 
 
-// --- MODAIS DE ADMINISTRAÇÃO (Inalterados) ---
+// --- MODAIS DE ADMINISTRAÇÃO ---
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
@@ -622,6 +622,45 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 };
 // ----------------------------------------------------
 
+// # <--- MUDANÇA (Novo Modal de Exportação)
+// --- NOVO: Modal "Exportar Relatório Geral" ---
+const ExportReportModal = ({ onClose }) => {
+    const [selectedPriority, setSelectedPriority] = useState('todas');
+
+    const handleGenerate = () => {
+        // Abre o link da API com o filtro de prioridade
+        window.open(`${API_URL}/export/pdf_pendentes_todas_obras?prioridade=${selectedPriority}`);
+        onClose(); // Fecha o modal
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Exportar Relatório Geral de Pendências</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
+                <div className="form-group">
+                    <label>Filtrar por Prioridade</label>
+                    <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
+                        <option value="todas">Todas as Pendências</option>
+                        <option value="5">Prioridade 5 (Urgente)</option>
+                        <option value="4">Prioridade 4</option>
+                        <option value="3">Prioridade 3 (Média)</option>
+                        <option value="2">Prioridade 2</option>
+                        <option value="1">Prioridade 1</option>
+                        <option value="0">Prioridade 0 (Nenhuma)</option>
+                    </select>
+                </div>
+                
+                <div className="form-actions" style={{ marginTop: '30px' }}>
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn pdf">Gerar PDF</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+// ----------------------------------------------------
+// --- FIM DA MUDANÇA ---
+
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
@@ -638,6 +677,10 @@ function Dashboard() {
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingServico, setViewingServico] = useState(null);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
+
+    // # <--- MUDANÇA (Novo State para o Modal de Exportação)
+    const [isExportModalVisible, setExportModalVisible] = useState(false);
+    // --- FIM DA MUDANÇA ---
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -723,8 +766,7 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // ...dentro de function Dashboard()
-    // ...dentro de function Dashboard()
+    // # <--- MUDANÇA (Correção no handleSaveEdit)
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
@@ -739,8 +781,7 @@ function Dashboard() {
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
-// ...
-// ...
+    // --- FIM DA MUDANÇA ---
     
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
@@ -777,7 +818,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // # <--- MUDANÇA AQUI (Item D - Lógica da Função)
+    // # <--- MUDANÇA (Lógica da Função com Prioridade)
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -814,6 +855,7 @@ function Dashboard() {
 
     // --- RENDERIZAÇÃO ---
     
+    // # <--- MUDANÇA (Tela de Obras com Botão de Exportar)
     // TELA DE SELEÇÃO DE OBRAS
     if (!obraSelecionada) {
         return (
@@ -823,9 +865,24 @@ function Dashboard() {
                     onClose={() => setAdminPanelVisible(false)} 
                 />}
                 
+                {/* MUDANÇA: Renderiza o novo modal de exportação */}
+                {isExportModalVisible && <ExportReportModal 
+                    onClose={() => setExportModalVisible(false)} 
+                />}
+                
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
+                    
+                        {/* MUDANÇA: Adiciona o novo botão de Relatório */}
+                        <button 
+                            onClick={() => setExportModalVisible(true)} 
+                            className="export-btn pdf" 
+                            style={{marginRight: '10px'}}
+                        >
+                            Relatório Geral de Pendências
+                        </button>
+                        
                         {user.role === 'administrador' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
                                 Gerenciar Usuários
@@ -891,6 +948,7 @@ function Dashboard() {
             </div>
         );
     }
+    // --- FIM DA MUDANÇA ---
 
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
@@ -917,7 +975,7 @@ function Dashboard() {
                 />
             )}
             
-            {/* # <--- MUDANÇA AQUI (Modal de Adicionar Gasto) --- */}
+            {/* # <--- MUDANÇA (Modal de Adicionar Gasto) --- */}
             {isAddLancamentoModalVisible && (
                 <AddLancamentoModal
                     onClose={() => setAddLancamentoModalVisible(false)}
@@ -999,7 +1057,7 @@ function Dashboard() {
                                     </div>
                                 </div>
                                 
-                                {/* # <--- MUDANÇA AQUI (Item D - Formulário Inline) --- */}
+                                {/* # <--- MUDANÇA (Formulário Inline com Prioridade) --- */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                         <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
@@ -1062,7 +1120,7 @@ function Dashboard() {
              )}
 
 
-            {/* # <--- MUDANÇA AQUI (Item E - Tabela de Histórico) --- */}
+            {/* # <--- MUDANÇA (Tabela de Histórico com Prioridade Condicional) --- */}
             <div className="card-full">
                 <div className="card-header"><h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
                     <div className="header-actions">
@@ -1099,7 +1157,7 @@ function Dashboard() {
                                     )}
                                 </td>
                                 <td>{item.tipo}</td>
-                            
+                                
                                 {/* MUDANÇA: Nova célula de Prioridade (agora condicional) */}
                                 <td className="status-cell">
                                     {item.status === 'A Pagar' ? (
@@ -1222,7 +1280,7 @@ const AddServicoModal = ({ onClose, onSave }) => {
     );
 };
 
-// # <--- MUDANÇA AQUI (Modal de Adicionar Gasto) ---
+// # <--- MUDANÇA (Modal de Adicionar Gasto com Prioridade) ---
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
