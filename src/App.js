@@ -50,6 +50,7 @@ const useAuth = () => useContext(AuthContext);
 
 // --- COMPONENTE DE LOGIN ---
 const LoginScreen = () => {
+    // ... (Código do LoginScreen inalterado) ...
     const { login } = useAuth(); 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -82,7 +83,6 @@ const LoginScreen = () => {
         });
     };
 
-    // (Estilos do Login... inalterados)
     const loginStyles = {
         container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f2f5' },
         card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', minWidth: '300px' },
@@ -134,9 +134,10 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
-    // ... (código inalterado)
+// --- MUDANÇA: Modal de Lançamento agora aceita lista de serviços e data ---
+const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
+    
     useEffect(() => {
          if (lancamento) {
              const initialData = { ...lancamento };
@@ -148,22 +149,62 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
                      initialData.data = '';
                  }
              }
+             // Garante que servico_id seja nulo ou número
+             initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
+
              setFormData(initialData);
          } else {
              setFormData({});
          }
      }, [lancamento]);
-    const handleChange = (e) => { const { name, value } = e.target; const finalValue = name === 'valor' ? parseFloat(value) || 0 : value; setFormData(prev => ({ ...prev, [name]: finalValue })); };
-    const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
+
+    const handleChange = (e) => { 
+        const { name, value } = e.target; 
+        let finalValue = value;
+        if (name === 'valor') {
+            finalValue = parseFloat(value) || 0;
+        }
+        if (name === 'servico_id') {
+            finalValue = value ? parseInt(value, 10) : ''; // Guarda como número ou string vazia
+        }
+        setFormData(prev => ({ ...prev, [name]: finalValue })); 
+    };
+    
+    const handleSubmit = (e) => { 
+        e.preventDefault(); 
+        const dataToSend = {
+            ...formData,
+            servico_id: formData.servico_id || null // Envia null se estiver vazio
+        };
+        onSave(dataToSend); 
+    };
+    
     if (!lancamento) return null;
+
     return (
         <Modal onClose={onClose}>
             <h2>Editar Lançamento</h2>
             <form onSubmit={handleSubmit}>
-                <div className="form-group"><label>Data</label><input type="date" name="data" value={formData.data || ''} onChange={handleChange} required /></div>
+                {/* --- MUDANÇA: Campo de Data --- */}
+                <div className="form-group">
+                    <label>Data</label>
+                    <input type="date" name="data" value={formData.data || ''} onChange={handleChange} required />
+                </div>
+                
                 <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
                 <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                 <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required /></div>
+                
+                {/* --- MUDANÇA: Campo Vincular ao Serviço --- */}
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="form-group"><label>Tipo/Segmento</label>
                     <select name="tipo" value={formData.tipo || 'Mão de Obra'} onChange={handleChange} required>
                         <option>Mão de Obra</option>
@@ -179,8 +220,9 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave }) => {
     );
 };
 
-// --- MUDANÇA: Modal de Empreitada renomeado para Servico ---
+// --- MUDANÇA: Modal de Serviço (ex-Empreitada) ---
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
+    // ... (Código de permissão e estado inalterado) ...
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
@@ -190,7 +232,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
              setFormData({
                  ...servico,
                  valor_global_mao_de_obra: servico.valor_global_mao_de_obra || 0,
-                 valor_global_material: servico.valor_global_material || 0,
              });
          } else {
              setFormData({});
@@ -199,14 +240,14 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     const handleChange = (e) => { 
         const { name, value } = e.target; 
-        const finalValue = (name === 'valor_global_mao_de_obra' || name === 'valor_global_material') ? parseFloat(value) || 0 : value; 
+        const finalValue = (name === 'valor_global_mao_de_obra') ? parseFloat(value) || 0 : value; 
         setFormData(prev => ({ ...prev, [name]: finalValue })); 
     };
     
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
 
     const handleDeletarPagamento = (pagamentoId) => {
-        // --- MUDANÇA: Rota atualizada ---
+        // ... (código inalterado) ...
         fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
@@ -217,7 +258,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
     };
 
     const handleDeletarServico = () => {
-        // --- MUDANÇA: Rota atualizada ---
+        // ... (código inalterado) ...
         fetchWithAuth(`${API_URL}/servicos/${servico.id}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
         .then(() => {
@@ -229,12 +270,12 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    // --- MUDANÇA: Cálculos de pagamento separados por tipo ---
+    // Cálculos de pagamento (agora inclui gastos vinculados)
     const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
+    const totalPagoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
+
     const pagamentosMat = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
-    
-    const totalPagoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0);
-    const totalPagoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0);
+    const totalPagoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
 
     return (
         <Modal onClose={onClose}>
@@ -247,16 +288,17 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    <p><strong>Valor Total Mão de Obra:</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Pago: {formatCurrency(totalPagoMO)})</p>
-                    <p><strong>Valor Total Material:</strong> {formatCurrency(servico.valor_global_material)} (Pago: {formatCurrency(totalPagoMat)})</p>
+                    {/* --- MUDANÇA: Mostra apenas o orçado de MO e o total gasto de Material --- */}
+                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Pago: {formatCurrency(totalPagoMO)})</p>
+                    <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalPagoMat)}</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
-                    <h3>Histórico de Pagamentos</h3>
+                    <h3>Histórico de Pagamentos (do Serviço)</h3>
                     <table className="tabela-pagamentos" style={{width: '100%'}}>
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Tipo</th> {/* NOVO */}
+                                <th>Tipo</th>
                                 <th>Valor</th>
                                 <th>Status</th>
                                 {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
@@ -267,7 +309,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                 servico.pagamentos.map((pag) => (
                                     <tr key={pag.id}>
                                         <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
-                                        <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td> {/* NOVO */}
+                                        <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
                                             <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-verde)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
@@ -283,7 +325,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                 ))
                              ) : (
                                 <tr>
-                                    <td colSpan={user.role === 'administrador' ? 5 : 4} style={{textAlign: 'center'}}>Nenhum pagamento realizado.</td>
+                                    <td colSpan={user.role === 'administrador' ? 5 : 4} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -299,9 +341,8 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <h2>Editar Serviço</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    {/* --- MUDANÇA: Campos de valor separados --- */}
-                    <div className="form-group"><label>Valor Mão de Obra (R$)</label><input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Valor Material (R$)</label><input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || 0} onChange={handleChange} required /></div>
+                    {/* --- MUDANÇA: Apenas MO é editável --- */}
+                    <div className="form-group"><label>Valor Orçado - Mão de Obra (R$)</label><input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                     <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
                 </form>
@@ -313,7 +354,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
 // --- MODAIS DE ADMINISTRAÇÃO (Inalterados) ---
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
-    // ... (código inalterado)
+    // ... (código inalterado) ...
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
@@ -381,7 +422,7 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
 };
 
 const AdminPanelModal = ({ allObras, onClose }) => {
-    // ... (código inalterado)
+    // ... (código inalterado) ...
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -532,36 +573,25 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
-
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
-    // --- MUDANÇA: 'empreitadas' -> 'servicos' ---
-    const [servicos, setServicos] = useState([]);
+    const [servicos, setServicos] = useState([]); // <-- MUDANÇA
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-
-    // Modais do Dashboard
     const [editingLancamento, setEditingLancamento] = useState(null);
-    // --- MUDANÇA: 'AddEmpreitada' -> 'AddServico' ---
-    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false);
+    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false); // <-- MUDANÇA
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
-    const [viewingServico, setViewingServico] = useState(null);
-    
-    // Modal de Admin
+    const [viewingServico, setViewingServico] = useState(null); // <-- MUDANÇA
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
-
 
     // Efeito para buscar obras
     useEffect(() => {
         console.log("Buscando lista de obras...");
         fetchWithAuth(`${API_URL}/obras`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
-            .then(data => {
-                console.log("Obras recebidas:", data);
-                setObras(Array.isArray(data) ? data : []);
-            })
+            .then(data => { console.log("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
             .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
     }, []); 
 
@@ -588,25 +618,16 @@ function Dashboard() {
     };
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
-
     const handleAddObra = (e) => {
-        // ... (código inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
-        fetchWithAuth(`${API_URL}/obras`, {
-            method: 'POST',
-            body: JSON.stringify({ nome, cliente })
-        })
+        fetchWithAuth(`${API_URL}/obras`, { method: 'POST', body: JSON.stringify({ nome, cliente }) })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(novaObra => {
-            setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome)));
-            e.target.reset();
-        })
+        .then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); })
         .catch(error => console.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
-        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
@@ -625,27 +646,19 @@ function Dashboard() {
         } else if (isServicoPag) {
             url = `${API_URL}/servicos/pagamentos/${actualId}/status`;
         } else {
-            return; // ID desconhecido
+            return; 
         }
 
         console.log("Alternando status para:", itemId);
         fetchWithAuth(url, { method: 'PATCH' })
-             .then(res => {
-                 if (!res.ok) {
-                     return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
-                 }
-                 return res.json();
-             })
-             .then(() => fetchObraData(obraSelecionada.id)) // Recarrega tudo
+             .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+             .then(() => fetchObraData(obraSelecionada.id))
              .catch(error => console.error("Erro ao marcar como pago:", error));
     };
 
-
     const handleDeletarLancamento = (itemId) => {
-         // Esta função agora só lida com 'lanc-'
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
-
         if (isLancamento) {
             console.log("Deletando lançamento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
@@ -653,19 +666,13 @@ function Dashboard() {
                 .then(() => { fetchObraData(obraSelecionada.id); })
                 .catch(error => console.error('Erro ao deletar lançamento:', error));
         }
-        // Deleção de pagamentos de serviço é feita no ServicoDetailsModal
     };
     
     const handleEditLancamento = (item) => {
-        // Esta função só lida com lançamentos
-        if (item.tipo_registro === 'lancamento') { 
-            setEditingLancamento(item); 
-        }
-        // Edição de serviços é feita no ServicoDetailsModal
+        if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
     const handleSaveEdit = (updatedLancamento) => {
-        // ... (código inalterado)
         const dataToSend = { ...updatedLancamento, valor: parseFloat(updatedLancamento.valor) || 0 };
         fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.id}`, {
             method: 'PUT',
@@ -675,14 +682,8 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
     
-    const handleSaveLancamento = (e) => {
-        // ... (código inalterado)
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const lancamentoData = Object.fromEntries(formData.entries());
-        lancamentoData.data = getTodayString();
-        lancamentoData.valor = parseFloat(lancamentoData.valor) || 0;
-        lancamentoData.pix = lancamentoData.pix || null;
+    const handleSaveLancamento = (lancamentoData) => {
+        console.log("Salvando novo lançamento:", lancamentoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
@@ -691,79 +692,54 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar lançamento:", error));
     };
 
-    // --- MUDANÇA: 'handleSaveEmpreitada' -> 'handleSaveServico' ---
     const handleSaveServico = (servicoData) => {
         console.log("Salvando novo serviço:", servicoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos`, {
             method: 'POST',
             body: JSON.stringify(servicoData)
-        }).then(res => {
-             if (!res.ok) {
-                 return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido ao salvar serviço') });
-             }
-             return res.json();
-        })
-        .then(() => {
-            setAddServicoModalVisible(false);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar serviço:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => { setAddServicoModalVisible(false); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar serviço:", error));
     };
 
-    // --- MUDANÇA: 'handleSaveEditEmpreitada' -> 'handleSaveEditServico' ---
     const handleSaveEditServico = (updatedServico) => {
         const dataToSend = {
             ...updatedServico,
             valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
-            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0,
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
-        console.log("Salvando edição do serviço:", dataToSend.id);
         fetchWithAuth(`${API_URL}/servicos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
-        }).then(res => {
-            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } 
-            return res.json();
-        })
-        .then(() => {
-            setViewingServico(null);
-            fetchObraData(obraSelecionada.id);
-        }).catch(error => console.error("Erro ao salvar edição do serviço:", error));
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => { setViewingServico(null); fetchObraData(obraSelecionada.id); })
+        .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // --- MUDANÇA: 'handleAddPagamentoParcial' -> 'handleAddPagamentoServico' ---
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
         const statusPagamento = e.target.statusPagamento.value;
-        const tipoPagamento = e.target.tipoPagamento.value; // NOVO
+        const tipoPagamento = e.target.tipoPagamento.value;
+        const dataPagamento = e.target.dataPagamento.value; // <-- Data personalizada
         
-        if (!valorPagamento || !tipoPagamento) return;
+        if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
         const pagamento = {
             valor: parseFloat(valorPagamento) || 0,
-            data: getTodayString(),
+            data: dataPagamento, // <-- Data personalizada
             status: statusPagamento,
-            tipo_pagamento: tipoPagamento // NOVO
+            tipo_pagamento: tipoPagamento
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
         fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
             method: 'POST',
             body: JSON.stringify(pagamento)
-        }).then(res => {
-            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); }
-            return res.json(); 
-        })
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then((servicoAtualizado) => {
-             setServicos(prevServicos =>
-                 prevServicos.map(serv =>
-                     serv.id === servicoId ? servicoAtualizado : serv
-                 )
-             );
-             if (viewingServico && viewingServico.id === servicoId) {
-                 setViewingServico(servicoAtualizado);
-             }
+             setServicos(prevServicos => prevServicos.map(serv => serv.id === servicoId ? servicoAtualizado : serv));
+             if (viewingServico && viewingServico.id === servicoId) { setViewingServico(servicoAtualizado); }
              e.target.reset(); 
              fetchObraData(obraSelecionada.id);
         })
@@ -772,7 +748,7 @@ function Dashboard() {
 
     // --- RENDERIZAÇÃO ---
     
-    // TELA DE SELEÇÃO DE OBRAS (Inalterada)
+    // TELA DE SELEÇÃO DE OBRAS
     if (!obraSelecionada) {
         return (
             <div className="container">
@@ -834,15 +810,21 @@ function Dashboard() {
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
 
-    const pagamentosPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : []).filter(l => l.status === 'A Pagar');
+    // Filtra apenas pagamentos "A Pagar" de Lançamentos Gerais (não vinculados)
+    const pagamentosPendentesGerais = (Array.isArray(lancamentos) ? lancamentos : [])
+        .filter(l => l.status === 'A Pagar' && !l.servico_id);
 
     // TELA PRINCIPAL DO DASHBOARD
     return (
         <div className="dashboard-container">
             {/* --- Modais --- */}
-            {editingLancamento && <EditLancamentoModal lancamento={editingLancamento} onClose={() => setEditingLancamento(null)} onSave={handleSaveEdit} />}
+            {editingLancamento && <EditLancamentoModal 
+                lancamento={editingLancamento} 
+                onClose={() => setEditingLancamento(null)} 
+                onSave={handleSaveEdit}
+                servicos={servicos} // <-- Passa a lista de serviços para o modal
+            />}
             
-            {/* --- MUDANÇA: Modal de "AddServico" --- */}
             {isAddServicoModalVisible && (
                 <AddServicoModal
                     onClose={() => setAddServicoModalVisible(false)}
@@ -850,26 +832,15 @@ function Dashboard() {
                 />
             )}
             
+            {/* --- MUDANÇA: Modal "Novo Gasto" agora aceita serviços e data --- */}
             {isAddLancamentoModalVisible && (
-                <Modal onClose={() => setAddLancamentoModalVisible(false)}>
-                    <h2>Adicionar Novo Gasto</h2>
-                    <form onSubmit={handleSaveLancamento}>
-                        <div className="form-group"><label>Descrição</label><input type="text" name="descricao" required /></div>
-                        <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" /></div>
-                        <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" required /></div>
-                        <div className="form-group"><label>Tipo/Segmento</label>
-                            <select name="tipo" defaultValue="Mão de Obra" required>
-                                <option>Mão de Obra</option>
-                                <option>Serviço</option>
-                                <option>Material</option>
-                                <option>Equipamentos</option>
-                            </select>
-                        </div>
-                        <div className="form-group"><label>Status</label><select name="status" defaultValue="A Pagar" required><option>A Pagar</option><option>Pago</option></select></div>
-                        <div className="form-actions"><button type="button" onClick={() => setAddLancamentoModalVisible(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-                    </form>
-                </Modal>
+                <AddLancamentoModal
+                    onClose={() => setAddLancamentoModalVisible(false)}
+                    onSave={handleSaveLancamento}
+                    servicos={servicos} // <-- Passa a lista de serviços
+                />
             )}
+            
              {viewingServico && <ServicoDetailsModal
                                      servico={viewingServico}
                                      onClose={() => setViewingServico(null)}
@@ -877,7 +848,6 @@ function Dashboard() {
                                      fetchObraData={fetchObraData}
                                      obraId={obraSelecionada.id}
                                  />}
-
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
@@ -888,17 +858,16 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* --- KPIs --- */}
+            {/* --- KPIs (Simplificados) --- */}
              {sumarios && (
                  <div className="kpi-grid">
-                     <div className="kpi-card total-geral"><span>Total Geral</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
-                     <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     <div className="kpi-card total-a-pagar"><span>Total a Pagar</span><h2>{formatCurrency(sumarios.total_a_pagar)}</h2><small>{pagamentosPendentesGerais.length} pendência(s) gerais</small></div>
+                     <div className="kpi-card total-pago"><span>Total Pago (Todos)</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
+                     {/* KPIs de Total Geral e A Pagar foram removidos por complexidade, como discutido */}
                  </div>
              )}
 
 
-            {/* --- MUDANÇA: 'Empreitadas' -> 'Serviços' --- */}
+            {/* --- Serviços (ex-Empreitadas) --- */}
             <div className="card-full">
                  <div className="card-header">
                     <h3>Serviços (Planilha de Custos)</h3>
@@ -906,66 +875,63 @@ function Dashboard() {
                         <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
                     )}
                 </div>
-                <div className="lista-empreitadas"> {/* (CSS class 'lista-empreitadas' mantida por estilo) */}
+                <div className="lista-empreitadas">
                     {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
                         
-                        // --- MUDANÇA: Cálculo de pagamento separado ---
                         const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
                         
-                        // Mão de Obra
+                        // Mão de Obra (Orçado)
                         const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra' && p.status === 'Pago');
-                        const valorPagoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0);
+                        const valorPagoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
                         const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
                         const progressoMO = valorGlobalMO > 0 ? (valorPagoMO / valorGlobalMO) * 100 : 0;
 
-                        // Material
+                        // Material (Somatório)
                         const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material' && p.status === 'Pago');
-                        const valorPagoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0);
-                        const valorGlobalMat = serv.valor_global_material || 0;
-                        const progressoMat = valorGlobalMat > 0 ? (valorPagoMat / valorGlobalMat) * 100 : 0;
+                        const valorPagoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                         
                         return (
-                            <div key={serv.id} className="card-empreitada-item"> {/* (CSS class mantida) */}
+                            <div key={serv.id} className="card-empreitada-item">
                                 <div onClick={() => setViewingServico(serv)}>
                                     <div className="empreitada-header">
                                         <h4>{serv.nome}</h4>
-                                        {/* Mostra o valor total (MO+Mat) que vem do backend */}
-                                        <span>{formatCurrency(serv.valor_global_total)}</span>
+                                        {/* Mostra o valor total ORÇADO (só MO) */}
+                                        <span>{formatCurrency(valorGlobalMO)}</span>
                                     </div>
                                     <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                     
-                                    {/* --- MUDANÇA: Duas barras de progresso --- */}
+                                    {/* Mão de Obra (Barra de Progresso) */}
                                     <div style={{marginTop: '10px'}}>
                                         <small>Mão de Obra: {formatCurrency(valorPagoMO)} / {formatCurrency(valorGlobalMO)}</small>
                                         <div className="progress-bar-container">
                                             <div className="progress-bar" style={{ width: `${progressoMO}%`, backgroundColor: 'var(--cor-azul)' }}></div>
                                         </div>
                                     </div>
+                                    {/* Material (Totalizador) */}
                                     <div style={{marginTop: '5px'}}>
-                                        <small>Material: {formatCurrency(valorPagoMat)} / {formatCurrency(valorGlobalMat)}</small>
+                                        <small>Material (Gasto Total): {formatCurrency(valorPagoMat)}</small>
                                         <div className="progress-bar-container">
-                                            <div className="progress-bar" style={{ width: `${progressoMat}%`, backgroundColor: 'var(--cor-verde)' }}></div>
+                                            <div className="progress-bar" style={{ width: `100%`, backgroundColor: 'var(--cor-verde)' }}></div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {/* --- MUDANÇA: Formulário de Pagamento Atualizado --- */}
+                                {/* Formulário de Pagamento Rápido */}
                                 {(user.role === 'administrador' || user.role === 'master') && (
                                     <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                        <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 2}} />
-                                        
-                                        {/* Seletor de Tipo de Pagamento */}
-                                        <select name="tipoPagamento" required style={{flex: 2, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                        {/* --- MUDANÇA: Campo de Data --- */}
+                                        <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
+                                        <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
+                                        <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                             <option value="">Tipo...</option>
                                             <option value="mao_de_obra">Mão de Obra</option>
                                             <option value="material">Material</option>
                                         </select>
-                                        
                                         <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                             <option value="Pago">Pago</option>
                                             <option value="A Pagar">A Pagar</option>
                                         </select>
-                                        <button type="submit">Adicionar</button>
+                                        <button type="submit" style={{flex: 1}}>Adic.</button>
                                     </form>
                                 )}
                             </div>
@@ -974,9 +940,8 @@ function Dashboard() {
                 </div> 
             </div> 
 
-
-            {/* --- Grid Principal (Pendentes e Segmentos) --- */}
-             {sumarios && sumarios.total_por_segmento && (
+            {/* --- Grid Principal (Apenas Lançamentos Gerais) --- */}
+             {sumarios && sumarios.total_por_segmento_geral && (
                  <div className="main-grid">
                      <div className="card-main">
                          <div className="card-header"><h3>Pagamentos Pendentes (Gerais)</h3></div>
@@ -997,15 +962,15 @@ function Dashboard() {
                      </div>
                      <div className="card-main">
                          <div className="card-header"><h3>Total por Segmento (Geral)</h3></div>
-                         <div className="lista-segmento">{Object.entries(sumarios.total_por_segmento).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div>
+                         <div className="lista-segmento">{Object.entries(sumarios.total_por_segmento_geral).map(([segmento, valor]) => (<div key={segmento} className="item-segmento"><span>{segmento}</span><span className="valor-segmento">{formatCurrency(valor)}</span></div>))}</div>
                      </div>
                  </div>
              )}
 
 
-            {/* --- MUDANÇA: Histórico de Gastos Atualizado --- */}
+            {/* --- Histórico de Gastos --- */}
             <div className="card-full">
-                <div className="card-header"><h3>Histórico Completo (Gastos e Pag. Serviços)</h3>
+                <div className="card-header"><h3>Histórico Completo (Gastos Gerais e Pag. Serviços)</h3>
                     <div className="header-actions">
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
@@ -1033,9 +998,9 @@ function Dashboard() {
                                     {item.status === 'A Pagar' ? (
                                         (user.role === 'administrador' || user.role === 'master') ? (
                                             <button 
-                                                onClick={() => handleMarcarComoPago(item.id)} // item.id pode ser 'lanc-1' ou 'serv-pag-1'
+                                                onClick={() => handleMarcarComoPago(item.id)}
                                                 className="quick-pay-btn" 
-                                                title={item.status === 'A Pagar' ? "Marcar como Pago" : "Marcar como A Pagar"}
+                                                title="Marcar como Pago"
                                             >
                                                 A Pagar ✓
                                             </button>
@@ -1043,13 +1008,12 @@ function Dashboard() {
                                             <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
                                         )
                                     ) : (
-                                        // --- MUDANÇA: Permite clicar em "Pago" para reverter ---
                                         (user.role === 'administrador' || user.role === 'master') ? (
                                             <button 
                                                 onClick={() => handleMarcarComoPago(item.id)}
                                                 className="quick-pay-btn"
                                                 style={{backgroundColor: 'var(--cor-verde)'}}
-                                                title={item.status === 'A Pagar' ? "Marcar como Pago" : "Marcar como A Pagar"}
+                                                title="Marcar como A Pagar"
                                             >
                                                 Pago ⮎
                                             </button>
@@ -1089,16 +1053,11 @@ function Dashboard() {
 
 // --- NOVO: Modal "Adicionar Serviço" ---
 const AddServicoModal = ({ onClose, onSave }) => {
-    // Controla qual formulário mostrar
-    const [rateioTipo, setRateioTipo] = useState('empreita'); // 'empreita' ou 'detalhado'
-    
     // Campos do formulário
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
-    const [valorUnico, setValorUnico] = useState(0);
-    const [valorMO, setValorMO] = useState(0);
-    const [valorMat, setValorMat] = useState(0);
+    const [valorMO, setValorMO] = useState(0); // Apenas Mão de Obra
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1107,18 +1066,8 @@ const AddServicoModal = ({ onClose, onSave }) => {
             nome,
             responsavel: responsavel || null,
             pix: pix || null,
-            valor_global_mao_de_obra: 0,
-            valor_global_material: 0
+            valor_global_mao_de_obra: valorMO,
         };
-
-        if (rateioTipo === 'empreita') {
-            // Se for empreita, 100% do valor vai para Mão de Obra
-            servicoData.valor_global_mao_de_obra = valorUnico;
-        } else {
-            // Se for detalhado, usa os valores separados
-            servicoData.valor_global_mao_de_obra = valorMO;
-            servicoData.valor_global_material = valorMat;
-        }
         
         onSave(servicoData);
     };
@@ -1142,38 +1091,81 @@ const AddServicoModal = ({ onClose, onSave }) => {
                 
                 <hr />
 
-                {/* Seletor de Tipo de Rateio */}
                 <div className="form-group">
-                    <label>Tipo de Rateio de Custo</label>
-                    <select value={rateioTipo} onChange={(e) => setRateioTipo(e.target.value)}>
-                        <option value="empreita">Empreita (Valor Único)</option>
-                        <option value="detalhado">Detalhado (Mão de Obra + Material)</option>
-                    </select>
+                    <label>Valor Orçado - Mão de Obra (R$)</label>
+                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
+                    <small>O custo de material será a soma dos lançamentos de material vinculados a este serviço.</small>
                 </div>
-
-                {/* Campos de Valor Condicionais */}
-                {rateioTipo === 'empreita' ? (
-                    <div className="form-group">
-                        <label>Valor Global (R$)</label>
-                        <input type="number" step="0.01" value={valorUnico} onChange={(e) => setValorUnico(parseFloat(e.target.value) || 0)} required />
-                    </div>
-                ) : (
-                    <>
-                        <div className="form-group">
-                            <label>Valor Mão de Obra (R$)</label>
-                            <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
-                        </div>
-                        <div className="form-group">
-                            <label>Valor Material (R$)</label>
-                            <input type="number" step="0.01" value={valorMat} onChange={(e) => setValorMat(parseFloat(e.target.value) || 0)} required />
-                        </div>
-                    </>
-                )}
                 
                 <div className="form-actions">
                     <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
                     <button type="submit" className="submit-btn">Salvar Serviço</button>
                 </div>
+            </form>
+        </Modal>
+    );
+};
+
+// --- NOVO: Modal "Adicionar Gasto Geral" ---
+const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
+    const [data, setData] = useState(getTodayString());
+    const [descricao, setDescricao] = useState('');
+    const [pix, setPix] = useState('');
+    const [valor, setValor] = useState(0);
+    const [tipo, setTipo] = useState('Material'); // Padrão Material
+    const [status, setStatus] = useState('A Pagar');
+    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            data,
+            descricao,
+            pix: pix || null,
+            valor: parseFloat(valor) || 0,
+            tipo,
+            status,
+            servico_id: servicoId ? parseInt(servicoId, 10) : null // Envia null se for "Nenhum"
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Adicionar Novo Gasto</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Data</label>
+                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                </div>
+                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
+                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
+                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
+                
+                {/* --- MUDANÇA: Vincular ao Serviço --- */}
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                <div className="form-group"><label>Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                        <option>A Pagar</option>
+                        <option>Pago</option>
+                    </select>
+                </div>
+                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
             </form>
         </Modal>
     );
@@ -1227,5 +1219,3 @@ function App() {
         </AuthContext.Provider>
     );
 }
-
-export default App;
