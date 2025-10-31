@@ -677,9 +677,12 @@ function Dashboard() {
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [viewingServico, setViewingServico] = useState(null);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
+    const [orcamentos, setOrcamentos] = useState([]);
+    const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
 
     // # <--- MUDANÇA (Novo State para o Modal de Exportação)
     const [isExportModalVisible, setExportModalVisible] = useState(false);
+    
     // --- FIM DA MUDANÇA ---
 
     // Efeito para buscar obras
@@ -707,6 +710,7 @@ function Dashboard() {
                 setServicos(servicosComPagamentosArray);
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
+                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); })
             .finally(() => setIsLoading(false));
@@ -810,6 +814,36 @@ function Dashboard() {
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
+        const handleSaveOrcamento = (orcamentoData) => {
+        console.log("Salvando novo orçamento:", orcamentoData);
+        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
+            method: 'POST',
+            body: JSON.stringify(orcamentoData)
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+            setAddOrcamentoModalVisible(false);
+            fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao salvar orçamento:", error));
+    };
+    
+    const handleAprovarOrcamento = (orcamentoId) => {
+        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+             fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao aprovar orçamento:", error));
+    };
+    
+    const handleRejeitarOrcamento = (orcamentoId) => {
+        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+             fetchObraData(obraSelecionada.id); 
+        })
+        .catch(error => console.error("Erro ao rejeitar orçamento:", error));
+    };
         fetchWithAuth(`${API_URL}/servicos/${dataToSend.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -964,10 +998,21 @@ function Dashboard() {
             {editingLancamento && <EditLancamentoModal 
                 lancamento={editingLancamento} 
                 onClose={() => setEditingLancamento(null)} 
-                onSave={handleSaveEdit}
+                onSave={handleSaveEdit} 
                 servicos={servicos} 
             />}
-            
+            {isAddOrcamentoModalVisible && (
+                <AddOrcamentoModal
+                    onClose={() => setAddOrcamentoModalVisible(false)}
+                    onSave={handleSaveOrcamento}
+                    servicos={servicos}
+                />
+            )}
+            {/* --- Cabeçalho --- */}
+            {/* ... (cabeçalho do dashboard) ... */}
+
+            {/* --- *** KPIs *** --- */}
+            {/* ... (kpi-grid) ... */}
             {isAddServicoModalVisible && (
                 <AddServicoModal
                     onClose={() => setAddServicoModalVisible(false)}
@@ -1011,8 +1056,67 @@ function Dashboard() {
                      <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
+             
              {/* --- *** FIM DA MODIFICAÇÃO *** --- */}
-
+{/* <--- ADICIONE ESTA NOVA TABELA DE ORÇAMENTOS AQUI (antes dos Serviços) --- */}
+<div className="card-full">
+    <div className="card-header">
+        <h3>Orçamentos para Aprovação</h3>
+        {(user.role === 'administrador' || user.role === 'master') && (
+            <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
+        )}
+    </div>
+    <table className="tabela-historico">
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Fornecedor</th>
+                <th>Segmento</th>
+                <th>Serviço</th>
+                <th>Valor</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {orcamentos.length > 0 ? orcamentos.map(orc => (
+                <tr key={orc.id}>
+                    <td>{orc.descricao}</td>
+                    <td>{orc.fornecedor || 'N/A'}</td>
+                    <td>{orc.tipo}</td>
+                    <td>{orc.servico_nome || 'Geral'}</td>
+                    <td>{formatCurrency(orc.valor)}</td>
+                    <td className="acoes-cell" style={{display: 'flex', gap: '5px'}}>
+                        {(user.role === 'administrador' || user.role === 'master') && (
+                            <>
+                                <button 
+                                    onClick={() => handleRejeitarOrcamento(orc.id)} 
+                                    className="acao-btn" 
+                                    title="Rejeitar"
+                                    style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
+                                >
+                                    Rejeitar
+                                </button>
+                                <button 
+                                    onClick={() => handleAprovarOrcamento(orc.id)} 
+                                    className="acao-btn" 
+                                    title="Aprovar"
+                                    style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
+                                >
+                                    Aprovar
+                                </button>
+                            </>
+                        )}
+                    </td>
+                </tr>
+            )) : (
+                <tr>
+                    <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
+                </tr>
+            )}
+        </tbody>
+    </table>
+</div>
+{/* --- FIM DA NOVA TABELA --- */}
 
             {/* --- Serviços (ex-Empreitadas) --- */}
             <div className="card-full">
@@ -1224,6 +1328,79 @@ function Dashboard() {
         </div>
     );
 }
+// [App.js] - Adicione este NOVO componente modal
+
+// --- NOVO: Modal "Adicionar Orçamento" ---
+const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
+    const [descricao, setDescricao] = useState('');
+    const [fornecedor, setFornecedor] = useState('');
+    const [valor, setValor] = useState(0);
+    const [dadosPagamento, setDadosPagamento] = useState('');
+    const [tipo, setTipo] = useState('Material'); // Padrão Material
+    const [servicoId, setServicoId] = useState(''); // String vazia para "Nenhum"
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            descricao,
+            fornecedor: fornecedor || null,
+            valor: parseFloat(valor) || 0,
+            dados_pagamento: dadosPagamento || null,
+            tipo,
+            servico_id: servicoId ? parseInt(servicoId, 10) : null
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Adicionar Orçamento para Aprovação</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento e Areia" required />
+                </div>
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
+                </div>
+                <div className="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                </div>
+                 <div className="form-group">
+                    <label>Dados de Pagamento (Opcional)</label>
+                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
+                </div>
+                
+                <hr style={{margin: '20px 0'}} />
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Orçamento</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+// --- FIM DO NOVO MODAL ---
 
 // --- NOVO: Modal "Adicionar Serviço" ---
 const AddServicoModal = ({ onClose, onSave }) => {
