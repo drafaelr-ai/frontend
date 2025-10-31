@@ -749,6 +749,17 @@ function Dashboard() {
     // State para o novo modal de Prioridade
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
 
+    // <--- CORREÇÃO: useMemo movido para o topo da função
+    const itemsAPagar = useMemo(() => 
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
+        [historicoUnificado]
+    );
+    const itemsPagos = useMemo(() => 
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
+        [historicoUnificado]
+    );
+    // --- FIM DA CORREÇÃO ---
+
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -1093,18 +1104,7 @@ function Dashboard() {
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
 
-    // <--- MUDANÇA: Lógica de filtro movida para aqui
-    const itemsAPagar = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
-        [historicoUnificado]
-    );
-    const itemsPagos = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
-        [historicoUnificado]
-    );
-    // --- FIM DA MUDANÇA ---
-
-
+    
     // TELA PRINCIPAL DO DASHBOARD
     return (
         <div className="dashboard-container">
@@ -1321,8 +1321,6 @@ function Dashboard() {
                 )}
             </div> 
 
-            {/* <--- MUDANÇA: Bloco "main-grid" removido --- */}
-
             {/* <--- MUDANÇA: Nova Tabela de Pendências --- */}
             <div className="card-full">
                 <div className="card-header">
@@ -1369,13 +1367,17 @@ function Dashboard() {
                                     <PrioridadeBadge prioridade={item.prioridade} />
                                 </td>
                                 <td className="status-cell">
-                                    <button 
-                                        onClick={() => handleMarcarComoPago(item.id)}
-                                        className="quick-pay-btn" 
-                                        title="Marcar como Pago"
-                                    >
-                                        A Pagar ✓
-                                    </button>
+                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                        <button 
+                                            onClick={() => handleMarcarComoPago(item.id)}
+                                            className="quick-pay-btn" 
+                                            title="Marcar como Pago"
+                                        >
+                                            A Pagar ✓
+                                        </button>
+                                    ) : (
+                                        <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
+                                    )}
                                 </td>
                                 <td>{formatCurrency(item.valor)}</td>
                                 <td className="acoes-cell">
@@ -1440,14 +1442,18 @@ function Dashboard() {
                                     <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
                                 </td>
                                 <td className="status-cell">
-                                    <button 
-                                        onClick={() => handleMarcarComoPago(item.id)}
-                                        className="quick-pay-btn"
-                                        style={{backgroundColor: 'var(--cor-acento)'}}
-                                        title="Marcar como A Pagar"
-                                    >
-                                        Pago ⮎
-                                    </button>
+                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                        <button 
+                                            onClick={() => handleMarcarComoPago(item.id)}
+                                            className="quick-pay-btn"
+                                            style={{backgroundColor: 'var(--cor-acento)'}}
+                                            title="Marcar como A Pagar"
+                                        >
+                                            Pago ⮎
+                                        </button>
+                                    ) : (
+                                        <span className="status pago">Pago</span>
+                                    )}
                                 </td>
                                 <td>{formatCurrency(item.valor)}</td>
                                 <td className="acoes-cell">
