@@ -699,6 +699,9 @@ function Dashboard() {
     const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
+    
+    // <--- MUDANÇA: State para recolher serviços
+    const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
 
     // Efeito para buscar obras
     useEffect(() => {
@@ -725,7 +728,7 @@ function Dashboard() {
                 setServicos(servicosComPagamentosArray);
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
-                // Novo: Seta os orçamentos
+                // Seta os orçamentos
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
@@ -793,7 +796,7 @@ function Dashboard() {
             valor: parseFloat(updatedLancamento.valor) || 0,
             servico_id: updatedLancamento.servico_id || null 
         };
-        fetchWithAuth(`${API_URL}/lancamentos/${dataToSend.lancamento_id}`, { 
+        fetchWithAuth(`${API_URL}/lancamentos/${updatedLancamento.lancamento_id}`, { 
             method: 'PUT',
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
@@ -828,7 +831,7 @@ function Dashboard() {
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
-        fetchWithAuth(`${API_URL}/servicos/${dataToSend.id}`, {
+        fetchWithAuth(`${API_URL}/servicos/${updatedServico.id}`, {
             method: 'PUT',
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
@@ -847,13 +850,8 @@ function Dashboard() {
             setAddOrcamentoModalVisible(false);
             fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => {
-            console.error("Erro ao salvar orçamento:", error);
-            // <--- MUDANÇA AQUI
-            alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
-        });
-};
-
+        .catch(error => console.error("Erro ao salvar orçamento:", error));
+    };
     
     const handleAprovarOrcamento = (orcamentoId) => {
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
@@ -1153,80 +1151,94 @@ function Dashboard() {
             </div>
 
 
-            {/* --- Serviços (ex-Empreitadas) --- */}
+            {/* <--- MUDANÇA: Card de Serviços Colapsável --- */}
             <div className="card-full">
                  <div className="card-header">
                     <h3>Serviços (Planilha de Custos)</h3>
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
-                    )}
+                    <div className="header-actions"> {/* Agrupador para os botões */}
+                        {(user.role === 'administrador' || user.role === 'master') && (
+                            <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
+                        )}
+                        
+                        <button 
+                            className="acao-btn" 
+                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            onClick={() => setIsServicosCollapsed(prev => !prev)}
+                        >
+                            {isServicosCollapsed ? 'Expandir' : 'Recolher'}
+                        </button>
+                    </div>
                 </div>
-                <div className="lista-empreitadas">
-                    {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
-                        
-                        const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
-                        
-                        const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
-                        const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
-                        const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
-                        const progressoMO = valorGlobalMO > 0 ? (valorGastoTotalMO / valorGlobalMO) * 100 : 0;
+                
+                {!isServicosCollapsed && (
+                    <div className="lista-empreitadas" style={{marginTop: '15px'}}>
+                        {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
+                            
+                            const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
+                            
+                            const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
+                            const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
+                            const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
+                            const progressoMO = valorGlobalMO > 0 ? (valorGastoTotalMO / valorGlobalMO) * 100 : 0;
 
-                        const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
-                        const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
-                        
-                        return (
-                            <div key={serv.id} className="card-empreitada-item">
-                                <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
-                                    <div className="empreitada-header">
-                                        <h4>{serv.nome}</h4>
-                                        <span>Orçado (MO): {formatCurrency(valorGlobalMO)}</span>
+                            const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
+                            const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
+                            
+                            return (
+                                <div key={serv.id} className="card-empreitada-item">
+                                    <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
+                                        <div className="empreitada-header">
+                                            <h4>{serv.nome}</h4>
+                                            <span>Orçado (MO): {formatCurrency(valorGlobalMO)}</span>
+                                        </div>
+                                        <small>Responsável: {serv.responsavel || 'N/A'}</small>
+                                        
+                                        <div style={{marginTop: '10px'}}>
+                                            <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
+                                            <div className="progress-bar-container">
+                                                <div className="progress-bar" style={{ width: `${progressoMO}%` }}></div>
+                                            </div>
+                                        </div>
+                                        <div style={{marginTop: '5px'}}>
+                                            <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
+                                            <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                     
-                                    <div style={{marginTop: '10px'}}>
-                                        <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
-                                        <div className="progress-bar-container">
-                                            <div className="progress-bar" style={{ width: `${progressoMO}%` }}></div>
-                                        </div>
-                                    </div>
-                                    <div style={{marginTop: '5px'}}>
-                                        <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
-                                        <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
-                                        </div>
-                                    </div>
+                                    {(user.role === 'administrador' || user.role === 'master') && (
+                                        <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
+                                            <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
+                                            <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
+                                            
+                                            <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                                <option value="0">P: 0</option>
+                                                <option value="1">P: 1</option>
+                                                <option value="2">P: 2</option>
+                                                <option value="3">P: 3</option>
+                                                <option value="4">P: 4</option>
+                                                <option value="5">P: 5</option>
+                                            </select>
+                                            
+                                            <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                                <option value="">Tipo...</option>
+                                                <option value="mao_de_obra">Mão de Obra</option>
+                                                <option value="material">Material</option>
+                                            </select>
+                                            <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                                <option value="Pago">Pago</option>
+                                                <option value="A Pagar">A Pagar</option>
+                                            </select>
+                                            <button type="submit" style={{flex: 1}}>Adic.</button>
+                                        </form>
+                                    )}
                                 </div>
-                                
-                                {(user.role === 'administrador' || user.role === 'master') && (
-                                    <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                        <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
-                                        <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
-                                        
-                                        <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                            <option value="0">P: 0</option>
-                                            <option value="1">P: 1</option>
-                                            <option value="2">P: 2</option>
-                                            <option value="3">P: 3</option>
-                                            <option value="4">P: 4</option>
-                                            <option value="5">P: 5</option>
-                                        </select>
-                                        
-                                        <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                            <option value="">Tipo...</option>
-                                            <option value="mao_de_obra">Mão de Obra</option>
-                                            <option value="material">Material</option>
-                                        </select>
-                                        <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                            <option value="Pago">Pago</option>
-                                            <option value="A Pagar">A Pagar</option>
-                                        </select>
-                                        <button type="submit" style={{flex: 1}}>Adic.</button>
-                                    </form>
-                                )}
-                            </div>
-                        );
-                    }) : <p>Nenhum serviço cadastrado.</p>}
-                </div> 
+                            );
+                        }) : <p>Nenhum serviço cadastrado.</p>}
+                    </div> 
+                )}
             </div> 
+            {/* --- FIM DA MUDANÇA --- */}
 
             {/* --- Grid Principal (Apenas Lançamentos Gerais) --- */}
              {sumarios && sumarios.total_por_segmento_geral && (
@@ -1266,7 +1278,6 @@ function Dashboard() {
                         )}
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
                         
-                        {/* Correção: Botão de PDF com fetchWithAuth */}
                         <button 
                             onClick={handleExportObraPDF} 
                             className="export-btn pdf"
@@ -1302,7 +1313,6 @@ function Dashboard() {
                                 </td>
                                 <td>{item.tipo}</td>
                                 
-                                {/* Correção: Prioridade condicional (só se 'A Pagar') */}
                                 <td className="status-cell">
                                     {item.status === 'A Pagar' ? (
                                         <PrioridadeBadge prioridade={item.prioridade} />
