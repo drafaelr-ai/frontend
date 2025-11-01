@@ -1314,6 +1314,7 @@ function Dashboard() {
                     servicos={servicos}
                 />
             )}
+            
 {/* ... (Modal de Edição de Orçamento) ... */}
 
             {/* <-- INÍCIO DA MUDANÇA: Adicione estas linhas --> */}
@@ -1331,6 +1332,7 @@ function Dashboard() {
                 onClose={() => setEditingServicoPrioridade(null)}
                 onSave={handleSaveServicoPrioridade}
               />
+              
             )}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
@@ -2000,6 +2002,71 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
                 });
         }
     }, [orcamento]);
+    // --- NOVO MODAL PARA VER ANEXOS ---
+const ViewAnexosModal = ({ orcamento, onClose }) => {
+    const [anexos, setAnexos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (orcamento) {
+            setIsLoading(true);
+            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
+                .then(res => res.json())
+                .then(data => {
+                    setAnexos(Array.isArray(data) ? data : []);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar anexos:", err);
+                    setIsLoading(false);
+                });
+        }
+    }, [orcamento]);
+
+    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
+    const handleOpenAnexo = (anexoId) => {
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+    };
+
+    if (!orcamento) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Anexos de: {orcamento.descricao}</h2>
+            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
+                {isLoading ? <p>Carregando anexos...</p> : (
+                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
+                        {anexos.length > 0 ? anexos.map(anexo => (
+                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
+                                <a
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                    title={`Abrir ${anexo.filename}`}
+                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                >
+                                    📎 {anexo.filename}
+                                </a>
+                            </li>
+                        )) : <p>Nenhum anexo encontrado.</p>}
+                    </ul>
+                )}
+            </div>
+            <div className="form-actions" style={{marginTop: '20px'}}>
+                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
+            </div>
+        </Modal>
+    );
+};
+// --- FIM DO NOVO MODAL ---
 
     // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
     const handleOpenAnexo = (anexoId) => {
