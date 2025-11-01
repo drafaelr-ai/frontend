@@ -837,9 +837,16 @@ function Dashboard() {
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
     const [filtroPendencias, setFiltroPendencias] = useState('');
+    
 
     // <--- MUDANÇA: Novo state para edição de orçamento
     const [editingOrcamento, setEditingOrcamento] = useState(null);
+    // (Linhas existentes...)
+
+    // <-- INÍCIO DA MUDANÇA: Adicione esta linha -->
+    const [viewingAnexos, setViewingAnexos] = useState(null);
+    // <-- FIM DA MUDANÇA -->
+    // (Resto do código...)
 
     // Filtros de 'A Pagar' e 'Pagos'
     const itemsAPagar = useMemo(() => 
@@ -1295,6 +1302,7 @@ function Dashboard() {
                     onSave={handleSaveOrcamento}
                     servicos={servicos}
                 />
+                
             )}
 
             {/* <--- MUDANÇA: Renderiza o novo modal de Edição de Orçamento (COM A CHAMADA CORRIGIDA) --> */}
@@ -1306,16 +1314,24 @@ function Dashboard() {
                     servicos={servicos}
                 />
             )}
+{/* ... (Modal de Edição de Orçamento) ... */}
 
-            {editingServicoPrioridade && (
-                <EditPrioridadeModal
-                    item={editingServicoPrioridade}
-                    onClose={() => setEditingServicoPrioridade(null)}
-                    onSave={handleSaveServicoPrioridade}
+            {/* <-- INÍCIO DA MUDANÇA: Adicione estas linhas --> */}
+            {viewingAnexos && (
+                <ViewAnexosModal
+                    orcamento={viewingAnexos}
+                    onClose={() => setViewingAnexos(null)}
                 />
             )}
+            {/* <-- FIM DA MUDANÇA --> */}
 
-            {/* --- Cabeçalho --- */}
+            {editingServicoPrioridade && (
+              <EditPrioridadeModal
+                item={editingServicoPrioridade}
+                onClose={() => setEditingServicoPrioridade(null)}
+                onSave={handleSaveServicoPrioridade}
+              />
+            )}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
                 <div>
@@ -1381,13 +1397,6 @@ function Dashboard() {
                             {orcamentos.length > 0 ? orcamentos.map(orc => (
                                 <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
                                     <td>
-                                        {/* <-- INÍCIO DA MUDANÇA --> */}
-                                        {orc.anexos_count > 0 && (
-                                            <span title={`${orc.anexos_count} anexo(s)`} style={{marginRight: '8px', fontSize: '1.2em'}}>
-                                                📎
-                                            </span>
-                                        )}
-                                        {/* <-- FIM DA MUDANÇA --> */}
                                         {orc.descricao}
                                     </td>
                                     <td>{orc.fornecedor || 'N/A'}</td>
@@ -1395,6 +1404,20 @@ function Dashboard() {
                                     <td>{orc.servico_nome || 'Geral'}</td>
                                     <td>{formatCurrency(orc.valor)}</td>
                                     <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}} onClick={e => e.stopPropagation()}>
+                                        
+                                        {/* <-- INÍCIO DA MUDANÇA: Botão de Anexo --> */}
+                                        {orc.anexos_count > 0 && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setViewingAnexos(orc); }}
+                                                className="acao-icon-btn"
+                                                title={`${orc.anexos_count} anexo(s)`}
+                                                style={{ fontSize: '1.3em', color: '#007bff' }}
+                                            >
+                                                📎
+                                            </button>
+                                        )}
+                                        {/* <-- FIM DA MUDANÇA --> */}
+
                                         {(user.role === 'administrador' || user.role === 'master') && (
                                             <>
                                                 <button 
@@ -1957,6 +1980,71 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
     const [existingAnexos, setExistingAnexos] = useState([]);
     const [newAnexos, setNewAnexos] = useState([]);
     const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
+    // --- NOVO MODAL PARA VER ANEXOS ---
+const ViewAnexosModal = ({ orcamento, onClose }) => {
+    const [anexos, setAnexos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (orcamento) {
+            setIsLoading(true);
+            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
+                .then(res => res.json())
+                .then(data => {
+                    setAnexos(Array.isArray(data) ? data : []);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar anexos:", err);
+                    setIsLoading(false);
+                });
+        }
+    }, [orcamento]);
+
+    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
+    const handleOpenAnexo = (anexoId) => {
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+    };
+
+    if (!orcamento) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Anexos de: {orcamento.descricao}</h2>
+            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
+                {isLoading ? <p>Carregando anexos...</p> : (
+                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
+                        {anexos.length > 0 ? anexos.map(anexo => (
+                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
+                                <a
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                    title={`Abrir ${anexo.filename}`}
+                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                >
+                                    📎 {anexo.filename}
+                                </a>
+                            </li>
+                        )) : <p>Nenhum anexo encontrado.</p>}
+                    </ul>
+                )}
+            </div>
+            <div className="form-actions" style={{marginTop: '20px'}}>
+                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
+            </div>
+        </Modal>
+    );
+};
+// --- FIM DO NOVO MODAL ---
     // <-- FIM DAS MUDANÇAS -->
 
     useEffect(() => {
