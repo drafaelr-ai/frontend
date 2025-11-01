@@ -1377,10 +1377,19 @@ function Dashboard() {
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
+                            <tbody>
                             {orcamentos.length > 0 ? orcamentos.map(orc => (
                                 <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
-                                    <td>{orc.descricao}</td>
+                                    <td>
+                                        {/* <-- INÍCIO DA MUDANÇA --> */}
+                                        {orc.anexos_count > 0 && (
+                                            <span title={`${orc.anexos_count} anexo(s)`} style={{marginRight: '8px', fontSize: '1.2em'}}>
+                                                📎
+                                            </span>
+                                        )}
+                                        {/* <-- FIM DA MUDANÇA --> */}
+                                        {orc.descricao}
+                                    </td>
                                     <td>{orc.fornecedor || 'N/A'}</td>
                                     <td>{orc.tipo}</td>
                                     <td>{orc.servico_nome || 'Geral'}</td>
