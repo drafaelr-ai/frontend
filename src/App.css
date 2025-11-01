@@ -1,188 +1,23 @@
-:root {
-    /* NOVA PALETA "OBRALY" */
-    --cor-fundo: #f4f7f6; /* Um cinza muito claro e limpo */
-    --cor-card: #ffffff;
-    --cor-texto: #1a202c; /* Texto principal mais escuro (quase preto) */
-    --cor-texto-secundario: #4a5568; /* Cinza para texto secundário */
-    
-    /* "Imponente" (Cor Primária) */
-    --cor-primaria: #4f46e5; /* Índigo */
-    
-    /* "Empolgante" (Cor de Acento/Sucesso) */
-    --cor-acento: #10b981; /* Esmeralda/Verde */
-    
-    /* Cores de Status */
-    --cor-vermelho: #ef4444; /* Vermelho mais moderno */
-    --cor-info: #3b82f6; /* Azul para informação */
-    /* --cor-aviso: #f59e0b; (REMOVIDO) */
-
-    /* Sombra moderna */
-    --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+/* --- MUDANÇA: Adiciona barra de rolagem às tabelas e listas --- */
+.tabela-scroll-container {
+    max-height: 400px; /* Você pode ajustar essa altura (ex: 300px) */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 0 5px; /* Pequeno padding para a barra de rolagem */
 }
 
-body { 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; 
-    background-color: var(--cor-fundo); 
-    color: var(--cor-texto); 
-    margin: 0; 
+/* Faz o cabeçalho da tabela "grudar" no topo ao rolar */
+.tabela-scroll-container .tabela-historico th {
+    position: sticky;
+    top: 0;
+    z-index: 1; 
+    background-color: #f8f9fa; /* Cor de fundo para o cabeçalho fixo */
 }
 
-.container { max-width: 1200px; margin: 40px auto; padding: 20px; }
-.lista-obras { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-
-.card-obra { 
-    background-color: var(--cor-card); 
-    border-radius: 8px; 
-    box-shadow: var(--sombra-card); 
-    transition: transform 0.2s, box-shadow 0.2s; 
-    padding: 0; 
-    overflow: hidden; 
+/* Remove a borda dupla estranha no container de serviços */
+.lista-empreitadas.tabela-scroll-container {
+    border: none;
+    padding: 0;
 }
-
-.card-obra-content {
-    padding: 20px;
-    cursor: pointer;
-}
-.card-obra-content:hover {
-    background-color: #f8f9fa;
-}
-
-
-.card-obra h3 {
-    margin-top: 0;
-    color: var(--cor-primaria); 
-}
-
-.obra-kpi-summary {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--cor-fundo);
-}
-.obra-kpi-summary div {
-    display: flex;
-    flex-direction: column;
-}
-.obra-kpi-summary span {
-    font-size: 0.85em;
-    color: var(--cor-texto-secundario);
-    margin-bottom: 2px;
-}
-.obra-kpi-summary strong {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--cor-texto);
-}
-
-
-.dashboard-container { max-width: 1200px; margin: auto; padding: 20px; }
-.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.dashboard-header h1 { margin: 0; }
-.dashboard-header p { margin: 0; color: var(--cor-texto-secundario); }
-
-.voltar-btn { background-color: #6c757d; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
-
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.kpi-card { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); color: white; }
-.kpi-card span { font-size: 1em; opacity: 0.9; }
-.kpi-card h2 { font-size: 2em; margin: 5px 0; }
-
-.kpi-card.total-geral { background: var(--cor-primaria); } 
-.kpi-card.total-pago { background: var(--cor-acento); } 
-.kpi-card.total-a-pagar { background: var(--cor-vermelho); }
-/* .kpi-card.liberado-pagamento { background: var(--cor-aviso); } (REMOVIDO) */
-
-.main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.card-main, .card-full { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); margin-bottom: 20px; }
-
-.card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-.card-header h3 { margin: 0; }
-.header-actions { display: flex; gap: 10px; }
-
-.export-btn { background-color: #f8f9fa; color: var(--cor-texto); border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-.export-btn.pdf { background-color: var(--cor-vermelho); color: white; border-color: var(--cor-vermelho); }
-
-.lista-pendentes .item-pendente { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-.lista-pendentes .item-pendente:last-child { border-bottom: none; }
-.item-info .item-descricao { display: block; }
-.item-info small { color: var(--cor-texto-secundario); }
-.item-acao { text-align: right; }
-.item-acao .item-valor { display: block; font-weight: bold; margin-bottom: 5px; }
-.marcar-pago-btn { background-color: var(--cor-acento); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; }
-
-.lista-segmento .item-segmento { display: flex; justify-content: space-between; padding: 10px 0; }
-.valor-segmento { font-weight: bold; }
-
-.tabela-historico { width: 100%; border-collapse: collapse; }
-.tabela-historico th, .tabela-historico td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
-.tabela-historico th { background-color: #f8f9fa; }
-.status { padding: 3px 8px; border-radius: 12px; color: white; font-weight: 500; font-size: 0.8em; text-transform: uppercase; }
-.status.pago { background-color: var(--cor-acento); }
-
-.status-cell { text-align: center; }
-.quick-pay-btn { background-color: var(--cor-vermelho); color: white; border: none; border-radius: 12px; padding: 4px 10px; font-size: 0.8em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
-.quick-pay-btn[style*="var(--cor-verde)"] { background-color: var(--cor-acento); } 
-.quick-pay-btn[style*="var(--cor-verde)"]:hover { background-color: #0e8a6a; }
-.quick-pay-btn:hover { background-color: #c83b3b; }
-
-.acoes-cell { text-align: center; }
-.acao-icon-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; padding: 5px; }
-.edit-btn:hover { color: var(--cor-primaria); }
-.delete-btn:hover { color: var(--cor-vermelho); }
-
-.loading-screen { text-align: center; padding: 50px; font-size: 1.5em; }
-
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { position: relative; background: var(--cor-card); padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; }
-.close-modal-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2em; color: #aaa; cursor: pointer; }
-.modal-content h2 { margin-top: 0; text-align: center; margin-bottom: 20px; }
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-.form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-.form-actions { display: flex; gap: 10px; margin-top: 20px; }
-.form-actions .submit-btn, .form-actions .cancel-btn { width: 100%; padding: 12px 15px; border-radius: 5px; font-size: 1em; font-weight: bold; cursor: pointer; border: none; }
-
-.cancel-btn { background-color: #6c757d; color: white; }
-.submit-btn { background-color: var(--cor-primaria); color: white; }
-.add-btn { background-color: var(--cor-primaria); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
-.lista-empreitadas { display: flex; flex-direction: column; gap: 15px; }
-.card-empreitada-item { border: 1px solid #eee; padding: 15px; border-radius: 5px; transition: background-color 0.2s; }
-.card-empreitada-item-clickable { cursor: pointer; }
-.card-empreitada-item-clickable:hover { background-color: #f8f9fa; }
-
-.empreitada-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; }
-.progress-bar-container { background-color: #e9ecef; border-radius: .25rem; height: 1rem; margin: 10px 0; }
-.progress-bar { background-color: var(--cor-primaria); height: 100%; border-radius: .25rem; } 
-.empreitada-sumario { display: flex; justify-content: space-between; font-size: 0.9em; color: var(--cor-texto-secundario); }
-
-.form-pagamento-parcial { display: flex; gap: 10px; margin-top: 15px; }
-.form-pagamento-parcial input { flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.form-pagamento-parcial button { background-color: var(--cor-info); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-
-.tabela-pagamentos { width: 100%; margin-top: 15px; border-collapse: collapse; }
-.tabela-pagamentos th, .tabela-pagamentos td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-.tabela-pagamentos th { font-weight: bold; }
-
-.form-add-obra { display: flex; gap: 10px; align-items: center; }
-.form-add-obra input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-.card-obra { position: relative; }
-
-.card-obra-delete-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 1.3em; 
-    background: none; 
-    border: none; 
-    cursor: pointer; 
-    opacity: 0.6;
-    padding: 5px;
-    z-index: 2; 
-}
-
-.card-obra-delete-btn:hover {
-    opacity: 1;
-    color: var(--cor-vermelho);
-}
+/* ----------------------------------------------------------- */

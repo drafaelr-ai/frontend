@@ -173,7 +173,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// <--- MUDANÇA: Modal de Edição (com Fornecedor)
+// Modal de Edição (com Fornecedor)
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -190,8 +190,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
              }
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
              initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
-             
-             // <--- MUDANÇA: Adicionado Fornecedor
              initialData.fornecedor = initialData.fornecedor || ''; 
 
              setFormData(initialData);
@@ -221,7 +219,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
             ...formData,
             servico_id: formData.servico_id || null,
             prioridade: parseInt(formData.prioridade, 10) || 0,
-            fornecedor: formData.fornecedor || null // <--- MUDANÇA
+            fornecedor: formData.fornecedor || null 
         };
         onSave(dataToSend); 
     };
@@ -239,7 +237,6 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 
                 <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
                 
-                {/* <--- MUDANÇA: Adicionado campo Fornecedor */}
                 <div className="form-group">
                     <label>Fornecedor (Opcional)</label>
                     <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
@@ -284,6 +281,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     );
 };
 
+// <--- MUDANÇA: Modal de Serviço (com Orçamento de Material)
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
@@ -294,6 +292,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
              setFormData({
                  ...servico,
                  valor_global_mao_de_obra: servico.valor_global_mao_de_obra || 0,
+                 valor_global_material: servico.valor_global_material || 0, // <--- MUDANÇA
              });
          } else {
              setFormData({});
@@ -302,7 +301,9 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     const handleChange = (e) => { 
         const { name, value } = e.target; 
-        const finalValue = (name === 'valor_global_mao_de_obra') ? parseFloat(value) || 0 : value; 
+        const finalValue = (name === 'valor_global_mao_de_obra' || name === 'valor_global_material') 
+            ? parseFloat(value) || 0 
+            : value; 
         setFormData(prev => ({ ...prev, [name]: finalValue })); 
     };
     
@@ -347,49 +348,53 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
+                    {/* <--- MUDANÇA: Exibição dos dois orçamentos */}
                     <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Gasto Total: {formatCurrency(totalGastoMO)})</p>
-                    <p><strong>Total Gasto (Material):</strong> {formatCurrency(totalGastoMat)}</p>
+                    <p><strong>Valor Orçado (Material):</strong> {formatCurrency(servico.valor_global_material)} (Gasto Total: {formatCurrency(totalGastoMat)})</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
-                    <table className="tabela-pagamentos" style={{width: '100%'}}>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Tipo</th>
-                                <th>Fornecedor</th> {/* <--- MUDANÇA */}
-                                <th>Valor</th>
-                                <th>Status</th>
-                                {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {servico.pagamentos && servico.pagamentos.length > 0 ? (
-                                servico.pagamentos.map((pag) => (
-                                    <tr key={pag.id}>
-                                        <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
-                                        <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
-                                        <td>{pag.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
-                                        <td>{formatCurrency(pag.valor)}</td>
-                                        <td>
-                                            <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-acento)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
-                                                {pag.status}
-                                            </span>
-                                        </td>
-                                        {user.role === 'administrador' && (
-                                            <td style={{textAlign: 'center'}}>
-                                                <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))
-                             ) : (
+                    {/* <--- MUDANÇA: Tabela com container de scroll */}
+                    <div className="tabela-scroll-container" style={{maxHeight: '200px'}}> 
+                        <table className="tabela-pagamentos" style={{width: '100%'}}>
+                            <thead>
                                 <tr>
-                                    <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Fornecedor</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {servico.pagamentos && servico.pagamentos.length > 0 ? (
+                                    servico.pagamentos.map((pag) => (
+                                        <tr key={pag.id}>
+                                            <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
+                                            <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
+                                            <td>{pag.fornecedor || 'N/A'}</td>
+                                            <td>{formatCurrency(pag.valor)}</td>
+                                            <td>
+                                                <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-acento)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
+                                                    {pag.status}
+                                                </span>
+                                            </td>
+                                            {user.role === 'administrador' && (
+                                                <td style={{textAlign: 'center'}}>
+                                                    <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <div className="form-actions" style={{marginTop: '20px'}}>
                             <button type="button" onClick={() => setIsEditing(true)} className="submit-btn"> Editar Serviço </button>
@@ -401,7 +406,16 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <h2>Editar Serviço</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Valor Orçado - Mão de Obra (R$)</label><input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} required /></div>
+                    {/* <--- MUDANÇA: Campo para Orçamento de Material */}
+                    <div className="form-group">
+                        <label>Valor Orçado - Mão de Obra (R$)</label>
+                        <input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                        <label>Valor Orçado - Material (R$)</label>
+                        <input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || 0} onChange={handleChange} />
+                    </div>
+                    
                     <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
                     <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
                 </form>
@@ -643,16 +657,14 @@ const ExportReportModal = ({ onClose }) => {
                 if (!res.ok) {
                     throw new Error('Falha ao gerar o relatório.');
                 }
-                return res.blob(); // Pega os dados como um Blob (arquivo)
+                return res.blob();
             })
             .then(blob => {
-                // Cria uma URL local no navegador para o arquivo que baixamos
                 const fileURL = URL.createObjectURL(blob);
-                // Manda o navegador abrir essa URL local em uma nova aba
                 window.open(fileURL);
                 
                 setIsLoading(false);
-                onClose(); // Fecha o modal
+                onClose();
             })
             .catch(err => {
                 console.error("Erro ao gerar PDF:", err);
@@ -759,15 +771,30 @@ function Dashboard() {
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
-    
-    // State para o novo modal de Prioridade
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
+
+    // <--- MUDANÇA: State para o filtro de pendências
+    const [filtroPendencias, setFiltroPendencias] = useState('');
 
     // Filtros de 'A Pagar' e 'Pagos'
     const itemsAPagar = useMemo(() => 
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
         [historicoUnificado]
     );
+    
+    // <--- MUDANÇA: Aplica o filtro de busca
+    const itemsAPagarFiltrados = useMemo(() => {
+        if (!filtroPendencias) {
+            return itemsAPagar; // Retorna tudo se o filtro estiver vazio
+        }
+        const lowerCaseFiltro = filtroPendencias.toLowerCase();
+        return itemsAPagar.filter(item => 
+            (item.descricao && item.descricao.toLowerCase().includes(lowerCaseFiltro)) ||
+            (item.fornecedor && item.fornecedor.toLowerCase().includes(lowerCaseFiltro)) ||
+            (item.tipo && item.tipo.toLowerCase().includes(lowerCaseFiltro))
+        );
+    }, [itemsAPagar, filtroPendencias]);
+
     const itemsPagos = useMemo(() => 
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
         [historicoUnificado]
@@ -897,6 +924,7 @@ function Dashboard() {
         const dataToSend = {
             ...updatedServico,
             valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
+            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0, // <--- MUDANÇA
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
@@ -969,7 +997,7 @@ function Dashboard() {
             });
     };
 
-    // <--- MUDANÇA: Handler de Pagamento de Serviço (com Fornecedor)
+    // Handler de Pagamento de Serviço (com Fornecedor)
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -977,7 +1005,7 @@ function Dashboard() {
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
         const prioridadePagamento = e.target.prioridadePagamento.value; 
-        const fornecedor = e.target.fornecedor.value; // <--- MUDANÇA
+        const fornecedor = e.target.fornecedor.value;
         
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
@@ -987,7 +1015,7 @@ function Dashboard() {
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
             prioridade: parseInt(prioridadePagamento, 10) || 0,
-            fornecedor: fornecedor || null // <--- MUDANÇA
+            fornecedor: fornecedor || null
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
         fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
@@ -1188,7 +1216,7 @@ function Dashboard() {
                  </div>
              )}
 
-            {/* Novo: Tabela de Orçamentos */}
+            {/* Tabela de Orçamentos */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Orçamentos para Aprovação</h3>
@@ -1196,55 +1224,58 @@ function Dashboard() {
                         <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
                     )}
                 </div>
-                <table className="tabela-historico">
-                    <thead>
-                        <tr>
-                            <th>Descrição</th>
-                            <th>Fornecedor</th>
-                            <th>Segmento</th>
-                            <th>Serviço</th>
-                            <th>Valor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {orcamentos.length > 0 ? orcamentos.map(orc => (
-                            <tr key={orc.id}>
-                                <td>{orc.descricao}</td>
-                                <td>{orc.fornecedor || 'N/A'}</td>
-                                <td>{orc.tipo}</td>
-                                <td>{orc.servico_nome || 'Geral'}</td>
-                                <td>{formatCurrency(orc.valor)}</td>
-                                <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}}>
-                                    {(user.role === 'administrador' || user.role === 'master') && (
-                                        <>
-                                            <button 
-                                                onClick={() => handleRejeitarOrcamento(orc.id)} 
-                                                className="acao-btn" 
-                                                title="Rejeitar"
-                                                style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
-                                            >
-                                                Rejeitar
-                                            </button>
-                                            <button 
-                                                onClick={() => handleAprovarOrcamento(orc.id)} 
-                                                className="acao-btn" 
-                                                title="Aprovar"
-                                                style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
-                                            >
-                                                Aprovar
-                                            </button>
-                                        </>
-                                    )}
-                                </td>
-                            </tr>
-                        )) : (
+                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
+                <div className="tabela-scroll-container">
+                    <table className="tabela-historico">
+                        <thead>
                             <tr>
-                                <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Segmento</th>
+                                <th>Serviço</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {orcamentos.length > 0 ? orcamentos.map(orc => (
+                                <tr key={orc.id}>
+                                    <td>{orc.descricao}</td>
+                                    <td>{orc.fornecedor || 'N/A'}</td>
+                                    <td>{orc.tipo}</td>
+                                    <td>{orc.servico_nome || 'Geral'}</td>
+                                    <td>{formatCurrency(orc.valor)}</td>
+                                    <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                        {(user.role === 'administrador' || user.role === 'master') && (
+                                            <>
+                                                <button 
+                                                    onClick={() => handleRejeitarOrcamento(orc.id)} 
+                                                    className="acao-btn" 
+                                                    title="Rejeitar"
+                                                    style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
+                                                >
+                                                    Rejeitar
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAprovarOrcamento(orc.id)} 
+                                                    className="acao-btn" 
+                                                    title="Aprovar"
+                                                    style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
+                                                >
+                                                    Aprovar
+                                                </button>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
 
@@ -1268,7 +1299,8 @@ function Dashboard() {
                 </div>
                 
                 {!isServicosCollapsed && (
-                    <div className="lista-empreitadas" style={{marginTop: '15px'}}>
+                    /* <--- MUDANÇA: Barra de rolagem adicionada */
+                    <div className="lista-empreitadas tabela-scroll-container" style={{marginTop: '15px'}}>
                         {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
                             
                             const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
@@ -1281,12 +1313,19 @@ function Dashboard() {
                             const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
                             const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                             
+                            // <--- MUDANÇA: Pega o valor orçado de material
+                            const valorGlobalMat = serv.valor_global_material || 0;
+
                             return (
                                 <div key={serv.id} className="card-empreitada-item">
                                     <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
                                         <div className="empreitada-header">
                                             <h4>{serv.nome}</h4>
-                                            <span>Orçado (MO): {formatCurrency(valorGlobalMO)}</span>
+                                            {/* <--- MUDANÇA: Exibe os dois orçamentos */}
+                                            <span style={{textAlign: 'right'}}>
+                                                Orçado (MO): {formatCurrency(valorGlobalMO)}<br/>
+                                                Orçado (Mat): {formatCurrency(valorGlobalMat)}
+                                            </span>
                                         </div>
                                         <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                         
@@ -1297,13 +1336,13 @@ function Dashboard() {
                                             </div>
                                         </div>
                                         <div style={{marginTop: '5px'}}>
-                                            <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)}</small>
+                                            {/* <--- MUDANÇA: Exibe gasto vs orçado de material */}
+                                            <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)} / {formatCurrency(valorGlobalMat)}</small>
                                             <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    {/* <--- MUDANÇA: Adicionado campo Fornecedor ao form inline */}
                                     {(user.role === 'administrador' || user.role === 'master') && (
                                         <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
                                             <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
@@ -1343,6 +1382,14 @@ function Dashboard() {
                 <div className="card-header">
                     <h3>Pendências (A Pagar)</h3>
                     <div className="header-actions">
+                        {/* <--- MUDANÇA: Campo de Filtro Adicionado */}
+                        <input 
+                            type="text" 
+                            placeholder="Filtrar pendências..." 
+                            value={filtroPendencias}
+                            onChange={(e) => setFiltroPendencias(e.target.value)}
+                            style={{padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
+                        />
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
                         )}
@@ -1355,72 +1402,75 @@ function Dashboard() {
                         </button>
                     </div>
                 </div>
-                <table className="tabela-historico">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Descrição</th>
-                            <th>Fornecedor</th> {/* <--- MUDANÇA */}
-                            <th>Segmento</th>
-                            <th>Prior.</th>
-                            <th>Status</th>
-                            <th>Valor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {itemsAPagar.length > 0 ? itemsAPagar.map(item => (
-                            <tr key={item.id}>
-                                <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                <td>
-                                    {item.descricao}
-                                    {item.tipo_registro === 'pagamento_servico' && (
-                                        <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                            SERVIÇO
-                                        </span>
-                                    )}
-                                </td>
-                                <td>{item.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
-                                <td>{item.tipo}</td>
-                                <td className="status-cell">
-                                    <PrioridadeBadge prioridade={item.prioridade} />
-                                </td>
-                                <td className="status-cell">
-                                    {(user.role === 'administrador' || user.role === 'master') ? (
-                                        <button 
-                                            onClick={() => handleMarcarComoPago(item.id)}
-                                            className="quick-pay-btn" 
-                                            title="Marcar como Pago"
-                                        >
-                                            A Pagar ✓
-                                        </button>
-                                    ) : (
-                                        <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
-                                    )}
-                                </td>
-                                <td>{formatCurrency(item.valor)}</td>
-                                <td className="acoes-cell">
-                                    {(user.role === 'administrador' || user.role === 'master') ? (
-                                        item.tipo_registro === 'lancamento' ? (
-                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
-                                        ) : (
-                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
-                                        )
-                                    ) : null}
-                                    {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
-                                        <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
-                                    )}
-                                </td>
-                            </tr>
-                        )) : (
+                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
+                <div className="tabela-scroll-container">
+                    <table className="tabela-historico">
+                        <thead>
                             <tr>
-                                <td colSpan="8" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td> {/* <--- MUDANÇA (colspan=8) */}
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Segmento</th>
+                                <th>Prior.</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {/* <--- MUDANÇA: Usando a lista FILTRADA */}
+                            {itemsAPagarFiltrados.length > 0 ? itemsAPagarFiltrados.map(item => (
+                                <tr key={item.id}>
+                                    <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                    <td>
+                                        {item.descricao}
+                                        {item.tipo_registro === 'pagamento_servico' && (
+                                            <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                                SERVIÇO
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>{item.fornecedor || 'N/A'}</td>
+                                    <td>{item.tipo}</td>
+                                    <td className="status-cell">
+                                        <PrioridadeBadge prioridade={item.prioridade} />
+                                    </td>
+                                    <td className="status-cell">
+                                        {(user.role === 'administrador' || user.role === 'master') ? (
+                                            <button 
+                                                onClick={() => handleMarcarComoPago(item.id)}
+                                                className="quick-pay-btn" 
+                                                title="Marcar como Pago"
+                                            >
+                                                A Pagar ✓
+                                            </button>
+                                        ) : (
+                                            <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
+                                        )}
+                                    </td>
+                                    <td>{formatCurrency(item.valor)}</td>
+                                    <td className="acoes-cell">
+                                        {(user.role === 'administrador' || user.role === 'master') ? (
+                                            item.tipo_registro === 'lancamento' ? (
+                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                            ) : (
+                                                <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                            )
+                                        ) : null}
+                                        {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
+                                            <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="8" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            {/* --- FIM DA NOVA TABELA --- */}
 
 
             {/* Tabela de Histórico (agora somente Pagos) */}
@@ -1431,82 +1481,86 @@ function Dashboard() {
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
                     </div>
                 </div>
-                <table className="tabela-historico">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Descrição</th>
-                            <th>Fornecedor</th> {/* <--- MUDANÇA */}
-                            <th>Segmento</th>
-                            <th>Prior.</th>
-                            <th>Status</th>
-                            <th>Valor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {itemsPagos.length > 0 ? itemsPagos.map(item => (
-                            <tr key={item.id}>
-                                <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                <td>
-                                    {item.descricao}
-                                    {item.tipo_registro === 'pagamento_servico' && (
-                                        <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                            SERVIÇO
-                                        </span>
-                                    )}
-                                </td>
-                                <td>{item.fornecedor || 'N/A'}</td> {/* <--- MUDANÇA */}
-                                <td>{item.tipo}</td>
-                                <td className="status-cell">
-                                    <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
-                                </td>
-                                <td className="status-cell">
-                                    {(user.role === 'administrador' || user.role === 'master') ? (
-                                        <button 
-                                            onClick={() => handleMarcarComoPago(item.id)}
-                                            className="quick-pay-btn"
-                                            style={{backgroundColor: 'var(--cor-acento)'}}
-                                            title="Marcar como A Pagar"
-                                        >
-                                            Pago ⮎
-                                        </button>
-                                    ) : (
-                                        <span className="status pago">Pago</span>
-                                    )}
-                                </td>
-                                <td>{formatCurrency(item.valor)}</td>
-                                <td className="acoes-cell">
-                                    {(user.role === 'administrador' || user.role === 'master') ? (
-                                        item.tipo_registro === 'lancamento' ? (
-                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
-                                        ) : (
-                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
-                                        )
-                                    ) : null}
-                                    {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
-                                        <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
-                                    )}
-                                </td>
-                            </tr>
-                        )) : (
+                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
+                <div className="tabela-scroll-container">
+                    <table className="tabela-historico">
+                        <thead>
                             <tr>
-                                <td colSpan="8" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td> {/* <--- MUDANÇA (colspan=8) */}
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Segmento</th>
+                                <th>Prior.</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {itemsPagos.length > 0 ? itemsPagos.map(item => (
+                                <tr key={item.id}>
+                                    <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                    <td>
+                                        {item.descricao}
+                                        {item.tipo_registro === 'pagamento_servico' && (
+                                            <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                                SERVIÇO
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>{item.fornecedor || 'N/A'}</td>
+                                    <td>{item.tipo}</td>
+                                    <td className="status-cell">
+                                        <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
+                                    </td>
+                                    <td className="status-cell">
+                                        {(user.role === 'administrador' || user.role === 'master') ? (
+                                            <button 
+                                                onClick={() => handleMarcarComoPago(item.id)}
+                                                className="quick-pay-btn"
+                                                style={{backgroundColor: 'var(--cor-acento)'}}
+                                                title="Marcar como A Pagar"
+                                            >
+                                                Pago ⮎
+                                            </button>
+                                        ) : (
+                                            <span className="status pago">Pago</span>
+                                        )}
+                                    </td>
+                                    <td>{formatCurrency(item.valor)}</td>
+                                    <td className="acoes-cell">
+                                        {(user.role === 'administrador' || user.role === 'master') ? (
+                                            item.tipo_registro === 'lancamento' ? (
+                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                            ) : (
+                                                <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                            )
+                                        ) : null}
+                                        {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
+                                            <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="8" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
 }
 
-// Modal "Adicionar Serviço"
+// <--- MUDANÇA: Modal "Adicionar Serviço" (com Orçamento de Material)
 const AddServicoModal = ({ onClose, onSave }) => {
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
     const [valorMO, setValorMO] = useState(0); 
+    const [valorMaterial, setValorMaterial] = useState(0); // <--- MUDANÇA
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1516,6 +1570,7 @@ const AddServicoModal = ({ onClose, onSave }) => {
             responsavel: responsavel || null,
             pix: pix || null,
             valor_global_mao_de_obra: valorMO,
+            valor_global_material: valorMaterial, // <--- MUDANÇA
         };
         
         onSave(servicoData);
@@ -1542,8 +1597,13 @@ const AddServicoModal = ({ onClose, onSave }) => {
 
                 <div className="form-group">
                     <label>Valor Orçado - Mão de Obra (R$)</label>
-                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} required />
-                    <small>O custo de material será a soma dos lançamentos de material vinculados a este serviço.</small>
+                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
+                </div>
+                
+                {/* <--- MUDANÇA: Campo para Orçamento de Material */}
+                <div className="form-group">
+                    <label>Valor Orçado - Material (R$)</label>
+                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
                 </div>
                 
                 <div className="form-actions">
@@ -1555,11 +1615,11 @@ const AddServicoModal = ({ onClose, onSave }) => {
     );
 };
 
-// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (com Fornecedor) ---
+// Modal "Adicionar Gasto Geral" (com Fornecedor)
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState(''); // <--- MUDANÇA
+    const [fornecedor, setFornecedor] = useState(''); 
     const [pix, setPix] = useState('');
     const [valor, setValor] = useState(0);
     const [tipo, setTipo] = useState('Material');
@@ -1572,7 +1632,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
         onSave({
             data,
             descricao,
-            fornecedor: fornecedor || null, // <--- MUDANÇA
+            fornecedor: fornecedor || null,
             pix: pix || null,
             valor: parseFloat(valor) || 0,
             tipo,
@@ -1592,7 +1652,6 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                 </div>
                 <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
                 
-                {/* <--- MUDANÇA: Campo Fornecedor Adicionado */}
                 <div className="form-group">
                     <label>Fornecedor (Opcional)</label>
                     <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
