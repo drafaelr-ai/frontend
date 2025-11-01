@@ -169,19 +169,18 @@ const LoginScreen = () => {
     );
 };
 
-// <--- MUDANÇA: NOVO COMPONENTE DE GRÁFICO ---
+// Gráfico de Pizza
 const GastosPorSegmentoChart = ({ data }) => {
-    // O 'data' aqui é o `sumarios.total_por_segmento_geral`
     if (!data || Object.keys(data).length === 0) {
         return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gráfico.</p>;
     }
 
     const chartData = {
-        labels: Object.keys(data), // ['Material', 'Mão de Obra', 'Serviço', 'Equipamentos']
+        labels: Object.keys(data),
         datasets: [
             {
                 label: 'Valor Gasto (R$)',
-                data: Object.values(data), // [1000, 500, 300, 150]
+                data: Object.values(data),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.7)', // Vermelho (Material)
                     'rgba(54, 162, 235, 0.7)', // Azul (Mão de Obra)
@@ -203,19 +202,17 @@ const GastosPorSegmentoChart = ({ data }) => {
 
     const options = {
         responsive: true,
-        maintainAspectRatio: false, // Importante para o container
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
             },
             title: {
                 display: false,
-                text: 'Distribuição de Gastos Gerais',
             },
         },
     };
 
-    // Container com altura definida para o gráfico
     return (
         <div style={{ position: 'relative', height: '350px' }}>
             <Pie data={chartData} options={options} />
@@ -831,9 +828,10 @@ function Dashboard() {
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
-
-    // <--- MUDANÇA: State para o filtro de pendências
     const [filtroPendencias, setFiltroPendencias] = useState('');
+
+    // <--- MUDANÇA: Novo state para edição de orçamento
+    const [editingOrcamento, setEditingOrcamento] = useState(null);
 
     // Filtros de 'A Pagar' e 'Pagos'
     const itemsAPagar = useMemo(() => 
@@ -841,10 +839,9 @@ function Dashboard() {
         [historicoUnificado]
     );
     
-    // <--- MUDANÇA: Aplica o filtro de busca
     const itemsAPagarFiltrados = useMemo(() => {
         if (!filtroPendencias) {
-            return itemsAPagar; // Retorna tudo se o filtro estiver vazio
+            return itemsAPagar;
         }
         const lowerCaseFiltro = filtroPendencias.toLowerCase();
         return itemsAPagar.filter(item => 
@@ -1009,6 +1006,23 @@ function Dashboard() {
         .catch(error => {
             console.error("Erro ao salvar orçamento:", error);
             alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+        });
+    };
+    
+    // <--- MUDANÇA: Nova função para salvar edição de orçamento
+    const handleSaveEditOrcamento = (updatedOrcamento) => {
+        console.log("Salvando edição do orçamento:", updatedOrcamento);
+        fetchWithAuth(`${API_URL}/orcamentos/${updatedOrcamento.id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updatedOrcamento)
+        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then(() => {
+            setEditingOrcamento(null); // Fecha o modal
+            fetchObraData(obraSelecionada.id); // Recarrega os dados
+        })
+        .catch(error => {
+            console.error("Erro ao salvar edição do orçamento:", error);
+            alert(`Erro ao salvar edição: ${error.message}`);
         });
     };
     
@@ -1249,6 +1263,16 @@ function Dashboard() {
                 />
             )}
 
+            {/* <--- MUDANÇA: Renderiza o novo modal de Edição de Orçamento */}
+            {editingOrcamento && (
+                <EditOrcamentoModal
+                    orcamento={editingOrcamento}
+                    onClose={() => setEditingOrcamento(null)}
+                    onSave={handleSaveEditOrcamento}
+                    servicos={servicos}
+                />
+            )}
+
             {editingServicoPrioridade && (
                 <EditPrioridadeModal
                     item={editingServicoPrioridade}
@@ -1275,7 +1299,7 @@ function Dashboard() {
                  </div>
              )}
             
-            {/* <--- MUDANÇA: Novo Grid com Gráfico e Sumário --- */}
+            {/* Grid com Gráfico e Sumário */}
             <div className="main-grid">
                 <div className="card-main">
                     <div className="card-header"><h3>Gráfico de Gastos (Gerais)</h3></div>
@@ -1297,7 +1321,6 @@ function Dashboard() {
                     </div>
                 </div>
             </div>
-            {/* --- FIM DO NOVO GRID --- */}
 
 
             {/* Tabela de Orçamentos */}
@@ -1322,13 +1345,13 @@ function Dashboard() {
                         </thead>
                         <tbody>
                             {orcamentos.length > 0 ? orcamentos.map(orc => (
-                                <tr key={orc.id}>
+                                <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
                                     <td>{orc.descricao}</td>
                                     <td>{orc.fornecedor || 'N/A'}</td>
                                     <td>{orc.tipo}</td>
                                     <td>{orc.servico_nome || 'Geral'}</td>
                                     <td>{formatCurrency(orc.valor)}</td>
-                                    <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                    <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}} onClick={e => e.stopPropagation()}>
                                         {(user.role === 'administrador' || user.role === 'master') && (
                                             <>
                                                 <button 
@@ -1775,7 +1798,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// Modal "Adicionar Orçamento"
+// <--- MUDANÇA: Modal "Adicionar Orçamento" (com Observações) ---
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
@@ -1783,6 +1806,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [dadosPagamento, setDadosPagamento] = useState('');
     const [tipo, setTipo] = useState('Material'); 
     const [servicoId, setServicoId] = useState(''); 
+    const [observacoes, setObservacoes] = useState(''); // <--- MUDANÇA
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1792,7 +1816,8 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
             valor: parseFloat(valor) || 0,
             dados_pagamento: dadosPagamento || null,
             tipo,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null
+            servico_id: servicoId ? parseInt(servicoId, 10) : null,
+            observacoes: observacoes || null // <--- MUDANÇA
         });
     };
 
@@ -1815,6 +1840,12 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                  <div className="form-group">
                     <label>Dados de Pagamento (Opcional)</label>
                     <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
+                </div>
+                
+                {/* <--- MUDANÇA: Campo de Observações --- */}
+                <div className="form-group">
+                    <label>Observações (Opcional)</label>
+                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
                 </div>
                 
                 <hr style={{margin: '20px 0'}} />
@@ -1840,6 +1871,98 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                 <div className="form-actions">
                     <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
                     <button type="submit" className="submit-btn">Salvar Orçamento</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// <--- MUDANÇA: Novo Modal para Editar Orçamento ---
+const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
+    const [formData, setFormData] = useState({});
+
+    useEffect(() => {
+        if (orcamento) {
+            setFormData({
+                ...orcamento,
+                servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
+                observacoes: orcamento.observacoes || ''
+            });
+        }
+    }, [orcamento]);
+
+    const handleChange = (e) => { 
+        const { name, value } = e.target; 
+        let finalValue = value;
+        if (name === 'valor') {
+            finalValue = parseFloat(value) || 0;
+        }
+        if (name === 'servico_id') {
+            finalValue = value ? parseInt(value, 10) : ''; 
+        }
+        setFormData(prev => ({ ...prev, [name]: finalValue })); 
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            ...formData,
+            servico_id: formData.servico_id || null,
+            observacoes: formData.observacoes || null
+        });
+    };
+
+    if (!orcamento) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Editar Orçamento</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
+                </div>
+                 <div className="form-group">
+                    <label>Dados de Pagamento (Opcional)</label>
+                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
+                </div>
+                
+                <div className="form-group">
+                    <label>Observações (Opcional)</label>
+                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
+                </div>
+                
+                <hr style={{margin: '20px 0'}} />
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Alterações</button>
                 </div>
             </form>
         </Modal>
