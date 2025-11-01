@@ -91,14 +91,13 @@ body {
 .kpi-card.total-geral { background: var(--cor-primaria); } 
 .kpi-card.total-pago { background: var(--cor-acento); } 
 .kpi-card.total-a-pagar { background: var(--cor-vermelho); }
-/* .kpi-card.liberado-pagamento { background: var(--cor-aviso); (REMOVIDO) */
 
 .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
 .card-main, .card-full { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); margin-bottom: 20px; }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
 .card-header h3 { margin: 0; }
-.header-actions { display: flex; gap: 10px; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
 .export-btn { background-color: #f8f9fa; color: var(--cor-texto); border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
 .export-btn.pdf { background-color: var(--cor-vermelho); color: white; border-color: var(--cor-vermelho); }
@@ -116,12 +115,27 @@ body {
 .item-acao .item-valor { display: block; font-weight: bold; margin-bottom: 5px; }
 .marcar-pago-btn { background-color: var(--cor-acento); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em; }
 
-.lista-segmento .item-segmento { display: flex; justify-content: space-between; padding: 10px 0; }
+.lista-segmento .item-segmento { 
+    display: flex; 
+    justify-content: space-between; 
+    padding: 10px 0; 
+    border-bottom: 1px solid #f0f0f0;
+}
+.lista-segmento .item-segmento:last-child {
+    border-bottom: none;
+}
 .valor-segmento { font-weight: bold; }
 
 .tabela-historico { width: 100%; border-collapse: collapse; }
 .tabela-historico th, .tabela-historico td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
 .tabela-historico th { background-color: #f8f9fa; }
+
+/* <--- MUDANÇA: Estilo para linha clicável --- */
+.tabela-historico tr.linha-clicavel:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
 .status { padding: 3px 8px; border-radius: 12px; color: white; font-weight: 500; font-size: 0.8em; text-transform: uppercase; }
 .status.pago { background-color: var(--cor-acento); }
 
@@ -144,7 +158,8 @@ body {
 .modal-content h2 { margin-top: 0; text-align: center; margin-bottom: 20px; }
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+.form-group textarea { resize: vertical; min-height: 80px; }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 .form-actions .submit-btn, .form-actions .cancel-btn { width: 100%; padding: 12px 15px; border-radius: 5px; font-size: 1em; font-weight: bold; cursor: pointer; border: none; }
 

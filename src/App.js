@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useContext, createContext } from 'react';
 import './App.css';
 
-// <--- MUDANÇA: Imports do Chart.js
+// Imports do Chart.js
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
-// <--- MUDANÇA: Registrar os componentes do Chart.js
+// Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- CONFIGURAÇÃO INICIAL ---
