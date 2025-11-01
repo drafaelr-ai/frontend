@@ -1798,7 +1798,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// <--- MUDANÇA: Modal "Adicionar Orçamento" (com Observações) ---
+// Modal "Adicionar Orçamento" (com Observações)
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
@@ -1806,7 +1806,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [dadosPagamento, setDadosPagamento] = useState('');
     const [tipo, setTipo] = useState('Material'); 
     const [servicoId, setServicoId] = useState(''); 
-    const [observacoes, setObservacoes] = useState(''); // <--- MUDANÇA
+    const [observacoes, setObservacoes] = useState(''); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1817,7 +1817,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
             dados_pagamento: dadosPagamento || null,
             tipo,
             servico_id: servicoId ? parseInt(servicoId, 10) : null,
-            observacoes: observacoes || null // <--- MUDANÇA
+            observacoes: observacoes || null 
         });
     };
 
@@ -1842,7 +1842,6 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                     <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
                 </div>
                 
-                {/* <--- MUDANÇA: Campo de Observações --- */}
                 <div className="form-group">
                     <label>Observações (Opcional)</label>
                     <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
