@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo, useContext, createContext } from 'react';
 import './App.css';
 
+// <--- MUDANÇA: Imports do Chart.js
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+// <--- MUDANÇA: Registrar os componentes do Chart.js
+ChartJS.register(ArcElement, Tooltip, Legend);
+
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
@@ -162,6 +169,61 @@ const LoginScreen = () => {
     );
 };
 
+// <--- MUDANÇA: NOVO COMPONENTE DE GRÁFICO ---
+const GastosPorSegmentoChart = ({ data }) => {
+    // O 'data' aqui é o `sumarios.total_por_segmento_geral`
+    if (!data || Object.keys(data).length === 0) {
+        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gráfico.</p>;
+    }
+
+    const chartData = {
+        labels: Object.keys(data), // ['Material', 'Mão de Obra', 'Serviço', 'Equipamentos']
+        datasets: [
+            {
+                label: 'Valor Gasto (R$)',
+                data: Object.values(data), // [1000, 500, 300, 150]
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)', // Vermelho (Material)
+                    'rgba(54, 162, 235, 0.7)', // Azul (Mão de Obra)
+                    'rgba(255, 206, 86, 0.7)', // Amarelo (Serviço)
+                    'rgba(75, 192, 192, 0.7)', // Verde (Equipamentos)
+                    'rgba(153, 102, 255, 0.7)', // Roxo
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                ],
+                borderWidth: 1,
+            },
+        ],
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false, // Importante para o container
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: false,
+                text: 'Distribuição de Gastos Gerais',
+            },
+        },
+    };
+
+    // Container com altura definida para o gráfico
+    return (
+        <div style={{ position: 'relative', height: '350px' }}>
+            <Pie data={chartData} options={options} />
+        </div>
+    );
+};
+// ---------------------------------
+
 
 // --- COMPONENTES DE MODAL (Existentes) ---
 const Modal = ({ children, onClose }) => (
@@ -281,7 +343,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     );
 };
 
-// <--- MUDANÇA: Modal de Serviço (com Orçamento de Material)
+// Modal de Serviço (com Orçamento de Material)
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
@@ -292,7 +354,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
              setFormData({
                  ...servico,
                  valor_global_mao_de_obra: servico.valor_global_mao_de_obra || 0,
-                 valor_global_material: servico.valor_global_material || 0, // <--- MUDANÇA
+                 valor_global_material: servico.valor_global_material || 0, 
              });
          } else {
              setFormData({});
@@ -348,13 +410,11 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    {/* <--- MUDANÇA: Exibição dos dois orçamentos */}
                     <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Gasto Total: {formatCurrency(totalGastoMO)})</p>
                     <p><strong>Valor Orçado (Material):</strong> {formatCurrency(servico.valor_global_material)} (Gasto Total: {formatCurrency(totalGastoMat)})</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
-                    {/* <--- MUDANÇA: Tabela com container de scroll */}
                     <div className="tabela-scroll-container" style={{maxHeight: '200px'}}> 
                         <table className="tabela-pagamentos" style={{width: '100%'}}>
                             <thead>
@@ -387,7 +447,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                             )}
                                         </tr>
                                     ))
-                                ) : (
+                                 ) : (
                                     <tr>
                                         <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
                                     </tr>
@@ -406,7 +466,6 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <h2>Editar Serviço</h2>
                     <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    {/* <--- MUDANÇA: Campo para Orçamento de Material */}
                     <div className="form-group">
                         <label>Valor Orçado - Mão de Obra (R$)</label>
                         <input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} />
@@ -924,7 +983,7 @@ function Dashboard() {
         const dataToSend = {
             ...updatedServico,
             valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
-            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0, // <--- MUDANÇA
+            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0, 
             responsavel: updatedServico.responsavel || null,
             pix: updatedServico.pix || null
         };
@@ -1215,6 +1274,31 @@ function Dashboard() {
                      <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
+            
+            {/* <--- MUDANÇA: Novo Grid com Gráfico e Sumário --- */}
+            <div className="main-grid">
+                <div className="card-main">
+                    <div className="card-header"><h3>Gráfico de Gastos (Gerais)</h3></div>
+                    <GastosPorSegmentoChart data={sumarios.total_por_segmento_geral} />
+                </div>
+                <div className="card-main">
+                    <div className="card-header"><h3>Total por Segmento (Geral)</h3></div>
+                    <div className="lista-segmento tabela-scroll-container">
+                        {sumarios.total_por_segmento_geral && Object.keys(sumarios.total_por_segmento_geral).length > 0 ? (
+                            Object.entries(sumarios.total_por_segmento_geral).map(([segmento, valor]) => (
+                                <div key={segmento} className="item-segmento">
+                                    <span>{segmento}</span>
+                                    <span className="valor-segmento">{formatCurrency(valor)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p>Nenhum gasto geral registrado.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+            {/* --- FIM DO NOVO GRID --- */}
+
 
             {/* Tabela de Orçamentos */}
             <div className="card-full">
@@ -1224,7 +1308,6 @@ function Dashboard() {
                         <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
                     )}
                 </div>
-                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
                 <div className="tabela-scroll-container">
                     <table className="tabela-historico">
                         <thead>
@@ -1299,7 +1382,6 @@ function Dashboard() {
                 </div>
                 
                 {!isServicosCollapsed && (
-                    /* <--- MUDANÇA: Barra de rolagem adicionada */
                     <div className="lista-empreitadas tabela-scroll-container" style={{marginTop: '15px'}}>
                         {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
                             
@@ -1313,7 +1395,6 @@ function Dashboard() {
                             const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
                             const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                             
-                            // <--- MUDANÇA: Pega o valor orçado de material
                             const valorGlobalMat = serv.valor_global_material || 0;
 
                             return (
@@ -1321,7 +1402,6 @@ function Dashboard() {
                                     <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
                                         <div className="empreitada-header">
                                             <h4>{serv.nome}</h4>
-                                            {/* <--- MUDANÇA: Exibe os dois orçamentos */}
                                             <span style={{textAlign: 'right'}}>
                                                 Orçado (MO): {formatCurrency(valorGlobalMO)}<br/>
                                                 Orçado (Mat): {formatCurrency(valorGlobalMat)}
@@ -1336,7 +1416,6 @@ function Dashboard() {
                                             </div>
                                         </div>
                                         <div style={{marginTop: '5px'}}>
-                                            {/* <--- MUDANÇA: Exibe gasto vs orçado de material */}
                                             <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)} / {formatCurrency(valorGlobalMat)}</small>
                                             <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
                                             </div>
@@ -1382,7 +1461,6 @@ function Dashboard() {
                 <div className="card-header">
                     <h3>Pendências (A Pagar)</h3>
                     <div className="header-actions">
-                        {/* <--- MUDANÇA: Campo de Filtro Adicionado */}
                         <input 
                             type="text" 
                             placeholder="Filtrar pendências..." 
@@ -1402,7 +1480,6 @@ function Dashboard() {
                         </button>
                     </div>
                 </div>
-                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
                 <div className="tabela-scroll-container">
                     <table className="tabela-historico">
                         <thead>
@@ -1418,7 +1495,6 @@ function Dashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* <--- MUDANÇA: Usando a lista FILTRADA */}
                             {itemsAPagarFiltrados.length > 0 ? itemsAPagarFiltrados.map(item => (
                                 <tr key={item.id}>
                                     <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
@@ -1481,7 +1557,6 @@ function Dashboard() {
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
                     </div>
                 </div>
-                {/* <--- MUDANÇA: Barra de rolagem adicionada */}
                 <div className="tabela-scroll-container">
                     <table className="tabela-historico">
                         <thead>
@@ -1554,13 +1629,13 @@ function Dashboard() {
     );
 }
 
-// <--- MUDANÇA: Modal "Adicionar Serviço" (com Orçamento de Material)
+// Modal "Adicionar Serviço" (com Orçamento de Material)
 const AddServicoModal = ({ onClose, onSave }) => {
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
     const [valorMO, setValorMO] = useState(0); 
-    const [valorMaterial, setValorMaterial] = useState(0); // <--- MUDANÇA
+    const [valorMaterial, setValorMaterial] = useState(0); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1570,7 +1645,7 @@ const AddServicoModal = ({ onClose, onSave }) => {
             responsavel: responsavel || null,
             pix: pix || null,
             valor_global_mao_de_obra: valorMO,
-            valor_global_material: valorMaterial, // <--- MUDANÇA
+            valor_global_material: valorMaterial, 
         };
         
         onSave(servicoData);
@@ -1600,7 +1675,6 @@ const AddServicoModal = ({ onClose, onSave }) => {
                     <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
                 </div>
                 
-                {/* <--- MUDANÇA: Campo para Orçamento de Material */}
                 <div className="form-group">
                     <label>Valor Orçado - Material (R$)</label>
                     <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
