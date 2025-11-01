@@ -52,18 +52,26 @@ const getTodayString = () => {
     return todayWithOffset.toISOString().split('T')[0];
 };
 
-// --- HELPER DA API ---
+// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
     
     const headers = {
         ...options.headers,
-        'Content-Type': 'application/json', 
+        // 'Content-Type': 'application/json', // <-- REMOVIDO DAQUI
     };
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
+
+    // <-- INÍCIO DA MUDANÇA -->
+    // Não defina Content-Type se o body for FormData
+    // O navegador fará isso (com o 'boundary' correto)
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    // <-- FIM DA MUDANÇA -->
 
     const response = await fetch(url, { ...options, headers });
 
@@ -992,12 +1000,12 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // Handlers dos Orçamentos
-    const handleSaveOrcamento = (orcamentoData) => {
-        console.log("Salvando novo orçamento:", orcamentoData);
+    // Handlers dos Orçamentos (ATUALIZADOS)
+    const handleSaveOrcamento = (formData) => { // <--- MUDANÇA: Recebe FormData
+        console.log("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
-            body: JSON.stringify(orcamentoData)
+            body: formData // <--- MUDANÇA: Enviado diretamente
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
             setAddOrcamentoModalVisible(false);
@@ -1009,14 +1017,40 @@ function Dashboard() {
         });
     };
     
-    // <--- MUDANÇA: Nova função para salvar edição de orçamento
-    const handleSaveEditOrcamento = (updatedOrcamento) => {
-        console.log("Salvando edição do orçamento:", updatedOrcamento);
-        fetchWithAuth(`${API_URL}/orcamentos/${updatedOrcamento.id}`, {
+    // <--- MUDANÇA: Nova função para salvar edição de orçamento (com anexos)
+    const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
+        console.log("Salvando edição do orçamento:", orcamentoId);
+        
+        // Etapa 1: Salvar os dados do formulário (texto)
+        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
-            body: JSON.stringify(updatedOrcamento)
+            body: formData // Envia como FormData
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
+            
+            // Etapa 2: Se houver novos arquivos, enviá-los
+            if (newFiles.length > 0) {
+                const fileFormData = new FormData();
+                newFiles.forEach(file => {
+                    fileFormData.append('anexos', file);
+                });
+                
+                // Rota do backend para adicionar anexos a um orçamento existente
+                return fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/anexos`, {
+                    method: 'POST',
+                    body: fileFormData
+                });
+            }
+            
+            return Promise.resolve(); // Nenhum arquivo para enviar
+            
+        }).then(fileRes => {
+            if (fileRes && !fileRes.ok) {
+                 // Tenta ler o erro do upload de arquivo
+                 return fileRes.json().then(err => { throw new Error(err.erro || 'Erro ao enviar anexos') });
+            }
+            
+            // Tudo certo, fechar modal e recarregar
             setEditingOrcamento(null); // Fecha o modal
             fetchObraData(obraSelecionada.id); // Recarrega os dados
         })
@@ -1263,12 +1297,12 @@ function Dashboard() {
                 />
             )}
 
-            {/* <--- MUDANÇA: Renderiza o novo modal de Edição de Orçamento */}
+            {/* <--- MUDANÇA: Renderiza o novo modal de Edição de Orçamento (COM A CHAMADA CORRIGIDA) --> */}
             {editingOrcamento && (
                 <EditOrcamentoModal
                     orcamento={editingOrcamento}
                     onClose={() => setEditingOrcamento(null)}
-                    onSave={handleSaveEditOrcamento}
+                    onSave={(orcamentoId, formData, newFiles) => handleSaveEditOrcamento(orcamentoId, formData, newFiles)}
                     servicos={servicos}
                 />
             )}
@@ -1798,7 +1832,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// Modal "Adicionar Orçamento" (com Observações)
+// Modal "Adicionar Orçamento" (ATUALIZADO com Anexos)
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
@@ -1808,17 +1842,35 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [servicoId, setServicoId] = useState(''); 
     const [observacoes, setObservacoes] = useState(''); 
 
+    // <-- INÍCIO DA MUDANÇA -->
+    const [anexos, setAnexos] = useState([]); // State para os arquivos
+    // <-- FIM DA MUDANÇA -->
+
+    const handleFileChange = (e) => {
+        setAnexos(Array.from(e.target.files));
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({
-            descricao,
-            fornecedor: fornecedor || null,
-            valor: parseFloat(valor) || 0,
-            dados_pagamento: dadosPagamento || null,
-            tipo,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null,
-            observacoes: observacoes || null 
+        
+        // <-- INÍCIO DA MUDANÇA -->
+        // Não é mais um objeto JSON, é FormData
+        const formData = new FormData();
+        formData.append('descricao', descricao);
+        formData.append('fornecedor', fornecedor || '');
+        formData.append('valor', parseFloat(valor) || 0);
+        formData.append('dados_pagamento', dadosPagamento || '');
+        formData.append('tipo', tipo);
+        formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
+        formData.append('observacoes', observacoes || '');
+        
+        // Adiciona os arquivos
+        anexos.forEach(file => {
+            formData.append('anexos', file);
         });
+        
+        onSave(formData); // Envia o FormData
+        // <-- FIM DA MUDANÇA -->
     };
 
     return (
@@ -1846,6 +1898,18 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                     <label>Observações (Opcional)</label>
                     <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
                 </div>
+                
+                {/* <-- INÍCIO DA MUDANÇA: Campo de Anexos --> */}
+                <div className="form-group">
+                    <label>Anexos (PDF, Imagens)</label>
+                    <input 
+                        type="file" 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept="image/*,.pdf"
+                    />
+                </div>
+                {/* <-- FIM DA MUDANÇA --> */}
                 
                 <hr style={{margin: '20px 0'}} />
                 
@@ -1876,9 +1940,15 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// <--- MUDANÇA: Novo Modal para Editar Orçamento ---
+// <--- MUDANÇA: Novo Modal para Editar Orçamento (COM ANEXOS) ---
 const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
+    
+    // <-- INÍCIO DAS MUDANÇAS -->
+    const [existingAnexos, setExistingAnexos] = useState([]);
+    const [newAnexos, setNewAnexos] = useState([]);
+    const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
+    // <-- FIM DAS MUDANÇAS -->
 
     useEffect(() => {
         if (orcamento) {
@@ -1887,6 +1957,21 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                 servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
                 observacoes: orcamento.observacoes || ''
             });
+            
+            // <-- INÍCIO DAS MUDANÇAS -->
+            // Buscar anexos existentes
+            setIsLoadingAnexos(true);
+            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
+                .then(res => res.json())
+                .then(data => {
+                    setExistingAnexos(Array.isArray(data) ? data : []);
+                    setIsLoadingAnexos(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar anexos:", err);
+                    setIsLoadingAnexos(false);
+                });
+            // <-- FIM DAS MUDANÇAS -->
         }
     }, [orcamento]);
 
@@ -1901,15 +1986,58 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
         }
         setFormData(prev => ({ ...prev, [name]: finalValue })); 
     };
+    
+    // <-- INÍCIO DAS MUDANÇAS -->
+    const handleFileChange = (e) => {
+        setNewAnexos(Array.from(e.target.files));
+    };
+
+    const handleOpenAnexo = (anexoId) => {
+        // Usamos o fetchWithAuth para autenticar a requisição do arquivo
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                // Cria uma URL temporária para o blob e abre em nova aba
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+    };
+
+    const handleDeleteAnexo = (anexoId, e) => {
+        e.preventDefault(); // Impede o clique no link
+        e.stopPropagation(); // Impede o clique no link
+        
+        if (window.confirm("Tem certeza que deseja excluir este anexo?")) {
+            fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Falha ao deletar');
+                    setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
+                })
+                .catch(err => alert(`Erro ao deletar anexo: ${err.message}`));
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({
-            ...formData,
-            servico_id: formData.servico_id || null,
-            observacoes: formData.observacoes || null
-        });
+        
+        // 1. Criar o FormData para os dados de texto
+        const data = new FormData();
+        data.append('descricao', formData.descricao || '');
+        data.append('fornecedor', formData.fornecedor || '');
+        data.append('valor', parseFloat(formData.valor) || 0);
+        data.append('dados_pagamento', formData.dados_pagamento || '');
+        data.append('tipo', formData.tipo || 'Material');
+        data.append('servico_id', formData.servico_id || '');
+        data.append('observacoes', formData.observacoes || '');
+        
+        // 2. Chamar onSave com o ID, os dados de texto e os novos arquivos
+        onSave(formData.id, data, newAnexos);
     };
+    // <-- FIM DAS MUDANÇAS -->
 
     if (!orcamento) return null;
 
@@ -1939,6 +2067,48 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                     <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
                 </div>
                 
+                <hr style={{margin: '20px 0'}} />
+
+                {/* <-- INÍCIO DAS MUDANÇAS: Listagem e Upload de Anexos --> */}
+                <div className="form-group">
+                    <label>Anexos Atuais</label>
+                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
+                        <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
+                            {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
+                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
+                                    <a 
+                                        href="#" // Usamos onClick para autenticação
+                                        onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                        title={`Abrir ${anexo.filename}`}
+                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                    >
+                                        {anexo.filename}
+                                    </a>
+                                    <button 
+                                        type="button" 
+                                        onClick={(e) => handleDeleteAnexo(anexo.id, e)}
+                                        title="Excluir Anexo"
+                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
+                                    >
+                                        &times;
+                                    </button>
+                                </li>
+                            )) : <p>Nenhum anexo.</p>}
+                        </ul>
+                    )}
+                </div>
+
+                <div className="form-group">
+                    <label>Adicionar Novos Anexos</label>
+                    <input 
+                        type="file" 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept="image/*,.pdf"
+                    />
+                </div>
+                {/* <-- FIM DAS MUDANÇAS --> */}
+
                 <hr style={{margin: '20px 0'}} />
                 
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
