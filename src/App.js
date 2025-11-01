@@ -58,20 +58,15 @@ const fetchWithAuth = async (url, options = {}) => {
     
     const headers = {
         ...options.headers,
-        // 'Content-Type': 'application/json', // <-- REMOVIDO DAQUI
     };
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // <-- INÍCIO DA MUDANÇA -->
-    // Não defina Content-Type se o body for FormData
-    // O navegador fará isso (com o 'boundary' correto)
     if (!(options.body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
-    // <-- FIM DA MUDANÇA -->
 
     const response = await fetch(url, { ...options, headers });
 
@@ -813,6 +808,500 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
 };
 // ----------------------------------------------------
 
+// Modal "Adicionar Serviço" (com Orçamento de Material)
+const AddServicoModal = ({ onClose, onSave }) => {
+    const [nome, setNome] = useState('');
+    const [responsavel, setResponsavel] = useState('');
+    const [pix, setPix] = useState('');
+    const [valorMO, setValorMO] = useState(0); 
+    const [valorMaterial, setValorMaterial] = useState(0); 
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        let servicoData = {
+            nome,
+            responsavel: responsavel || null,
+            pix: pix || null,
+            valor_global_mao_de_obra: valorMO,
+            valor_global_material: valorMaterial, 
+        };
+        
+        onSave(servicoData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Cadastrar Novo Serviço</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição do Serviço</label>
+                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
+                </div>
+                <div className="form-group">
+                    <label>Responsável</label>
+                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
+                </div>
+                <div className="form-group">
+                    <label>Dados de Pagamento (PIX)</label>
+                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
+                </div>
+                
+                <hr />
+
+                <div className="form-group">
+                    <label>Valor Orçado - Mão de Obra (R$)</label>
+                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
+                </div>
+                
+                <div className="form-group">
+                    <label>Valor Orçado - Material (R$)</label>
+                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Serviço</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal "Adicionar Gasto Geral" (com Fornecedor)
+const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
+    const [data, setData] = useState(getTodayString());
+    const [descricao, setDescricao] = useState('');
+    const [fornecedor, setFornecedor] = useState(''); 
+    const [pix, setPix] = useState('');
+    const [valor, setValor] = useState(0);
+    const [tipo, setTipo] = useState('Material');
+    const [status, setStatus] = useState('A Pagar');
+    const [servicoId, setServicoId] = useState('');
+    const [prioridade, setPrioridade] = useState(0); 
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            data,
+            descricao,
+            fornecedor: fornecedor || null,
+            pix: pix || null,
+            valor: parseFloat(valor) || 0,
+            tipo,
+            status,
+            prioridade: parseInt(prioridade, 10) || 0,
+            servico_id: servicoId ? parseInt(servicoId, 10) : null
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Adicionar Novo Gasto</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Data</label>
+                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                </div>
+                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
+                
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                </div>
+
+                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
+                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                <div className="form-group"><label>Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                        <option>A Pagar</option>
+                        <option>Pago</option>
+                    </select>
+                </div>
+                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal "Adicionar Orçamento" (ATUALIZADO com Anexos)
+const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
+    const [descricao, setDescricao] = useState('');
+    const [fornecedor, setFornecedor] = useState('');
+    const [valor, setValor] = useState(0);
+    const [dadosPagamento, setDadosPagamento] = useState('');
+    const [tipo, setTipo] = useState('Material'); 
+    const [servicoId, setServicoId] = useState(''); 
+    const [observacoes, setObservacoes] = useState(''); 
+    const [anexos, setAnexos] = useState([]); 
+
+    const handleFileChange = (e) => {
+        setAnexos(Array.from(e.target.files));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('descricao', descricao);
+        formData.append('fornecedor', fornecedor || '');
+        formData.append('valor', parseFloat(valor) || 0);
+        formData.append('dados_pagamento', dadosPagamento || '');
+        formData.append('tipo', tipo);
+        formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
+        formData.append('observacoes', observacoes || '');
+        
+        anexos.forEach(file => {
+            formData.append('anexos', file);
+        });
+        
+        onSave(formData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Adicionar Orçamento para Aprovação</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento e Areia" required />
+                </div>
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
+                </div>
+                <div className="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                </div>
+                 <div className="form-group">
+                    <label>Dados de Pagamento (Opcional)</label>
+                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
+                </div>
+                
+                <div className="form-group">
+                    <label>Observações (Opcional)</label>
+                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
+                </div>
+                
+                <div className="form-group">
+                    <label>Anexos (PDF, Imagens)</label>
+                    <input 
+                        type="file" 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept="image/*,.pdf"
+                    />
+                </div>
+                
+                <hr style={{margin: '20px 0'}} />
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Orçamento</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal para Editar Orçamento (COM ANEXOS)
+const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
+    const [formData, setFormData] = useState({});
+    const [existingAnexos, setExistingAnexos] = useState([]);
+    const [newAnexos, setNewAnexos] = useState([]);
+    const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
+
+    useEffect(() => {
+        if (orcamento) {
+            setFormData({
+                ...orcamento,
+                servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
+                observacoes: orcamento.observacoes || ''
+            });
+            
+            setIsLoadingAnexos(true);
+            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
+                .then(res => res.json())
+                .then(data => {
+                    setExistingAnexos(Array.isArray(data) ? data : []);
+                    setIsLoadingAnexos(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar anexos:", err);
+                    setIsLoadingAnexos(false);
+                });
+        }
+    }, [orcamento]);
+
+    const handleChange = (e) => { 
+        const { name, value } = e.target; 
+        let finalValue = value;
+        if (name === 'valor') {
+            finalValue = parseFloat(value) || 0;
+        }
+        if (name === 'servico_id') {
+            finalValue = value ? parseInt(value, 10) : ''; 
+        }
+        setFormData(prev => ({ ...prev, [name]: finalValue })); 
+    };
+    
+    const handleFileChange = (e) => {
+        setNewAnexos(Array.from(e.target.files));
+    };
+
+    const handleOpenAnexo = (anexoId) => {
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+    };
+
+    const handleDeleteAnexo = (anexoId, e) => {
+        e.preventDefault();
+        e.stopPropagation(); 
+        
+        if (window.confirm("Tem certeza que deseja excluir este anexo?")) {
+            fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Falha ao deletar');
+                    setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
+                })
+                .catch(err => alert(`Erro ao deletar anexo: ${err.message}`));
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        const data = new FormData();
+        data.append('descricao', formData.descricao || '');
+        data.append('fornecedor', formData.fornecedor || '');
+        data.append('valor', parseFloat(formData.valor) || 0);
+        data.append('dados_pagamento', formData.dados_pagamento || '');
+        data.append('tipo', formData.tipo || 'Material');
+        data.append('servico_id', formData.servico_id || '');
+        data.append('observacoes', formData.observacoes || '');
+        
+        onSave(formData.id, data, newAnexos);
+    };
+
+    if (!orcamento) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Editar Orçamento</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
+                </div>
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
+                </div>
+                 <div className="form-group">
+                    <label>Dados de Pagamento (Opcional)</label>
+                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
+                </div>
+                
+                <div className="form-group">
+                    <label>Observações (Opcional)</label>
+                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
+                </div>
+                
+                <hr style={{margin: '20px 0'}} />
+
+                <div className="form-group">
+                    <label>Anexos Atuais</label>
+                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
+                        <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
+                            {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
+                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
+                                    <a 
+                                        href="#"
+                                        onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                        title={`Abrir ${anexo.filename}`}
+                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                    >
+                                        {anexo.filename}
+                                    </a>
+                                    <button 
+                                        type="button" 
+                                        onClick={(e) => handleDeleteAnexo(anexo.id, e)}
+                                        title="Excluir Anexo"
+                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
+                                    >
+                                        &times;
+                                    </button>
+                                </li>
+                            )) : <p>Nenhum anexo.</p>}
+                        </ul>
+                    )}
+                </div>
+
+                <div className="form-group">
+                    <label>Adicionar Novos Anexos</label>
+                    <input 
+                        type="file" 
+                        multiple 
+                        onChange={handleFileChange} 
+                        accept="image/*,.pdf"
+                    />
+                </div>
+
+                <hr style={{margin: '20px 0'}} />
+                
+                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
+                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
+                        <option value="">Nenhum (Gasto Geral)</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                <div className="form-group"><label>Tipo/Segmento</label>
+                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
+                        <option>Material</option>
+                        <option>Mão de Obra</option>
+                        <option>Serviço</option>
+                        <option>Equipamentos</option>
+                    </select>
+                </div>
+                
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Salvar Alterações</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// --- NOVO MODAL PARA VER ANEXOS ---
+const ViewAnexosModal = ({ orcamento, onClose }) => {
+    const [anexos, setAnexos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (orcamento) {
+            setIsLoading(true);
+            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
+                .then(res => res.json())
+                .then(data => {
+                    setAnexos(Array.isArray(data) ? data : []);
+                    setIsLoading(false);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar anexos:", err);
+                    setIsLoading(false);
+                });
+        }
+    }, [orcamento]);
+
+    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
+    const handleOpenAnexo = (anexoId) => {
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+    };
+
+    if (!orcamento) return null;
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Anexos de: {orcamento.descricao}</h2>
+            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
+                {isLoading ? <p>Carregando anexos...</p> : (
+                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
+                        {anexos.length > 0 ? anexos.map(anexo => (
+                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
+                                <a
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                    title={`Abrir ${anexo.filename}`}
+                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                >
+                                    📎 {anexo.filename}
+                                </a>
+                            </li>
+                        )) : <p>Nenhum anexo encontrado.</p>}
+                    </ul>
+                )}
+            </div>
+            <div className="form-actions" style={{marginTop: '20px'}}>
+                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
+            </div>
+        </Modal>
+    );
+};
+// --- FIM DO NOVO MODAL ---
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
@@ -834,19 +1323,14 @@ function Dashboard() {
     const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
+    
+    const [editingOrcamento, setEditingOrcamento] = useState(null);
+    const [viewingAnexos, setViewingAnexos] = useState(null); // <-- MUDANÇA 2
+    
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
     const [filtroPendencias, setFiltroPendencias] = useState('');
-    
 
-    // <--- MUDANÇA: Novo state para edição de orçamento
-    const [editingOrcamento, setEditingOrcamento] = useState(null);
-    // (Linhas existentes...)
-
-    // <-- INÍCIO DA MUDANÇA: Adicione esta linha -->
-    const [viewingAnexos, setViewingAnexos] = useState(null);
-    // <-- FIM DA MUDANÇA -->
-    // (Resto do código...)
 
     // Filtros de 'A Pagar' e 'Pagos'
     const itemsAPagar = useMemo(() => 
@@ -1007,12 +1491,12 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // Handlers dos Orçamentos (ATUALIZADOS)
-    const handleSaveOrcamento = (formData) => { // <--- MUDANÇA: Recebe FormData
+    // Handlers dos Orçamentos
+    const handleSaveOrcamento = (formData) => {
         console.log("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
-            body: formData // <--- MUDANÇA: Enviado diretamente
+            body: formData
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
             setAddOrcamentoModalVisible(false);
@@ -1024,42 +1508,36 @@ function Dashboard() {
         });
     };
     
-    // <--- MUDANÇA: Nova função para salvar edição de orçamento (com anexos)
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
         console.log("Salvando edição do orçamento:", orcamentoId);
         
-        // Etapa 1: Salvar os dados do formulário (texto)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
-            body: formData // Envia como FormData
+            body: formData
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
             
-            // Etapa 2: Se houver novos arquivos, enviá-los
             if (newFiles.length > 0) {
                 const fileFormData = new FormData();
                 newFiles.forEach(file => {
                     fileFormData.append('anexos', file);
                 });
                 
-                // Rota do backend para adicionar anexos a um orçamento existente
                 return fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/anexos`, {
                     method: 'POST',
                     body: fileFormData
                 });
             }
             
-            return Promise.resolve(); // Nenhum arquivo para enviar
+            return Promise.resolve();
             
         }).then(fileRes => {
             if (fileRes && !fileRes.ok) {
-                 // Tenta ler o erro do upload de arquivo
                  return fileRes.json().then(err => { throw new Error(err.erro || 'Erro ao enviar anexos') });
             }
             
-            // Tudo certo, fechar modal e recarregar
-            setEditingOrcamento(null); // Fecha o modal
-            fetchObraData(obraSelecionada.id); // Recarrega os dados
+            setEditingOrcamento(null);
+            fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
             console.error("Erro ao salvar edição do orçamento:", error);
@@ -1085,7 +1563,7 @@ function Dashboard() {
         .catch(error => console.error("Erro ao rejeitar orçamento:", error));
     };
 
-    // Handler do PDF da Obra (com fetchWithAuth)
+    // Handler do PDF da Obra
     const handleExportObraPDF = () => {
         if (!obraSelecionada) return;
         
@@ -1111,7 +1589,7 @@ function Dashboard() {
             });
     };
 
-    // Handler de Pagamento de Serviço (com Fornecedor)
+    // Handler de Pagamento de Serviço
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
         const valorPagamento = e.target.valorPagamento.value;
@@ -1155,8 +1633,8 @@ function Dashboard() {
         })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
-            setEditingServicoPrioridade(null); // Fecha o modal
-            fetchObraData(obraSelecionada.id); // Recarrega os dados
+            setEditingServicoPrioridade(null);
+            fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
             console.error("Erro ao salvar prioridade do serviço:", error);
@@ -1167,7 +1645,7 @@ function Dashboard() {
 
     // --- RENDERIZAÇÃO ---
     
-    // TELA DE SELEÇÃO DE OBRAS (com Botão de Relatório Geral)
+    // TELA DE SELEÇÃO DE OBRAS
     if (!obraSelecionada) {
         return (
             <div className="container">
@@ -1302,10 +1780,8 @@ function Dashboard() {
                     onSave={handleSaveOrcamento}
                     servicos={servicos}
                 />
-                
             )}
 
-            {/* <--- MUDANÇA: Renderiza o novo modal de Edição de Orçamento (COM A CHAMADA CORRIGIDA) --> */}
             {editingOrcamento && (
                 <EditOrcamentoModal
                     orcamento={editingOrcamento}
@@ -1314,26 +1790,24 @@ function Dashboard() {
                     servicos={servicos}
                 />
             )}
-            
-{/* ... (Modal de Edição de Orçamento) ... */}
 
-            {/* <-- INÍCIO DA MUDANÇA: Adicione estas linhas --> */}
+            {/* <-- MUDANÇA 5: Renderiza o novo modal --> */}
             {viewingAnexos && (
                 <ViewAnexosModal
                     orcamento={viewingAnexos}
                     onClose={() => setViewingAnexos(null)}
                 />
             )}
-            {/* <-- FIM DA MUDANÇA --> */}
 
             {editingServicoPrioridade && (
-              <EditPrioridadeModal
-                item={editingServicoPrioridade}
-                onClose={() => setEditingServicoPrioridade(null)}
-                onSave={handleSaveServicoPrioridade}
-              />
-              
+                <EditPrioridadeModal
+                    item={editingServicoPrioridade}
+                    onClose={() => setEditingServicoPrioridade(null)}
+                    onSave={handleSaveServicoPrioridade}
+                />
             )}
+
+            {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
                 <div>
@@ -1395,19 +1869,23 @@ function Dashboard() {
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                            <tbody>
+                        <tbody>
                             {orcamentos.length > 0 ? orcamentos.map(orc => (
                                 <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
+                                    
+                                    {/* <-- MUDANÇA 1: Removido o clipe daqui --> */}
                                     <td>
                                         {orc.descricao}
                                     </td>
+                                    
                                     <td>{orc.fornecedor || 'N/A'}</td>
                                     <td>{orc.tipo}</td>
                                     <td>{orc.servico_nome || 'Geral'}</td>
                                     <td>{formatCurrency(orc.valor)}</td>
+                                    
+                                    {/* <-- MUDANÇA 3: Adicionado o botão de clipe aqui --> */}
                                     <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}} onClick={e => e.stopPropagation()}>
                                         
-                                        {/* <-- INÍCIO DA MUDANÇA: Botão de Anexo --> */}
                                         {orc.anexos_count > 0 && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setViewingAnexos(orc); }}
@@ -1418,7 +1896,6 @@ function Dashboard() {
                                                 📎
                                             </button>
                                         )}
-                                        {/* <-- FIM DA MUDANÇA --> */}
 
                                         {(user.role === 'administrador' || user.role === 'master') && (
                                             <>
@@ -1719,588 +2196,6 @@ function Dashboard() {
         </div>
     );
 }
-
-// Modal "Adicionar Serviço" (com Orçamento de Material)
-const AddServicoModal = ({ onClose, onSave }) => {
-    const [nome, setNome] = useState('');
-    const [responsavel, setResponsavel] = useState('');
-    const [pix, setPix] = useState('');
-    const [valorMO, setValorMO] = useState(0); 
-    const [valorMaterial, setValorMaterial] = useState(0); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        let servicoData = {
-            nome,
-            responsavel: responsavel || null,
-            pix: pix || null,
-            valor_global_mao_de_obra: valorMO,
-            valor_global_material: valorMaterial, 
-        };
-        
-        onSave(servicoData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Cadastrar Novo Serviço</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição do Serviço</label>
-                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
-                </div>
-                <div className="form-group">
-                    <label>Responsável</label>
-                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
-                </div>
-                <div className="form-group">
-                    <label>Dados de Pagamento (PIX)</label>
-                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
-                </div>
-                
-                <hr />
-
-                <div className="form-group">
-                    <label>Valor Orçado - Mão de Obra (R$)</label>
-                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Orçado - Material (R$)</label>
-                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Serviço</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal "Adicionar Gasto Geral" (com Fornecedor)
-const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
-    const [data, setData] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState(''); 
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(0);
-    const [tipo, setTipo] = useState('Material');
-    const [status, setStatus] = useState('A Pagar');
-    const [servicoId, setServicoId] = useState('');
-    const [prioridade, setPrioridade] = useState(0); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            data,
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0,
-            tipo,
-            status,
-            prioridade: parseInt(prioridade, 10) || 0,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Adicionar Novo Gasto</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                <div className="form-group"><label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option>A Pagar</option>
-                        <option>Pago</option>
-                    </select>
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal "Adicionar Orçamento" (ATUALIZADO com Anexos)
-const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [valor, setValor] = useState(0);
-    const [dadosPagamento, setDadosPagamento] = useState('');
-    const [tipo, setTipo] = useState('Material'); 
-    const [servicoId, setServicoId] = useState(''); 
-    const [observacoes, setObservacoes] = useState(''); 
-
-    // <-- INÍCIO DA MUDANÇA -->
-    const [anexos, setAnexos] = useState([]); // State para os arquivos
-    // <-- FIM DA MUDANÇA -->
-
-    const handleFileChange = (e) => {
-        setAnexos(Array.from(e.target.files));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        // <-- INÍCIO DA MUDANÇA -->
-        // Não é mais um objeto JSON, é FormData
-        const formData = new FormData();
-        formData.append('descricao', descricao);
-        formData.append('fornecedor', fornecedor || '');
-        formData.append('valor', parseFloat(valor) || 0);
-        formData.append('dados_pagamento', dadosPagamento || '');
-        formData.append('tipo', tipo);
-        formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
-        formData.append('observacoes', observacoes || '');
-        
-        // Adiciona os arquivos
-        anexos.forEach(file => {
-            formData.append('anexos', file);
-        });
-        
-        onSave(formData); // Envia o FormData
-        // <-- FIM DA MUDANÇA -->
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Adicionar Orçamento para Aprovação</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento e Areia" required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
-                </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
-                </div>
-                
-                {/* <-- INÍCIO DA MUDANÇA: Campo de Anexos --> */}
-                <div className="form-group">
-                    <label>Anexos (PDF, Imagens)</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-                {/* <-- FIM DA MUDANÇA --> */}
-                
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Orçamento</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// <--- MUDANÇA: Novo Modal para Editar Orçamento (COM ANEXOS) ---
-const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
-    const [formData, setFormData] = useState({});
-    
-    // <-- INÍCIO DAS MUDANÇAS -->
-    const [existingAnexos, setExistingAnexos] = useState([]);
-    const [newAnexos, setNewAnexos] = useState([]);
-    const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
-    // --- NOVO MODAL PARA VER ANEXOS ---
-const ViewAnexosModal = ({ orcamento, onClose }) => {
-    const [anexos, setAnexos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (orcamento) {
-            setIsLoading(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setAnexos(Array.isArray(data) ? data : []);
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [orcamento]);
-    // --- NOVO MODAL PARA VER ANEXOS ---
-const ViewAnexosModal = ({ orcamento, onClose }) => {
-    const [anexos, setAnexos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (orcamento) {
-            setIsLoading(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setAnexos(Array.isArray(data) ? data : []);
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [orcamento]);
-
-    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexos de: {orcamento.descricao}</h2>
-            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
-                {isLoading ? <p>Carregando anexos...</p> : (
-                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
-                        {anexos.length > 0 ? anexos.map(anexo => (
-                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                    title={`Abrir ${anexo.filename}`}
-                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                >
-                                    📎 {anexo.filename}
-                                </a>
-                            </li>
-                        )) : <p>Nenhum anexo encontrado.</p>}
-                    </ul>
-                )}
-            </div>
-            <div className="form-actions" style={{marginTop: '20px'}}>
-                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO NOVO MODAL ---
-
-    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexos de: {orcamento.descricao}</h2>
-            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
-                {isLoading ? <p>Carregando anexos...</p> : (
-                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
-                        {anexos.length > 0 ? anexos.map(anexo => (
-                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                    title={`Abrir ${anexo.filename}`}
-                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                >
-                                    📎 {anexo.filename}
-                                </a>
-                            </li>
-                        )) : <p>Nenhum anexo encontrado.</p>}
-                    </ul>
-                )}
-            </div>
-            <div className="form-actions" style={{marginTop: '20px'}}>
-                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO NOVO MODAL ---
-    // <-- FIM DAS MUDANÇAS -->
-
-    useEffect(() => {
-        if (orcamento) {
-            setFormData({
-                ...orcamento,
-                servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
-                observacoes: orcamento.observacoes || ''
-            });
-            
-            // <-- INÍCIO DAS MUDANÇAS -->
-            // Buscar anexos existentes
-            setIsLoadingAnexos(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setExistingAnexos(Array.isArray(data) ? data : []);
-                    setIsLoadingAnexos(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
-                    setIsLoadingAnexos(false);
-                });
-            // <-- FIM DAS MUDANÇAS -->
-        }
-    }, [orcamento]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        let finalValue = value;
-        if (name === 'valor') {
-            finalValue = parseFloat(value) || 0;
-        }
-        if (name === 'servico_id') {
-            finalValue = value ? parseInt(value, 10) : ''; 
-        }
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    // <-- INÍCIO DAS MUDANÇAS -->
-    const handleFileChange = (e) => {
-        setNewAnexos(Array.from(e.target.files));
-    };
-
-    const handleOpenAnexo = (anexoId) => {
-        // Usamos o fetchWithAuth para autenticar a requisição do arquivo
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                // Cria uma URL temporária para o blob e abre em nova aba
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    const handleDeleteAnexo = (anexoId, e) => {
-        e.preventDefault(); // Impede o clique no link
-        e.stopPropagation(); // Impede o clique no link
-        
-        if (window.confirm("Tem certeza que deseja excluir este anexo?")) {
-            fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Falha ao deletar');
-                    setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
-                })
-                .catch(err => alert(`Erro ao deletar anexo: ${err.message}`));
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        // 1. Criar o FormData para os dados de texto
-        const data = new FormData();
-        data.append('descricao', formData.descricao || '');
-        data.append('fornecedor', formData.fornecedor || '');
-        data.append('valor', parseFloat(formData.valor) || 0);
-        data.append('dados_pagamento', formData.dados_pagamento || '');
-        data.append('tipo', formData.tipo || 'Material');
-        data.append('servico_id', formData.servico_id || '');
-        data.append('observacoes', formData.observacoes || '');
-        
-        // 2. Chamar onSave com o ID, os dados de texto e os novos arquivos
-        onSave(formData.id, data, newAnexos);
-    };
-    // <-- FIM DAS MUDANÇAS -->
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Orçamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
-                </div>
-                
-                <hr style={{margin: '20px 0'}} />
-
-                {/* <-- INÍCIO DAS MUDANÇAS: Listagem e Upload de Anexos --> */}
-                <div className="form-group">
-                    <label>Anexos Atuais</label>
-                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
-                        <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
-                            {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
-                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
-                                    <a 
-                                        href="#" // Usamos onClick para autenticação
-                                        onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                        title={`Abrir ${anexo.filename}`}
-                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                    >
-                                        {anexo.filename}
-                                    </a>
-                                    <button 
-                                        type="button" 
-                                        onClick={(e) => handleDeleteAnexo(anexo.id, e)}
-                                        title="Excluir Anexo"
-                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
-                                    >
-                                        &times;
-                                    </button>
-                                </li>
-                            )) : <p>Nenhum anexo.</p>}
-                        </ul>
-                    )}
-                </div>
-
-                <div className="form-group">
-                    <label>Adicionar Novos Anexos</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-                {/* <-- FIM DAS MUDANÇAS --> */}
-
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Alterações</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
