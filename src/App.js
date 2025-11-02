@@ -226,9 +226,13 @@ const GastosPorSegmentoChart = ({ data }) => {
 
 
 // --- COMPONENTES DE MODAL (Existentes) ---
-const Modal = ({ children, onClose }) => (
+const Modal = ({ children, onClose, customWidth }) => (
     <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div 
+            className="modal-content" 
+            style={{ maxWidth: customWidth || '500px' }}  // <-- MUDANÇA AQUI
+            onClick={e => e.stopPropagation()}
+        >
             <button onClick={onClose} className="close-modal-btn">&times;</button>
             {children}
         </div>
@@ -671,7 +675,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
         });
     };
     return (
-        <Modal onClose={onClose}>
+        <Modal onClose={onClose} customWidth="700px"> {/* <-- MUDANÇA AQUI */}
             {userToEdit && (
                 <UserPermissionsModal
                     userToEdit={userToEdit}
