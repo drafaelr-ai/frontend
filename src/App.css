@@ -54,8 +54,9 @@ body {
 }
 
 .obra-kpi-summary {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid var(--cor-fundo);
@@ -65,12 +66,12 @@ body {
     flex-direction: column;
 }
 .obra-kpi-summary span {
-    font-size: 0.85em;
+    font-size: 0.75em;
     color: var(--cor-texto-secundario);
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 .obra-kpi-summary strong {
-    font-size: 1.1em;
+    font-size: 1em;
     font-weight: 600;
     color: var(--cor-texto);
 }

@@ -1914,16 +1914,27 @@ function Dashboard() {
                                     
                                     <div className="obra-kpi-summary">
                                         <div>
-                                            <span>Total Pago</span>
-                                            <strong style={{ color: 'var(--cor-acento)' }}>
-                                                {formatCurrency(obra.total_pago)}
+                                            <span>Orçamento Total</span>
+                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
+                                                {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
                                         </div>
                                         <div>
-                                            {/* --- MUDANÇA AQUI --- */}
-                                            <span>Residual (Orçado - Pago)</span>
-                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
-                                                {formatCurrency(obra.total_a_pagar)}
+                                            <span>Valores Pagos</span>
+                                            <strong style={{ color: 'var(--cor-primaria)' }}>
+                                                {formatCurrency(obra.total_pago || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Liberado (Fila)</span>
+                                            <strong style={{ color: 'var(--cor-acento)' }}>
+                                                {formatCurrency(obra.liberado_pagamento || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Residual</span>
+                                            <strong style={{ color: '#f0ad4e' }}>
+                                                {formatCurrency(obra.residual || 0)}
                                             </strong>
                                         </div>
                                     </div>
