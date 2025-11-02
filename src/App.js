@@ -2032,7 +2032,7 @@ function Dashboard() {
                  <div className="kpi-grid">
                      <div className="kpi-card total-geral"><span>Total Comprometido (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
                      <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     <div className="kpi-card total-a-pagar"><span>Restante do Orçamento</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
+                     <div className="kpi-card total-a-pagar"><span>Orçamento Total</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
                  </div>
              )}
             
