@@ -235,7 +235,7 @@ const Modal = ({ children, onClose }) => (
     </div>
 );
 
-// Modal de Edição (com Fornecedor)
+// <--- MUDANÇA: Modal de Edição (com valor_total e valor_pago) -->
 const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const [formData, setFormData] = useState({});
     
@@ -263,7 +263,8 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     const handleChange = (e) => { 
         const { name, value } = e.target; 
         let finalValue = value;
-        if (name === 'valor') {
+        
+        if (name === 'valor_total' || name === 'valor_pago') { // <-- MUDANÇA
             finalValue = parseFloat(value) || 0;
         }
         if (name === 'servico_id') {
@@ -305,7 +306,16 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 </div>
 
                 <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
-                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required /></div>
+                
+                {/* <-- MUDANÇA: valor -> valor_total --> */}
+                <div className="form-group"><label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" name="valor_total" value={formData.valor_total || 0} onChange={handleChange} required />
+                </div>
+                {/* <-- MUDANÇA: Novo campo valor_pago --> */}
+                <div className="form-group"><label>Valor Já Pago (R$)</label>
+                    <input type="number" step="0.01" name="valor_pago" value={formData.valor_pago || 0} onChange={handleChange} required />
+                </div>
+
                 
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
@@ -343,7 +353,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
     );
 };
 
-// Modal de Serviço (com Orçamento de Material)
+// <--- MUDANÇA: Modal de Serviço (com valor_total e valor_pago) -->
 const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
     const { user } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
@@ -393,11 +403,23 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    const pagamentosMO = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'mao_de_obra');
-    const totalGastoMO = pagamentosMO.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
+    // Calcula totais pagos
+    const totalPagoMO = (servico.pagamentos || [])
+        .filter(p => p.tipo_pagamento === 'mao_de_obra')
+        .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
+        
+    const totalGastoMO = (servico.pagamentos || [])
+        .filter(p => p.tipo_pagamento === 'mao_de_obra')
+        .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
 
-    const pagamentosMat = (servico.pagamentos || []).filter(p => p.tipo_pagamento === 'material');
-    const totalGastoMat = pagamentosMat.reduce((sum, p) => sum + (p.valor || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
+    const totalPagoMat = (servico.pagamentos || [])
+        .filter(p => p.tipo_pagamento === 'material')
+        .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
+        
+    const totalGastoMat = (servico.pagamentos || [])
+        .filter(p => p.tipo_pagamento === 'material')
+        .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
+
 
     return (
         <Modal onClose={onClose}>
@@ -410,8 +432,8 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                         )}
                     </div>
                     <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Gasto Total: {formatCurrency(totalGastoMO)})</p>
-                    <p><strong>Valor Orçado (Material):</strong> {formatCurrency(servico.valor_global_material)} (Gasto Total: {formatCurrency(totalGastoMat)})</p>
+                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Comprometido: {formatCurrency(totalGastoMO)} | Pago: {formatCurrency(totalPagoMO)})</p>
+                    <p><strong>Valor Orçado (Material):</strong> {formatCurrency(servico.valor_global_material)} (Comprometido: {formatCurrency(totalGastoMat)} | Pago: {formatCurrency(totalPagoMat)})</p>
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
@@ -422,8 +444,8 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                     <th>Data</th>
                                     <th>Tipo</th>
                                     <th>Fornecedor</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
+                                    <th>Valor Total</th>
+                                    <th>Valor Pago</th>
                                     {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
                                 </tr>
                             </thead>
@@ -434,12 +456,9 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                             <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
                                             <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
                                             <td>{pag.fornecedor || 'N/A'}</td>
-                                            <td>{formatCurrency(pag.valor)}</td>
-                                            <td>
-                                                <span style={{ backgroundColor: pag.status === 'Pago' ? 'var(--cor-acento)' : 'var(--cor-vermelho)', color: 'white', padding: '4px 8px', borderRadius: '12px', fontSize: '0.8em', fontWeight: '500', textTransform: 'uppercase' }}>
-                                                    {pag.status}
-                                                </span>
-                                            </td>
+                                            <td>{formatCurrency(pag.valor_total)}</td>
+                                            <td>{formatCurrency(pag.valor_pago)}</td>
+                                            
                                             {user.role === 'administrador' && (
                                                 <td style={{textAlign: 'center'}}>
                                                     <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
@@ -486,6 +505,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
 // --- MODAIS DE ADMINISTRAÇÃO ---
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
+    // ... (código inalterado)
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
@@ -553,6 +573,7 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
 };
 
 const AdminPanelModal = ({ allObras, onClose }) => {
+    // ... (código inalterado)
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -699,8 +720,9 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 };
 // ----------------------------------------------------
 
-// Modal "Exportar Relatório Geral" (com fetchWithAuth)
+// Modal "Exportar Relatório Geral"
 const ExportReportModal = ({ onClose }) => {
+    // ... (código inalterado)
     const [selectedPriority, setSelectedPriority] = useState('todas');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -762,8 +784,9 @@ const ExportReportModal = ({ onClose }) => {
 };
 // ----------------------------------------------------
 
-// Modal para Editar Apenas a Prioridade de Pagamentos de Serviço
+// Modal para Editar Prioridade
 const EditPrioridadeModal = ({ item, onClose, onSave }) => {
+    // ... (código inalterado)
     const [prioridade, setPrioridade] = useState(0);
 
     useEffect(() => {
@@ -808,8 +831,9 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
 };
 // ----------------------------------------------------
 
-// Modal "Adicionar Serviço" (com Orçamento de Material)
+// Modal "Adicionar Serviço"
 const AddServicoModal = ({ onClose, onSave }) => {
+    // ... (código inalterado)
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
@@ -868,13 +892,13 @@ const AddServicoModal = ({ onClose, onSave }) => {
     );
 };
 
-// Modal "Adicionar Gasto Geral" (com Fornecedor)
+// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState(''); 
     const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(0);
+    const [valor, setValor] = useState(0); // Este 'valor' será enviado como 'valor_total'
     const [tipo, setTipo] = useState('Material');
     const [status, setStatus] = useState('A Pagar');
     const [servicoId, setServicoId] = useState('');
@@ -887,7 +911,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
             descricao,
             fornecedor: fornecedor || null,
             pix: pix || null,
-            valor: parseFloat(valor) || 0,
+            valor: parseFloat(valor) || 0, // O handler 'handleSaveLancamento' espera 'valor'
             tipo,
             status,
             prioridade: parseInt(prioridade, 10) || 0,
@@ -911,7 +935,11 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                 </div>
 
                 <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                <div className="form-group"><label>Valor (R$)</label><input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required /></div>
+                
+                {/* O usuário insere 'valor', mas o backend salvará em 'valor_total' */}
+                <div className="form-group"><label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                </div>
                 
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
@@ -954,8 +982,9 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// Modal "Adicionar Orçamento" (ATUALIZADO com Anexos)
+// Modal "Adicionar Orçamento"
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
+    // ... (código inalterado, já usa FormData)
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
     const [valor, setValor] = useState(0);
@@ -1053,8 +1082,9 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// Modal para Editar Orçamento (COM ANEXOS)
+// Modal para Editar Orçamento
 const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
+    // ... (código inalterado)
     const [formData, setFormData] = useState({});
     const [existingAnexos, setExistingAnexos] = useState([]);
     const [newAnexos, setNewAnexos] = useState([]);
@@ -1239,6 +1269,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
 
 // --- NOVO MODAL PARA VER ANEXOS ---
 const ViewAnexosModal = ({ orcamento, onClose }) => {
+    // ... (código inalterado)
     const [anexos, setAnexos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -1258,7 +1289,6 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
         }
     }, [orcamento]);
 
-    // Lógica para abrir o anexo (reutilizada do EditOrcamentoModal)
     const handleOpenAnexo = (anexoId) => {
         fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
             .then(res => {
@@ -1303,6 +1333,84 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
 };
 // --- FIM DO NOVO MODAL ---
 
+
+// <--- MUDANÇA: NOVO MODAL PARA PAGAMENTO PARCIAL ---
+const PartialPaymentModal = ({ item, onClose, onSave }) => {
+    
+    // Calcula o valor que ainda falta pagar
+    const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
+    
+    // Define o valor inicial do input como o valor restante
+    const [valorAPagar, setValorAPagar] = useState(valorRestante.toFixed(2));
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        setError('');
+        
+        const valorFloat = parseFloat(valorAPagar);
+        
+        if (isNaN(valorFloat) || valorFloat <= 0) {
+            setError('O valor deve ser um número positivo.');
+            return;
+        }
+        
+        // +0.01 para evitar erros de arredondamento de centavos
+        if (valorFloat > (valorRestante + 0.01)) {
+            setError(`O valor não pode ser maior que o restante (${formatCurrency(valorRestante)}).`);
+            return;
+        }
+        
+        // Envia o valor para a função principal
+        onSave(valorFloat);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Registrar Pagamento</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Item</label>
+                    <input type="text" value={item.descricao} readOnly disabled />
+                </div>
+                
+                <div className="form-group">
+                    <label>Valor Restante</label>
+                    <input 
+                        type="text" 
+                        value={formatCurrency(valorRestante)} 
+                        readOnly 
+                        disabled 
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Valor a Pagar Hoje</label>
+                    <input 
+                        type="number" 
+                        step="0.01"
+                        value={valorAPagar}
+                        onChange={(e) => setValorAPagar(e.target.value)}
+                        required
+                        autoFocus
+                    />
+                </div>
+                
+                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
+
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn" style={{backgroundColor: 'var(--cor-acento)'}}>
+                        Registrar Pagamento
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+// --- FIM DO NOVO MODAL ---
+
+
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -1325,16 +1433,21 @@ function Dashboard() {
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     
     const [editingOrcamento, setEditingOrcamento] = useState(null);
-    const [viewingAnexos, setViewingAnexos] = useState(null); // <-- MUDANÇA 2
+    const [viewingAnexos, setViewingAnexos] = useState(null);
+    
+    // <--- MUDANÇA: Novo estado para o modal de pagamento -->
+    const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
     const [filtroPendencias, setFiltroPendencias] = useState('');
 
 
-    // Filtros de 'A Pagar' e 'Pagos'
+    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     const itemsAPagar = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'A Pagar'), 
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
+            (item.valor_total || 0) > (item.valor_pago || 0)
+        ), 
         [historicoUnificado]
     );
     
@@ -1351,7 +1464,9 @@ function Dashboard() {
     }, [itemsAPagar, filtroPendencias]);
 
     const itemsPagos = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => item.status === 'Pago'),
+        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
+            (item.valor_total || 0) - (item.valor_pago || 0) < 0.01 // Totalmente pago
+        ),
         [historicoUnificado]
     );
 
@@ -1389,6 +1504,7 @@ function Dashboard() {
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
     const handleAddObra = (e) => {
+        // ... (código inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
@@ -1398,12 +1514,14 @@ function Dashboard() {
         .catch(error => console.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => console.error('Erro ao deletar obra:', error));
     };
     
+    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
     const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
@@ -1426,6 +1544,7 @@ function Dashboard() {
     };
 
     const handleDeletarLancamento = (itemId) => {
+         // ... (código inalterado)
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
@@ -1441,12 +1560,17 @@ function Dashboard() {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
+    // <--- MUDANÇA: Atualizado para enviar valor_total e valor_pago -->
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
-            valor: parseFloat(updatedLancamento.valor) || 0,
+            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANÇA
+            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANÇA
             servico_id: updatedLancamento.servico_id || null 
         };
+        // Remove 'valor' se existir por acidente
+        delete dataToSend.valor;
+        
         fetchWithAuth(`${API_URL}/lancamentos/${updatedLancamento.lancamento_id}`, { 
             method: 'PUT',
             body: JSON.stringify(dataToSend)
@@ -1455,8 +1579,11 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição:", error));
     };
     
+    // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
         console.log("Salvando novo lançamento:", lancamentoData);
+        // O formulário envia 'valor', mas o backend espera 'valor'
+        // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
@@ -1466,6 +1593,7 @@ function Dashboard() {
     };
 
     const handleSaveServico = (servicoData) => {
+        // ... (código inalterado)
         console.log("Salvando novo serviço:", servicoData);
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos`, {
             method: 'POST',
@@ -1476,6 +1604,7 @@ function Dashboard() {
     };
 
     const handleSaveEditServico = (updatedServico) => {
+        // ... (código inalterado)
         const dataToSend = {
             ...updatedServico,
             valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
@@ -1491,8 +1620,9 @@ function Dashboard() {
         .catch(error => console.error("Erro ao salvar edição do serviço:", error));
     };
 
-    // Handlers dos Orçamentos
+    // --- Handlers de Orçamento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
+        // ... (código inalterado)
         console.log("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
@@ -1507,8 +1637,8 @@ function Dashboard() {
             alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
-    
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
+        // ... (código inalterado)
         console.log("Salvando edição do orçamento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
@@ -1544,8 +1674,8 @@ function Dashboard() {
             alert(`Erro ao salvar edição: ${error.message}`);
         });
     };
-    
     const handleAprovarOrcamento = (orcamentoId) => {
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
@@ -1553,8 +1683,8 @@ function Dashboard() {
         })
         .catch(error => console.error("Erro ao aprovar orçamento:", error));
     };
-    
     const handleRejeitarOrcamento = (orcamentoId) => {
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
@@ -1565,6 +1695,7 @@ function Dashboard() {
 
     // Handler do PDF da Obra
     const handleExportObraPDF = () => {
+        // ... (código inalterado)
         if (!obraSelecionada) return;
         
         setIsExportingPDF(true);
@@ -1589,10 +1720,10 @@ function Dashboard() {
             });
     };
 
-    // Handler de Pagamento de Serviço
+    // <--- MUDANÇA: Handler de Pagamento (usa 'valor' para 'valor_total') -->
     const handleAddPagamentoServico = (e, servicoId) => {
         e.preventDefault();
-        const valorPagamento = e.target.valorPagamento.value;
+        const valorPagamento = e.target.valorPagamento.value; // Este é o 'valor' do formulário
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
@@ -1602,7 +1733,7 @@ function Dashboard() {
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
         const pagamento = {
-            valor: parseFloat(valorPagamento) || 0,
+            valor: parseFloat(valorPagamento) || 0, // O backend espera 'valor'
             data: dataPagamento, 
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
@@ -1621,8 +1752,9 @@ function Dashboard() {
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
 
-    // Nova Função para salvar Prioridade do Pag. Serviço
+    // Handler de Prioridade
     const handleSaveServicoPrioridade = (novaPrioridade) => {
+        // ... (código inalterado)
         if (!editingServicoPrioridade) return;
 
         const pagamentoId = editingServicoPrioridade.pagamento_id;
@@ -1642,11 +1774,46 @@ function Dashboard() {
         });
     };
 
+    // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
+    const handleSavePartialPayment = (valor_a_pagar) => {
+        if (!payingItem) return;
+
+        const { tipo_registro, id } = payingItem;
+        // O ID vem como "lanc-123" ou "serv-pag-456"
+        const item_type = tipo_registro === 'lancamento' ? 'lancamento' : 'pagamento_servico';
+        const item_id = id.split('-').pop();
+
+        console.log(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
+
+        fetchWithAuth(`${API_URL}/pagamentos/${item_type}/${item_id}/pagar`, {
+            method: 'PATCH',
+            body: JSON.stringify({ valor_a_pagar })
+        })
+        .then(res => {
+            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); }
+            return res.json();
+        })
+        .then(() => {
+            setPayingItem(null); // Fecha o modal
+            fetchObraData(obraSelecionada.id); // Recarrega os dados
+        })
+        .catch(error => {
+            console.error("Erro ao registrar pagamento parcial:", error);
+            // Mostra o erro de validação (ex: "valor maior que o restante")
+            // Precisamos garantir que o modal esteja aberto para mostrar o erro
+            if (payingItem) {
+                alert(`Erro: ${error.message}`);
+            }
+        });
+    };
+    // <--- FIM DA NOVA FUNÇÃO ---
+
 
     // --- RENDERIZAÇÃO ---
     
     // TELA DE SELEÇÃO DE OBRAS
     if (!obraSelecionada) {
+        // ... (código inalterado) ...
         return (
             <div className="container">
                 {isAdminPanelVisible && <AdminPanelModal 
@@ -1791,11 +1958,19 @@ function Dashboard() {
                 />
             )}
 
-            {/* <-- MUDANÇA 5: Renderiza o novo modal --> */}
             {viewingAnexos && (
                 <ViewAnexosModal
                     orcamento={viewingAnexos}
                     onClose={() => setViewingAnexos(null)}
+                />
+            )}
+
+            {/* <-- MUDANÇA: Renderiza o novo modal de pagamento --> */}
+            {payingItem && (
+                <PartialPaymentModal
+                    item={payingItem}
+                    onClose={() => setPayingItem(null)}
+                    onSave={handleSavePartialPayment}
                 />
             )}
 
@@ -1872,18 +2047,13 @@ function Dashboard() {
                         <tbody>
                             {orcamentos.length > 0 ? orcamentos.map(orc => (
                                 <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
-                                    
-                                    {/* <-- MUDANÇA 1: Removido o clipe daqui --> */}
                                     <td>
                                         {orc.descricao}
                                     </td>
-                                    
                                     <td>{orc.fornecedor || 'N/A'}</td>
                                     <td>{orc.tipo}</td>
                                     <td>{orc.servico_nome || 'Geral'}</td>
                                     <td>{formatCurrency(orc.valor)}</td>
-                                    
-                                    {/* <-- MUDANÇA 3: Adicionado o botão de clipe aqui --> */}
                                     <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}} onClick={e => e.stopPropagation()}>
                                         
                                         {orc.anexos_count > 0 && (
@@ -1957,17 +2127,17 @@ function Dashboard() {
                             
                             // --- Lógica de Mão de Obra ---
                             const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
-                            const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
+                            const valorPagoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor_pago || 0), 0);
+                            const valorComprometidoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor_total || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
                             const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
-                            // Calcula a porcentagem (ex: 50.0)
-                            const progressoMOPct = valorGlobalMO > 0 ? ((valorGastoTotalMO / valorGlobalMO) * 100).toFixed(0) : 0;
+                            const progressoMOPct = valorGlobalMO > 0 ? ((valorPagoTotalMO / valorGlobalMO) * 100).toFixed(0) : 0;
 
-                            // --- Lógica de Material (COM CORREÇÃO) ---
+                            // --- Lógica de Material ---
                             const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
-                            const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
+                            const valorPagoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor_pago || 0), 0);
+                            const valorComprometidoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor_total || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
                             const valorGlobalMat = serv.valor_global_material || 0;
-                            // Calcula a porcentagem (ex: 50.0)
-                            const progressoMatPct = valorGlobalMat > 0 ? ((valorGastoTotalMat / valorGlobalMat) * 100).toFixed(0) : 0;
+                            const progressoMatPct = valorGlobalMat > 0 ? ((valorPagoTotalMat / valorGlobalMat) * 100).toFixed(0) : 0;
 
 
                             return (
@@ -1982,10 +2152,9 @@ function Dashboard() {
                                         </div>
                                         <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                         
-                                        {/* --- MUDANÇA 1: Bloco Mão de Obra (com %) --- */}
                                         <div style={{marginTop: '10px'}}>
                                             <small>
-                                                Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}
+                                                Mão de Obra (Pago/Comprometido): {formatCurrency(valorPagoTotalMO)} / {formatCurrency(valorComprometidoMO)}
                                                 <span style={{fontWeight: 'bold', marginLeft: '8px', color: 'var(--cor-primaria)'}}>({progressoMOPct}%)</span>
                                             </small>
                                             <div className="progress-bar-container">
@@ -1993,14 +2162,12 @@ function Dashboard() {
                                             </div>
                                         </div>
                                         
-                                        {/* --- MUDANÇA 2: Bloco Material (com % e barra CORRIGIDA) --- */}
                                         <div style={{marginTop: '5px'}}>
                                             <small>
-                                                Material (Gasto Total): {formatCurrency(valorGastoTotalMat)} / {formatCurrency(valorGlobalMat)}
+                                                Material (Pago/Comprometido): {formatCurrency(valorPagoTotalMat)} / {formatCurrency(valorComprometidoMat)}
                                                 <span style={{fontWeight: 'bold', marginLeft: '8px', color: '#fd7e14'}}>({progressoMatPct}%)</span>
                                             </small>
                                             <div className="progress-bar-container">
-                                                {/* Esta é a barra que estava faltando */}
                                                 <div className="progress-bar" style={{ width: `${progressoMatPct}%`, backgroundColor: '#fd7e14' }}></div>
                                             </div>
                                         </div>
@@ -2040,7 +2207,7 @@ function Dashboard() {
                 )}
             </div> 
 
-            {/* Tabela de Pendências (A Pagar) */}
+            {/* <--- MUDANÇA: Tabela de Pendências (A Pagar) ATUALIZADA --> */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Pendências (A Pagar)</h3>
@@ -2074,12 +2241,19 @@ function Dashboard() {
                                 <th>Segmento</th>
                                 <th>Prior.</th>
                                 <th>Status</th>
-                                <th>Valor</th>
+                                <th>Valor Restante</th> {/* <-- MUDANÇA */}
                                 <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {itemsAPagarFiltrados.length > 0 ? itemsAPagarFiltrados.map(item => (
+                            {itemsAPagarFiltrados.length > 0 ? itemsAPagarFiltrados.map(item => {
+                                
+                                // Lógica de cálculo do item
+                                const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
+                                const isParcial = (item.valor_pago || 0) > 0;
+                                const pctPago = ((item.valor_pago || 0) / (item.valor_total || 1) * 100).toFixed(0);
+
+                                return (
                                 <tr key={item.id}>
                                     <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                     <td>
@@ -2095,20 +2269,36 @@ function Dashboard() {
                                     <td className="status-cell">
                                         <PrioridadeBadge prioridade={item.prioridade} />
                                     </td>
+                                    
+                                    {/* --- Status Cell --- */}
                                     <td className="status-cell">
                                         {(user.role === 'administrador' || user.role === 'master') ? (
                                             <button 
-                                                onClick={() => handleMarcarComoPago(item.id)}
+                                                onClick={() => setPayingItem(item)} // <-- MUDANÇA: Abre o novo modal
                                                 className="quick-pay-btn" 
-                                                title="Marcar como Pago"
+                                                title="Registrar Pagamento"
+                                                style={{backgroundColor: isParcial ? '#ffc107' : 'var(--cor-vermelho)', color: isParcial ? 'black' : 'white'}}
                                             >
-                                                A Pagar ✓
+                                                {isParcial ? `Parcial (${pctPago}%)` : 'Pagar 💵'}
                                             </button>
                                         ) : (
-                                            <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>A Pagar</span>
+                                            <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>
+                                                {isParcial ? `Parcial (${pctPago}%)` : 'A Pagar'}
+                                            </span>
                                         )}
                                     </td>
-                                    <td>{formatCurrency(item.valor)}</td>
+                                    
+                                    {/* --- Valor Cell --- */}
+                                    <td>
+                                        {formatCurrency(valorRestante)}
+                                        {isParcial && (
+                                            <small style={{display: 'block', color: '#6c757d', textDecoration: 'line-through'}}>
+                                                Total: {formatCurrency(item.valor_total)}
+                                            </small>
+                                        )}
+                                    </td>
+
+                                    {/* --- Ações Cell --- */}
                                     <td className="acoes-cell">
                                         {(user.role === 'administrador' || user.role === 'master') ? (
                                             item.tipo_registro === 'lancamento' ? (
@@ -2122,7 +2312,8 @@ function Dashboard() {
                                         )}
                                     </td>
                                 </tr>
-                            )) : (
+                                )
+                            }) : (
                                 <tr>
                                     <td colSpan="8" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td>
                                 </tr>
@@ -2133,7 +2324,7 @@ function Dashboard() {
             </div>
 
 
-            {/* Tabela de Histórico (agora somente Pagos) */}
+            {/* <--- MUDANÇA: Tabela de Histórico (Pagos) ATUALIZADA --> */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Histórico de Pagamentos (Pagos)</h3>
@@ -2151,7 +2342,7 @@ function Dashboard() {
                                 <th>Segmento</th>
                                 <th>Prior.</th>
                                 <th>Status</th>
-                                <th>Valor</th>
+                                <th>Valor Pago</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -2173,20 +2364,9 @@ function Dashboard() {
                                         <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
                                     </td>
                                     <td className="status-cell">
-                                        {(user.role === 'administrador' || user.role === 'master') ? (
-                                            <button 
-                                                onClick={() => handleMarcarComoPago(item.id)}
-                                                className="quick-pay-btn"
-                                                style={{backgroundColor: 'var(--cor-acento)'}}
-                                                title="Marcar como A Pagar"
-                                            >
-                                                Pago ⮎
-                                            </button>
-                                        ) : (
-                                            <span className="status pago">Pago</span>
-                                        )}
+                                        <span className="status pago">Pago</span>
                                     </td>
-                                    <td>{formatCurrency(item.valor)}</td>
+                                    <td>{formatCurrency(item.valor_pago)}</td>
                                     <td className="acoes-cell">
                                         {(user.role === 'administrador' || user.role === 'master') ? (
                                             item.tipo_registro === 'lancamento' ? (
@@ -2195,9 +2375,6 @@ function Dashboard() {
                                                 <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
                                             )
                                         ) : null}
-                                        {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
-                                            <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
-                                        )}
                                     </td>
                                 </tr>
                             )) : (
