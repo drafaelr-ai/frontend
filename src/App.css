@@ -89,17 +89,10 @@ body {
 .kpi-card h2 { font-size: 2em; margin: 5px 0; }
 
 /* --- MUDANÇA: Novas classes de cor do KPI --- */
-.kpi-card.orcamento-total { background: var(--cor-vermelho); }      /* Card 1 (Vermelho) */
-.kpi-card.total-pago { background: var(--cor-primaria); }         /* Card 2 (Azul) */
-.kpi-card.liberado-pagamento { background: var(--cor-acento); }    /* Card 3 (Verde) */
-.kpi-card.residual-servicos { background: var(--cor-info); }      /* Card 4 (Azul Claro) */
-/* --- FIM DA MUDANÇA --- */
-/* ... (depois de .kpi-card.resto-a-pagar) ... */
-
-/* --- ADICIONE ESTA NOVA REGRA --- */
-.kpi-card.residual { 
-    background: #f0ad4e; /* Um tom de laranja/amarelo */
-}
+.kpi-card.orcamento-total { background: var(--cor-vermelho); }      /* Card 1 - Orçamento Total (Vermelho) */
+.kpi-card.total-pago { background: var(--cor-primaria); }           /* Card 2 - Valores Pagos (Índigo/Azul) */
+.kpi-card.liberado-pagamento { background: var(--cor-acento); }     /* Card 3 - Liberado p/ Pagamento (Verde) */
+.kpi-card.residual-servicos { background: #f0ad4e; }                /* Card 4 - Residual (Laranja) */
 /* --- FIM DA MUDANÇA --- */
 
 .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }

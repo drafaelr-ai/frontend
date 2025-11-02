@@ -2031,28 +2031,28 @@ function Dashboard() {
             {/* --- *** KPIs *** --- */}
              {sumarios && (
                  <div className="kpi-grid">
-                     {/* Card 1: Valor Total de Obra (Comprometido) */}
-                     <div className="kpi-card total-geral">
-                         <span>Valor Total da Obra (Lançado)</span>
-                         <h2>{formatCurrency(sumarios.valor_total_obra)}</h2>
+                     {/* Card 1: Orçamento Total */}
+                     <div className="kpi-card orcamento-total">
+                         <span>Orçamento Total (Orçado)</span>
+                         <h2>{formatCurrency(sumarios.orcamento_total)}</h2>
                      </div>
 
-                     {/* Card 2: Valores Pagos */}
+                     {/* Card 2: Valores Efetivados/Pagos */}
                      <div className="kpi-card total-pago">
-                         <span>Valores Pagos</span>
+                         <span>Valores Efetivados (Pagos)</span>
                          <h2>{formatCurrency(sumarios.valores_pagos)}</h2>
                      </div>
                      
-                     {/* Card 3: Residual (Saldo de Obra) */}
-                     <div className="kpi-card residual"> {/* <-- NOVA COR */}
-                         <span>Residual (Orçado - Pago)</span>
-                         <h2>{formatCurrency(sumarios.residual)}</h2>
+                     {/* Card 3: Liberado para Pagamento (Fila) */}
+                     <div className="kpi-card liberado-pagamento">
+                         <span>Liberado p/ Pagamento (Fila)</span>
+                         <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
                      </div>
 
-                     {/* Card 4: Valor Liberado para Pagamento (Resto a Pagar) */}
-                     <div className="kpi-card resto-a-pagar">
-                         <span>Liberado p/ Pagamento (Restante)</span>
-                         <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
+                     {/* Card 4: Residual (Orçamento - Pago) */}
+                     <div className="kpi-card residual-servicos">
+                         <span>Residual (Orçado - Pago)</span>
+                         <h2>{formatCurrency(sumarios.residual)}</h2>
                      </div>
                  </div>
              )}
