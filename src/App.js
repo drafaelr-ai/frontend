@@ -2030,9 +2030,29 @@ function Dashboard() {
             {/* --- *** KPIs *** --- */}
              {sumarios && (
                  <div className="kpi-grid">
-                     <div className="kpi-card total-geral"><span>Total Comprometido (Pago + A Pagar)</span><h2>{formatCurrency(sumarios.total_geral)}</h2></div>
-                     <div className="kpi-card total-pago"><span>Total Pago</span><h2>{formatCurrency(sumarios.total_pago)}</h2></div>
-                     <div className="kpi-card total-a-pagar"><span>Orçamento Total</span><h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2></div>
+                     {/* 1. Orçamento Total (Vermelho) */}
+                     <div className="kpi-card total-a-pagar">
+                         <span>Orçamento Total</span>
+                         <h2>{formatCurrency(sumarios.total_em_aberto_orcamento)}</h2>
+                     </div>
+
+                     {/* 2. Total Comprometido (Azul) */}
+                     <div className="kpi-card total-geral">
+                         <span>Total Comprometido</span>
+                         <h2>{formatCurrency(sumarios.total_geral)}</h2>
+                     </div>
+
+                     {/* 3. Total Pago (Verde) */}
+                     <div className="kpi-card total-pago">
+                         <span>Total Pago</span>
+                         <h2>{formatCurrency(sumarios.total_pago)}</h2>
+                     </div>
+                     
+                     {/* 4. NOVO CARD: Resto a Pagar (Azul Claro) */}
+                     <div className="kpi-card resto-a-pagar">
+                         <span>Resto a Pagar (Comprometido - Pago)</span>
+                         <h2>{formatCurrency(sumarios.total_geral - sumarios.total_pago)}</h2>
+                     </div>
                  </div>
              )}
             
