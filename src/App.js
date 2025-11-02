@@ -595,6 +595,31 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                 setIsLoading(false);
             });
     };
+    // ... (depois da função handleCreateUser)
+
+    const handleDeleteUser = (user) => {
+        if (!window.confirm(`Tem certeza que deseja excluir o usuário ${user.username}? Esta ação não pode ser desfeita.`)) {
+            return;
+        }
+        
+        setError(null);
+        
+        fetchWithAuth(`${API_URL}/admin/users/${user.id}`, {
+            method: 'DELETE'
+        })
+        .then(res => {
+            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
+            return res.json();
+        })
+        .then(() => {
+            // Remove o usuário da lista no frontend
+            setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
+        })
+        .catch(err => {
+            console.error("Erro ao deletar usuário:", err);
+            setError(err.message);
+        });
+    };
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -700,13 +725,20 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                 <tr key={user.id}>
                                     <td>{user.username}</td>
                                     <td>{user.role}</td>
-                                    <td style={{textAlign: 'center'}}>
+                                   <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
                                         <button 
                                             className="acao-btn" 
                                             style={{backgroundColor: '#17a2b8', color: 'white'}}
                                             onClick={() => setUserToEdit(user)}
                                         >
                                             Editar Permissões
+                                        </button>
+                                        <button 
+                                            className="acao-btn" 
+                                            style={{backgroundColor: 'var(--cor-vermelho)', color: 'white'}}
+                                            onClick={() => handleDeleteUser(user)}
+                                        >
+                                            Excluir
                                         </button>
                                     </td>
                                 </tr>
