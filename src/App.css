@@ -211,11 +211,12 @@ body {
 
 /* --- MUDANÇA: Adiciona barra de rolagem às tabelas e listas --- */
 .tabela-scroll-container {
-    max-height: 400px; /* Você pode ajustar essa altura (ex: 300px) */
+    max-height: 400px;
     overflow-y: auto;
+    overflow-x: auto; /* <-- MUDANÇA ADICIONADA AQUI */
     border: 1px solid #eee;
     border-radius: 5px;
-    padding: 0 5px; /* Pequeno padding para a barra de rolagem */
+    padding: 0 5px;
 }
 
 /* Faz o cabeçalho da tabela "grudar" no topo ao rolar */
