@@ -1955,15 +1955,20 @@ function Dashboard() {
                             
                             const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
                             
+                            // --- Lógica de Mão de Obra ---
                             const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
                             const valorGastoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
                             const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
-                            const progressoMO = valorGlobalMO > 0 ? (valorGastoTotalMO / valorGlobalMO) * 100 : 0;
+                            // Calcula a porcentagem (ex: 50.0)
+                            const progressoMOPct = valorGlobalMO > 0 ? ((valorGastoTotalMO / valorGlobalMO) * 100).toFixed(0) : 0;
 
+                            // --- Lógica de Material (COM CORREÇÃO) ---
                             const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
                             const valorGastoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
-                            
                             const valorGlobalMat = serv.valor_global_material || 0;
+                            // Calcula a porcentagem (ex: 50.0)
+                            const progressoMatPct = valorGlobalMat > 0 ? ((valorGastoTotalMat / valorGlobalMat) * 100).toFixed(0) : 0;
+
 
                             return (
                                 <div key={serv.id} className="card-empreitada-item">
@@ -1977,15 +1982,26 @@ function Dashboard() {
                                         </div>
                                         <small>Responsável: {serv.responsavel || 'N/A'}</small>
                                         
+                                        {/* --- MUDANÇA 1: Bloco Mão de Obra (com %) --- */}
                                         <div style={{marginTop: '10px'}}>
-                                            <small>Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}</small>
+                                            <small>
+                                                Mão de Obra (Gasto Total): {formatCurrency(valorGastoTotalMO)} / {formatCurrency(valorGlobalMO)}
+                                                <span style={{fontWeight: 'bold', marginLeft: '8px', color: 'var(--cor-primaria)'}}>({progressoMOPct}%)</span>
+                                            </small>
                                             <div className="progress-bar-container">
-                                                <div className="progress-bar" style={{ width: `${progressoMO}%` }}></div>
+                                                <div className="progress-bar" style={{ width: `${progressoMOPct}%` }}></div>
                                             </div>
                                         </div>
+                                        
+                                        {/* --- MUDANÇA 2: Bloco Material (com % e barra CORRIGIDA) --- */}
                                         <div style={{marginTop: '5px'}}>
-                                            <small>Material (Gasto Total): {formatCurrency(valorGastoTotalMat)} / {formatCurrency(valorGlobalMat)}</small>
-                                            <div className="progress-bar-container" style={{backgroundColor: '#e9ecef'}}>
+                                            <small>
+                                                Material (Gasto Total): {formatCurrency(valorGastoTotalMat)} / {formatCurrency(valorGlobalMat)}
+                                                <span style={{fontWeight: 'bold', marginLeft: '8px', color: '#fd7e14'}}>({progressoMatPct}%)</span>
+                                            </small>
+                                            <div className="progress-bar-container">
+                                                {/* Esta é a barra que estava faltando */}
+                                                <div className="progress-bar" style={{ width: `${progressoMatPct}%`, backgroundColor: '#fd7e14' }}></div>
                                             </div>
                                         </div>
                                     </div>
