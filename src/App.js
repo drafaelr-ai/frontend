@@ -1599,10 +1599,32 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
         setDownloadType('resumo');
         setError(null);
 
-        window.open(`${API_URL}/obras/${obraId}/relatorio/resumo-completo`, '_blank');
-        
-        setIsDownloading(false);
-        setDownloadType(null);
+        // <-- CORREÇÃO: Usar fetchWithAuth para enviar token
+        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio/resumo-completo`)
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório'); });
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                // Criar URL temporário e abrir em nova aba
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                
+                // Limpar URL após um tempo
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+            })
+            .catch(err => {
+                console.error("Erro ao gerar relatório:", err);
+                setError(err.message);
+            })
+            .finally(() => {
+                setIsDownloading(false);
+                setDownloadType(null);
+            });
     };
 
     return (
