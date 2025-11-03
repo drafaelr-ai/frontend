@@ -1447,6 +1447,110 @@ const PartialPaymentModal = ({ item, onClose, onSave }) => {
 // --- FIM DO NOVO MODAL ---
 
 
+// --- MODAL DE UPLOAD DE NOTA FISCAL ---
+const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
+    const [file, setFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile) {
+            // Validar tipo de arquivo (PDF, imagens)
+            const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+            if (!validTypes.includes(selectedFile.type)) {
+                setError('Tipo de arquivo inválido. Apenas PDF e imagens são permitidos.');
+                return;
+            }
+            // Validar tamanho (max 10MB)
+            if (selectedFile.size > 10 * 1024 * 1024) {
+                setError('Arquivo muito grande. Tamanho máximo: 10MB');
+                return;
+            }
+            setFile(selectedFile);
+            setError(null);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!file) {
+            setError('Por favor, selecione um arquivo');
+            return;
+        }
+
+        setIsUploading(true);
+        setError(null);
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('item_id', item.id);
+        formData.append('item_type', item.tipo_registro);
+
+        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(err => { throw new Error(err.erro || 'Erro ao fazer upload'); });
+            }
+            return res.json();
+        })
+        .then(() => {
+            onSuccess();
+            onClose();
+        })
+        .catch(err => {
+            console.error("Erro ao fazer upload:", err);
+            setError(err.message);
+        })
+        .finally(() => {
+            setIsUploading(false);
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>Anexar Nota Fiscal</h2>
+            <div style={{ marginBottom: '15px', padding: '10px', background: '#f8f9fa', borderRadius: '5px' }}>
+                <strong>Item:</strong> {item.descricao}<br />
+                <strong>Fornecedor:</strong> {item.fornecedor || 'N/A'}
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Selecione o arquivo (PDF ou Imagem)</label>
+                    <input 
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={handleFileChange}
+                        disabled={isUploading}
+                    />
+                    {file && (
+                        <p style={{ marginTop: '5px', color: 'var(--cor-acento)', fontSize: '0.9em' }}>
+                            ✓ Arquivo selecionado: {file.name}
+                        </p>
+                    )}
+                </div>
+
+                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
+
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isUploading}>
+                        Cancelar
+                    </button>
+                    <button type="submit" className="submit-btn" disabled={isUploading}>
+                        {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+// --- FIM DO MODAL DE UPLOAD DE NOTA FISCAL ---
+
+
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -1477,6 +1581,10 @@ function Dashboard() {
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
     const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
     const [filtroPendencias, setFiltroPendencias] = useState('');
+    
+    // <--- NOVO: Estados para Notas Fiscais -->
+    const [notasFiscais, setNotasFiscais] = useState([]);
+    const [uploadingNFFor, setUploadingNFFor] = useState(null); // Item que está recebendo upload
 
 
     // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
@@ -1533,9 +1641,33 @@ function Dashboard() {
                 setSumarios(data.sumarios || null);
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
+                
+                // <--- NOVO: Buscar notas fiscais -->
+                fetchNotasFiscais(obraId);
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
             .finally(() => setIsLoading(false));
+    };
+    
+    // <--- NOVO: Função para buscar notas fiscais -->
+    const fetchNotasFiscais = (obraId) => {
+        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
+            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
+            .then(data => {
+                console.log("Notas fiscais recebidas:", data);
+                setNotasFiscais(Array.isArray(data) ? data : []);
+            })
+            .catch(error => {
+                console.error("Erro ao buscar notas fiscais:", error);
+                setNotasFiscais([]);
+            });
+    };
+    
+    // <--- NOVO: Helper para verificar se item tem nota fiscal -->
+    const itemHasNotaFiscal = (item) => {
+        return notasFiscais.some(nf => 
+            nf.item_id === item.id && nf.item_type === item.tipo_registro
+        );
     };
 
     // --- FUNÇÕES DE AÇÃO (CRUD) ---
@@ -2029,6 +2161,16 @@ function Dashboard() {
                     onSave={handleSaveServicoPrioridade}
                 />
             )}
+            
+            {/* <-- NOVO: Modal de Upload de Nota Fiscal --> */}
+            {uploadingNFFor && (
+                <UploadNotaFiscalModal
+                    item={uploadingNFFor}
+                    obraId={obraSelecionada.id}
+                    onClose={() => setUploadingNFFor(null)}
+                    onSuccess={() => fetchNotasFiscais(obraSelecionada.id)}
+                />
+            )}
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
@@ -2368,6 +2510,21 @@ function Dashboard() {
 
                                     {/* --- Ações Cell --- */}
                                     <td className="acoes-cell">
+                                        {/* <--- NOVO: Botão Anexar NF --> */}
+                                        {(user.role === 'administrador' || user.role === 'master') && (
+                                            <button 
+                                                onClick={() => setUploadingNFFor(item)} 
+                                                className="acao-icon-btn" 
+                                                title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
+                                                style={{ 
+                                                    color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
+                                                    fontSize: '1.2em'
+                                                }}
+                                            >
+                                                📎
+                                            </button>
+                                        )}
+                                        
                                         {(user.role === 'administrador' || user.role === 'master') ? (
                                             item.tipo_registro === 'lancamento' ? (
                                                 <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
@@ -2436,6 +2593,21 @@ function Dashboard() {
                                     </td>
                                     <td>{formatCurrency(item.valor_pago)}</td>
                                     <td className="acoes-cell">
+                                        {/* <--- NOVO: Botão Anexar NF --> */}
+                                        {(user.role === 'administrador' || user.role === 'master') && (
+                                            <button 
+                                                onClick={() => setUploadingNFFor(item)} 
+                                                className="acao-icon-btn" 
+                                                title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
+                                                style={{ 
+                                                    color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
+                                                    fontSize: '1.2em'
+                                                }}
+                                            >
+                                                📎
+                                            </button>
+                                        )}
+                                        
                                         {(user.role === 'administrador' || user.role === 'master') ? (
                                             item.tipo_registro === 'lancamento' ? (
                                                 <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
