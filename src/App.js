@@ -1482,9 +1482,14 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
         setIsUploading(true);
         setError(null);
 
+        // <-- CORREÇÃO: Pegar o ID correto baseado no tipo de registro
+        const realItemId = item.tipo_registro === 'lancamento' 
+            ? item.lancamento_id 
+            : item.pagamento_id;
+
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('item_id', item.id);
+        formData.append('item_id', realItemId);
         formData.append('item_type', item.tipo_registro);
 
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
@@ -1845,8 +1850,13 @@ function Dashboard() {
     
     // <--- NOVO: Helper para verificar se item tem nota fiscal -->
     const itemHasNotaFiscal = (item) => {
+        // <-- CORREÇÃO: Usar o ID correto baseado no tipo de registro
+        const realItemId = item.tipo_registro === 'lancamento' 
+            ? item.lancamento_id 
+            : item.pagamento_id;
+            
         return notasFiscais.some(nf => 
-            nf.item_id === item.id && nf.item_type === item.tipo_registro
+            nf.item_id === realItemId && nf.item_type === item.tipo_registro
         );
     };
 
