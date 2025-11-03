@@ -1551,6 +1551,183 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
 // --- FIM DO MODAL DE UPLOAD DE NOTA FISCAL ---
 
 
+// --- MODAL DE RELATÓRIOS ---
+const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadType, setDownloadType] = useState(null);
+    const [error, setError] = useState(null);
+
+    const handleDownloadNotasFiscais = () => {
+        setIsDownloading(true);
+        setDownloadType('notas');
+        setError(null);
+
+        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais/export/zip`)
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao baixar notas fiscais'); });
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `notas_fiscais_${obraNome}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(err => {
+                console.error("Erro ao baixar notas fiscais:", err);
+                setError(err.message);
+            })
+            .finally(() => {
+                setIsDownloading(false);
+                setDownloadType(null);
+            });
+    };
+
+    const handleDownloadResumoObra = () => {
+        setIsDownloading(true);
+        setDownloadType('resumo');
+        setError(null);
+
+        window.open(`${API_URL}/obras/${obraId}/relatorio/resumo-completo`, '_blank');
+        
+        setIsDownloading(false);
+        setDownloadType(null);
+    };
+
+    return (
+        <Modal onClose={onClose} customWidth="500px">
+            <h2>📊 Relatórios da Obra</h2>
+            <p style={{ marginBottom: '25px', color: 'var(--cor-texto-secundario)' }}>
+                Selecione o tipo de relatório que deseja gerar:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {/* Opção 1: Baixar Notas Fiscais */}
+                <button
+                    onClick={handleDownloadNotasFiscais}
+                    disabled={isDownloading}
+                    style={{
+                        padding: '20px',
+                        border: '2px solid var(--cor-primaria)',
+                        borderRadius: '8px',
+                        background: 'white',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        opacity: isDownloading && downloadType !== 'notas' ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isDownloading) {
+                            e.currentTarget.style.background = 'var(--cor-fundo)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontSize: '2em' }}>📎</span>
+                        <div>
+                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-primaria)' }}>
+                                {isDownloading && downloadType === 'notas' ? 'Preparando...' : 'Baixar Notas Fiscais'}
+                            </strong>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
+                                Exporta todas as notas fiscais em um arquivo ZIP
+                            </p>
+                        </div>
+                    </div>
+                </button>
+
+                {/* Opção 2: Resumo da Obra */}
+                <button
+                    onClick={handleDownloadResumoObra}
+                    disabled={isDownloading}
+                    style={{
+                        padding: '20px',
+                        border: '2px solid var(--cor-acento)',
+                        borderRadius: '8px',
+                        background: 'white',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        opacity: isDownloading && downloadType !== 'resumo' ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isDownloading) {
+                            e.currentTarget.style.background = 'var(--cor-fundo)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontSize: '2em' }}>📄</span>
+                        <div>
+                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-acento)' }}>
+                                {isDownloading && downloadType === 'resumo' ? 'Gerando...' : 'Resumo Completo da Obra'}
+                            </strong>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
+                                PDF com serviços, valores, pendências, orçamentos e gráficos
+                            </p>
+                        </div>
+                    </div>
+                </button>
+
+                {/* Placeholder para opção 3 */}
+                <button
+                    disabled
+                    style={{
+                        padding: '20px',
+                        border: '2px dashed #ccc',
+                        borderRadius: '8px',
+                        background: '#f8f9fa',
+                        cursor: 'not-allowed',
+                        textAlign: 'left',
+                        opacity: 0.6
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontSize: '2em' }}>📊</span>
+                        <div>
+                            <strong style={{ fontSize: '1.1em', color: '#6c757d' }}>
+                                Em breve...
+                            </strong>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#6c757d' }}>
+                                Novo relatório será adicionado aqui
+                            </p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            {error && (
+                <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '15px' }}>
+                    {error}
+                </p>
+            )}
+
+            <div style={{ marginTop: '25px', textAlign: 'center' }}>
+                <button onClick={onClose} className="cancel-btn" disabled={isDownloading}>
+                    Fechar
+                </button>
+            </div>
+        </Modal>
+    );
+};
+// --- FIM DO MODAL DE RELATÓRIOS ---
+
+
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -1585,6 +1762,9 @@ function Dashboard() {
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
     const [uploadingNFFor, setUploadingNFFor] = useState(null); // Item que está recebendo upload
+    
+    // <--- NOVO: Estado para modal de relatórios -->
+    const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
 
 
     // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
@@ -2171,12 +2351,29 @@ function Dashboard() {
                     onSuccess={() => fetchNotasFiscais(obraSelecionada.id)}
                 />
             )}
+            
+            {/* <-- NOVO: Modal de Relatórios --> */}
+            {isRelatoriosModalVisible && (
+                <RelatoriosModal
+                    onClose={() => setRelatoriosModalVisible(false)}
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                />
+            )}
 
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
-                <div>
-                    <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d', marginRight: '10px'}}>Sair (Logout)</button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {/* <-- NOVO: Botão Relatórios --> */}
+                    <button 
+                        onClick={() => setRelatoriosModalVisible(true)} 
+                        className="voltar-btn" 
+                        style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
+                    >
+                        📊 Relatórios
+                    </button>
+                    <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
                     <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
                 </div>
             </header>
