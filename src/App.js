@@ -2484,7 +2484,8 @@ function Dashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {orcamentos.length > 0 ? orcamentos.map(orc => (
+                            {/* <-- MUDANÇA: Filtrar orçamentos rejeitados da lista principal */}
+                            {orcamentos.filter(orc => orc.status !== 'Rejeitado').length > 0 ? orcamentos.filter(orc => orc.status !== 'Rejeitado').map(orc => (
                                 <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
                                     <td>
                                         {orc.descricao}
