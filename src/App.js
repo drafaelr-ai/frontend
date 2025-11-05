@@ -2169,7 +2169,43 @@ const totalOrcamentosPendentes = useMemo(() => {
         return (Array.isArray(orcamentos) ? orcamentos : [])
             .reduce((total, orc) => total + (orc.valor || 0), 0);
     }, [orcamentos]);
+const cronogramaPagamentos = useMemo(() => {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
 
+        const data7Dias = new Date(hoje);
+        data7Dias.setDate(hoje.getDate() + 7);
+
+        const data30Dias = new Date(hoje);
+        data30Dias.setDate(hoje.getDate() + 30);
+
+        const totais = {
+            atrasados: 0,
+            hoje: 0,
+            prox7dias: 0,
+            prox30dias: 0,
+            totalAPagar: 0
+        };
+
+        (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
+            const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
+            const dataVencimento = new Date(item.data + 'T00:00:00'); // Ajusta fuso
+            
+            totais.totalAPagar += valorRestante;
+
+            if (dataVencimento < hoje) {
+                totais.atrasados += valorRestante;
+            } else if (dataVencimento.getTime() === hoje.getTime()) {
+                totais.hoje += valorRestante;
+            } else if (dataVencimento <= data7Dias) {
+                totais.prox7dias += valorRestante;
+            } else if (dataVencimento <= data30Dias) {
+                totais.prox30dias += valorRestante;
+            }
+        });
+
+        return totais;
+    }, [itemsAPagar]);
     // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     const itemsAPagar = useMemo(() => 
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
@@ -2649,6 +2685,52 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
                                         </div>
+                                        </div>
+             
+            
+            {/* --- ADICIONE ESTE NOVO CARD --- */}
+            <div className="card-full" style={{ marginBottom: '20px' }}>
+                <div className="card-header">
+                    <h3>Cronograma de Pagamentos (Pendências)</h3>
+                </div>
+                <div className="kpi-grid" style={{ padding: '10px 0px' }}> {/* Reutilizando a classe dos KPIs */}
+                    
+                    {/* Card 1: Atrasados */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-vermelho)' }}>
+                        <span>Atrasados (Vencidos)</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.atrasados)}</h2>
+                    </div>
+
+                    {/* Card 2: Vencendo Hoje */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-laranja, #fd7e14)' }}>
+                        <span>Vencendo Hoje</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.hoje)}</h2>
+                    </div>
+                    
+                    {/* Card 3: Próximos 7 Dias */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-info, #17a2b8)' }}>
+                        <span>Próximos 7 Dias</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.prox7dias)}</h2>
+                    </div>
+
+                    {/* Card 4: Próximos 30 Dias */}
+                    <div className="kpi-card" style={{ background: '#6c757d' }}>
+                        <span>Próximos 30 Dias</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.prox30dias)}</h2>
+                    </div>
+
+                    {/* Card 5: Total */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-primaria)' }}>
+                        <span>Total a Pagar (Fila)</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.totalAPagar)}</h2>
+                    </div>
+                </div>
+            </div>
+            {/* --- FIM DA ADIÇÃO --- */}
+            
+
+            {/* Grid com Gráfico e Sumário */}
+            <div className="main-grid">
                                         <div>
                                             <span>Valores Pagos</span>
                                             <strong style={{ color: 'var(--cor-primaria)' }}>
@@ -3092,7 +3174,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     <table className="tabela-historico">
                         <thead>
                             <tr>
-                                <th>Data</th>
+                                <th>Vencimento</th>
                                 <th>Descrição</th>
                                 <th>Fornecedor</th>
                                 <th>Segmento</th>
@@ -3208,7 +3290,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     <table className="tabela-historico">
                         <thead>
                             <tr>
-                                <th>Data</th>
+                                <th style={{width: '120px'}}>Vencimento</th>
                                 <th>Descrição</th>
                                 <th>Fornecedor</th>
                                 <th>Segmento</th>
