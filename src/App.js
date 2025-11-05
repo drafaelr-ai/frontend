@@ -2146,7 +2146,7 @@ function Dashboard() {
     const { user, logout } = useAuth();
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
-    
+    const [telaCronograma, setTelaCronograma] = useState(false);
     const [lancamentos, setLancamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [sumarios, setSumarios] = useState(null);
