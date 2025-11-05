@@ -2136,11 +2136,6 @@ const CronogramaCompras = ({ obraSelecionada, voltarParaLista }) => {
 // ... INSTRUÇÕES DE INTEGRAÇÃO (comente ou apague isso) ...
 // ===================================
 
-
-// --- COMPONENTE DO DASHBOARD (Atualizado) ---
-
-    const { user, logout } = useAuth(); 
-    // ... resto do código ...
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
