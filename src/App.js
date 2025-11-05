@@ -2122,12 +2122,31 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
 };
 // --- FIM DO MODAL DE RELATÓRIOS ---
 
+// ... outros imports e helpers ...
+// ... 
 
+// ===================================
+// COLE O CÓDIGO DO CRONOGRAMA_COMPRAS_COMPONENT.JS AQUI
+// ===================================
+const CronogramaCompras = ({ obraSelecionada, voltarParaLista }) => {
+    // ... todo o código do novo componente ...
+};
+
+// ===================================
+// ... INSTRUÇÕES DE INTEGRAÇÃO (comente ou apague isso) ...
+// ===================================
+
+
+// --- COMPONENTE DO DASHBOARD (Atualizado) ---
+function Dashboard() { // <- Esta é a linha 2127 da sua imagem
+    const { user, logout } = useAuth(); }
+    // ... resto do código ...
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
+    
     const [lancamentos, setLancamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [sumarios, setSumarios] = useState(null);
@@ -2585,7 +2604,39 @@ function Dashboard() {
                 {isExportModalVisible && <ExportReportModal 
                     onClose={() => setExportModalVisible(false)} 
                 />}
-                
+                {/* --- Cabeçalho --- */}
+<header className="dashboard-header">
+    <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
+    <div style={{ display: 'flex', gap: '10px' }}>
+        
+        {/* ADICIONE ESTE BOTÃO: */}
+        <button 
+            onClick={() => setTelaCronograma(true)} 
+            style={{
+                backgroundColor: 'var(--cor-info)', // Uma cor azul
+                color: 'white',
+                padding: '10px 15px',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+            }}
+        >
+            📅 Cronograma de Compras
+        </button>
+        
+        {/* Botões existentes */}
+        <button 
+            onClick={() => setRelatoriosModalVisible(true)} 
+            className="voltar-btn" 
+            style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
+        >
+            📊 Relatórios
+        </button>
+        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+        <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
+    </div>
+</header>
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
@@ -2678,7 +2729,12 @@ function Dashboard() {
 
     // TELA DE LOADING
     if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
-
+if (telaCronograma) {
+    return <CronogramaCompras 
+        obraSelecionada={obraSelecionada} 
+        voltarParaLista={() => setTelaCronograma(false)} 
+    />;
+}
     
     // TELA PRINCIPAL DO DASHBOARD
     return (
