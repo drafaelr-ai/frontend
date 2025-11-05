@@ -2169,7 +2169,30 @@ const totalOrcamentosPendentes = useMemo(() => {
         return (Array.isArray(orcamentos) ? orcamentos : [])
             .reduce((total, orc) => total + (orc.valor || 0), 0);
     }, [orcamentos]);
-const cronogramaPagamentos = useMemo(() => {
+
+   const itemsAPagar = useMemo(() => {
+    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
+    return (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item =>
+        (item.valor_total || 0) > (item.valor_pago || 0)
+    )
+},
+[historicoUnificado]
+);
+    
+    const itemsAPagarFiltrados = useMemo(() => {
+        if (!filtroPendencias) {
+            return itemsAPagar;
+        }
+        const lowerCaseFiltro = filtroPendencias.toLowerCase();
+        return itemsAPagar.filter(item => 
+            (item.descricao && item.descricao.toLowerCase().includes(lowerCaseFiltro)) ||
+            (item.fornecedor && item.fornecedor.toLowerCase().includes(lowerCaseFiltro)) ||
+            (item.tipo && item.tipo.toLowerCase().includes(lowerCaseFiltro))
+        );
+    }, [itemsAPagar, filtroPendencias]);
+
+ // --- NOVO BLOCO DO CRONOGRAMA (LUGAR CORRETO) ---
+    const cronogramaPagamentos = useMemo(() => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
 
@@ -2187,9 +2210,11 @@ const cronogramaPagamentos = useMemo(() => {
             totalAPagar: 0
         };
 
+        // Usa a variável 'itemsAPagar' que já foi definida ANTES
         (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
             const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            const dataVencimento = new Date(item.data + 'T00:00:00'); // Ajusta fuso
+            // Corrige o fuso horário para comparações de data
+            const dataVencimento = new Date(item.data + 'T00:00:00'); 
             
             totais.totalAPagar += valorRestante;
 
@@ -2205,26 +2230,9 @@ const cronogramaPagamentos = useMemo(() => {
         });
 
         return totais;
-    }, [itemsAPagar]);
-    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
-    const itemsAPagar = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
-            (item.valor_total || 0) > (item.valor_pago || 0)
-        ), 
-        [historicoUnificado]
-    );
-    
-    const itemsAPagarFiltrados = useMemo(() => {
-        if (!filtroPendencias) {
-            return itemsAPagar;
-        }
-        const lowerCaseFiltro = filtroPendencias.toLowerCase();
-        return itemsAPagar.filter(item => 
-            (item.descricao && item.descricao.toLowerCase().includes(lowerCaseFiltro)) ||
-            (item.fornecedor && item.fornecedor.toLowerCase().includes(lowerCaseFiltro)) ||
-            (item.tipo && item.tipo.toLowerCase().includes(lowerCaseFiltro))
-        );
-    }, [itemsAPagar, filtroPendencias]);
+    }, [itemsAPagar]); // A dependência é 'itemsAPagar'
+    // --- FIM DO NOVO BLOCO ---
+
 
     const itemsPagos = useMemo(() => 
         (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
