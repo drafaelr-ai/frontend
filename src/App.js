@@ -2163,7 +2163,12 @@ function Dashboard() {
     
     // <--- NOVO: Estado para modal de orçamentos -->
     const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
-
+const totalOrcamentosPendentes = useMemo(() => {
+        // A variável 'orcamentos' já contém
+        // apenas os orçamentos com status 'Pendente' vindos do backend.
+        return (Array.isArray(orcamentos) ? orcamentos : [])
+            .reduce((total, orc) => total + (orc.valor || 0), 0);
+    }, [orcamentos]);
 
     // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     const itemsAPagar = useMemo(() => 
@@ -2856,11 +2861,33 @@ function Dashboard() {
             {/* Tabela de Orçamentos */}
             <div className="card-full">
                 <div className="card-header">
-                    <h3>Orçamentos para Aprovação</h3>
+                <h3>Orçamentos para Aprovação</h3>
+                
+                <div className="header-actions">
+                    <span style={{ 
+                        fontSize: '1.1em', 
+                        fontWeight: 'bold', 
+                        color: 'var(--cor-texto-secundario)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginRight: '20px' 
+                    }}>
+                        Total Pendente: 
+                        <span style={{ 
+                            color: 'var(--cor-primaria)', 
+                            fontSize: '1.2em', 
+                            marginLeft: '8px' 
+                        }}>
+                            {formatCurrency(totalOrcamentosPendentes)}
+                        </span>
+                    </span>
+                
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
                     )}
+                
                 </div>
+            </div>
                 <div className="tabela-scroll-container">
                     <table className="tabela-historico">
                         <thead>
