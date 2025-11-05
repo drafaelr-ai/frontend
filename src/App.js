@@ -2600,38 +2600,6 @@ function Dashboard() {
                     onClose={() => setExportModalVisible(false)} 
                 />}
                 {/* --- Cabeçalho --- */}
-<header className="dashboard-header">
-    <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
-    <div style={{ display: 'flex', gap: '10px' }}>
-        
-        {/* ADICIONE ESTE BOTÃO: */}
-        <button 
-            onClick={() => setTelaCronograma(true)} 
-            style={{
-                backgroundColor: 'var(--cor-info)', // Uma cor azul
-                color: 'white',
-                padding: '10px 15px',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-            }}
-        >
-            📅 Cronograma de Compras
-        </button>
-        
-        {/* Botões existentes */}
-        <button 
-            onClick={() => setRelatoriosModalVisible(true)} 
-            className="voltar-btn" 
-            style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
-        >
-            📊 Relatórios
-        </button>
-        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
-        <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
-    </div>
-</header>
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
