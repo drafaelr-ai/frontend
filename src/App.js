@@ -2746,7 +2746,20 @@ if (telaCronograma) {
                 onSave={handleSaveEdit}
                 servicos={servicos} 
             />}
-            
+            <button 
+                    onClick={() => setTelaCronograma(true)} 
+                    style={{
+                        backgroundColor: 'var(--cor-info)', // Uma cor azul
+                        color: 'white',
+                        padding: '10px 15px',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    📅 Cronograma de Compras
+                </button>
             {isAddServicoModalVisible && (
                 <AddServicoModal
                     onClose={() => setAddServicoModalVisible(false)}
