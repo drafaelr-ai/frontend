@@ -2878,6 +2878,46 @@ const totalOrcamentosPendentes = useMemo(() => {
                  </div>
              )}
             
+            {/* --- Cronograma de Pagamentos --- */}
+            <div className="card-full" style={{ marginBottom: '20px' }}>
+                <div className="card-header">
+                    <h3>📅 Cronograma de Pagamentos (Pendências)</h3>
+                </div>
+                <div className="kpi-grid" style={{ padding: '10px 0px' }}>
+                    
+                    {/* Card 1: Atrasados */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-vermelho)' }}>
+                        <span>Atrasados (Vencidos)</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.atrasados)}</h2>
+                    </div>
+
+                    {/* Card 2: Vencendo Hoje */}
+                    <div className="kpi-card" style={{ background: '#fd7e14' }}>
+                        <span>Vencendo Hoje</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.hoje)}</h2>
+                    </div>
+                    
+                    {/* Card 3: Próximos 7 Dias */}
+                    <div className="kpi-card" style={{ background: '#17a2b8' }}>
+                        <span>Próximos 7 Dias</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.prox7dias)}</h2>
+                    </div>
+
+                    {/* Card 4: Próximos 30 Dias */}
+                    <div className="kpi-card" style={{ background: '#6c757d' }}>
+                        <span>Próximos 30 Dias</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.prox30dias)}</h2>
+                    </div>
+
+                    {/* Card 5: Total a Pagar */}
+                    <div className="kpi-card" style={{ background: 'var(--cor-primaria)' }}>
+                        <span>Total a Pagar (Fila)</span>
+                        <h2>{formatCurrency(cronogramaPagamentos.totalAPagar)}</h2>
+                    </div>
+                </div>
+            </div>
+            {/* --- Fim do Cronograma de Pagamentos --- */}
+            
             {/* Grid com Gráfico e Sumário */}
             <div className="main-grid">
                 <div className="card-main">
