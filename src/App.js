@@ -2138,8 +2138,8 @@ const CronogramaCompras = ({ obraSelecionada, voltarParaLista }) => {
 
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
-function Dashboard() { // <- Esta é a linha 2127 da sua imagem
-    const { user, logout } = useAuth(); }
+
+    const { user, logout } = useAuth(); 
     // ... resto do código ...
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
