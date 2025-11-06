@@ -254,6 +254,17 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                      initialData.data = '';
                  }
              }
+             // Formatar data_vencimento
+             if (initialData.data_vencimento) {
+                 try {
+                     initialData.data_vencimento = new Date(initialData.data_vencimento + 'T00:00:00').toISOString().split('T')[0];
+                 } catch (e) {
+                     console.error("Erro ao formatar data_vencimento para edição:", e);
+                     initialData.data_vencimento = '';
+                 }
+             } else {
+                 initialData.data_vencimento = initialData.data || ''; // Fallback para data normal
+             }
              initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
              initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
              initialData.fornecedor = initialData.fornecedor || ''; 
@@ -298,8 +309,13 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
             <h2>Editar Lançamento</h2>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label>Data</label>
+                    <label>Data do Registro</label>
                     <input type="date" name="data" value={formData.data || ''} onChange={handleChange} required />
+                </div>
+                
+                <div className="form-group">
+                    <label>Data de Vencimento ⚠️</label>
+                    <input type="date" name="data_vencimento" value={formData.data_vencimento || ''} onChange={handleChange} required />
                 </div>
                 
                 <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
@@ -931,6 +947,7 @@ const AddServicoModal = ({ onClose, onSave }) => {
 // <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
 const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [data, setData] = useState(getTodayString());
+    const [dataVencimento, setDataVencimento] = useState(getTodayString()); // NOVO campo
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState(''); 
     const [pix, setPix] = useState('');
@@ -944,6 +961,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
         e.preventDefault();
         onSave({
             data,
+            data_vencimento: dataVencimento, // NOVO campo
             descricao,
             fornecedor: fornecedor || null,
             pix: pix || null,
@@ -960,8 +978,12 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
             <h2>Adicionar Novo Gasto</h2>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                    <label>Data</label>
+                    <label>Data do Registro</label>
                     <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label>Data de Vencimento ⚠️</label>
+                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
                 </div>
                 <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
                 
@@ -2213,8 +2235,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         // Usa a variável 'itemsAPagar' que já foi definida ANTES
         (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
             const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            // Corrige o fuso horário para comparações de data
-            const dataVencimento = new Date(item.data + 'T00:00:00'); 
+            // Usa data_vencimento se existir, senão usa data como fallback
+            const dataParaUsar = item.data_vencimento || item.data;
+            const dataVencimento = new Date(dataParaUsar + 'T00:00:00'); 
             
             totais.totalAPagar += valorRestante;
 
@@ -2537,6 +2560,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
+        const dataVencimento = e.target.dataVencimento.value; // NOVO campo
         const prioridadePagamento = e.target.prioridadePagamento.value; 
         const fornecedor = e.target.fornecedor.value;
         
@@ -2545,6 +2569,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pagamento = {
             valor: parseFloat(valorPagamento) || 0, // O backend espera 'valor'
             data: dataPagamento, 
+            data_vencimento: dataVencimento, // NOVO campo
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
             prioridade: parseInt(prioridadePagamento, 10) || 0,
@@ -3116,7 +3141,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     
                                     {(user.role === 'administrador' || user.role === 'master') && (
                                         <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                            <input type="date" name="dataPagamento" defaultValue={getTodayString()} required style={{flex: 1.5}} />
+                                            <input type="date" name="dataPagamento" placeholder="Data Registro" defaultValue={getTodayString()} required style={{flex: 1.5}} title="Data do Registro" />
+                                            <input type="date" name="dataVencimento" placeholder="Vencimento" defaultValue={getTodayString()} required style={{flex: 1.5}} title="Data de Vencimento ⚠️" />
                                             <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.5}} />
                                             <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
                                             
@@ -3196,7 +3222,7 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                                 return (
                                 <tr key={item.id}>
-                                    <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                    <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                     <td>
                                         {item.descricao}
                                         {item.tipo_registro === 'pagamento_servico' && (
@@ -3305,7 +3331,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <tbody>
                             {itemsPagos.length > 0 ? itemsPagos.map(item => (
                                 <tr key={item.id}>
-                                    <td>{new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                    <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                     <td>
                                         {item.descricao}
                                         {item.tipo_registro === 'pagamento_servico' && (
