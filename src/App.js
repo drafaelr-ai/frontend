@@ -3497,6 +3497,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         fornecedor: '',
         valor_total: '',
         numero_parcelas: '1',
+        periodicidade: 'Mensal',
         data_primeira_parcela: getTodayString(),
         observacoes: ''
     });
@@ -3553,6 +3554,18 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                         onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
                         required
                     />
+                </label>
+
+                <label>
+                    Periodicidade:
+                    <select
+                        value={formData.periodicidade}
+                        onChange={(e) => setFormData({...formData, periodicidade: e.target.value})}
+                        required
+                    >
+                        <option value="Semanal">Semanal (a cada 7 dias)</option>
+                        <option value="Mensal">Mensal (a cada 30 dias)</option>
+                    </select>
                 </label>
 
                 <div style={{ 
@@ -3887,6 +3900,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                     <th>Fornecedor</th>
                                     <th>Valor Total</th>
                                     <th>Parcelas</th>
+                                    <th>Periodicidade</th>
                                     <th>Valor/Parcela</th>
                                     <th>1ª Parcela</th>
                                     <th>Status</th>
@@ -3901,6 +3915,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         <td>{formatCurrency(pag.valor_total)}</td>
                                         <td>
                                             <strong>{pag.parcelas_pagas}/{pag.numero_parcelas}</strong>
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontSize: '0.85em',
+                                                backgroundColor: pag.periodicidade === 'Semanal' ? '#ffc107' : '#6c757d',
+                                                color: 'white'
+                                            }}>
+                                                {pag.periodicidade || 'Mensal'}
+                                            </span>
                                         </td>
                                         <td>{formatCurrency(pag.valor_parcela)}</td>
                                         <td>{new Date(pag.data_primeira_parcela + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
