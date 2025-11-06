@@ -2924,10 +2924,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                  </div>
              )}
             
-            {/* --- Cronograma de Pagamentos --- */}
+            {/* --- Lista de Pendências --- */}
             <div className="card-full" style={{ marginBottom: '20px' }}>
                 <div className="card-header">
-                    <h3>📅 Cronograma de Pagamentos (Pendências)</h3>
+                    <h3>📋 Lista de Pendências</h3>
                 </div>
                 <div className="kpi-grid" style={{ padding: '10px 0px' }}>
                     
@@ -2962,7 +2962,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 </div>
             </div>
-            {/* --- Fim do Cronograma de Pagamentos --- */}
+            {/* --- Fim da Lista de Pendências --- */}
             
             {/* Grid com Gráfico e Sumário */}
             <div className="main-grid">
@@ -3806,7 +3806,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 <div className="card-full" style={{ marginBottom: '20px' }}>
                     <h3>📊 Tabela de Previsões Mensais</h3>
                     <p style={{ color: '#666', fontSize: '0.9em', marginBottom: '10px' }}>
-                        Soma automática de pagamentos planejados, parcelas e lançamentos com vencimento futuro
+                        Soma automática de pagamentos futuros e parcelados cadastrados no cronograma
                     </p>
                     
                     {previsoes.length > 0 ? (
