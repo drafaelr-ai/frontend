@@ -2185,6 +2185,10 @@ function Dashboard() {
     
     // <--- NOVO: Estado para modal de orçamentos -->
     const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
+    
+    // <--- NOVO: Estado para modal do Cronograma Financeiro -->
+    const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
+
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
         // apenas os orçamentos com status 'Pendente' vindos do backend.
@@ -2857,10 +2861,27 @@ const totalOrcamentosPendentes = useMemo(() => {
                 />
             )}
 
+            {/* <-- NOVO: Modal do Cronograma Financeiro --> */}
+            {isCronogramaFinanceiroVisible && (
+                <CronogramaFinanceiro
+                    onClose={() => setCronogramaFinanceiroVisible(false)}
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                />
+            )}
+
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
+                    {/* <-- NOVO: Botão Cronograma Financeiro --> */}
+                    <button 
+                        onClick={() => setCronogramaFinanceiroVisible(true)} 
+                        className="voltar-btn" 
+                        style={{ backgroundColor: '#28a745', color: 'white' }}
+                    >
+                        💰 Cronograma Financeiro
+                    </button>
                     {/* <-- NOVO: Botão Relatórios --> */}
                     <button 
                         onClick={() => setRelatoriosModalVisible(true)} 
@@ -3386,6 +3407,568 @@ const totalOrcamentosPendentes = useMemo(() => {
         </div>
     );
 }
+
+
+// ===================================
+// COMPONENTE CRONOGRAMA FINANCEIRO
+// ===================================
+
+// Modal para Cadastrar Pagamento Futuro (Único)
+const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
+    const [formData, setFormData] = useState({
+        descricao: '',
+        valor: '',
+        data_vencimento: getTodayString(),
+        fornecedor: '',
+        observacoes: ''
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        await onSave(formData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>💰 Cadastrar Pagamento Futuro</h2>
+            <form onSubmit={handleSubmit} className="form-orcamento">
+                <label>
+                    Descrição:
+                    <input
+                        type="text"
+                        value={formData.descricao}
+                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Valor:
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={formData.valor}
+                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Data de Vencimento:
+                    <input
+                        type="date"
+                        value={formData.data_vencimento}
+                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Fornecedor:
+                    <input
+                        type="text"
+                        value={formData.fornecedor}
+                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
+                    />
+                </label>
+
+                <label>
+                    Observações:
+                    <textarea
+                        value={formData.observacoes}
+                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                        rows="3"
+                    />
+                </label>
+
+                <div className="modal-footer">
+                    <button type="submit" className="submit-btn">Cadastrar</button>
+                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal para Cadastrar Pagamento Parcelado
+const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
+    const [formData, setFormData] = useState({
+        descricao: '',
+        fornecedor: '',
+        valor_total: '',
+        numero_parcelas: '1',
+        data_primeira_parcela: getTodayString(),
+        observacoes: ''
+    });
+
+    const valor_parcela = formData.valor_total && formData.numero_parcelas 
+        ? (parseFloat(formData.valor_total) / parseInt(formData.numero_parcelas)).toFixed(2)
+        : '0.00';
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        await onSave(formData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>📊 Cadastrar Pagamento Parcelado</h2>
+            <form onSubmit={handleSubmit} className="form-orcamento">
+                <label>
+                    Descrição:
+                    <input
+                        type="text"
+                        value={formData.descricao}
+                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Fornecedor:
+                    <input
+                        type="text"
+                        value={formData.fornecedor}
+                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
+                    />
+                </label>
+
+                <label>
+                    Valor Total:
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={formData.valor_total}
+                        onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Número de Parcelas:
+                    <input
+                        type="number"
+                        min="1"
+                        value={formData.numero_parcelas}
+                        onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <div style={{ 
+                    padding: '10px', 
+                    background: '#f0f8ff', 
+                    borderRadius: '5px',
+                    marginBottom: '10px'
+                }}>
+                    <strong>Valor de cada parcela:</strong> {formatCurrency(parseFloat(valor_parcela))}
+                </div>
+
+                <label>
+                    Data da 1ª Parcela:
+                    <input
+                        type="date"
+                        value={formData.data_primeira_parcela}
+                        onChange={(e) => setFormData({...formData, data_primeira_parcela: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Observações:
+                    <textarea
+                        value={formData.observacoes}
+                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                        rows="3"
+                    />
+                </label>
+
+                <div className="modal-footer">
+                    <button type="submit" className="submit-btn">Cadastrar</button>
+                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// Modal Principal do Cronograma Financeiro
+const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
+    const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
+    const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
+    const [previsoes, setPrevisoes] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    
+    const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
+    const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
+
+    // Carregar dados
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [futuroRes, parceladoRes, previsoesRes] = await Promise.all([
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`),
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`),
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`)
+            ]);
+
+            if (futuroRes.ok) {
+                const data = await futuroRes.json();
+                setPagamentosFuturos(data);
+            }
+
+            if (parceladoRes.ok) {
+                const data = await parceladoRes.json();
+                setPagamentosParcelados(data);
+            }
+
+            if (previsoesRes.ok) {
+                const data = await previsoesRes.json();
+                setPrevisoes(data);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar cronograma financeiro:', error);
+            alert('Erro ao carregar dados do cronograma');
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [obraId]);
+
+    // Salvar Pagamento Futuro
+    const handleSavePagamentoFuturo = async (formData) => {
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                }
+            );
+
+            if (res.ok) {
+                alert('Pagamento futuro cadastrado com sucesso!');
+                setCadastrarFuturoVisible(false);
+                fetchData();
+            } else {
+                const errorData = await res.json();
+                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro ao salvar pagamento futuro:', error);
+            alert('Erro ao salvar pagamento futuro');
+        }
+    };
+
+    // Salvar Pagamento Parcelado
+    const handleSavePagamentoParcelado = async (formData) => {
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                }
+            );
+
+            if (res.ok) {
+                alert('Pagamento parcelado cadastrado com sucesso!');
+                setCadastrarParceladoVisible(false);
+                fetchData();
+            } else {
+                const errorData = await res.json();
+                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro ao salvar pagamento parcelado:', error);
+            alert('Erro ao salvar pagamento parcelado');
+        }
+    };
+
+    // Deletar Pagamento Futuro
+    const handleDeletePagamentoFuturo = async (id) => {
+        if (!window.confirm('Deseja realmente excluir este pagamento futuro?')) return;
+
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}`,
+                { method: 'DELETE' }
+            );
+
+            if (res.ok) {
+                alert('Pagamento futuro excluído com sucesso!');
+                fetchData();
+            } else {
+                alert('Erro ao excluir pagamento futuro');
+            }
+        } catch (error) {
+            console.error('Erro ao deletar pagamento futuro:', error);
+            alert('Erro ao deletar pagamento futuro');
+        }
+    };
+
+    // Deletar Pagamento Parcelado
+    const handleDeletePagamentoParcelado = async (id) => {
+        if (!window.confirm('Deseja realmente excluir este pagamento parcelado?')) return;
+
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${id}`,
+                { method: 'DELETE' }
+            );
+
+            if (res.ok) {
+                alert('Pagamento parcelado excluído com sucesso!');
+                fetchData();
+            } else {
+                alert('Erro ao excluir pagamento parcelado');
+            }
+        } catch (error) {
+            console.error('Erro ao deletar pagamento parcelado:', error);
+            alert('Erro ao deletar pagamento parcelado');
+        }
+    };
+
+    // Marcar parcela como paga
+    const handleMarcarParcelaPaga = async (pagamento) => {
+        const novasParcelas = pagamento.parcelas_pagas + 1;
+        
+        if (novasParcelas > pagamento.numero_parcelas) {
+            alert('Todas as parcelas já foram pagas!');
+            return;
+        }
+
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({ parcelas_pagas: novasParcelas })
+                }
+            );
+
+            if (res.ok) {
+                alert(`Parcela ${novasParcelas}/${pagamento.numero_parcelas} marcada como paga!`);
+                fetchData();
+            } else {
+                alert('Erro ao marcar parcela como paga');
+            }
+        } catch (error) {
+            console.error('Erro ao marcar parcela:', error);
+            alert('Erro ao marcar parcela como paga');
+        }
+    };
+
+    if (isLoading) {
+        return <Modal onClose={onClose}><div className="loading-screen">Carregando cronograma...</div></Modal>;
+    }
+
+    const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
+
+    return (
+        <Modal onClose={onClose} customWidth="1000px">
+            <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                <h2>💰 Cronograma Financeiro - {obraNome}</h2>
+                
+                {/* Botões de Cadastro */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                    <button 
+                        onClick={() => setCadastrarFuturoVisible(true)} 
+                        className="submit-btn"
+                    >
+                        ➕ Cadastrar Pagamento Futuro (Único)
+                    </button>
+                    <button 
+                        onClick={() => setCadastrarParceladoVisible(true)} 
+                        className="submit-btn"
+                        style={{ backgroundColor: 'var(--cor-acento)' }}
+                    >
+                        ➕ Cadastrar Pagamento Parcelado
+                    </button>
+                </div>
+
+                {/* Tabela de Previsões */}
+                <div className="card-full" style={{ marginBottom: '20px' }}>
+                    <h3>📊 Tabela de Previsões Mensais</h3>
+                    <p style={{ color: '#666', fontSize: '0.9em', marginBottom: '10px' }}>
+                        Soma automática de pagamentos planejados, parcelas e lançamentos com vencimento futuro
+                    </p>
+                    
+                    {previsoes.length > 0 ? (
+                        <>
+                            <table className="tabela-pendencias">
+                                <thead>
+                                    <tr>
+                                        <th>Mês</th>
+                                        <th>Valor Previsto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {previsoes.map((prev, index) => (
+                                        <tr key={index}>
+                                            <td><strong>{prev.mes_nome}</strong></td>
+                                            <td>{formatCurrency(prev.valor)}</td>
+                                        </tr>
+                                    ))}
+                                    <tr style={{ background: 'var(--cor-primaria)', color: 'white', fontWeight: 'bold' }}>
+                                        <td>TOTAL PREVISTO</td>
+                                        <td>{formatCurrency(totalPrevisoes)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </>
+                    ) : (
+                        <p>Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.</p>
+                    )}
+                </div>
+
+                {/* Listagem de Pagamentos Futuros */}
+                <div className="card-full" style={{ marginBottom: '20px' }}>
+                    <h3>💵 Pagamentos Futuros (Únicos)</h3>
+                    {pagamentosFuturos.length > 0 ? (
+                        <table className="tabela-pendencias">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Fornecedor</th>
+                                    <th>Vencimento</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pagamentosFuturos.map(pag => (
+                                    <tr key={pag.id}>
+                                        <td>{pag.descricao}</td>
+                                        <td>{pag.fornecedor || '-'}</td>
+                                        <td>{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td>{formatCurrency(pag.valor)}</td>
+                                        <td>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontSize: '0.85em',
+                                                backgroundColor: pag.status === 'Previsto' ? '#17a2b8' : 
+                                                               pag.status === 'Pago' ? '#28a745' : '#6c757d',
+                                                color: 'white'
+                                            }}>
+                                                {pag.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button
+                                                onClick={() => handleDeletePagamentoFuturo(pag.id)}
+                                                className="voltar-btn"
+                                                style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                            >
+                                                🗑️ Excluir
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p>Nenhum pagamento futuro cadastrado.</p>
+                    )}
+                </div>
+
+                {/* Listagem de Pagamentos Parcelados */}
+                <div className="card-full">
+                    <h3>📋 Pagamentos Parcelados</h3>
+                    {pagamentosParcelados.length > 0 ? (
+                        <table className="tabela-pendencias">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Fornecedor</th>
+                                    <th>Valor Total</th>
+                                    <th>Parcelas</th>
+                                    <th>Valor/Parcela</th>
+                                    <th>1ª Parcela</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pagamentosParcelados.map(pag => (
+                                    <tr key={pag.id}>
+                                        <td>{pag.descricao}</td>
+                                        <td>{pag.fornecedor || '-'}</td>
+                                        <td>{formatCurrency(pag.valor_total)}</td>
+                                        <td>
+                                            <strong>{pag.parcelas_pagas}/{pag.numero_parcelas}</strong>
+                                        </td>
+                                        <td>{formatCurrency(pag.valor_parcela)}</td>
+                                        <td>{new Date(pag.data_primeira_parcela + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontSize: '0.85em',
+                                                backgroundColor: pag.status === 'Ativo' ? '#17a2b8' : 
+                                                               pag.status === 'Concluído' ? '#28a745' : '#6c757d',
+                                                color: 'white'
+                                            }}>
+                                                {pag.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
+                                                {pag.status === 'Ativo' && (
+                                                    <button
+                                                        onClick={() => handleMarcarParcelaPaga(pag)}
+                                                        className="submit-btn"
+                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                                    >
+                                                        ✓ Pagar Parcela
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDeletePagamentoParcelado(pag.id)}
+                                                    className="voltar-btn"
+                                                    style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                                >
+                                                    🗑️ Excluir
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p>Nenhum pagamento parcelado cadastrado.</p>
+                    )}
+                </div>
+
+                <div className="modal-footer" style={{ marginTop: '20px' }}>
+                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                </div>
+            </div>
+
+            {/* Modais de Cadastro */}
+            {isCadastrarFuturoVisible && (
+                <CadastrarPagamentoFuturoModal
+                    onClose={() => setCadastrarFuturoVisible(false)}
+                    onSave={handleSavePagamentoFuturo}
+                    obraId={obraId}
+                />
+            )}
+
+            {isCadastrarParceladoVisible && (
+                <CadastrarPagamentoParceladoModal
+                    onClose={() => setCadastrarParceladoVisible(false)}
+                    onSave={handleSavePagamentoParcelado}
+                    obraId={obraId}
+                />
+            )}
+        </Modal>
+    );
+};
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
