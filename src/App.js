@@ -2855,8 +2855,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
-        const dataVencimento = e.target.dataVencimento.value; // NOVO campo
-        const prioridadePagamento = e.target.prioridadePagamento.value; 
+        const dataVencimento = e.target.dataVencimento.value;
         const fornecedor = e.target.fornecedor.value;
         
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
@@ -2864,10 +2863,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pagamento = {
             valor: parseFloat(valorPagamento) || 0, // O backend espera 'valor'
             data: dataPagamento, 
-            data_vencimento: dataVencimento, // NOVO campo
+            data_vencimento: dataVencimento,
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
-            prioridade: parseInt(prioridadePagamento, 10) || 0,
             fornecedor: fornecedor || null
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
@@ -3446,15 +3444,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                                             <input type="date" name="dataVencimento" placeholder="Vencimento" defaultValue={getTodayString()} required style={{flex: 1.5}} title="Data de Vencimento ⚠️" />
                                             <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.5}} />
                                             <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
-                                            
-                                            <select name="prioridadePagamento" defaultValue="0" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                                <option value="0">P: 0</option>
-                                                <option value="1">P: 1</option>
-                                                <option value="2">P: 2</option>
-                                                <option value="3">P: 3</option>
-                                                <option value="4">P: 4</option>
-                                                <option value="5">P: 5</option>
-                                            </select>
                                             
                                             <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                                 <option value="">Tipo...</option>
