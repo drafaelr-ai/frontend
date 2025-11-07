@@ -3604,14 +3604,428 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         </Modal>
     );
 };
+// ==========================================
+// COMPONENTE: MODAL DE EDIÇÃO DE PARCELAS
+// ==========================================
 
+const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) => {
+    const [parcelas, setParcelas] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [parcelaEditando, setParcelaEditando] = useState(null);
+
+    useEffect(() => {
+        carregarParcelas();
+    }, []);
+
+    const carregarParcelas = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas`
+            );
+            
+            if (!response.ok) throw new Error('Erro ao carregar parcelas');
+            
+            const data = await response.json();
+            setParcelas(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEditarParcela = async (parcela, novoValor, novaData) => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        valor_parcela: parseFloat(novoValor),
+                        data_vencimento: novaData
+                    })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao editar parcela');
+
+            await carregarParcelas();
+            setParcelaEditando(null);
+            
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    const handleMarcarPaga = async (parcela) => {
+        if (!window.confirm(`Confirma o pagamento da parcela ${parcela.numero_parcela}?`)) return;
+
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        data_pagamento: getTodayString()
+                    })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
+
+            await carregarParcelas();
+            
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    const calcularValorTotal = () => {
+        return parcelas.reduce((sum, p) => sum + p.valor_parcela, 0);
+    };
+
+    if (isLoading) return <Modal><div className="modal-content">Carregando...</div></Modal>;
+    if (error) return <Modal><div className="modal-content">Erro: {error}</div></Modal>;
+
+    return (
+        <Modal>
+            <div className="modal-content" style={{ maxWidth: '900px', maxHeight: '80vh', overflowY: 'auto' }}>
+                <h2>✏️ Editar Parcelas</h2>
+                <h2>📊 Cronograma Financeiro</h2>
+                
+                <QuadroAlertasVencimento obraId={obraId} />
+                <p style={{ marginBottom: '20px', color: '#666' }}>
+                    <strong>{pagamentoParcelado.descricao}</strong><br />
+                    Fornecedor: {pagamentoParcelado.fornecedor || '-'}
+                </p>
+
+                <div style={{ 
+                    marginBottom: '20px', 
+                    padding: '15px', 
+                    backgroundColor: '#f8f9fa', 
+                    borderRadius: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div>
+                        <strong>Valor Total Calculado:</strong> {formatCurrency(calcularValorTotal())}
+                    </div>
+                    <div style={{ fontSize: '0.9em', color: '#666' }}>
+                        {parcelas.filter(p => p.status === 'Pago').length} de {parcelas.length} pagas
+                    </div>
+                </div>
+
+                <table className="tabela-pendencias">
+                    <thead>
+                        <tr>
+                            <th>Parcela</th>
+                            <th>Valor</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {parcelas.map(parcela => (
+                            <tr key={parcela.id} style={{
+                                backgroundColor: parcela.status === 'Pago' ? '#e8f5e9' : 
+                                               new Date(parcela.data_vencimento) < new Date() ? '#ffebee' : 'white'
+                            }}>
+                                <td>
+                                    <strong>#{parcela.numero_parcela}</strong>
+                                </td>
+                                <td>
+                                    {parcelaEditando === parcela.id ? (
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            defaultValue={parcela.valor_parcela}
+                                            id={`valor-${parcela.id}`}
+                                            style={{ width: '120px', padding: '5px' }}
+                                        />
+                                    ) : (
+                                        formatCurrency(parcela.valor_parcela)
+                                    )}
+                                </td>
+                                <td>
+                                    {parcelaEditando === parcela.id ? (
+                                        <input
+                                            type="date"
+                                            defaultValue={parcela.data_vencimento}
+                                            id={`data-${parcela.id}`}
+                                            style={{ padding: '5px' }}
+                                        />
+                                    ) : (
+                                        new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')
+                                    )}
+                                </td>
+                                <td>
+                                    <span style={{
+                                        padding: '3px 8px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.85em',
+                                        backgroundColor: parcela.status === 'Pago' ? '#28a745' : 
+                                                       new Date(parcela.data_vencimento) < new Date() ? '#dc3545' : '#17a2b8',
+                                        color: 'white'
+                                    }}>
+                                        {parcela.status === 'Pago' ? 'Paga' : 
+                                         new Date(parcela.data_vencimento) < new Date() ? 'Vencida' : 'Previsto'}
+                                    </span>
+                                </td>
+                                <td>
+                                    {parcela.status !== 'Pago' && (
+                                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                            {parcelaEditando === parcela.id ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => {
+                                                            const novoValor = document.getElementById(`valor-${parcela.id}`).value;
+                                                            const novaData = document.getElementById(`data-${parcela.id}`).value;
+                                                            handleEditarParcela(parcela, novoValor, novaData);
+                                                        }}
+                                                        className="submit-btn"
+                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                    >
+                                                        ✓ Salvar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setParcelaEditando(null)}
+                                                        className="voltar-btn"
+                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                    >
+                                                        ✕ Cancelar
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => setParcelaEditando(parcela.id)}
+                                                        className="submit-btn"
+                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                    >
+                                                        ✏️ Editar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleMarcarPaga(parcela)}
+                                                        className="submit-btn"
+                                                        style={{ padding: '3px 8px', fontSize: '0.8em', backgroundColor: '#28a745' }}
+                                                    >
+                                                        ✓ Pagar
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                    {parcela.status === 'Pago' && parcela.data_pagamento && (
+                                        <span style={{ fontSize: '0.8em', color: '#666' }}>
+                                            Paga em {new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                        </span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <div className="modal-footer" style={{ marginTop: '20px' }}>
+                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+
+// ==========================================
+// COMPONENTE: QUADRO DE ALERTAS DE VENCIMENTO
+// ==========================================
+
+const QuadroAlertasVencimento = ({ obraId }) => {
+    const [alertas, setAlertas] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [categoriaExpandida, setCategoriaExpandida] = useState(null);
+
+    useEffect(() => {
+        carregarAlertas();
+    }, [obraId]);
+
+    const carregarAlertas = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/alertas-vencimento`
+            );
+            
+            if (!response.ok) throw new Error('Erro ao carregar alertas');
+            
+            const data = await response.json();
+            setAlertas(data);
+        } catch (err) {
+            console.error('Erro ao carregar alertas:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const toggleCategoria = (categoria) => {
+        setCategoriaExpandida(categoriaExpandida === categoria ? null : categoria);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="card-full">
+                <h3>📊 Status de Pagamentos</h3>
+                <p>Carregando...</p>
+            </div>
+        );
+    }
+
+    if (!alertas) return null;
+
+    const categorias = [
+        {
+            key: 'vencidos',
+            titulo: '🔴 Vencidos (Atrasados)',
+            cor: '#dc3545',
+            dados: alertas.vencidos
+        },
+        {
+            key: 'vence_hoje',
+            titulo: '⚠️ Vence Hoje',
+            cor: '#ffc107',
+            dados: alertas.vence_hoje
+        },
+        {
+            key: 'vence_amanha',
+            titulo: '📅 Vence Amanhã',
+            cor: '#fd7e14',
+            dados: alertas.vence_amanha
+        },
+        {
+            key: 'vence_7_dias',
+            titulo: '📆 Vence em até 7 dias',
+            cor: '#17a2b8',
+            dados: alertas.vence_7_dias
+        },
+        {
+            key: 'futuros',
+            titulo: '✅ Futuros (mais de 7 dias)',
+            cor: '#28a745',
+            dados: alertas.futuros
+        }
+    ];
+
+    return (
+        <div className="card-full">
+            <h3>📊 Quadro Informativo - Cronograma Financeiro</h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '20px' }}>
+                {categorias.map(categoria => (
+                    <div
+                        key={categoria.key}
+                        style={{
+                            padding: '15px',
+                            backgroundColor: 'white',
+                            border: `3px solid ${categoria.cor}`,
+                            borderRadius: '8px',
+                            cursor: categoria.dados.itens?.length > 0 ? 'pointer' : 'default',
+                            transition: 'transform 0.2s',
+                            position: 'relative'
+                        }}
+                        onClick={() => categoria.dados.itens?.length > 0 && toggleCategoria(categoria.key)}
+                        onMouseEnter={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1.02)')}
+                        onMouseLeave={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                        <div style={{ fontSize: '1.1em', fontWeight: 'bold', marginBottom: '10px', color: categoria.cor }}>
+                            {categoria.titulo}
+                        </div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', marginBottom: '5px' }}>
+                            {categoria.dados.quantidade} {categoria.dados.quantidade === 1 ? 'item' : 'itens'}
+                        </div>
+                        <div style={{ fontSize: '1.2em', color: '#666' }}>
+                            {formatCurrency(categoria.dados.valor_total)}
+                        </div>
+                        
+                        {categoria.dados.itens?.length > 0 && (
+                            <div style={{ 
+                                position: 'absolute', 
+                                bottom: '10px', 
+                                right: '10px', 
+                                fontSize: '0.8em', 
+                                color: '#999' 
+                            }}>
+                                {categoriaExpandida === categoria.key ? '▲ Fechar' : '▼ Ver detalhes'}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Lista Expandida de Itens */}
+            {categoriaExpandida && (
+                <div style={{ 
+                    marginTop: '20px', 
+                    padding: '15px', 
+                    backgroundColor: '#f8f9fa', 
+                    borderRadius: '8px',
+                    border: `2px solid ${categorias.find(c => c.key === categoriaExpandida)?.cor}`
+                }}>
+                    <h4>{categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes</h4>
+                    
+                    <table className="tabela-pendencias" style={{ marginTop: '10px' }}>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Valor</th>
+                                <th>Vencimento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {alertas[categoriaExpandida]?.itens?.map((item, index) => (
+                                <tr key={index}>
+                                    <td>
+                                        <span style={{
+                                            padding: '3px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '0.8em',
+                                            backgroundColor: item.tipo === 'Parcela' ? '#6c757d' : '#007bff',
+                                            color: 'white'
+                                        }}>
+                                            {item.tipo}
+                                        </span>
+                                    </td>
+                                    <td>{item.descricao}</td>
+                                    <td>{item.fornecedor || '-'}</td>
+                                    <td><strong>{formatCurrency(item.valor)}</strong></td>
+                                    <td>{new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
 // Modal Principal do Cronograma Financeiro
 const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
     const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
+    const [isEditarParcelasVisible, setEditarParcelasVisible] = useState(false);
+    const [pagamentoParceladoSelecionado, setPagamentoParceladoSelecionado] = useState(null);
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+    const handleAbrirEditarParcelas = (pagamento) => {
+        setPagamentoParceladoSelecionado(pagamento);
+        setEditarParcelasVisible(true);
+    };
     const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
     const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
 
@@ -3944,13 +4358,22 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         <td>
                                             <div style={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
                                                 {pag.status === 'Ativo' && (
-                                                    <button
-                                                        onClick={() => handleMarcarParcelaPaga(pag)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                                    >
-                                                        ✓ Pagar Parcela
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleMarcarParcelaPaga(pag)}
+                                                            className="submit-btn"
+                                                            style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                                        >
+                                                            ✓ Pagar Próxima Parcela
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleAbrirEditarParcelas(pag)}
+                                                            className="submit-btn"
+                                                            style={{ padding: '5px 10px', fontSize: '0.85em', backgroundColor: '#6c757d' }}
+                                                        >
+                                                            ✏️ Editar Parcelas
+                                                        </button>
+                                                    </>
                                                 )}
                                                 <button
                                                     onClick={() => handleDeletePagamentoParcelado(pag.id)}
@@ -3989,6 +4412,20 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     onClose={() => setCadastrarParceladoVisible(false)}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
+                />
+                
+            )}
+            {isEditarParcelasVisible && pagamentoParceladoSelecionado && (
+                <EditarParcelasModal
+                    obraId={obraId}
+                    pagamentoParcelado={pagamentoParceladoSelecionado}
+                    onClose={() => {
+                        setEditarParcelasVisible(false);
+                        setPagamentoParceladoSelecionado(null);
+                    }}
+                    onSave={() => {
+                        carregarDados();
+                    }}
                 />
             )}
         </Modal>
