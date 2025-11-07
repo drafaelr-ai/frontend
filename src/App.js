@@ -4381,11 +4381,35 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 alert('Pagamento futuro excluído com sucesso!');
                 fetchData();
             } else {
-                alert('Erro ao excluir pagamento futuro');
+                const errorData = await res.json();
+                alert('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
             console.error('Erro ao deletar pagamento futuro:', error);
-            alert('Erro ao deletar pagamento futuro');
+            alert('Erro ao deletar pagamento futuro: ' + error.message);
+        }
+    };
+
+    // Marcar Pagamento Futuro Individual como Pago
+    const handleMarcarPagamentoFuturoPago = async (id) => {
+        if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
+
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
+                { method: 'POST' }
+            );
+
+            if (res.ok) {
+                alert('Pagamento marcado como pago!');
+                fetchData();
+            } else {
+                const errorData = await res.json();
+                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro ao marcar pagamento como pago:', error);
+            alert('Erro ao processar: ' + error.message);
         }
     };
 
@@ -4467,6 +4491,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     >
                         ➕ Cadastrar Pagamento Parcelado
                     </button>
+                    {itensSelecionados.length > 0 && (
+                        <button 
+                            onClick={handleMarcarMultiplosComoPago} 
+                            className="inserir-btn"
+                            style={{ backgroundColor: '#28a745' }}
+                        >
+                            ✓ Marcar {itensSelecionados.length} Selecionado(s) como Pago
+                        </button>
+                    )}
                 </div>
 
                 {/* Tabela de Previsões */}
@@ -4607,13 +4640,29 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                             </span>
                                         </td>
                                         <td>
-                                            <button
-                                                onClick={() => handleDeletePagamentoFuturo(pag.id)}
-                                                className="voltar-btn"
-                                                style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                            >
-                                                🗑️ Excluir
-                                            </button>
+                                            {pag.status === 'Previsto' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleMarcarPagamentoFuturoPago(pag.id)}
+                                                        className="inserir-btn"
+                                                        style={{ padding: '5px 10px', fontSize: '0.85em', marginRight: '5px' }}
+                                                        title="Marcar como Pago"
+                                                    >
+                                                        ✓ Pagar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeletePagamentoFuturo(pag.id)}
+                                                        className="voltar-btn"
+                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                                        title="Excluir"
+                                                    >
+                                                        🗑️ Excluir
+                                                    </button>
+                                                </>
+                                            )}
+                                            {pag.status === 'Pago' && (
+                                                <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓ Pago</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
