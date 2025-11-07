@@ -4177,13 +4177,14 @@ const QuadroAlertasVencimento = ({ obraId }) => {
 const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
     const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
+    const [pagamentosServicoPendentes, setPagamentosServicoPendentes] = useState([]); // NOVO
     const [isEditarParcelasVisible, setEditarParcelasVisible] = useState(false);
     const [pagamentoParceladoSelecionado, setPagamentoParceladoSelecionado] = useState(null);
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
     // MUDANÇA 5: Estados para seleção múltipla
-    const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela', id: X}]
+    const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
     
     const handleAbrirEditarParcelas = (pagamento) => {
@@ -4211,11 +4212,20 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     
     const selecionarTodos = () => {
         const todos = [];
+        
+        // Pagamentos Futuros
         pagamentosFuturos.forEach(pag => {
             if (pag.status === 'Previsto') {
                 todos.push({ tipo: 'futuro', id: pag.id });
             }
         });
+        
+        // Pagamentos de Serviço Pendentes
+        pagamentosServicoPendentes.forEach(pag => {
+            todos.push({ tipo: 'servico', id: pag.id });
+        });
+        
+        // Parcelas
         pagamentosParcelados.forEach(pagParcelado => {
             pagParcelado.parcelas?.forEach(parcela => {
                 if (parcela.status === 'Previsto') {
@@ -4223,6 +4233,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 }
             });
         });
+        
         setItensSelecionados(todos);
     };
     
@@ -4271,10 +4282,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [futuroRes, parceladoRes, previsoesRes] = await Promise.all([
+            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`),
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`)
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`),
+                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`) // NOVO
             ]);
 
             if (futuroRes.ok) {
@@ -4307,6 +4319,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             if (previsoesRes.ok) {
                 const data = await previsoesRes.json();
                 setPrevisoes(data);
+            }
+            
+            // NOVO: Carregar pagamentos de serviço pendentes
+            if (servicoPendentesRes.ok) {
+                const data = await servicoPendentesRes.json();
+                setPagamentosServicoPendentes(data);
             }
         } catch (error) {
             console.error('Erro ao carregar cronograma financeiro:', error);
@@ -4505,6 +4523,63 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                         <p>Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.</p>
                     )}
                 </div>
+
+                {/* NOVO: Listagem de Pagamentos de Serviço Pendentes */}
+                {pagamentosServicoPendentes.length > 0 && (
+                    <div className="card-full" style={{ marginBottom: '20px', backgroundColor: '#fff3cd', border: '2px solid #ffc107' }}>
+                        <h3>⚠️ Pagamentos de Serviço Pendentes</h3>
+                        <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
+                            Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
+                        </p>
+                        <table className="tabela-pendencias">
+                            <thead>
+                                <tr>
+                                    <th style={{width: '40px'}}>✓</th>
+                                    <th>Serviço</th>
+                                    <th>Descrição</th>
+                                    <th>Tipo</th>
+                                    <th>Valor Total</th>
+                                    <th>Pago</th>
+                                    <th>Restante</th>
+                                    <th>Prior.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pagamentosServicoPendentes.map(pag => (
+                                    <tr key={pag.id}>
+                                        <td>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={isItemSelecionado('servico', pag.id)}
+                                                onChange={() => toggleSelecao('servico', pag.id)}
+                                                style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                            />
+                                        </td>
+                                        <td><strong>{pag.servico_nome}</strong></td>
+                                        <td>{pag.descricao}</td>
+                                        <td>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontSize: '0.85em',
+                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
+                                                color: 'white'
+                                            }}>
+                                                {pag.tipo_pagamento}
+                                            </span>
+                                        </td>
+                                        <td>{formatCurrency(pag.valor_total)}</td>
+                                        <td>{formatCurrency(pag.valor_pago)}</td>
+                                        <td><strong>{formatCurrency(pag.valor_restante)}</strong></td>
+                                        <td>
+                                            <PrioridadeBadge prioridade={pag.prioridade} />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 {/* Listagem de Pagamentos Futuros */}
                 <div className="card-full" style={{ marginBottom: '20px' }}>
