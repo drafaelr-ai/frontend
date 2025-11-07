@@ -3695,14 +3695,10 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         <Modal>
             <div className="modal-content" style={{ maxWidth: '900px', maxHeight: '80vh', overflowY: 'auto' }}>
                 <h2>✏️ Editar Parcelas</h2>
-                <h2>📊 Cronograma Financeiro</h2>
-                
-                <QuadroAlertasVencimento obraId={obraId} />
                 <p style={{ marginBottom: '20px', color: '#666' }}>
                     <strong>{pagamentoParcelado.descricao}</strong><br />
                     Fornecedor: {pagamentoParcelado.fornecedor || '-'}
                 </p>
-
                 <div style={{ 
                     marginBottom: '20px', 
                     padding: '15px', 
@@ -4198,7 +4194,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
         <Modal onClose={onClose} customWidth="1000px">
             <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                 <h2>💰 Cronograma Financeiro - {obraNome}</h2>
-                
+                <QuadroAlertasVencimento obraId={obraId} /> 
                 {/* Botões de Cadastro */}
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                     <button 
