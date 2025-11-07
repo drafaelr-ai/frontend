@@ -1130,7 +1130,8 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [pix, setPix] = useState('');
     const [valor, setValor] = useState(0); // Este 'valor' será enviado como 'valor_total'
     const [tipo, setTipo] = useState('Material');
-    const [status, setStatus] = useState('A Pagar');
+    // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
+    const status = 'Pago';
     const [servicoId, setServicoId] = useState('');
     const [prioridade, setPrioridade] = useState(0); 
 
@@ -1144,15 +1145,19 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
             pix: pix || null,
             valor: parseFloat(valor) || 0, // O handler 'handleSaveLancamento' espera 'valor'
             tipo,
-            status,
+            status: 'Pago', // MUDANÇA 2: Sempre "Pago"
             prioridade: parseInt(prioridade, 10) || 0,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null
+            servico_id: servicoId ? parseInt(servicoId, 10) : null,
+            is_gasto_avulso_historico: true // MUDANÇA 2: Flag para backend
         });
     };
 
     return (
         <Modal onClose={onClose}>
-            <h2>Adicionar Novo Gasto</h2>
+            <h2>💵 Adicionar Gasto Avulso (Pago)</h2>
+            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+                Este gasto será automaticamente marcado como <strong>PAGO</strong> e adicionado ao histórico.
+            </p>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label>Data do Registro</label>
@@ -1205,11 +1210,9 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                         <option>Equipamentos</option>
                     </select>
                 </div>
-                <div className="form-group"><label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option>A Pagar</option>
-                        <option>Pago</option>
-                    </select>
+                {/* MUDANÇA 2: Campo Status removido - sempre será Pago */}
+                <div style={{padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', marginBottom: '15px'}}>
+                    <strong>Status: PAGO</strong> (automático)
                 </div>
                 <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
             </form>
@@ -1311,6 +1314,111 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                 <div className="form-actions">
                     <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
                     <button type="submit" className="submit-btn">Salvar Orçamento</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+// MUDANÇA 3: NOVO Modal "Inserir Pagamento"
+const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
+    const [data, setData] = useState(getTodayString());
+    const [dataVencimento, setDataVencimento] = useState(getTodayString());
+    const [descricao, setDescricao] = useState('');
+    const [fornecedor, setFornecedor] = useState('');
+    const [pix, setPix] = useState('');
+    const [valor, setValor] = useState(0);
+    const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
+    const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
+    const [servicoId, setServicoId] = useState('');
+    const [prioridade, setPrioridade] = useState(0);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            data,
+            data_vencimento: dataVencimento,
+            descricao,
+            fornecedor: fornecedor || null,
+            pix: pix || null,
+            valor: parseFloat(valor) || 0,
+            tipo,
+            status,
+            prioridade: parseInt(prioridade, 10) || 0,
+            servico_id: servicoId ? parseInt(servicoId, 10) : null
+        });
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>💳 Inserir Pagamento</h2>
+            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
+                Insira um novo pagamento. Você pode vincular a um serviço e escolher se foi pago ou está a pagar.
+            </p>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>Data do Registro</label>
+                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label>Data de Vencimento</label>
+                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label>Fornecedor (Opcional)</label>
+                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                </div>
+                <div className="form-group">
+                    <label>Chave PIX (Opcional)</label>
+                    <input type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
+                </div>
+                <div className="form-group">
+                    <label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label>Tipo</label>
+                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                        <option value="Material">Material</option>
+                        <option value="Mão de Obra">Mão de Obra</option>
+                        <option value="Serviço">Serviço</option>
+                        <option value="Equipamentos">Equipamentos</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                        <option value="Pago">Pago</option>
+                        <option value="A Pagar">A Pagar</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Vincular ao Serviço (Opcional)</label>
+                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                        <option value="">Nenhum</option>
+                        {servicos.map(s => (
+                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Prioridade</label>
+                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                        <option value="0">0 (Nenhuma)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3 (Média)</option>
+                        <option value="4">4</option>
+                        <option value="5">5 (Urgente)</option>
+                    </select>
+                </div>
+                <div className="form-actions">
+                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
+                    <button type="submit" className="submit-btn">Inserir Pagamento</button>
                 </div>
             </form>
         </Modal>
@@ -2366,6 +2474,9 @@ function Dashboard() {
     
     // <--- NOVO: Estado para modal do Cronograma Financeiro -->
     const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
+    
+    // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
+    const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
 
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
@@ -2605,6 +2716,29 @@ const totalOrcamentosPendentes = useMemo(() => {
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
         .catch(error => console.error("Erro ao salvar lançamento:", error));
+    };
+    
+    // MUDANÇA 3: NOVO handler para Inserir Pagamento
+    const handleInserirPagamento = (pagamentoData) => {
+        console.log("Inserindo novo pagamento:", pagamentoData);
+        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
+            method: 'POST',
+            body: JSON.stringify(pagamentoData)
+        }).then(res => { 
+            if (!res.ok) { 
+                return res.json().then(err => { throw new Error(err.erro || 'Erro ao inserir pagamento') }); 
+            } 
+            return res.json(); 
+        })
+        .then(() => { 
+            setInserirPagamentoModalVisible(false); 
+            fetchObraData(obraSelecionada.id); 
+            alert('Pagamento inserido com sucesso!');
+        })
+        .catch(error => {
+            console.error("Erro ao inserir pagamento:", error);
+            alert('Erro ao inserir pagamento: ' + error.message);
+        });
     };
 
     const handleSaveServico = (servicoData) => {
@@ -2962,6 +3096,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                 />
             )}
             
+            {/* MUDANÇA 3: NOVO modal Inserir Pagamento */}
+            {isInserirPagamentoModalVisible && (
+                <InserirPagamentoModal
+                    onClose={() => setInserirPagamentoModalVisible(false)}
+                    onSave={handleInserirPagamento}
+                    servicos={servicos}
+                    obraId={obraSelecionada.id}
+                />
+            )}
+            
             {viewingServico && <ServicoDetailsModal
                                      servico={viewingServico}
                                      onClose={() => setViewingServico(null)}
@@ -3060,6 +3204,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                     >
                         💰 Cronograma Financeiro
                     </button>
+                    {/* MUDANÇA 3: NOVO botão Inserir Pagamento */}
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <button 
+                            onClick={() => setInserirPagamentoModalVisible(true)} 
+                            className="voltar-btn" 
+                            style={{ backgroundColor: '#007bff', color: 'white' }}
+                        >
+                            💳 Inserir Pagamento
+                        </button>
+                    )}
                     {/* <-- NOVO: Botão Relatórios --> */}
                     <button 
                         onClick={() => setRelatoriosModalVisible(true)} 
@@ -3338,143 +3492,17 @@ const totalOrcamentosPendentes = useMemo(() => {
                 )}
             </div> 
 
-            {/* <--- MUDANÇA: Tabela de Pendências (A Pagar) ATUALIZADA --> */}
-            <div className="card-full">
-                <div className="card-header">
-                    <h3>Pendências (A Pagar)</h3>
-                    <div className="header-actions">
-                        <input 
-                            type="text" 
-                            placeholder="Filtrar pendências..." 
-                            value={filtroPendencias}
-                            onChange={(e) => setFiltroPendencias(e.target.value)}
-                            style={{padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
-                        />
-                        {(user.role === 'administrador' || user.role === 'master') && (
-                            <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Geral</button>
-                        )}
-                        <button 
-                            onClick={handleExportObraPDF} 
-                            className="export-btn pdf"
-                            disabled={isExportingPDF}
-                        >
-                            {isExportingPDF ? 'Gerando...' : 'PDF (Pendentes)'}
-                        </button>
-                    </div>
-                </div>
-                <div className="tabela-scroll-container">
-                    <table className="tabela-historico">
-                        <thead>
-                            <tr>
-                                <th>Vencimento</th>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Segmento</th>
-                                <th>Prior.</th>
-                                <th>Status</th>
-                                <th>Valor Restante</th> {/* <-- MUDANÇA */}
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {itemsAPagarFiltrados.length > 0 ? itemsAPagarFiltrados.map(item => {
-                                
-                                // Lógica de cálculo do item
-                                const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-                                const isParcial = (item.valor_pago || 0) > 0;
-                                const pctPago = ((item.valor_pago || 0) / (item.valor_total || 1) * 100).toFixed(0);
-
-                                return (
-                                <tr key={item.id}>
-                                    <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                    <td>
-                                        {item.descricao}
-                                        {item.tipo_registro === 'pagamento_servico' && (
-                                            <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                                SERVIÇO
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td>{item.fornecedor || 'N/A'}</td>
-                                    <td>{item.tipo}</td>
-                                    <td className="status-cell">
-                                        <PrioridadeBadge prioridade={item.prioridade} />
-                                    </td>
-                                    
-                                    {/* --- Status Cell --- */}
-                                    <td className="status-cell">
-                                        {(user.role === 'administrador' || user.role === 'master') ? (
-                                            <button 
-                                                onClick={() => setPayingItem(item)} // <-- MUDANÇA: Abre o novo modal
-                                                className="quick-pay-btn" 
-                                                title="Registrar Pagamento"
-                                                style={{backgroundColor: isParcial ? '#ffc107' : 'var(--cor-vermelho)', color: isParcial ? 'black' : 'white'}}
-                                            >
-                                                {isParcial ? `Parcial (${pctPago}%)` : 'Pagar 💵'}
-                                            </button>
-                                        ) : (
-                                            <span className="status" style={{backgroundColor: 'var(--cor-vermelho)'}}>
-                                                {isParcial ? `Parcial (${pctPago}%)` : 'A Pagar'}
-                                            </span>
-                                        )}
-                                    </td>
-                                    
-                                    {/* --- Valor Cell --- */}
-                                    <td>
-                                        {formatCurrency(valorRestante)}
-                                        {isParcial && (
-                                            <small style={{display: 'block', color: '#6c757d', textDecoration: 'line-through'}}>
-                                                Total: {formatCurrency(item.valor_total)}
-                                            </small>
-                                        )}
-                                    </td>
-
-                                    {/* --- Ações Cell --- */}
-                                    <td className="acoes-cell">
-                                        {/* <--- NOVO: Botão Anexar NF --> */}
-                                        {(user.role === 'administrador' || user.role === 'master') && (
-                                            <button 
-                                                onClick={() => setUploadingNFFor(item)} 
-                                                className="acao-icon-btn" 
-                                                title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
-                                                style={{ 
-                                                    color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
-                                                    fontSize: '1.2em'
-                                                }}
-                                            >
-                                                📎
-                                            </button>
-                                        )}
-                                        
-                                        {(user.role === 'administrador' || user.role === 'master') ? (
-                                            item.tipo_registro === 'lancamento' ? (
-                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
-                                            ) : (
-                                                <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
-                                            )
-                                        ) : null}
-                                        {item.tipo_registro === 'lancamento' && user.role === 'administrador' && (
-                                            <button onClick={() => handleDeletarLancamento(item.id)} className="acao-icon-btn delete-btn" title="Excluir" > 🗑️ </button>
-                                        )}
-                                    </td>
-                                </tr>
-                                )
-                            }) : (
-                                <tr>
-                                    <td colSpan="8" style={{textAlign: 'center'}}>Nenhuma pendência encontrada.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
+            {/* MUDANÇA 1 e 4: Card de Pendências REMOVIDO - substituído pelo Cronograma Financeiro */}
 
             {/* <--- MUDANÇA: Tabela de Histórico (Pagos) ATUALIZADA --> */}
             <div className="card-full">
                 <div className="card-header">
                     <h3>Histórico de Pagamentos (Pagos)</h3>
                     <div className="header-actions">
+                        {/* MUDANÇA 2: Botão Novo Gasto Avulso movido para cá (sempre marca como Pago) */}
+                        {(user.role === 'administrador' || user.role === 'master') && (
+                            <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Avulso</button>
+                        )}
                         <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
                     </div>
                 </div>
@@ -4161,12 +4189,91 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const [pagamentoParceladoSelecionado, setPagamentoParceladoSelecionado] = useState(null);
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    
+    // MUDANÇA 5: Estados para seleção múltipla
+    const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela', id: X}]
+    const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
+    
     const handleAbrirEditarParcelas = (pagamento) => {
         setPagamentoParceladoSelecionado(pagamento);
         setEditarParcelasVisible(true);
     };
     const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
     const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
+    
+    // MUDANÇA 5: Funções de seleção
+    const toggleSelecao = (tipo, id) => {
+        setItensSelecionados(prev => {
+            const exists = prev.find(item => item.tipo === tipo && item.id === id);
+            if (exists) {
+                return prev.filter(item => !(item.tipo === tipo && item.id === id));
+            } else {
+                return [...prev, { tipo, id }];
+            }
+        });
+    };
+    
+    const isItemSelecionado = (tipo, id) => {
+        return itensSelecionados.some(item => item.tipo === tipo && item.id === id);
+    };
+    
+    const selecionarTodos = () => {
+        const todos = [];
+        pagamentosFuturos.forEach(pag => {
+            if (pag.status === 'Previsto') {
+                todos.push({ tipo: 'futuro', id: pag.id });
+            }
+        });
+        pagamentosParcelados.forEach(pagParcelado => {
+            pagParcelado.parcelas?.forEach(parcela => {
+                if (parcela.status === 'Previsto') {
+                    todos.push({ tipo: 'parcela', id: parcela.id });
+                }
+            });
+        });
+        setItensSelecionados(todos);
+    };
+    
+    const desselecionarTodos = () => {
+        setItensSelecionados([]);
+    };
+    
+    // MUDANÇA 5: Handler para marcar múltiplos como pagos
+    const handleMarcarMultiplosComoPago = async () => {
+        if (itensSelecionados.length === 0) {
+            alert('Selecione pelo menos um item para marcar como pago.');
+            return;
+        }
+        
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        itens: itensSelecionados,
+                        data_pagamento: new Date().toISOString().split('T')[0]
+                    })
+                }
+            );
+            
+            if (res.ok) {
+                const data = await res.json();
+                const sucessos = data.resultados.filter(r => r.status === 'success').length;
+                const erros = data.resultados.filter(r => r.status === 'error').length;
+                
+                alert(`${sucessos} item(ns) marcado(s) como pago. ${erros > 0 ? erros + ' erro(s).' : ''}`);
+                setItensSelecionados([]);
+                fetchData();
+            } else {
+                const errorData = await res.json();
+                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro ao marcar itens como pagos:', error);
+            alert('Erro ao processar pagamentos');
+        }
+    };
 
     // Carregar dados
     const fetchData = async () => {
@@ -4185,7 +4292,24 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
             if (parceladoRes.ok) {
                 const data = await parceladoRes.json();
-                setPagamentosParcelados(data);
+                // MUDANÇA 5: Buscar parcelas individuais para cada pagamento parcelado
+                const parceladosComParcelas = await Promise.all(
+                    data.map(async (pagParcelado) => {
+                        try {
+                            const parcelasRes = await fetchWithAuth(
+                                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParcelado.id}/parcelas`
+                            );
+                            if (parcelasRes.ok) {
+                                const parcelas = await parcelasRes.json();
+                                return { ...pagParcelado, parcelas };
+                            }
+                        } catch (err) {
+                            console.error('Erro ao buscar parcelas:', err);
+                        }
+                        return { ...pagParcelado, parcelas: [] };
+                    })
+                );
+                setPagamentosParcelados(parceladosComParcelas);
             }
 
             if (previsoesRes.ok) {
@@ -4397,6 +4521,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
+                                    <th style={{width: '40px'}}>✓</th>
                                     <th>Descrição</th>
                                     <th>Fornecedor</th>
                                     <th>Vencimento</th>
@@ -4408,6 +4533,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                             <tbody>
                                 {pagamentosFuturos.map(pag => (
                                     <tr key={pag.id}>
+                                        <td>
+                                            {pag.status === 'Previsto' && (
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isItemSelecionado('futuro', pag.id)}
+                                                    onChange={() => toggleSelecao('futuro', pag.id)}
+                                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                                />
+                                            )}
+                                        </td>
                                         <td>{pag.descricao}</td>
                                         <td>{pag.fornecedor || '-'}</td>
                                         <td>{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
