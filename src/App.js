@@ -825,14 +825,6 @@ const ExportReportModal = ({ onClose }) => {
                 
                 <div className="form-actions" style={{ marginTop: '30px' }}>
                     <button type="button" onClick={onClose} className="cancel-btn" disabled={isLoading}>Cancelar</button>
-                        
-                        <button 
-                            onClick={() => setRelatorioCronogramaVisible(true)} 
-                            className="export-btn pdf" 
-                            style={{marginRight: '10px', backgroundColor: '#28a745'}}
-                        >
-                            📊 Relatório do Cronograma
-                        </button>
                     <button type="submit" className="submit-btn pdf" disabled={isLoading}>
                         {isLoading ? 'Gerando...' : 'Gerar PDF'}
                     </button>
