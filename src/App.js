@@ -4423,9 +4423,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                         setEditarParcelasVisible(false);
                         setPagamentoParceladoSelecionado(null);
                     }}
-                    onSave={() => {
-                        carregarDados();
-                    }}
                 />
             )}
         </Modal>
