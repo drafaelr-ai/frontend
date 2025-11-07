@@ -1323,7 +1323,6 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
     const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
     const [servicoId, setServicoId] = useState('');
-    const [prioridade, setPrioridade] = useState(0);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1336,7 +1335,6 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             valor: parseFloat(valor) || 0,
             tipo,
             status,
-            prioridade: parseInt(prioridade, 10) || 0,
             servico_id: servicoId ? parseInt(servicoId, 10) : null
         });
     };
@@ -1395,17 +1393,6 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                         {servicos.map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
                     </select>
                 </div>
                 <div className="form-actions">
@@ -2964,8 +2951,9 @@ const totalOrcamentosPendentes = useMemo(() => {
                     onClose={() => setAdminPanelVisible(false)} 
                 />}
                 
-                {isExportModalVisible && <ExportReportModal 
-                    onClose={() => setExportModalVisible(false)} 
+                {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
+                    obras={obras}
+                    onClose={() => setRelatorioCronogramaVisible(false)} 
                 />}
                 
                 <header className="dashboard-header">
@@ -2973,11 +2961,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                     <div className="header-actions">
                     
                         <button 
-                            onClick={() => setExportModalVisible(true)} 
+                            onClick={() => setRelatorioCronogramaVisible(true)} 
                             className="export-btn pdf" 
                             style={{marginRight: '10px'}}
                         >
-                            Relatório Geral de Pendências
+                            📊 Relatório Financeiro
                         </button>
                         
                         {user.role === 'administrador' && (
@@ -3422,8 +3410,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         <div className="empreitada-header">
                                             <h4>{serv.nome}</h4>
                                             <span style={{textAlign: 'right'}}>
-                                                Orçado (MO): {formatCurrency(valorGlobalMO)}<br/>
-                                                Orçado (Mat): {formatCurrency(valorGlobalMat)}
+                                                <strong style={{fontSize: '1.1em', color: 'var(--cor-primaria)'}}>
+                                                    Valor Total em Andamento: {formatCurrency(valorGlobalMO + valorGlobalMat)}
+                                                </strong><br/>
+                                                <small>Orçado (MO): {formatCurrency(valorGlobalMO)}</small><br/>
+                                                <small>Orçado (Mat): {formatCurrency(valorGlobalMat)}</small>
                                             </span>
                                         </div>
                                         <small>Responsável: {serv.responsavel || 'N/A'}</small>
