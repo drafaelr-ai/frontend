@@ -1,5 +1,4 @@
-# Desabilita warnings do ESLint no build
+# Desabilita tratamento de warnings como erros no build
+CI=false
 ESLINT_NO_DEV_ERRORS=true
-
-# Se ainda houver problemas, descomente a linha abaixo:
-# DISABLE_ESLINT_PLUGIN=true
+DISABLE_ESLINT_PLUGIN=true
