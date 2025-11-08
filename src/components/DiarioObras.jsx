@@ -53,6 +53,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [arquivos, setArquivos] = useState([]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -77,6 +78,40 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
             }
 
             const data = await response.json();
+            
+            // Se houver arquivos, fazer upload de cada um
+            if (arquivos.length > 0) {
+                const entradaId = data.entrada?.id || data.id;
+                
+                for (const arquivo of arquivos) {
+                    // Converter arquivo para base64
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const base64String = reader.result.split(',')[1]; // Remove o prefixo data:...
+                            resolve(base64String);
+                        };
+                        reader.readAsDataURL(arquivo);
+                    });
+                    
+                    const uploadResponse = await fetchWithAuth(
+                        `${API_URL}/diario/${entradaId}/imagens`,
+                        {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                nome: arquivo.name,
+                                base64: base64,
+                                legenda: ''
+                            })
+                        }
+                    );
+                    
+                    if (!uploadResponse.ok) {
+                        console.error('Erro ao fazer upload de arquivo:', arquivo.name);
+                    }
+                }
+            }
+            
             onSave(data);
             onClose();
         } catch (err) {
@@ -87,6 +122,15 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleArquivosChange = (e) => {
+        const files = Array.from(e.target.files);
+        setArquivos(files);
+    };
+
+    const removerArquivo = (index) => {
+        setArquivos(prev => prev.filter((_, i) => i !== index));
     };
 
     const modalStyles = {
@@ -273,6 +317,72 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                         />
                     </div>
 
+                    {/* Campo de Anexos */}
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>📎 Anexos (Fotos e PDFs)</label>
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*,application/pdf"
+                            onChange={handleArquivosChange}
+                            style={{
+                                ...modalStyles.input,
+                                padding: '8px',
+                                cursor: 'pointer'
+                            }}
+                        />
+                        {arquivos.length > 0 && (
+                            <div style={{ marginTop: '10px' }}>
+                                <div style={{ fontSize: '0.9em', color: '#666', marginBottom: '8px' }}>
+                                    {arquivos.length} arquivo(s) selecionado(s):
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {arquivos.map((arquivo, index) => (
+                                        <div
+                                            key={index}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '8px 12px',
+                                                backgroundColor: '#f8f9fa',
+                                                borderRadius: '4px',
+                                                border: '1px solid #e0e0e0'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '1.2em' }}>
+                                                    {arquivo.type.startsWith('image/') ? '🖼️' : '📄'}
+                                                </span>
+                                                <span style={{ fontSize: '0.9em' }}>
+                                                    {arquivo.name}
+                                                    <span style={{ color: '#999', marginLeft: '8px' }}>
+                                                        ({(arquivo.size / 1024).toFixed(0)} KB)
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removerArquivo(index)}
+                                                style={{
+                                                    backgroundColor: '#dc3545',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    padding: '4px 8px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.85em'
+                                                }}
+                                            >
+                                                Remover
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {error && (
                         <div style={{ color: 'var(--cor-vermelho)', marginBottom: '15px', padding: '10px', backgroundColor: '#fee', borderRadius: '4px' }}>
                             {error}
@@ -293,7 +403,10 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                             className="submit-btn"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Salvando...' : entrada ? 'Atualizar' : 'Adicionar'}
+                            {isLoading 
+                                ? (arquivos.length > 0 ? 'Salvando e enviando arquivos...' : 'Salvando...') 
+                                : entrada ? 'Atualizar' : 'Adicionar'
+                            }
                         </button>
                     </div>
                 </form>
@@ -309,31 +422,42 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
     const handleImageUpload = async () => {
         if (imageFiles.length === 0) {
-            alert('Selecione pelo menos uma imagem');
+            alert('Selecione pelo menos um arquivo');
             return;
         }
 
         setIsUploading(true);
         try {
             for (const file of imageFiles) {
-                const formData = new FormData();
-                formData.append('imagem', file);
+                // Converter arquivo para base64
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64String = reader.result.split(',')[1]; // Remove o prefixo data:...
+                        resolve(base64String);
+                    };
+                    reader.readAsDataURL(file);
+                });
 
                 const response = await fetchWithAuth(`${API_URL}/diario/${entrada.id}/imagens`, {
                     method: 'POST',
-                    body: formData
+                    body: JSON.stringify({
+                        nome: file.name,
+                        base64: base64,
+                        legenda: ''
+                    })
                 });
 
                 if (!response.ok) {
-                    throw new Error('Erro ao enviar imagem');
+                    throw new Error('Erro ao enviar arquivo');
                 }
             }
 
-            alert('Imagens adicionadas com sucesso!');
+            alert('Arquivos adicionados com sucesso!');
             setImageFiles([]);
             onAddImage(); // Recarrega os dados
         } catch (err) {
-            alert('Erro ao enviar imagens: ' + err.message);
+            alert('Erro ao enviar arquivos: ' + err.message);
         } finally {
             setIsUploading(false);
         }
@@ -497,16 +621,16 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                     </div>
                 )}
 
-                {/* Seção de Imagens */}
+                {/* Seção de Anexos */}
                 <div style={modalStyles.section}>
-                    <div style={modalStyles.sectionTitle}>📸 Fotos</div>
+                    <div style={modalStyles.sectionTitle}>📎 Anexos (Fotos e PDFs)</div>
                     
-                    {/* Upload de novas imagens */}
+                    {/* Upload de novos anexos */}
                     <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'white', borderRadius: '4px' }}>
                         <input
                             type="file"
                             multiple
-                            accept="image/*"
+                            accept="image/*,application/pdf"
                             onChange={(e) => setImageFiles(Array.from(e.target.files))}
                             style={{ marginBottom: '10px' }}
                         />
@@ -517,23 +641,84 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                                 className="submit-btn"
                                 style={{ padding: '8px 15px', fontSize: '0.9em' }}
                             >
-                                {isUploading ? 'Enviando...' : `Enviar ${imageFiles.length} imagem(ns)`}
+                                {isUploading ? 'Enviando...' : `Enviar ${imageFiles.length} arquivo(s)`}
                             </button>
                         )}
                     </div>
 
-                    {/* Grid de imagens existentes */}
+                    {/* Grid de anexos existentes */}
                     {entrada.imagens && entrada.imagens.length > 0 ? (
                         <div style={modalStyles.imageGrid}>
-                            {entrada.imagens.map(img => (
-                                <div key={img.id} style={modalStyles.imageCard}>
-                                    <img
-                                        src={`data:image/jpeg;base64,${img.imagem_base64}`}
-                                        alt={img.legenda || 'Imagem do diário'}
-                                        style={modalStyles.image}
-                                    />
-                                    <button
-                                        onClick={() => handleDeleteImage(img.id)}
+                            {entrada.imagens.map(img => {
+                                const isPDF = img.arquivo_nome && img.arquivo_nome.toLowerCase().endsWith('.pdf');
+                                
+                                return (
+                                    <div key={img.id} style={modalStyles.imageCard}>
+                                        {isPDF ? (
+                                            // Visualização para PDFs
+                                            <div style={{
+                                                width: '100%',
+                                                height: '200px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: '#f0f0f0',
+                                                borderRadius: '8px'
+                                            }}>
+                                                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
+                                                <div style={{ fontSize: '0.9em', fontWeight: 'bold', textAlign: 'center', padding: '0 10px' }}>
+                                                    {img.arquivo_nome || 'Documento PDF'}
+                                                </div>
+                                                <a
+                                                    href={`data:application/pdf;base64,${img.arquivo_base64 || img.imagem_base64}`}
+                                                    download={img.arquivo_nome || 'documento.pdf'}
+                                                    style={{
+                                                        marginTop: '10px',
+                                                        padding: '5px 10px',
+                                                        backgroundColor: 'var(--cor-primaria)',
+                                                        color: 'white',
+                                                        borderRadius: '4px',
+                                                        textDecoration: 'none',
+                                                        fontSize: '0.85em'
+                                                    }}
+                                                >
+                                                    📥 Baixar
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            // Visualização para imagens
+                                            <img
+                                                src={`data:image/jpeg;base64,${img.arquivo_base64 || img.imagem_base64}`}
+                                                alt={img.legenda || img.arquivo_nome || 'Imagem do diário'}
+                                                style={modalStyles.image}
+                                            />
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteImage(img.id)}
+                                            style={modalStyles.deleteImageBtn}
+                                        >
+                                            🗑️
+                                        </button>
+                                        {img.legenda && (
+                                            <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
+                                                {img.legenda}
+                                            </div>
+                                        )}
+                                        {!isPDF && img.arquivo_nome && (
+                                            <div style={{ padding: '8px', fontSize: '0.85em', backgroundColor: 'white', color: '#666' }}>
+                                                {img.arquivo_nome}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                            Nenhum anexo adicionado
+                        </div>
+                    )}
                                         style={modalStyles.deleteImageBtn}
                                     >
                                         🗑️
@@ -792,7 +977,7 @@ const DiarioObras = ({ obra, onClose }) => {
                                             borderRadius: '12px',
                                             fontSize: '0.85em'
                                         }}>
-                                            📸 {entrada.imagens.length}
+                                            📎 {entrada.imagens.length}
                                         </div>
                                     )}
                                 </div>
