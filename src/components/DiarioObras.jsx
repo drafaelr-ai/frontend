@@ -580,10 +580,6 @@ const DiarioObras = ({ obra, onClose }) => {
     const [entradaSelecionada, setEntradaSelecionada] = useState(null);
     const [filtroData, setFiltroData] = useState('');
 
-    useEffect(() => {
-        carregarEntradas();
-    }, [obra.id]);
-
     const carregarEntradas = async () => {
         try {
             setIsLoading(true);
@@ -602,6 +598,11 @@ const DiarioObras = ({ obra, onClose }) => {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        carregarEntradas();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [obra.id]);
 
     const handleSaveEntrada = (novaEntrada) => {
         carregarEntradas();
