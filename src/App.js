@@ -4,12 +4,12 @@ import './App.css';
 // Imports do Chart.js
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
-
+import DiarioObras from './components/DiarioObras';
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // MUDANÇA 1: Import do componente DiarioObras
-import DiarioObras from './components/DiarioObras';
+
 
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
