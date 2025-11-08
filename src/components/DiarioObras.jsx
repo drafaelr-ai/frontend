@@ -590,10 +590,12 @@ const DiarioObras = ({ obra, onClose }) => {
             }
 
             const data = await response.json();
-            setEntradas(data);
+            // Garantir que data seja sempre um array
+            setEntradas(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Erro ao carregar entradas:', err);
             alert('Erro ao carregar o diário: ' + err.message);
+            setEntradas([]); // Garantir que entradas seja um array vazio em caso de erro
         } finally {
             setIsLoading(false);
         }
@@ -657,8 +659,8 @@ const DiarioObras = ({ obra, onClose }) => {
     };
 
     const entradasFiltradas = filtroData
-        ? entradas.filter(e => e.data === filtroData)
-        : entradas;
+        ? (Array.isArray(entradas) ? entradas : []).filter(e => e.data === filtroData)
+        : (Array.isArray(entradas) ? entradas : []);
 
     return (
         <div style={{
