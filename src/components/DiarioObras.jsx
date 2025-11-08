@@ -719,23 +719,6 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                             Nenhum anexo adicionado
                         </div>
                     )}
-                                        style={modalStyles.deleteImageBtn}
-                                    >
-                                        🗑️
-                                    </button>
-                                    {img.legenda && (
-                                        <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
-                                            {img.legenda}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
-                            Nenhuma foto adicionada
-                        </div>
-                    )}
                 </div>
 
                 <div style={modalStyles.buttonGroup}>
