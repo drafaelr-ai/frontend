@@ -1,0 +1,848 @@
+import React, { useState, useEffect } from 'react';
+
+const API_URL = 'https://backend-production-78c9.up.railway.app';
+
+// Helper para formatar datas
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR');
+};
+
+// Helper para fetch com autenticação
+const fetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem('token');
+    
+    const headers = {
+        ...options.headers,
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401 || response.status === 422) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.reload();
+        throw new Error('Sessão expirada. Faça o login novamente.');
+    }
+
+    return response;
+};
+
+// --- MODAL PARA ADICIONAR/EDITAR ENTRADA ---
+const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        data: entrada?.data || new Date().toISOString().split('T')[0],
+        titulo: entrada?.titulo || '',
+        descricao: entrada?.descricao || '',
+        clima: entrada?.clima || '',
+        temperatura: entrada?.temperatura || '',
+        atividades_realizadas: entrada?.atividades_realizadas || '',
+        equipe_presente: entrada?.equipe_presente || '',
+        materiais_utilizados: entrada?.materiais_utilizados || '',
+        equipamentos_utilizados: entrada?.equipamentos_utilizados || '',
+        observacoes: entrada?.observacoes || ''
+    });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const url = entrada
+                ? `${API_URL}/diario/${entrada.id}`
+                : `${API_URL}/obras/${obraId}/diario`;
+            
+            const method = entrada ? 'PUT' : 'POST';
+
+            const response = await fetchWithAuth(url, {
+                method,
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.erro || 'Erro ao salvar entrada');
+            }
+
+            const data = await response.json();
+            onSave(data);
+            onClose();
+        } catch (err) {
+            setError(err.message);
+            setIsLoading(false);
+        }
+    };
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const modalStyles = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '20px'
+        },
+        content: {
+            background: 'white',
+            borderRadius: '8px',
+            padding: '30px',
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+        },
+        formGroup: {
+            marginBottom: '20px'
+        },
+        label: {
+            display: 'block',
+            marginBottom: '5px',
+            fontWeight: 'bold',
+            color: '#333'
+        },
+        input: {
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+            boxSizing: 'border-box'
+        },
+        textarea: {
+            width: '100%',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+            minHeight: '100px',
+            resize: 'vertical',
+            boxSizing: 'border-box'
+        },
+        row: {
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '15px',
+            marginBottom: '20px'
+        },
+        buttonGroup: {
+            display: 'flex',
+            gap: '10px',
+            justifyContent: 'flex-end',
+            marginTop: '20px'
+        }
+    };
+
+    return (
+        <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div style={modalStyles.content}>
+                <h2 style={{ marginTop: 0, color: 'var(--cor-primaria)' }}>
+                    {entrada ? '✏️ Editar Entrada' : '➕ Nova Entrada no Diário'}
+                </h2>
+
+                <form onSubmit={handleSubmit}>
+                    <div style={modalStyles.row}>
+                        <div style={modalStyles.formGroup}>
+                            <label style={modalStyles.label}>Data *</label>
+                            <input
+                                type="date"
+                                value={formData.data}
+                                onChange={(e) => handleChange('data', e.target.value)}
+                                style={modalStyles.input}
+                                required
+                            />
+                        </div>
+                        <div style={modalStyles.formGroup}>
+                            <label style={modalStyles.label}>Título *</label>
+                            <input
+                                type="text"
+                                value={formData.titulo}
+                                onChange={(e) => handleChange('titulo', e.target.value)}
+                                style={modalStyles.input}
+                                placeholder="Ex: Fundação concluída"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Descrição</label>
+                        <textarea
+                            value={formData.descricao}
+                            onChange={(e) => handleChange('descricao', e.target.value)}
+                            style={modalStyles.textarea}
+                            placeholder="Descrição geral do dia..."
+                        />
+                    </div>
+
+                    <div style={modalStyles.row}>
+                        <div style={modalStyles.formGroup}>
+                            <label style={modalStyles.label}>Clima</label>
+                            <select
+                                value={formData.clima}
+                                onChange={(e) => handleChange('clima', e.target.value)}
+                                style={modalStyles.input}
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="Ensolarado">☀️ Ensolarado</option>
+                                <option value="Parcialmente nublado">⛅ Parcialmente nublado</option>
+                                <option value="Nublado">☁️ Nublado</option>
+                                <option value="Chuvoso">🌧️ Chuvoso</option>
+                            </select>
+                        </div>
+                        <div style={modalStyles.formGroup}>
+                            <label style={modalStyles.label}>Temperatura</label>
+                            <input
+                                type="text"
+                                value={formData.temperatura}
+                                onChange={(e) => handleChange('temperatura', e.target.value)}
+                                style={modalStyles.input}
+                                placeholder="Ex: 28°C"
+                            />
+                        </div>
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Atividades Realizadas</label>
+                        <textarea
+                            value={formData.atividades_realizadas}
+                            onChange={(e) => handleChange('atividades_realizadas', e.target.value)}
+                            style={modalStyles.textarea}
+                            placeholder="Descreva as atividades realizadas no dia..."
+                        />
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Equipe Presente</label>
+                        <textarea
+                            value={formData.equipe_presente}
+                            onChange={(e) => handleChange('equipe_presente', e.target.value)}
+                            style={{ ...modalStyles.textarea, minHeight: '60px' }}
+                            placeholder="Ex: João (Pedreiro), Maria (Servente), Pedro (Eletricista)"
+                        />
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Materiais Utilizados</label>
+                        <textarea
+                            value={formData.materiais_utilizados}
+                            onChange={(e) => handleChange('materiais_utilizados', e.target.value)}
+                            style={{ ...modalStyles.textarea, minHeight: '60px' }}
+                            placeholder="Ex: 10 sacos de cimento, 2m³ de areia"
+                        />
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Equipamentos Utilizados</label>
+                        <textarea
+                            value={formData.equipamentos_utilizados}
+                            onChange={(e) => handleChange('equipamentos_utilizados', e.target.value)}
+                            style={{ ...modalStyles.textarea, minHeight: '60px' }}
+                            placeholder="Ex: Betoneira, Furadeira, Andaime"
+                        />
+                    </div>
+
+                    <div style={modalStyles.formGroup}>
+                        <label style={modalStyles.label}>Observações</label>
+                        <textarea
+                            value={formData.observacoes}
+                            onChange={(e) => handleChange('observacoes', e.target.value)}
+                            style={{ ...modalStyles.textarea, minHeight: '80px' }}
+                            placeholder="Observações gerais, problemas encontrados, etc..."
+                        />
+                    </div>
+
+                    {error && (
+                        <div style={{ color: 'var(--cor-vermelho)', marginBottom: '15px', padding: '10px', backgroundColor: '#fee', borderRadius: '4px' }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <div style={modalStyles.buttonGroup}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="voltar-btn"
+                            disabled={isLoading}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="submit-btn"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Salvando...' : entrada ? 'Atualizar' : 'Adicionar'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// --- MODAL PARA VISUALIZAR DETALHES DA ENTRADA ---
+const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage }) => {
+    const [imageFiles, setImageFiles] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleImageUpload = async () => {
+        if (imageFiles.length === 0) {
+            alert('Selecione pelo menos uma imagem');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            for (const file of imageFiles) {
+                const formData = new FormData();
+                formData.append('imagem', file);
+
+                const response = await fetchWithAuth(`${API_URL}/diario/${entrada.id}/imagens`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao enviar imagem');
+                }
+            }
+
+            alert('Imagens adicionadas com sucesso!');
+            setImageFiles([]);
+            onAddImage(); // Recarrega os dados
+        } catch (err) {
+            alert('Erro ao enviar imagens: ' + err.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleDeleteImage = async (imagemId) => {
+        if (!window.confirm('Deseja realmente excluir esta imagem?')) return;
+
+        try {
+            const response = await fetchWithAuth(`${API_URL}/diario/imagens/${imagemId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir imagem');
+            }
+
+            alert('Imagem excluída com sucesso!');
+            onAddImage(); // Recarrega os dados
+        } catch (err) {
+            alert('Erro ao excluir imagem: ' + err.message);
+        }
+    };
+
+    const modalStyles = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '20px'
+        },
+        content: {
+            background: 'white',
+            borderRadius: '8px',
+            padding: '30px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+        },
+        section: {
+            marginBottom: '20px',
+            padding: '15px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px'
+        },
+        sectionTitle: {
+            fontWeight: 'bold',
+            color: 'var(--cor-primaria)',
+            marginBottom: '10px',
+            fontSize: '1.1em'
+        },
+        imageGrid: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '15px',
+            marginTop: '15px'
+        },
+        imageCard: {
+            position: 'relative',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        },
+        image: {
+            width: '100%',
+            height: '200px',
+            objectFit: 'cover'
+        },
+        deleteImageBtn: {
+            position: 'absolute',
+            top: '5px',
+            right: '5px',
+            backgroundColor: 'rgba(220, 53, 69, 0.9)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '5px 10px',
+            cursor: 'pointer',
+            fontSize: '12px'
+        },
+        buttonGroup: {
+            display: 'flex',
+            gap: '10px',
+            justifyContent: 'space-between',
+            marginTop: '20px',
+            flexWrap: 'wrap'
+        }
+    };
+
+    return (
+        <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div style={modalStyles.content}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
+                        📋 {entrada.titulo}
+                    </h2>
+                    <div style={{ fontSize: '0.9em', color: '#666' }}>
+                        {formatDate(entrada.data)}
+                    </div>
+                </div>
+
+                {entrada.descricao && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>📝 Descrição</div>
+                        <div>{entrada.descricao}</div>
+                    </div>
+                )}
+
+                {(entrada.clima || entrada.temperatura) && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>🌤️ Condições Climáticas</div>
+                        <div>
+                            {entrada.clima && <span><strong>Clima:</strong> {entrada.clima}</span>}
+                            {entrada.clima && entrada.temperatura && <span> | </span>}
+                            {entrada.temperatura && <span><strong>Temperatura:</strong> {entrada.temperatura}</span>}
+                        </div>
+                    </div>
+                )}
+
+                {entrada.atividades_realizadas && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>✅ Atividades Realizadas</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.atividades_realizadas}</div>
+                    </div>
+                )}
+
+                {entrada.equipe_presente && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>👷 Equipe Presente</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.equipe_presente}</div>
+                    </div>
+                )}
+
+                {entrada.materiais_utilizados && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>🧱 Materiais Utilizados</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.materiais_utilizados}</div>
+                    </div>
+                )}
+
+                {entrada.equipamentos_utilizados && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>🔧 Equipamentos Utilizados</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.equipamentos_utilizados}</div>
+                    </div>
+                )}
+
+                {entrada.observacoes && (
+                    <div style={modalStyles.section}>
+                        <div style={modalStyles.sectionTitle}>💭 Observações</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.observacoes}</div>
+                    </div>
+                )}
+
+                {/* Seção de Imagens */}
+                <div style={modalStyles.section}>
+                    <div style={modalStyles.sectionTitle}>📸 Fotos</div>
+                    
+                    {/* Upload de novas imagens */}
+                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'white', borderRadius: '4px' }}>
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => setImageFiles(Array.from(e.target.files))}
+                            style={{ marginBottom: '10px' }}
+                        />
+                        {imageFiles.length > 0 && (
+                            <button
+                                onClick={handleImageUpload}
+                                disabled={isUploading}
+                                className="submit-btn"
+                                style={{ padding: '8px 15px', fontSize: '0.9em' }}
+                            >
+                                {isUploading ? 'Enviando...' : `Enviar ${imageFiles.length} imagem(ns)`}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Grid de imagens existentes */}
+                    {entrada.imagens && entrada.imagens.length > 0 ? (
+                        <div style={modalStyles.imageGrid}>
+                            {entrada.imagens.map(img => (
+                                <div key={img.id} style={modalStyles.imageCard}>
+                                    <img
+                                        src={`data:image/jpeg;base64,${img.imagem_base64}`}
+                                        alt={img.legenda || 'Imagem do diário'}
+                                        style={modalStyles.image}
+                                    />
+                                    <button
+                                        onClick={() => handleDeleteImage(img.id)}
+                                        style={modalStyles.deleteImageBtn}
+                                    >
+                                        🗑️
+                                    </button>
+                                    {img.legenda && (
+                                        <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
+                                            {img.legenda}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                            Nenhuma foto adicionada
+                        </div>
+                    )}
+                </div>
+
+                <div style={modalStyles.buttonGroup}>
+                    <button onClick={onClose} className="voltar-btn">
+                        Fechar
+                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={() => onEdit(entrada)} className="submit-btn" style={{ backgroundColor: '#6c757d' }}>
+                            ✏️ Editar
+                        </button>
+                        <button onClick={() => onDelete(entrada.id)} className="voltar-btn">
+                            🗑️ Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- COMPONENTE PRINCIPAL DO DIÁRIO ---
+const DiarioObras = ({ obra, onClose }) => {
+    const [entradas, setEntradas] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false);
+    const [entradaSelecionada, setEntradaSelecionada] = useState(null);
+    const [filtroData, setFiltroData] = useState('');
+
+    useEffect(() => {
+        carregarEntradas();
+    }, [obra.id]);
+
+    const carregarEntradas = async () => {
+        try {
+            setIsLoading(true);
+            const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}/diario`);
+            
+            if (!response.ok) {
+                throw new Error('Erro ao carregar diário');
+            }
+
+            const data = await response.json();
+            setEntradas(data);
+        } catch (err) {
+            console.error('Erro ao carregar entradas:', err);
+            alert('Erro ao carregar o diário: ' + err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSaveEntrada = (novaEntrada) => {
+        carregarEntradas();
+    };
+
+    const handleDeleteEntrada = async (entradaId) => {
+        if (!window.confirm('Deseja realmente excluir esta entrada?')) return;
+
+        try {
+            const response = await fetchWithAuth(`${API_URL}/diario/${entradaId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao excluir entrada');
+            }
+
+            alert('Entrada excluída com sucesso!');
+            carregarEntradas();
+            setIsDetalhesModalOpen(false);
+        } catch (err) {
+            alert('Erro ao excluir entrada: ' + err.message);
+        }
+    };
+
+    const handleGerarRelatorio = async () => {
+        try {
+            let url = `${API_URL}/obras/${obra.id}/diario/relatorio`;
+            
+            if (filtroData) {
+                url += `?data_inicio=${filtroData}&data_fim=${filtroData}`;
+            }
+
+            const response = await fetchWithAuth(url);
+            
+            if (!response.ok) {
+                throw new Error('Erro ao gerar relatório');
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `diario_${obra.nome}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(downloadUrl);
+            document.body.removeChild(a);
+        } catch (err) {
+            alert('Erro ao gerar relatório: ' + err.message);
+        }
+    };
+
+    const entradasFiltradas = filtroData
+        ? entradas.filter(e => e.data === filtroData)
+        : entradas;
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 999,
+            padding: '20px'
+        }}>
+            <div style={{
+                background: 'white',
+                borderRadius: '8px',
+                padding: '30px',
+                maxWidth: '1200px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
+                        📔 Diário de Obras - {obra.nome}
+                    </h2>
+                    <button onClick={onClose} className="voltar-btn">✕ Fechar</button>
+                </div>
+
+                {/* Barra de ações */}
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    marginBottom: '20px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <button
+                        onClick={() => {
+                            setEntradaSelecionada(null);
+                            setIsFormModalOpen(true);
+                        }}
+                        className="submit-btn"
+                    >
+                        ➕ Nova Entrada
+                    </button>
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <input
+                            type="date"
+                            value={filtroData}
+                            onChange={(e) => setFiltroData(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px'
+                            }}
+                        />
+                        {filtroData && (
+                            <button
+                                onClick={() => setFiltroData('')}
+                                className="voltar-btn"
+                                style={{ padding: '8px 12px' }}
+                            >
+                                Limpar
+                            </button>
+                        )}
+                        <button
+                            onClick={handleGerarRelatorio}
+                            className="submit-btn"
+                            style={{ backgroundColor: '#6c757d' }}
+                        >
+                            📄 Gerar PDF
+                        </button>
+                    </div>
+                </div>
+
+                {/* Lista de entradas */}
+                {isLoading ? (
+                    <div style={{ textAlign: 'center', padding: '40px' }}>Carregando...</div>
+                ) : entradasFiltradas.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                        {filtroData ? 'Nenhuma entrada encontrada para esta data' : 'Nenhuma entrada no diário ainda'}
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gap: '15px' }}>
+                        {entradasFiltradas.map(entrada => (
+                            <div
+                                key={entrada.id}
+                                onClick={() => {
+                                    setEntradaSelecionada(entrada);
+                                    setIsDetalhesModalOpen(true);
+                                }}
+                                style={{
+                                    padding: '20px',
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    backgroundColor: 'white'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    e.currentTarget.style.borderColor = 'var(--cor-primaria)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.boxShadow = 'none';
+                                    e.currentTarget.style.borderColor = '#e0e0e0';
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                                    <div>
+                                        <h3 style={{ margin: 0, color: 'var(--cor-primaria)' }}>{entrada.titulo}</h3>
+                                        <div style={{ fontSize: '0.9em', color: '#666', marginTop: '5px' }}>
+                                            📅 {formatDate(entrada.data)}
+                                            {entrada.clima && ` • ${entrada.clima}`}
+                                            {entrada.temperatura && ` • ${entrada.temperatura}`}
+                                        </div>
+                                    </div>
+                                    {entrada.imagens && entrada.imagens.length > 0 && (
+                                        <div style={{
+                                            backgroundColor: 'var(--cor-primaria)',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '0.85em'
+                                        }}>
+                                            📸 {entrada.imagens.length}
+                                        </div>
+                                    )}
+                                </div>
+                                {entrada.descricao && (
+                                    <p style={{
+                                        margin: '10px 0 0 0',
+                                        color: '#555',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical'
+                                    }}>
+                                        {entrada.descricao}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Modais */}
+            {isFormModalOpen && (
+                <DiarioFormModal
+                    entrada={entradaSelecionada}
+                    obraId={obra.id}
+                    onClose={() => {
+                        setIsFormModalOpen(false);
+                        setEntradaSelecionada(null);
+                    }}
+                    onSave={handleSaveEntrada}
+                />
+            )}
+
+            {isDetalhesModalOpen && entradaSelecionada && (
+                <DiarioDetalhesModal
+                    entrada={entradaSelecionada}
+                    onClose={() => {
+                        setIsDetalhesModalOpen(false);
+                        setEntradaSelecionada(null);
+                    }}
+                    onEdit={(entrada) => {
+                        setIsDetalhesModalOpen(false);
+                        setEntradaSelecionada(entrada);
+                        setIsFormModalOpen(true);
+                    }}
+                    onDelete={handleDeleteEntrada}
+                    onAddImage={carregarEntradas}
+                />
+            )}
+        </div>
+    );
+};
+
+export default DiarioObras;

@@ -8,6 +8,9 @@ import { Pie } from 'react-chartjs-2';
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// MUDANÇA 1: Import do componente DiarioObras
+import DiarioObras from './components/DiarioObras';
+
 // --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
@@ -2454,6 +2457,9 @@ function Dashboard() {
     // <--- NOVO: Estado para modal do Cronograma Financeiro -->
     const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
     
+    // MUDANÇA 2: Estado para modal do Diário de Obras
+    const [isDiarioVisible, setDiarioVisible] = useState(false);
+    
     // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
 
@@ -3170,6 +3176,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                 />
             )}
 
+            {/* MUDANÇA 4: Modal do Diário de Obras */}
+            {isDiarioVisible && (
+                <DiarioObras
+                    obra={obraSelecionada}
+                    onClose={() => setDiarioVisible(false)}
+                />
+            )}
+
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
@@ -3199,6 +3213,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                         style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
                     >
                         📊 Relatórios
+                    </button>
+                    {/* MUDANÇA 3: Botão Diário de Obras */}
+                    <button 
+                        onClick={() => setDiarioVisible(true)} 
+                        className="voltar-btn" 
+                        style={{ backgroundColor: '#17a2b8', color: 'white' }}
+                    >
+                        📔 Diário de Obras
                     </button>
                     <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
                     <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
