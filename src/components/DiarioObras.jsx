@@ -83,35 +83,42 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
             if (arquivos.length > 0) {
                 const entradaId = data.entrada?.id || data.id;
                 
-                for (const arquivo of arquivos) {
-                    // Converter arquivo para base64
-                    const base64 = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                            const base64String = reader.result.split(',')[1]; // Remove o prefixo data:...
-                            resolve(base64String);
-                        };
-                        reader.readAsDataURL(arquivo);
-                    });
-                    
-                    const uploadResponse = await fetchWithAuth(
-                        `${API_URL}/diario/${entradaId}/imagens`,
-                        {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                nome: arquivo.name,
-                                base64: base64,
-                                legenda: ''
-                            })
+                try {
+                    for (const arquivo of arquivos) {
+                        // Converter arquivo para base64
+                        const base64 = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64String = reader.result.split(',')[1]; // Remove o prefixo data:...
+                                resolve(base64String);
+                            };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(arquivo);
+                        });
+                        
+                        const uploadResponse = await fetchWithAuth(
+                            `${API_URL}/diario/${entradaId}/imagens`,
+                            {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    nome: arquivo.name,
+                                    base64: base64,
+                                    legenda: ''
+                                })
+                            }
+                        );
+                        
+                        if (!uploadResponse.ok) {
+                            console.error('Erro ao fazer upload de arquivo:', arquivo.name);
                         }
-                    );
-                    
-                    if (!uploadResponse.ok) {
-                        console.error('Erro ao fazer upload de arquivo:', arquivo.name);
                     }
+                } catch (uploadError) {
+                    console.error('Erro no upload de arquivos:', uploadError);
+                    // Continua mesmo se houver erro no upload de imagens
                 }
             }
             
+            // Garantir que o callback seja chamado SEMPRE, independente dos uploads
             onSave(data);
             onClose();
         } catch (err) {
@@ -751,6 +758,7 @@ const DiarioObras = ({ obra, onClose }) => {
     const carregarEntradas = async () => {
         try {
             setIsLoading(true);
+            console.log('Carregando entradas da obra:', obra.id);
             const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}/diario`);
             
             if (!response.ok) {
@@ -758,6 +766,7 @@ const DiarioObras = ({ obra, onClose }) => {
             }
 
             const data = await response.json();
+            console.log('Entradas recebidas:', data);
             // Garantir que data seja sempre um array
             setEntradas(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -774,8 +783,9 @@ const DiarioObras = ({ obra, onClose }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [obra.id]);
 
-    const handleSaveEntrada = (novaEntrada) => {
-        carregarEntradas();
+    const handleSaveEntrada = async (novaEntrada) => {
+        console.log('Entrada salva, recarregando lista...', novaEntrada);
+        await carregarEntradas();
     };
 
     const handleDeleteEntrada = async (entradaId) => {
