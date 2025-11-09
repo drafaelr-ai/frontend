@@ -767,8 +767,20 @@ const DiarioObras = ({ obra, onClose }) => {
 
             const data = await response.json();
             console.log('Entradas recebidas:', data);
+            
             // Garantir que data seja sempre um array
-            setEntradas(Array.isArray(data) ? data : []);
+            // Backend pode retornar array direto ou objeto com propriedade 'entradas'
+            let entradasArray = [];
+            if (Array.isArray(data)) {
+                entradasArray = data;
+            } else if (data && Array.isArray(data.entradas)) {
+                entradasArray = data.entradas;
+            } else if (data && Array.isArray(data.data)) {
+                entradasArray = data.data;
+            }
+            
+            console.log('Entradas processadas (array):', entradasArray);
+            setEntradas(entradasArray);
         } catch (err) {
             console.error('Erro ao carregar entradas:', err);
             alert('Erro ao carregar o diário: ' + err.message);
