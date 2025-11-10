@@ -2860,6 +2860,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const valorPagamento = e.target.valorPagamento.value; // Este é o 'valor' do formulário
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
+        const formaPagamento = e.target.formaPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
         const dataVencimento = e.target.dataVencimento.value;
         const fornecedor = e.target.fornecedor.value;
@@ -2872,6 +2873,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             data_vencimento: dataVencimento,
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
+            forma_pagamento: formaPagamento || null,
             fornecedor: fornecedor || null
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
@@ -3471,6 +3473,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 <option value="">Tipo...</option>
                                                 <option value="mao_de_obra">Mão de Obra</option>
                                                 <option value="material">Material</option>
+                                            </select>
+                                            <select name="formaPagamento" style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                                <option value="">Forma...</option>
+                                                <option value="PIX">PIX</option>
+                                                <option value="Boleto">Boleto</option>
+                                                <option value="TED">TED</option>
+                                                <option value="Dinheiro">Dinheiro</option>
+                                                <option value="Cartão">Cartão</option>
+                                                <option value="Cheque">Cheque</option>
                                             </select>
                                             <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                                 <option value="Pago">Pago</option>
