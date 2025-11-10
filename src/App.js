@@ -4304,7 +4304,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
             if (futuroRes.ok) {
                 const data = await futuroRes.json();
+                console.log('🔍 DEBUG - Dados recebidos do backend:', data);
+                console.log('📊 DEBUG - Quantidade de pagamentos:', data.length);
+                if (data.length === 0) {
+                    console.warn('⚠️ DEBUG - Array vazio! Backend não retornou pagamentos.');
+                }
                 setPagamentosFuturos(data);
+            } else {
+                console.error('❌ DEBUG - Erro ao buscar pagamentos futuros:', futuroRes.status);
             }
 
             if (parceladoRes.ok) {
@@ -4364,7 +4371,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             if (res.ok) {
                 alert('Pagamento futuro cadastrado com sucesso!');
                 setCadastrarFuturoVisible(false);
-                fetchData();
+                await fetchData(); // ← CORRIGIDO: Aguarda carregar dados antes de continuar
             } else {
                 const errorData = await res.json();
                 alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
