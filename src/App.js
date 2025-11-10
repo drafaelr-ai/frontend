@@ -3666,6 +3666,84 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
     );
 };
 
+// Modal para Editar Pagamento Futuro
+const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
+    const [formData, setFormData] = useState({
+        descricao: pagamento.descricao || '',
+        valor: pagamento.valor || '',
+        data_vencimento: pagamento.data_vencimento || getTodayString(),
+        fornecedor: pagamento.fornecedor || '',
+        observacoes: pagamento.observacoes || ''
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        await onSave(formData);
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2>✏️ Editar Pagamento Futuro</h2>
+            <form onSubmit={handleSubmit} className="form-orcamento">
+                <label>
+                    Descrição:
+                    <input
+                        type="text"
+                        value={formData.descricao}
+                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Valor:
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={formData.valor}
+                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Data de Vencimento:
+                    <input
+                        type="date"
+                        value={formData.data_vencimento}
+                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Fornecedor:
+                    <input
+                        type="text"
+                        value={formData.fornecedor}
+                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
+                    />
+                </label>
+
+                <label>
+                    Observações:
+                    <textarea
+                        value={formData.observacoes}
+                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                        rows="3"
+                    />
+                </label>
+
+                <div className="modal-footer">
+                    <button type="submit" className="submit-btn">Salvar</button>
+                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+
 // Modal para Cadastrar Pagamento Parcelado
 const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
     const [formData, setFormData] = useState({
@@ -4206,6 +4284,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     };
     const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
     const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
+    const [isEditarFuturoVisible, setEditarFuturoVisible] = useState(false);
+    const [pagamentoFuturoSelecionado, setPagamentoFuturoSelecionado] = useState(null);
     
     // MUDANÇA 5: Funções de seleção
     const toggleSelecao = (tipo, id) => {
@@ -4364,6 +4444,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             if (res.ok) {
                 alert('Pagamento futuro cadastrado com sucesso!');
                 setCadastrarFuturoVisible(false);
+                fetchData();
             } else {
                 const errorData = await res.json();
                 alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
@@ -4371,6 +4452,32 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
         } catch (error) {
             console.error('Erro ao salvar pagamento futuro:', error);
             alert('Erro ao salvar pagamento futuro');
+        }
+    };
+
+    // Editar Pagamento Futuro
+    const handleEditarPagamentoFuturo = async (formData) => {
+        try {
+            const res = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${pagamentoFuturoSelecionado.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify(formData)
+                }
+            );
+
+            if (res.ok) {
+                alert('Pagamento futuro atualizado com sucesso!');
+                setEditarFuturoVisible(false);
+                setPagamentoFuturoSelecionado(null);
+                fetchData();
+            } else {
+                const errorData = await res.json();
+                alert('Erro ao atualizar: ' + (errorData.erro || 'Erro desconhecido'));
+            }
+        } catch (error) {
+            console.error('Erro ao editar pagamento futuro:', error);
+            alert('Erro ao editar pagamento futuro');
         }
     };
 
@@ -4388,6 +4495,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             if (res.ok) {
                 alert('Pagamento parcelado cadastrado com sucesso!');
                 setCadastrarParceladoVisible(false);
+                fetchData();
             } else {
                 const errorData = await res.json();
                 alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
@@ -4682,6 +4790,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                                         ✓ Pagar
                                                     </button>
                                                     <button
+                                                        onClick={() => {
+                                                            setPagamentoFuturoSelecionado(pag);
+                                                            setEditarFuturoVisible(true);
+                                                        }}
+                                                        className="submit-btn"
+                                                        style={{ padding: '5px 10px', fontSize: '0.85em', marginRight: '5px', backgroundColor: '#6c757d' }}
+                                                        title="Editar"
+                                                    >
+                                                        ✏️ Editar
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleDeletePagamentoFuturo(pag.id)}
                                                         className="voltar-btn"
                                                         style={{ padding: '5px 10px', fontSize: '0.85em' }}
@@ -4802,10 +4921,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             {/* Modais de Cadastro */}
             {isCadastrarFuturoVisible && (
                 <CadastrarPagamentoFuturoModal
-                    onClose={() => {
-                        setCadastrarFuturoVisible(false);
-                        fetchData();
-                    }}
+                    onClose={() => setCadastrarFuturoVisible(false)}
                     onSave={handleSavePagamentoFuturo}
                     obraId={obraId}
                 />
@@ -4813,15 +4929,24 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
             {isCadastrarParceladoVisible && (
                 <CadastrarPagamentoParceladoModal
-                    onClose={() => {
-                        setCadastrarParceladoVisible(false);
-                        fetchData();
-                    }}
+                    onClose={() => setCadastrarParceladoVisible(false)}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
                 />
                 
             )}
+            
+            {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
+                <EditarPagamentoFuturoModal
+                    onClose={() => {
+                        setEditarFuturoVisible(false);
+                        setPagamentoFuturoSelecionado(null);
+                    }}
+                    onSave={handleEditarPagamentoFuturo}
+                    pagamento={pagamentoFuturoSelecionado}
+                />
+            )}
+            
             {isEditarParcelasVisible && pagamentoParceladoSelecionado && (
                 <EditarParcelasModal
                     obraId={obraId}
