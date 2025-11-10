@@ -3596,6 +3596,7 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
         valor: '',
         data_vencimento: getTodayString(),
         fornecedor: '',
+        pix: '',
         observacoes: ''
     });
 
@@ -3649,6 +3650,17 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
                 </label>
 
                 <label>
+                    Chave PIX:
+                    <input
+                        type="text"
+                        value={formData.pix}
+                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
+                        placeholder="CPF, telefone, email ou chave aleatória"
+                        maxLength="100"
+                    />
+                </label>
+
+                <label>
                     Observações:
                     <textarea
                         value={formData.observacoes}
@@ -3673,6 +3685,7 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
         valor: pagamento.valor || '',
         data_vencimento: pagamento.data_vencimento || getTodayString(),
         fornecedor: pagamento.fornecedor || '',
+        pix: pagamento.pix || '',
         observacoes: pagamento.observacoes || ''
     });
 
@@ -3722,6 +3735,17 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
                         type="text"
                         value={formData.fornecedor}
                         onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
+                    />
+                </label>
+
+                <label>
+                    Chave PIX:
+                    <input
+                        type="text"
+                        value={formData.pix}
+                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
+                        placeholder="CPF, telefone, email ou chave aleatória"
+                        maxLength="100"
                     />
                 </label>
 
