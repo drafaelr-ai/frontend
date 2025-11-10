@@ -4362,9 +4362,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             );
 
             if (res.ok) {
-                await fetchData();
-                setCadastrarFuturoVisible(false);
                 alert('Pagamento futuro cadastrado com sucesso!');
+                setCadastrarFuturoVisible(false);
             } else {
                 const errorData = await res.json();
                 alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
@@ -4389,7 +4388,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             if (res.ok) {
                 alert('Pagamento parcelado cadastrado com sucesso!');
                 setCadastrarParceladoVisible(false);
-                fetchData();
             } else {
                 const errorData = await res.json();
                 alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
@@ -4804,7 +4802,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             {/* Modais de Cadastro */}
             {isCadastrarFuturoVisible && (
                 <CadastrarPagamentoFuturoModal
-                    onClose={() => setCadastrarFuturoVisible(false)}
+                    onClose={() => {
+                        setCadastrarFuturoVisible(false);
+                        fetchData();
+                    }}
                     onSave={handleSavePagamentoFuturo}
                     obraId={obraId}
                 />
@@ -4812,7 +4813,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
             {isCadastrarParceladoVisible && (
                 <CadastrarPagamentoParceladoModal
-                    onClose={() => setCadastrarParceladoVisible(false)}
+                    onClose={() => {
+                        setCadastrarParceladoVisible(false);
+                        fetchData();
+                    }}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
                 />
