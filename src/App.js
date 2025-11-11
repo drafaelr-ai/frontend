@@ -3172,7 +3172,10 @@ const totalOrcamentosPendentes = useMemo(() => {
             {/* <-- NOVO: Modal do Cronograma Financeiro --> */}
             {isCronogramaFinanceiroVisible && (
                 <CronogramaFinanceiro
-                    onClose={() => setCronogramaFinanceiroVisible(false)}
+                    onClose={() => {
+                        setCronogramaFinanceiroVisible(false);
+                        fetchObraData(obraSelecionada.id); // Recarrega dados da obra ao fechar
+                    }}
                     obraId={obraSelecionada.id}
                     obraNome={obraSelecionada.nome}
                 />
@@ -4588,7 +4591,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 alert('Pagamento marcado como pago!');
                 // Importante pro item sumir do cronograma e entrar no histórico
                 fetchData();
-                fetchObraData(obraId);
             } else {
                 const errorData = await res.json();
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
