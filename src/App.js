@@ -2633,49 +2633,25 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
     
     // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
-    const handleMarcarComoPago = async (itemId) => {
-        if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
-        
+    const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
         const actualId = String(itemId).split('-').pop(); 
 
-        try {
-            if (isLancamento) {
-                // Lançamento normal - usa a rota antiga
-                const url = `${API_URL}/lancamentos/${actualId}/pago`;
-                console.log("Marcando lançamento como pago:", actualId);
-                const res = await fetchWithAuth(url, { method: 'PATCH' });
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.erro || 'Erro ao marcar lançamento como pago');
-                }
-                await fetchObraData(obraSelecionada.id);
-            } else if (isServicoPag) {
-                // Pagamento de serviço - usa a rota de marcar múltiplos
-                console.log("Marcando pagamento de serviço como pago:", actualId);
-                const res = await fetchWithAuth(
-                    `${API_URL}/obras/${obraSelecionada.id}/cronograma/marcar-multiplos-pagos`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            itens: [{ tipo: 'servico', id: parseInt(actualId) }],
-                            data_pagamento: new Date().toISOString().split('T')[0]
-                        })
-                    }
-                );
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.erro || 'Erro ao marcar pagamento de serviço como pago');
-                }
-                const data = await res.json();
-                console.log("Resultado:", data);
-                await fetchObraData(obraSelecionada.id);
-            }
-        } catch (error) {
-            console.error("Erro ao marcar como pago:", error);
-            alert(`Erro ao marcar como pago: ${error.message}`);
+        let url = '';
+        if (isLancamento) {
+            url = `${API_URL}/lancamentos/${actualId}/pago`;
+        } else if (isServicoPag) {
+            url = `${API_URL}/servicos/pagamentos/${actualId}/status`;
+        } else {
+            return; 
         }
+
+        console.log("Alternando status para:", itemId);
+        fetchWithAuth(url, { method: 'PATCH' })
+             .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+             .then(() => fetchObraData(obraSelecionada.id))
+             .catch(error => console.error("Erro ao marcar como pago:", error));
     };
 
     const handleDeletarLancamento = (itemId) => {
@@ -4582,14 +4558,37 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
         if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
 
         try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
-                { method: 'POST' }
-            );
+            let res;
+            const idStr = String(id);
+            
+            if (idStr.startsWith('servico-')) {
+                // É um pagamento de serviço pendente "injetado" na lista
+                const servPagId = parseInt(idStr.split('-').pop(), 10);
+                console.log("Marcando pagamento de serviço futuro como pago:", servPagId);
+                res = await fetchWithAuth(
+                    `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            itens: [{ tipo: 'servico', id: servPagId }],
+                            data_pagamento: new Date().toISOString().split('T')[0]
+                        })
+                    }
+                );
+            } else {
+                // É um pagamento futuro "normal"
+                console.log("Marcando pagamento futuro normal como pago:", id);
+                res = await fetchWithAuth(
+                    `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
+                    { method: 'POST' }
+                );
+            }
 
             if (res.ok) {
                 alert('Pagamento marcado como pago!');
+                // Importante pro item sumir do cronograma e entrar no histórico
                 fetchData();
+                fetchObraData(obraId);
             } else {
                 const errorData = await res.json();
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
