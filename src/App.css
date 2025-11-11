@@ -232,3 +232,76 @@ body {
     border: none;
     padding: 0;
 }
+
+/* ============================================================================
+   RESPONSIVIDADE: Desktop vs Mobile
+   ============================================================================ */
+
+/* Desktop: Mostra tabela, esconde cards */
+@media (min-width: 768px) {
+    .mobile-only {
+        display: none !important;
+    }
+    .desktop-only {
+        display: block !important;
+    }
+}
+
+/* Mobile: Mostra cards, esconde tabela */
+@media (max-width: 767px) {
+    .mobile-only {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* ============================================================================
+   CARDS DE PREVISÃO (Mobile)
+   ============================================================================ */
+
+.card-previsao {
+    background-color: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-previsao-header {
+    flex: 1;
+}
+
+.card-previsao-mes {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.card-previsao-valor {
+    font-size: 18px;
+    color: #27ae60;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* Card do Total (destaque) */
+.card-previsao-total {
+    background: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+}
+
+.card-previsao-total .card-previsao-mes {
+    color: white;
+}
+
+.card-previsao-total .card-previsao-valor {
+    color: white;
+    font-size: 20px;
+}

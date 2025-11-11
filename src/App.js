@@ -4674,26 +4674,53 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     
                     {previsoes.length > 0 ? (
                         <>
-                            <table className="tabela-pendencias">
-                                <thead>
-                                    <tr>
-                                        <th>Mês</th>
-                                        <th>Valor Previsto</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {previsoes.map((prev, index) => (
-                                        <tr key={index}>
-                                            <td><strong>{prev.mes_nome}</strong></td>
-                                            <td>{formatCurrency(prev.valor)}</td>
+                            {/* DESKTOP: Tabela */}
+                            <div className="desktop-only">
+                                <table className="tabela-pendencias">
+                                    <thead>
+                                        <tr>
+                                            <th>Mês</th>
+                                            <th>Valor Previsto</th>
                                         </tr>
-                                    ))}
-                                    <tr style={{ background: 'var(--cor-primaria)', color: 'white', fontWeight: 'bold' }}>
-                                        <td>TOTAL PREVISTO</td>
-                                        <td>{formatCurrency(totalPrevisoes)}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {previsoes.map((prev, index) => (
+                                            <tr key={index}>
+                                                <td><strong>{prev.mes_nome}</strong></td>
+                                                <td>{formatCurrency(prev.valor)}</td>
+                                            </tr>
+                                        ))}
+                                        <tr style={{ background: 'var(--cor-primaria)', color: 'white', fontWeight: 'bold' }}>
+                                            <td>TOTAL PREVISTO</td>
+                                            <td>{formatCurrency(totalPrevisoes)}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* MOBILE: Cards */}
+                            <div className="mobile-only">
+                                {previsoes.map((prev, index) => (
+                                    <div key={index} className="card-previsao">
+                                        <div className="card-previsao-header">
+                                            <span className="card-previsao-mes">{prev.mes_nome}</span>
+                                        </div>
+                                        <div className="card-previsao-valor">
+                                            {formatCurrency(prev.valor)}
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                {/* Card do Total */}
+                                <div className="card-previsao card-previsao-total">
+                                    <div className="card-previsao-header">
+                                        <span className="card-previsao-mes">TOTAL PREVISTO</span>
+                                    </div>
+                                    <div className="card-previsao-valor">
+                                        {formatCurrency(totalPrevisoes)}
+                                    </div>
+                                </div>
+                            </div>
                         </>
                     ) : (
                         <p>Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.</p>
