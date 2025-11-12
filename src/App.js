@@ -2463,6 +2463,9 @@ function Dashboard() {
     // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
 
+    // NOVO: Estado para controlar o PIX de cada formulário de serviço
+    const [pixPorServico, setPixPorServico] = useState({}); // { servicoId: 'chave@pix.com' }
+
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
         // apenas os orçamentos com status 'Pendente' vindos do backend.
@@ -2864,6 +2867,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const dataPagamento = e.target.dataPagamento.value; 
         const dataVencimento = e.target.dataVencimento.value;
         const fornecedor = e.target.fornecedor.value;
+        const pixValue = pixPorServico[servicoId] || ''; // Pegar o PIX do state
         
         if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
         
@@ -2874,6 +2878,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
             forma_pagamento: formaPagamento || null,
+            pix: pixValue || null, // Adicionar PIX
             fornecedor: fornecedor || null
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
@@ -2883,6 +2888,8 @@ const totalOrcamentosPendentes = useMemo(() => {
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              e.target.reset(); 
+             // Limpar o state de PIX desse serviço
+             setPixPorServico(prev => ({ ...prev, [servicoId]: '' }));
              fetchObraData(obraSelecionada.id); 
         })
         .catch(error => console.error("Erro ao adicionar pagamento:", error));
@@ -3477,6 +3484,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 <option value="mao_de_obra">Mão de Obra</option>
                                                 <option value="material">Material</option>
                                             </select>
+                                            
+                                            <input 
+                                                type="text" 
+                                                placeholder="Chave PIX" 
+                                                value={pixPorServico[serv.id] || ''}
+                                                onChange={(e) => setPixPorServico(prev => ({ ...prev, [serv.id]: e.target.value }))}
+                                                style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
+                                            />
+                                            
                                             <select name="formaPagamento" style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                                 <option value="">Forma...</option>
                                                 <option value="PIX">PIX</option>
@@ -3486,6 +3502,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 <option value="Cartão">Cartão</option>
                                                 <option value="Cheque">Cheque</option>
                                             </select>
+                                            
                                             <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                                 <option value="Pago">Pago</option>
                                                 <option value="A Pagar">A Pagar</option>
