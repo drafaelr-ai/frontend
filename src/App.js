@@ -2863,7 +2863,6 @@ const totalOrcamentosPendentes = useMemo(() => {
         const valorPagamento = e.target.valorPagamento.value; // Este é o 'valor' do formulário
         const statusPagamento = e.target.statusPagamento.value;
         const tipoPagamento = e.target.tipoPagamento.value;
-        const formaPagamento = e.target.formaPagamento.value;
         const dataPagamento = e.target.dataPagamento.value; 
         const dataVencimento = e.target.dataVencimento.value;
         const fornecedor = e.target.fornecedor.value;
@@ -2877,8 +2876,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             data_vencimento: dataVencimento,
             status: statusPagamento,
             tipo_pagamento: tipoPagamento,
-            forma_pagamento: formaPagamento || null,
-            pix: pixValue || null, // Adicionar PIX
+            pix: pixValue || null, // Campo PIX
             fornecedor: fornecedor || null
         };
         console.log("Adicionando pagamento de serviço:", pagamento);
@@ -3474,40 +3472,30 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     
                                     {(user.role === 'administrador' || user.role === 'master') && (
                                         <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                            <input type="date" name="dataPagamento" placeholder="Data Registro" defaultValue={getTodayString()} required style={{flex: 1.5}} title="Data do Registro" />
-                                            <input type="date" name="dataVencimento" placeholder="Vencimento" defaultValue={getTodayString()} required style={{flex: 1.5}} title="Data de Vencimento ⚠️" />
-                                            <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.5}} />
-                                            <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1.5}} />
-                                            
-                                            <select name="tipoPagamento" required style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                                <option value="">Tipo...</option>
-                                                <option value="mao_de_obra">Mão de Obra</option>
-                                                <option value="material">Material</option>
-                                            </select>
+                                            <input type="date" name="dataPagamento" placeholder="Data Registro" defaultValue={getTodayString()} required style={{flex: 1, minWidth: '120px'}} title="Data do Registro" />
+                                            <input type="date" name="dataVencimento" placeholder="Vencimento" defaultValue={getTodayString()} required style={{flex: 1, minWidth: '120px'}} title="Data de Vencimento ⚠️" />
+                                            <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.2, minWidth: '120px'}} />
+                                            <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1, minWidth: '100px'}} />
                                             
                                             <input 
                                                 type="text" 
                                                 placeholder="Chave PIX" 
                                                 value={pixPorServico[serv.id] || ''}
                                                 onChange={(e) => setPixPorServico(prev => ({ ...prev, [serv.id]: e.target.value }))}
-                                                style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
+                                                style={{flex: 1.2, minWidth: '120px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
                                             />
                                             
-                                            <select name="formaPagamento" style={{flex: 1.5, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                                <option value="">Forma...</option>
-                                                <option value="PIX">PIX</option>
-                                                <option value="Boleto">Boleto</option>
-                                                <option value="TED">TED</option>
-                                                <option value="Dinheiro">Dinheiro</option>
-                                                <option value="Cartão">Cartão</option>
-                                                <option value="Cheque">Cheque</option>
+                                            <select name="tipoPagamento" required style={{flex: 1, minWidth: '100px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                                <option value="">Tipo...</option>
+                                                <option value="mao_de_obra">Mão de Obra</option>
+                                                <option value="material">Material</option>
                                             </select>
                                             
-                                            <select name="statusPagamento" defaultValue="Pago" required style={{flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
+                                            <select name="statusPagamento" defaultValue="Pago" required style={{flex: 0.8, minWidth: '80px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
                                                 <option value="Pago">Pago</option>
                                                 <option value="A Pagar">A Pagar</option>
                                             </select>
-                                            <button type="submit" style={{flex: 1}}>Adic.</button>
+                                            <button type="submit" style={{flex: 0.5, minWidth: '60px', maxWidth: '80px'}}>Adic.</button>
                                         </form>
                                     )}
                                 </div>
