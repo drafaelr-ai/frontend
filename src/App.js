@@ -4924,7 +4924,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         <td>{pag.fornecedor || '-'}</td>
                                         <td>{formatCurrency(pag.valor_total)}</td>
                                         <td>
-                                            <strong>{pag.parcelas_pagas}/{pag.numero_parcelas}</strong>
+                                            <strong>
+                                                {pag.proxima_parcela_numero ? 
+                                                    `${pag.proxima_parcela_numero}/${pag.numero_parcelas}` : 
+                                                    `${pag.numero_parcelas}/${pag.numero_parcelas}`
+                                                }
+                                            </strong>
                                         </td>
                                         <td>
                                             <span style={{
@@ -4938,7 +4943,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                             </span>
                                         </td>
                                         <td>{formatCurrency(pag.valor_parcela)}</td>
-                                        <td>{new Date(pag.data_primeira_parcela + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td>
+                                            {pag.proxima_parcela_vencimento ? 
+                                                new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
+                                                'Concluído'
+                                            }
+                                        </td>
                                         <td>
                                             <span style={{
                                                 padding: '3px 8px',
