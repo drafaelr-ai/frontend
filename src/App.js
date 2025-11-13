@@ -8,6 +8,9 @@ import { Pie } from 'react-chartjs-2';
 // MUDANÇA 1: Import do componente DiarioObras
 import DiarioObras from './components/DiarioObras';
 
+// MUDANÇA 2: Import do componente CronogramaObra
+import CronogramaObra from './components/CronogramaObra';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -1322,7 +1325,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
     const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(0);
+    const [valor, setValor] = useState('');
     const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
     const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
     const [servicoId, setServicoId] = useState('');
@@ -3293,6 +3296,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 </div>
             </div>
+
+
+            {/* --- MUDANÇA: CRONOGRAMA DA OBRA --- */}
+            <CronogramaObra obraId={obraSelecionada.id} />
+            {/* --- FIM DO CRONOGRAMA DA OBRA --- */}
 
 
             {/* Tabela de Orçamentos */}

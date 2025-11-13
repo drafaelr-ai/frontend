@@ -1,0 +1,449 @@
+/* ============================================================================
+   CRONOGRAMA DA OBRA - CSS RESPONSIVO
+   ============================================================================ */
+
+.cronograma-container {
+    background: var(--cor-card, #ffffff);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* ============================================================================
+   GRID DE CARDS
+   ============================================================================ */
+
+.cronograma-grid {
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+/* Desktop: 2 colunas */
+@media (min-width: 768px) {
+    .cronograma-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile: 1 coluna */
+@media (max-width: 767px) {
+    .cronograma-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================================
+   CARD INDIVIDUAL
+   ============================================================================ */
+
+.card-cronograma {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--cor-primaria, #4f46e5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-cronograma:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Cores por status */
+.card-cronograma.nao_iniciado {
+    border-left-color: #6c757d;
+    opacity: 0.9;
+}
+
+.card-cronograma.em_andamento {
+    border-left-color: #3b82f6;
+}
+
+.card-cronograma.concluido {
+    border-left-color: #10b981;
+    opacity: 0.7;
+}
+
+.card-cronograma.atrasado {
+    border-left-color: #ef4444;
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+    }
+}
+
+/* ============================================================================
+   CABEÇALHO DO CARD
+   ============================================================================ */
+
+.cronograma-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+
+.cronograma-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.cronograma-title h4 {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--cor-texto, #1a202c);
+    font-weight: 600;
+}
+
+.ordem-badge {
+    background: var(--cor-fundo, #f4f7f6);
+    color: var(--cor-texto-secundario, #4a5568);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.75em;
+    font-weight: bold;
+}
+
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.75em;
+    font-weight: 600;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.progress-container {
+    position: relative;
+    background: #e9ecef;
+    height: 28px;
+    border-radius: 14px;
+    margin: 12px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #10b981);
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    border-radius: 14px;
+    min-width: 30px;
+}
+
+.progress-text {
+    font-weight: bold;
+    font-size: 0.85em;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   TIMELINE INFO
+   ============================================================================ */
+
+.timeline-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9em;
+    color: var(--cor-texto-secundario, #4a5568);
+    margin: 12px 0;
+}
+
+.timeline-dates {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.timeline-dates .arrow {
+    color: var(--cor-primaria, #4f46e5);
+    font-weight: bold;
+}
+
+.timeline-duration {
+    display: flex;
+    gap: 5px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.text-danger {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+/* ============================================================================
+   MINI TIMELINE VISUAL
+   ============================================================================ */
+
+.mini-timeline {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.timeline-track {
+    position: relative;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: visible;
+}
+
+.timeline-progress {
+    height: 100%;
+    background: #10b981;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: -6px;
+    background: var(--cor-primaria, #4f46e5);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    font-weight: bold;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid var(--cor-primaria, #4f46e5);
+}
+
+/* ============================================================================
+   OBSERVAÇÕES
+   ============================================================================ */
+
+.cronograma-obs {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 12px 0;
+    border-left: 3px solid var(--cor-info, #3b82f6);
+}
+
+.cronograma-obs small {
+    color: var(--cor-texto-secundario, #4a5568);
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+/* ============================================================================
+   AÇÕES DO CARD
+   ============================================================================ */
+
+.cronograma-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.cronograma-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-editar {
+    background: var(--cor-primaria, #4f46e5);
+    color: white;
+}
+
+.btn-editar:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: #f8f9fa;
+    color: var(--cor-vermelho, #ef4444);
+    border: 1px solid #e9ecef;
+}
+
+.btn-delete:hover {
+    background: var(--cor-vermelho, #ef4444);
+    color: white;
+}
+
+/* ============================================================================
+   FILTROS E HEADER
+   ============================================================================ */
+
+.filtro-status {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9em;
+    background: white;
+    cursor: pointer;
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--cor-texto-secundario, #4a5568);
+}
+
+.empty-state p {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+/* ============================================================================
+   MODAL
+   ============================================================================ */
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 767px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Slider de Percentual */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--cor-primaria, #4f46e5);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--cor-primaria, #4f46e5);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider-value {
+    font-weight: bold;
+    color: var(--cor-primaria, #4f46e5);
+    font-size: 1.1em;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* ============================================================================
+   RESPONSIVIDADE MOBILE
+   ============================================================================ */
+
+@media (max-width: 767px) {
+    .cronograma-container {
+        padding: 15px;
+    }
+    
+    .card-cronograma {
+        padding: 14px;
+    }
+    
+    .cronograma-title h4 {
+        font-size: 1em;
+    }
+    
+    .timeline-dates {
+        font-size: 0.85em;
+    }
+    
+    .badge-status {
+        font-size: 0.7em;
+        padding: 3px 8px;
+    }
+    
+    .progress-container {
+        height: 24px;
+    }
+    
+    .timeline-marker {
+        font-size: 0.65em;
+        padding: 2px 6px;
+    }
+}

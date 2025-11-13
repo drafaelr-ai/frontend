@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO DE IMAGENS
 
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
@@ -84,7 +85,15 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                 const entradaId = data.entrada?.id || data.id;
                 
                 try {
-                    for (const arquivo of arquivos) {
+                    // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
+                    console.log('🔄 Comprimindo imagens...');
+                    const compressedFiles = await compressImages(arquivos, {
+                        maxWidth: 1920,
+                        maxHeight: 1920,
+                        quality: 0.8
+                    });
+
+                    for (const arquivo of compressedFiles) {
                         // Converter arquivo para base64
                         const base64 = await new Promise((resolve, reject) => {
                             const reader = new FileReader();
@@ -435,7 +444,15 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
         setIsUploading(true);
         try {
-            for (const file of imageFiles) {
+            // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
+            console.log('🔄 Comprimindo imagens...');
+            const compressedFiles = await compressImages(imageFiles, {
+                maxWidth: 1920,
+                maxHeight: 1920,
+                quality: 0.8
+            });
+
+            for (const file of compressedFiles) {
                 // Converter arquivo para base64
                 const base64 = await new Promise((resolve) => {
                     const reader = new FileReader();
