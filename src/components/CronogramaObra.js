@@ -101,6 +101,41 @@ const CardCronograma = ({ item, onEdit, onDelete }) => {
                 <StatusBadge status={status} />
             </div>
 
+            {/* TIPO DE MEDIÇÃO */}
+            {item.tipo_medicao && (
+                <div style={{
+                    fontSize: '0.75em', 
+                    color: '#6b7280', 
+                    marginBottom: '8px',
+                    padding: '4px 8px',
+                    background: '#f3f4f6',
+                    borderRadius: '4px',
+                    display: 'inline-block'
+                }}>
+                    {item.tipo_medicao === 'area' ? '📐 Medição por Área/Quantidade' : '📋 Medição por Empreitada'}
+                </div>
+            )}
+
+            {/* ÁREA/QUANTIDADE - só mostra se for tipo área */}
+            {item.tipo_medicao === 'area' && (item.area_total || item.area_executada) && (
+                <div style={{
+                    padding: '8px',
+                    background: '#f9fafb',
+                    borderRadius: '6px',
+                    marginBottom: '12px',
+                    fontSize: '0.9em'
+                }}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                        <span style={{color: '#6b7280'}}>Total:</span>
+                        <strong>{item.area_total} {item.unidade_medida || 'm²'}</strong>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                        <span style={{color: '#6b7280'}}>Executado:</span>
+                        <strong style={{color: '#10b981'}}>{item.area_executada || 0} {item.unidade_medida || 'm²'}</strong>
+                    </div>
+                </div>
+            )}
+
             {/* Progress Bar */}
             <div className="progress-container">
                 <div 
@@ -209,206 +244,313 @@ const CardCronograma = ({ item, onEdit, onDelete }) => {
     );
 };
 
-// Modal de Adicionar/Editar
-const CronogramaModal = ({ item, onClose, onSave, obraId }) => {
+// ==================== EDIT STAGE MODAL COM DOIS MODOS ====================
+const EditStageModal = ({ item, onClose, onSave, obraId }) => {
+    const [tipoMedicao, setTipoMedicao] = useState(item?.tipo_medicao || 'empreitada');
     const [formData, setFormData] = useState({
-        servico_nome: '',
-        ordem: 1,
-        // PLANEJAMENTO
-        data_inicio: '',
-        data_fim_prevista: '',
-        // EXECUÇÃO REAL
-        data_inicio_real: '',
-        data_fim_real: '',
-        percentual_conclusao: 0,
-        observacoes: ''
+        servico_nome: item?.servico_nome || '',
+        ordem: item?.ordem || '',
+        data_inicio: item?.data_inicio || '',
+        data_fim_prevista: item?.data_fim_prevista || '',
+        data_inicio_real: item?.data_inicio_real || '',
+        data_fim_real: item?.data_fim_real || '',
+        percentual_conclusao: item?.percentual_conclusao || 0,
+        observacoes: item?.observacoes || '',
+        // Campos de área/quantidade
+        area_total: item?.area_total || '',
+        area_executada: item?.area_executada || '',
+        unidade_medida: item?.unidade_medida || 'm²'
     });
 
+    // Calcular percentual automaticamente quando for modo área
     useEffect(() => {
-        if (item) {
-            setFormData({
-                ...item,
-                data_inicio: item.data_inicio || '',
-                data_fim_prevista: item.data_fim_prevista || '',
-                data_inicio_real: item.data_inicio_real || '',
-                data_fim_real: item.data_fim_real || '',
-            });
+        if (tipoMedicao === 'area' && formData.area_total > 0) {
+            const areaExec = parseFloat(formData.area_executada) || 0;
+            const areaTotal = parseFloat(formData.area_total);
+            const percentual = Math.min(100, Math.round((areaExec / areaTotal) * 100));
+            setFormData(prev => ({ ...prev, percentual_conclusao: percentual }));
         }
-    }, [item]);
+    }, [formData.area_executada, formData.area_total, tipoMedicao]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'percentual_conclusao' || name === 'ordem' 
-                ? parseFloat(value) || 0 
-                : value
-        }));
-    };
+    // Auto-preencher data_inicio_real quando percentual > 0 e não tiver data
+    useEffect(() => {
+        if (formData.percentual_conclusao > 0 && !formData.data_inicio_real) {
+            const hoje = new Date().toISOString().split('T')[0];
+            setFormData(prev => ({ ...prev, data_inicio_real: hoje }));
+        }
+    }, [formData.percentual_conclusao]);
 
-    const handleSubmit = async (e) => {
+    // Auto-preencher data_fim_real quando percentual = 100%
+    useEffect(() => {
+        if (formData.percentual_conclusao >= 100 && !formData.data_fim_real) {
+            const hoje = new Date().toISOString().split('T')[0];
+            setFormData(prev => ({ ...prev, data_fim_real: hoje }));
+        }
+    }, [formData.percentual_conclusao]);
+
+    const handleSubmit = (e) => {
         e.preventDefault();
         
-        const dataToSend = {
+        // Validações
+        if (!formData.servico_nome || !formData.data_inicio || !formData.data_fim_prevista) {
+            alert('Preencha os campos obrigatórios');
+            return;
+        }
+
+        // Se for modo área, validar campos de área
+        if (tipoMedicao === 'area') {
+            if (!formData.area_total || parseFloat(formData.area_total) <= 0) {
+                alert('Informe a área total válida');
+                return;
+            }
+        }
+
+        const dataToSave = {
             ...formData,
             obra_id: obraId,
-            percentual_conclusao: Math.min(100, Math.max(0, formData.percentual_conclusao)),
-            // Enviar string vazia como null
-            data_inicio_real: formData.data_inicio_real || null,
-            data_fim_real: formData.data_fim_real || null
+            tipo_medicao: tipoMedicao,
+            // Limpar campos de área se for empreitada
+            ...(tipoMedicao === 'empreitada' && {
+                area_total: null,
+                area_executada: null,
+                unidade_medida: null
+            })
         };
 
-        onSave(dataToSend);
+        onSave(dataToSave);
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="close-modal-btn">&times;</button>
-                <h2>{item ? 'Editar Etapa' : 'Nova Etapa do Cronograma'}</h2>
-                
+        <div className="modal-overlay">
+            <div className="modal-content-cronograma">
+                <div className="modal-header">
+                    <h3>{item ? '✏️ Editar Etapa' : '➕ Nova Etapa'}</h3>
+                    <button className="btn-close" onClick={onClose}>✕</button>
+                </div>
+
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Nome do Serviço/Etapa *</label>
-                        <input 
-                            type="text" 
-                            name="servico_nome" 
-                            value={formData.servico_nome} 
-                            onChange={handleChange} 
-                            placeholder="Ex: Fundação, Estrutura, Alvenaria..."
-                            required 
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Ordem de Execução *</label>
-                        <input 
-                            type="number" 
-                            name="ordem" 
-                            value={formData.ordem} 
-                            onChange={handleChange} 
-                            min="1"
-                            required 
-                        />
-                    </div>
-
-                    {/* SEÇÃO: PLANEJAMENTO */}
-                    <div style={{
-                        background: '#f0f9ff', 
-                        padding: '15px', 
-                        borderRadius: '8px',
-                        border: '2px solid #3b82f6',
-                        marginBottom: '15px'
-                    }}>
-                        <h4 style={{margin: '0 0 12px 0', color: '#1e40af', fontSize: '0.95em'}}>
-                            📋 PLANEJAMENTO (Datas Previstas)
-                        </h4>
-                        
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Data de Início Prevista *</label>
-                                <input 
-                                    type="date" 
-                                    name="data_inicio" 
-                                    value={formData.data_inicio} 
-                                    onChange={handleChange} 
-                                    required 
+                    {/* ESCOLHA DO TIPO DE MEDIÇÃO */}
+                    <div className="form-section">
+                        <label className="form-label">
+                            <strong>📊 Tipo de Medição</strong>
+                        </label>
+                        <div className="radio-group">
+                            <label className={`radio-card ${tipoMedicao === 'empreitada' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    value="empreitada"
+                                    checked={tipoMedicao === 'empreitada'}
+                                    onChange={(e) => setTipoMedicao(e.target.value)}
                                 />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Data de Término Prevista *</label>
-                                <input 
-                                    type="date" 
-                                    name="data_fim_prevista" 
-                                    value={formData.data_fim_prevista} 
-                                    onChange={handleChange} 
-                                    required 
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* SEÇÃO: EXECUÇÃO REAL */}
-                    <div style={{
-                        background: '#f0fdf4', 
-                        padding: '15px', 
-                        borderRadius: '8px',
-                        border: '2px solid #10b981',
-                        marginBottom: '15px'
-                    }}>
-                        <h4 style={{margin: '0 0 12px 0', color: '#047857', fontSize: '0.95em'}}>
-                            🎯 EXECUÇÃO REAL (Atualizar Manualmente)
-                        </h4>
-                        
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Data de Início Real (quando começou)</label>
-                                <input 
-                                    type="date" 
-                                    name="data_inicio_real" 
-                                    value={formData.data_inicio_real} 
-                                    onChange={handleChange} 
-                                />
-                                <small style={{color: '#6b7280', fontSize: '0.8em'}}>
-                                    Deixe vazio se ainda não iniciou
-                                </small>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Data de Término Real (quando terminou)</label>
-                                <input 
-                                    type="date" 
-                                    name="data_fim_real" 
-                                    value={formData.data_fim_real} 
-                                    onChange={handleChange} 
-                                />
-                                <small style={{color: '#6b7280', fontSize: '0.8em'}}>
-                                    Deixe vazio se ainda não terminou
-                                </small>
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>
-                                Percentual de Conclusão (%) 
-                                <span style={{color: '#047857', fontWeight: 'bold'}}> - Avanço Físico Real</span>
+                                <div className="radio-content">
+                                    <div className="radio-icon">📋</div>
+                                    <div>
+                                        <div className="radio-title">Por Empreitada</div>
+                                        <div className="radio-description">
+                                            Ajuste manual do percentual com slider
+                                        </div>
+                                    </div>
+                                </div>
                             </label>
-                            <div className="slider-container">
-                                <input 
-                                    type="range" 
-                                    name="percentual_conclusao" 
-                                    value={formData.percentual_conclusao} 
-                                    onChange={handleChange} 
-                                    min="0"
-                                    max="100"
-                                    step="5"
-                                    className="slider"
+
+                            <label className={`radio-card ${tipoMedicao === 'area' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    value="area"
+                                    checked={tipoMedicao === 'area'}
+                                    onChange={(e) => setTipoMedicao(e.target.value)}
                                 />
-                                <span className="slider-value">{formData.percentual_conclusao}%</span>
-                            </div>
-                            <small style={{color: '#6b7280', fontSize: '0.8em'}}>
-                                ⚠️ Este é o avanço físico REAL da obra, não é calculado pelos dias!
-                            </small>
+                                <div className="radio-content">
+                                    <div className="radio-icon">📐</div>
+                                    <div>
+                                        <div className="radio-title">Por Área/Quantidade</div>
+                                        <div className="radio-description">
+                                            Calcula percentual automaticamente
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label>Observações</label>
-                        <textarea 
-                            name="observacoes" 
-                            value={formData.observacoes} 
-                            onChange={handleChange} 
-                            placeholder="Detalhes adicionais, equipe responsável, etc..."
+                    {/* INFORMAÇÕES BÁSICAS */}
+                    <div className="form-section">
+                        <label className="form-label">
+                            Nome do Serviço/Etapa *
+                        </label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={formData.servico_nome}
+                            onChange={(e) => setFormData({...formData, servico_nome: e.target.value})}
+                            placeholder="Ex: Contrapiso, Alvenaria, Pintura..."
+                            required
+                        />
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Ordem</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={formData.ordem}
+                                onChange={(e) => setFormData({...formData, ordem: e.target.value})}
+                                placeholder="1"
+                            />
+                        </div>
+                    </div>
+
+                    {/* CAMPOS DE ÁREA - só aparecem se tipo = area */}
+                    {tipoMedicao === 'area' && (
+                        <div className="form-section area-section">
+                            <label className="form-label">
+                                <strong>📐 Medição de Área/Quantidade</strong>
+                            </label>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Área Total *</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="form-input"
+                                        value={formData.area_total}
+                                        onChange={(e) => setFormData({...formData, area_total: e.target.value})}
+                                        placeholder="100"
+                                        required={tipoMedicao === 'area'}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Área Executada</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="form-input"
+                                        value={formData.area_executada}
+                                        onChange={(e) => setFormData({...formData, area_executada: e.target.value})}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Unidade</label>
+                                    <select
+                                        className="form-input"
+                                        value={formData.unidade_medida}
+                                        onChange={(e) => setFormData({...formData, unidade_medida: e.target.value})}
+                                    >
+                                        <option value="m²">m²</option>
+                                        <option value="m³">m³</option>
+                                        <option value="m">m</option>
+                                        <option value="un">un</option>
+                                        <option value="kg">kg</option>
+                                        <option value="L">L</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="info-box">
+                                ℹ️ O percentual será calculado automaticamente: (Executado ÷ Total) × 100
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PERCENTUAL - sempre aparece, mas com comportamento diferente */}
+                    <div className="form-section">
+                        <label className="form-label">
+                            Percentual de Conclusão: <strong>{formData.percentual_conclusao}%</strong>
+                        </label>
+                        {tipoMedicao === 'empreitada' ? (
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                step="5"
+                                className="slider"
+                                value={formData.percentual_conclusao}
+                                onChange={(e) => setFormData({...formData, percentual_conclusao: parseInt(e.target.value)})}
+                            />
+                        ) : (
+                            <div className="readonly-progress">
+                                <div className="progress-bar" style={{width: `${formData.percentual_conclusao}%`}}>
+                                    {formData.percentual_conclusao}%
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* PLANEJAMENTO */}
+                    <div className="form-section">
+                        <label className="form-label">
+                            <strong>📋 PLANEJAMENTO</strong>
+                        </label>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label className="form-label">Data Início Prevista *</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={formData.data_inicio}
+                                    onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Data Fim Prevista *</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={formData.data_fim_prevista}
+                                    onChange={(e) => setFormData({...formData, data_fim_prevista: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* EXECUÇÃO REAL */}
+                    <div className="form-section">
+                        <label className="form-label">
+                            <strong>🎯 EXECUÇÃO REAL</strong>
+                        </label>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label className="form-label">Data Início Real</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={formData.data_inicio_real}
+                                    onChange={(e) => setFormData({...formData, data_inicio_real: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Data Fim Real</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={formData.data_fim_real}
+                                    onChange={(e) => setFormData({...formData, data_fim_real: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* OBSERVAÇÕES */}
+                    <div className="form-section">
+                        <label className="form-label">Observações</label>
+                        <textarea
+                            className="form-textarea"
+                            value={formData.observacoes}
+                            onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                            placeholder="Notas adicionais sobre esta etapa..."
                             rows="3"
                         />
                     </div>
 
-                    <div className="form-actions">
-                        <button type="button" onClick={onClose} className="cancel-btn">
+                    {/* BOTÕES */}
+                    <div className="modal-footer">
+                        <button type="button" className="btn-secondary" onClick={onClose}>
                             Cancelar
                         </button>
-                        <button type="submit" className="submit-btn">
+                        <button type="submit" className="btn-primary">
                             {item ? 'Salvar Alterações' : 'Adicionar Etapa'}
                         </button>
                     </div>
@@ -421,10 +563,10 @@ const CronogramaModal = ({ item, onClose, onSave, obraId }) => {
 // Modal de Importar Serviços
 const ImportarServicosModal = ({ obraId, onClose, onImport }) => {
     const [servicos, setServicos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedServicos, setSelectedServicos] = useState([]);
+    const [servicosSelecionados, setServicosSelecionados] = useState([]);
     const [dataInicio, setDataInicio] = useState('');
     const [diasPorServico, setDiasPorServico] = useState(7);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchServicos();
@@ -432,17 +574,16 @@ const ImportarServicosModal = ({ obraId, onClose, onImport }) => {
 
     const fetchServicos = async () => {
         try {
-            setLoading(true);
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/servicos`, {
+            const response = await fetch(`${API_URL}/obras/${obraId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             
             if (response.ok) {
-                const data = await response.json();
-                setServicos(data);
+                const obra = await response.json();
+                setServicos(obra.servicos || []);
             }
         } catch (error) {
             console.error('Erro ao buscar serviços:', error);
@@ -451,137 +592,100 @@ const ImportarServicosModal = ({ obraId, onClose, onImport }) => {
         }
     };
 
-    const handleToggleServico = (servicoId) => {
-        setSelectedServicos(prev => 
-            prev.includes(servicoId)
-                ? prev.filter(id => id !== servicoId)
-                : [...prev, servicoId]
-        );
+    const toggleServico = (servico) => {
+        const exists = servicosSelecionados.find(s => s.id === servico.id);
+        if (exists) {
+            setServicosSelecionados(servicosSelecionados.filter(s => s.id !== servico.id));
+        } else {
+            setServicosSelecionados([...servicosSelecionados, servico]);
+        }
     };
 
     const handleImport = () => {
-        if (selectedServicos.length === 0) {
+        if (servicosSelecionados.length === 0) {
             alert('Selecione pelo menos um serviço');
             return;
         }
         if (!dataInicio) {
-            alert('Informe a data de início');
+            alert('Defina a data de início');
             return;
         }
-
-        const servicosSelecionados = servicos.filter(s => selectedServicos.includes(s.id));
         onImport(servicosSelecionados, dataInicio, diasPorServico);
     };
 
+    if (loading) {
+        return (
+            <div className="modal-overlay">
+                <div className="modal-content-cronograma">
+                    <p>Carregando serviços...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="close-modal-btn">&times;</button>
-                <h2>📥 Importar Serviços para o Cronograma</h2>
-                
-                {loading ? (
-                    <div style={{textAlign: 'center', padding: '20px'}}>Carregando serviços...</div>
-                ) : servicos.length === 0 ? (
-                    <div style={{textAlign: 'center', padding: '20px', color: '#6b7280'}}>
-                        <p>Nenhum serviço cadastrado nesta obra.</p>
-                        <small>Cadastre serviços primeiro para poder importá-los.</small>
+        <div className="modal-overlay">
+            <div className="modal-content-cronograma">
+                <div className="modal-header">
+                    <h3>📥 Importar Serviços para o Cronograma</h3>
+                    <button className="btn-close" onClick={onClose}>✕</button>
+                </div>
+
+                <div className="import-config">
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">Data de Início</label>
+                            <input
+                                type="date"
+                                className="form-input"
+                                value={dataInicio}
+                                onChange={(e) => setDataInicio(e.target.value)}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Dias por Serviço</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={diasPorServico}
+                                onChange={(e) => setDiasPorServico(parseInt(e.target.value))}
+                                min="1"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {servicos.length === 0 ? (
+                    <div className="empty-state">
+                        <p>Nenhum serviço cadastrado nesta obra ainda.</p>
                     </div>
                 ) : (
                     <>
-                        <div style={{marginBottom: '20px'}}>
-                            <div className="form-group">
-                                <label>Data de Início do Cronograma *</label>
-                                <input 
-                                    type="date" 
-                                    value={dataInicio}
-                                    onChange={(e) => setDataInicio(e.target.value)}
-                                    required
-                                />
-                                <small style={{color: '#6b7280', fontSize: '0.85em'}}>
-                                    Os serviços serão agendados em sequência a partir desta data
-                                </small>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Dias por Serviço (padrão)</label>
-                                <input 
-                                    type="number" 
-                                    value={diasPorServico}
-                                    onChange={(e) => setDiasPorServico(parseInt(e.target.value) || 7)}
-                                    min="1"
-                                    max="365"
-                                />
-                                <small style={{color: '#6b7280', fontSize: '0.85em'}}>
-                                    Cada serviço terá esse prazo. Você pode ajustar depois.
-                                </small>
-                            </div>
-                        </div>
-
-                        <div style={{
-                            maxHeight: '300px', 
-                            overflowY: 'auto', 
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            padding: '10px'
-                        }}>
-                            <h4 style={{margin: '0 0 10px 0', fontSize: '0.9em', color: '#6b7280'}}>
-                                Selecione os serviços ({selectedServicos.length} selecionados)
-                            </h4>
-                            {servicos.map((servico, index) => (
-                                <div 
-                                    key={servico.id}
-                                    style={{
-                                        padding: '10px',
-                                        marginBottom: '8px',
-                                        background: selectedServicos.includes(servico.id) ? '#f0f9ff' : '#f9fafb',
-                                        border: selectedServicos.includes(servico.id) ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onClick={() => handleToggleServico(servico.id)}
-                                >
-                                    <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                        <input 
-                                            type="checkbox"
-                                            checked={selectedServicos.includes(servico.id)}
-                                            onChange={() => {}}
-                                            style={{cursor: 'pointer'}}
-                                        />
-                                        <div style={{flex: 1}}>
-                                            <strong>{servico.nome}</strong>
-                                            {servico.responsavel && (
-                                                <div style={{fontSize: '0.85em', color: '#6b7280'}}>
-                                                    Responsável: {servico.responsavel}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <span style={{
-                                            background: '#10b981',
-                                            color: 'white',
-                                            padding: '2px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '0.75em',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            #{index + 1}
+                        <div className="servicos-list">
+                            <h4>Selecione os Serviços:</h4>
+                            {servicos.map(servico => (
+                                <label key={servico.id} className="servico-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={servicosSelecionados.some(s => s.id === servico.id)}
+                                        onChange={() => toggleServico(servico)}
+                                    />
+                                    <span className="servico-nome">{servico.nome}</span>
+                                    {servico.responsavel && (
+                                        <span className="servico-responsavel">
+                                            👤 {servico.responsavel}
                                         </span>
-                                    </div>
-                                </div>
+                                    )}
+                                </label>
                             ))}
                         </div>
 
-                        <div className="form-actions" style={{marginTop: '20px'}}>
-                            <button type="button" onClick={onClose} className="cancel-btn">
+                        <div className="modal-footer">
+                            <button className="btn-secondary" onClick={onClose}>
                                 Cancelar
                             </button>
-                            <button 
-                                type="button" 
-                                onClick={handleImport}
-                                className="submit-btn"
-                                disabled={selectedServicos.length === 0 || !dataInicio}
-                            >
-                                Importar {selectedServicos.length} Serviço(s)
+                            <button className="btn-primary" onClick={handleImport}>
+                                Importar {servicosSelecionados.length} Serviço(s)
                             </button>
                         </div>
                     </>
@@ -596,20 +700,20 @@ const CronogramaObra = ({ obraId }) => {
     const [cronograma, setCronograma] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [filtroStatus, setFiltroStatus] = useState('todos');
-    const [showImportModal, setShowImportModal] = useState(false);
 
-    // Fetch inicial
     useEffect(() => {
-        fetchCronograma();
+        if (obraId) {
+            fetchCronograma();
+        }
     }, [obraId]);
 
     const fetchCronograma = async () => {
         try {
-            setLoading(true);
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/cronograma`, {
+            const response = await fetch(`${API_URL}/cronograma/${obraId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -706,6 +810,7 @@ const CronogramaObra = ({ obraId }) => {
                     data_inicio: currentDate.toISOString().split('T')[0],
                     data_fim_prevista: dataFim.toISOString().split('T')[0],
                     percentual_conclusao: 0,
+                    tipo_medicao: 'empreitada', // padrão ao importar
                     observacoes: servico.responsavel 
                         ? `Importado de serviços - Responsável: ${servico.responsavel}` 
                         : 'Importado de serviços'
@@ -803,7 +908,7 @@ const CronogramaObra = ({ obraId }) => {
             )}
 
             {showModal && (
-                <CronogramaModal 
+                <EditStageModal 
                     item={editingItem}
                     onClose={() => {
                         setShowModal(false);

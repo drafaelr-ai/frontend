@@ -1,96 +1,111 @@
-/* ============================================================================
-   CRONOGRAMA DA OBRA - CSS RESPONSIVO
-   ============================================================================ */
-
+/* ==================== CONTAINER PRINCIPAL ==================== */
 .cronograma-container {
-    background: var(--cor-card, #ffffff);
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-/* ============================================================================
-   GRID DE CARDS
-   ============================================================================ */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
+.card-header h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.5em;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.filtro-status {
+    padding: 8px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filtro-status:hover {
+    border-color: #4f46e5;
+}
+
+.acao-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95em;
+}
+
+.acao-btn:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.add-btn {
+    background: #10b981;
+}
+
+.add-btn:hover {
+    background: #059669;
+}
+
+/* ==================== GRID DE CARDS ==================== */
 .cronograma-grid {
     display: grid;
-    gap: 16px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
 }
-
-/* Desktop: 2 colunas */
-@media (min-width: 768px) {
-    .cronograma-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* Mobile: 1 coluna */
-@media (max-width: 767px) {
-    .cronograma-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ============================================================================
-   CARD INDIVIDUAL
-   ============================================================================ */
 
 .card-cronograma {
     background: white;
     border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--cor-primaria, #4f46e5);
-    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    border-left: 4px solid #4f46e5;
 }
 
 .card-cronograma:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Cores por status */
-.card-cronograma.nao_iniciado {
-    border-left-color: #6c757d;
-    opacity: 0.9;
-}
-
-.card-cronograma.em_andamento {
-    border-left-color: #3b82f6;
-}
-
-.card-cronograma.concluido {
-    border-left-color: #10b981;
-    opacity: 0.7;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
 .card-cronograma.atrasado {
     border-left-color: #ef4444;
-    animation: pulse-red 2s infinite;
 }
 
-@keyframes pulse-red {
-    0%, 100% {
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-    }
-    50% {
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
-    }
+.card-cronograma.concluido {
+    border-left-color: #10b981;
 }
 
-/* ============================================================================
-   CABEÇALHO DO CARD
-   ============================================================================ */
+.card-cronograma.nao_iniciado {
+    border-left-color: #6c757d;
+}
 
+/* ==================== CABEÇALHO DO CARD ==================== */
 .cronograma-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
-    gap: 10px;
 }
 
 .cronograma-title {
@@ -102,348 +117,613 @@
 
 .cronograma-title h4 {
     margin: 0;
+    color: #1f2937;
     font-size: 1.1em;
-    color: var(--cor-texto, #1a202c);
-    font-weight: 600;
 }
 
 .ordem-badge {
-    background: var(--cor-fundo, #f4f7f6);
-    color: var(--cor-texto-secundario, #4a5568);
-    padding: 2px 8px;
-    border-radius: 8px;
+    background: #e5e7eb;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 4px;
     font-size: 0.75em;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 .badge-status {
-    padding: 4px 10px;
-    border-radius: 12px;
-    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 0.75em;
     font-weight: 600;
+    color: white;
     white-space: nowrap;
-    text-transform: uppercase;
 }
 
-/* ============================================================================
-   PROGRESS BAR
-   ============================================================================ */
-
+/* ==================== PROGRESS BAR ==================== */
 .progress-container {
-    position: relative;
-    background: #e9ecef;
+    width: 100%;
     height: 28px;
+    background: #f3f4f6;
     border-radius: 14px;
-    margin: 12px 0;
     overflow: hidden;
+    margin: 16px 0;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #4f46e5, #10b981);
-    transition: width 0.5s ease;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding-right: 10px;
-    border-radius: 14px;
-    min-width: 30px;
+    justify-content: center;
+    transition: width 0.5s ease;
+    position: relative;
 }
 
 .progress-text {
-    font-weight: bold;
-    font-size: 0.85em;
     color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+    font-size: 0.85em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* ============================================================================
-   TIMELINE INFO
-   ============================================================================ */
-
+/* ==================== TIMELINE INFO ==================== */
 .timeline-info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 0.9em;
-    color: var(--cor-texto-secundario, #4a5568);
     margin: 12px 0;
 }
 
 .timeline-dates {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
     gap: 8px;
+    margin: 8px 0;
+    font-size: 0.9em;
+    color: #4b5563;
 }
 
-.timeline-dates .arrow {
-    color: var(--cor-primaria, #4f46e5);
+.arrow {
+    color: #9ca3af;
     font-weight: bold;
 }
 
 .timeline-duration {
-    display: flex;
-    gap: 5px;
     font-size: 0.85em;
-    font-weight: 500;
+    color: #6b7280;
+    margin-top: 4px;
 }
 
 .text-danger {
     color: #ef4444;
-    font-weight: bold;
+    font-weight: 600;
 }
 
-/* ============================================================================
-   MINI TIMELINE VISUAL
-   ============================================================================ */
-
+/* ==================== MINI TIMELINE ==================== */
 .mini-timeline {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #eee;
+    margin: 16px 0;
 }
 
 .timeline-track {
-    position: relative;
     height: 8px;
-    background: #e9ecef;
+    background: #e5e7eb;
     border-radius: 4px;
+    position: relative;
     overflow: visible;
 }
 
 .timeline-progress {
     height: 100%;
-    background: #10b981;
     border-radius: 4px;
     transition: width 0.5s ease;
 }
 
 .timeline-marker {
     position: absolute;
-    top: -6px;
-    background: var(--cor-primaria, #4f46e5);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
+    top: -20px;
+    transform: translateX(-50%);
     font-size: 0.7em;
-    font-weight: bold;
-    transform: translateX(-50%);
+    font-weight: 600;
+    color: #4f46e5;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 2px solid #4f46e5;
     white-space: nowrap;
-    z-index: 2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.timeline-marker::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--cor-primaria, #4f46e5);
-}
-
-/* ============================================================================
-   OBSERVAÇÕES
-   ============================================================================ */
-
+/* ==================== OBSERVAÇÕES E AÇÕES ==================== */
 .cronograma-obs {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 8px;
-    margin: 12px 0;
-    border-left: 3px solid var(--cor-info, #3b82f6);
+    background: #f9fafb;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 12px;
 }
 
 .cronograma-obs small {
-    color: var(--cor-texto-secundario, #4a5568);
+    color: #6b7280;
     font-size: 0.85em;
-    line-height: 1.4;
 }
-
-/* ============================================================================
-   AÇÕES DO CARD
-   ============================================================================ */
 
 .cronograma-actions {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #eee;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
 }
 
-.cronograma-actions button {
+.btn-editar, .btn-delete {
     flex: 1;
     padding: 8px 12px;
     border: none;
     border-radius: 6px;
-    font-size: 0.85em;
-    font-weight: 600;
     cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
     transition: all 0.2s;
 }
 
 .btn-editar {
-    background: var(--cor-primaria, #4f46e5);
+    background: #3b82f6;
     color: white;
 }
 
 .btn-editar:hover {
-    background: #4338ca;
-    transform: translateY(-1px);
+    background: #2563eb;
 }
 
 .btn-delete {
-    background: #f8f9fa;
-    color: var(--cor-vermelho, #ef4444);
-    border: 1px solid #e9ecef;
-}
-
-.btn-delete:hover {
-    background: var(--cor-vermelho, #ef4444);
+    background: #ef4444;
     color: white;
 }
 
-/* ============================================================================
-   FILTROS E HEADER
-   ============================================================================ */
+.btn-delete:hover {
+    background: #dc2626;
+}
 
-.filtro-status {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 0.9em;
+/* ==================== MODAL ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content-cronograma {
     background: white;
-    cursor: pointer;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
 }
 
-/* ============================================================================
-   EMPTY STATE
-   ============================================================================ */
-
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--cor-texto-secundario, #4a5568);
-}
-
-.empty-state p {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-}
-
-/* ============================================================================
-   MODAL
-   ============================================================================ */
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-@media (max-width: 767px) {
-    .form-row {
-        grid-template-columns: 1fr;
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
 }
 
-/* Slider de Percentual */
-.slider-container {
+.modal-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 15px;
+    padding: 24px;
+    border-bottom: 2px solid #e5e7eb;
 }
 
+.modal-header h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.5em;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: #9ca3af;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+/* ==================== FORM STYLES ==================== */
+form {
+    padding: 24px;
+}
+
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95em;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==================== RADIO CARDS (TIPO DE MEDIÇÃO) ==================== */
+.radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.radio-card {
+    position: relative;
+    border: 3px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+}
+
+.radio-card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.radio-card.active {
+    border-color: #4f46e5;
+    background: linear-gradient(135deg, #f0f0ff 0%, #ffffff 100%);
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.2);
+}
+
+.radio-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.radio-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.radio-icon {
+    font-size: 2em;
+    line-height: 1;
+}
+
+.radio-title {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1.05em;
+    margin-bottom: 4px;
+}
+
+.radio-description {
+    font-size: 0.85em;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* ==================== ÁREA SECTION ==================== */
+.area-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid #bae6fd;
+}
+
+.info-box {
+    background: #dbeafe;
+    border-left: 4px solid #3b82f6;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #1e40af;
+    margin-top: 12px;
+}
+
+/* ==================== SLIDER ==================== */
 .slider {
-    flex: 1;
+    width: 100%;
     height: 8px;
     border-radius: 4px;
-    background: #e9ecef;
+    background: linear-gradient(to right, #e5e7eb 0%, #10b981 100%);
     outline: none;
+    cursor: pointer;
     -webkit-appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: var(--cor-primaria, #4f46e5);
+    background: #4f46e5;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
     transition: all 0.2s;
 }
 
 .slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    background: #4338ca;
 }
 
 .slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: var(--cor-primaria, #4f46e5);
+    background: #4f46e5;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
     transition: all 0.2s;
 }
 
 .slider::-moz-range-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    background: #4338ca;
 }
 
-.slider-value {
-    font-weight: bold;
-    color: var(--cor-primaria, #4f46e5);
+/* ==================== READONLY PROGRESS ==================== */
+.readonly-progress {
+    height: 32px;
+    background: #f3f4f6;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.readonly-progress .progress-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, #4f46e5, #10b981);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9em;
+    transition: width 0.5s ease;
+}
+
+/* ==================== MODAL FOOTER ==================== */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 2px solid #e5e7eb;
+}
+
+.btn-secondary, .btn-primary {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+.btn-primary {
+    background: #4f46e5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* ==================== IMPORTAR SERVIÇOS ==================== */
+.import-config {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.servicos-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.servicos-list h4 {
+    margin: 0 0 12px 0;
+    color: #374151;
     font-size: 1.1em;
-    min-width: 45px;
-    text-align: right;
 }
 
-/* ============================================================================
-   RESPONSIVIDADE MOBILE
-   ============================================================================ */
+.servico-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
 
-@media (max-width: 767px) {
+.servico-checkbox:hover {
+    border-color: #4f46e5;
+    transform: translateX(4px);
+}
+
+.servico-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.servico-nome {
+    flex: 1;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.servico-responsavel {
+    font-size: 0.85em;
+    color: #6b7280;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.empty-state p {
+    color: #6b7280;
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+.loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    font-size: 1.2em;
+    color: #6b7280;
+}
+
+/* ==================== RESPONSIVO ==================== */
+@media (max-width: 768px) {
+    .cronograma-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .acao-btn, .filtro-status {
+        width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .radio-group {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content-cronograma {
+        max-height: 95vh;
+    }
+
+    .cronograma-actions {
+        flex-direction: column;
+    }
+
+    .btn-editar, .btn-delete {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
     .cronograma-container {
-        padding: 15px;
+        padding: 12px;
     }
-    
+
     .card-cronograma {
-        padding: 14px;
+        padding: 16px;
     }
-    
-    .cronograma-title h4 {
-        font-size: 1em;
+
+    .modal-content-cronograma {
+        border-radius: 0;
+        max-height: 100vh;
+        height: 100vh;
     }
-    
-    .timeline-dates {
-        font-size: 0.85em;
-    }
-    
-    .badge-status {
-        font-size: 0.7em;
-        padding: 3px 8px;
-    }
-    
-    .progress-container {
-        height: 24px;
-    }
-    
-    .timeline-marker {
-        font-size: 0.65em;
-        padding: 2px 6px;
+
+    form {
+        padding: 16px;
     }
 }
