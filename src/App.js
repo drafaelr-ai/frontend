@@ -453,7 +453,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                 <div>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h2>{servico.nome}</h2>
-                        {user.role === 'administrador' && (
+                        {(user.role === 'administrador' || user.role === 'master') && (
                             <button onClick={handleDeletarServico} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }} title="Excluir Serviço" > 🗑️ </button>
                         )}
                     </div>
@@ -472,7 +472,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                     <th>Fornecedor</th>
                                     <th>Valor Total</th>
                                     <th>Valor Pago</th>
-                                    {user.role === 'administrador' && <th style={{width: '80px'}}>Ações</th>}
+                                    {(user.role === 'administrador' || user.role === 'master') && <th style={{width: '80px'}}>Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -485,7 +485,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                             <td>{formatCurrency(pag.valor_total)}</td>
                                             <td>{formatCurrency(pag.valor_pago)}</td>
                                             
-                                            {user.role === 'administrador' && (
+                                            {(user.role === 'administrador' || user.role === 'master') && (
                                                 <td style={{textAlign: 'center'}}>
                                                     <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
                                                 </td>
@@ -2982,7 +2982,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             📊 Relatório Financeiro
                         </button>
                         
-                        {user.role === 'administrador' && (
+                        {(user.role === 'administrador' || user.role === 'master') && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
                                 Gerenciar Usuários
                             </button>
@@ -2991,7 +2991,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 </header>
 
-                {user.role === 'administrador' && (
+                {(user.role === 'administrador' || user.role === 'master') && (
                     <div className="card-full">
                         <h3>Cadastrar Nova Obra</h3>
                         <form onSubmit={handleAddObra} className="form-add-obra">
@@ -3007,7 +3007,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         obras.map(obra => (
                             <div key={obra.id} className="card-obra">
                                 
-                                {user.role === 'administrador' && (
+                                {(user.role === 'administrador' || user.role === 'master') && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
                                         className="card-obra-delete-btn"
