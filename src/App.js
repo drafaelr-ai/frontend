@@ -3585,6 +3585,29 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
                                             )
                                         ) : null}
+                                        
+                                        {/* NOVO: Botão Deletar - Apenas MASTER pode deletar pagamentos PAGOS */}
+                                        {user.role === 'master' && item.tipo_registro === 'lancamento' && (
+                                            <button 
+                                                onClick={() => {
+                                                    if (window.confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR PERMANENTEMENTE este pagamento já executado:\n\n"${item.descricao}"\nValor: ${formatCurrency(item.valor_pago)}\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja realmente continuar?`)) {
+                                                        handleDeletarLancamento(`lanc-${item.id}`);
+                                                    }
+                                                }} 
+                                                className="acao-icon-btn delete-btn" 
+                                                title="Excluir Pagamento (Apenas MASTER)" 
+                                                style={{ 
+                                                    background: 'none', 
+                                                    border: 'none', 
+                                                    cursor: 'pointer', 
+                                                    fontSize: '1.2em', 
+                                                    padding: '5px', 
+                                                    color: '#dc3545' 
+                                                }}
+                                            >
+                                                🗑️
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             )) : (
