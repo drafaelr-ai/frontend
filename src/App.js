@@ -2982,7 +2982,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             📊 Relatório Financeiro
                         </button>
                         
-                        {(user.role === 'administrador' || user.role === 'master') && (
+                        {user.role === 'master' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
                                 Gerenciar Usuários
                             </button>
