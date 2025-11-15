@@ -3586,12 +3586,31 @@ const totalOrcamentosPendentes = useMemo(() => {
                                             )
                                         ) : null}
                                         
-                                        {/* NOVO: Botão Deletar - Apenas MASTER pode deletar pagamentos PAGOS */}
-                                        {user.role === 'master' && item.tipo_registro === 'lancamento' && (
+                                        {/* NOVO: Botão Deletar - MASTER pode deletar QUALQUER pagamento PAGO */}
+                                        {user.role === 'master' && (
                                             <button 
                                                 onClick={() => {
                                                     if (window.confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR PERMANENTEMENTE este pagamento já executado:\n\n"${item.descricao}"\nValor: ${formatCurrency(item.valor_pago)}\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja realmente continuar?`)) {
-                                                        handleDeletarLancamento(`lanc-${item.id}`);
+                                                        // Deletar de acordo com o tipo
+                                                        if (item.tipo_registro === 'lancamento') {
+                                                            handleDeletarLancamento(`lanc-${item.id}`);
+                                                        } else if (item.tipo_registro === 'pagamento_servico') {
+                                                            // Deletar pagamento de serviço
+                                                            fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/pagamentos/${item.id}`, {
+                                                                method: 'DELETE'
+                                                            })
+                                                            .then(res => {
+                                                                if (!res.ok) throw new Error('Erro ao deletar');
+                                                                return res.json();
+                                                            })
+                                                            .then(() => {
+                                                                fetchObraData(obraSelecionada.id);
+                                                            })
+                                                            .catch(err => {
+                                                                console.error('Erro ao deletar pagamento de serviço:', err);
+                                                                alert('Erro ao deletar pagamento: ' + err.message);
+                                                            });
+                                                        }
                                                     }
                                                 }} 
                                                 className="acao-icon-btn delete-btn" 
