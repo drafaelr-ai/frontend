@@ -3,6 +3,9 @@
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .card-header {
@@ -14,6 +17,7 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-sizing: border-box;
 }
 
 .card-header h3 {
@@ -35,6 +39,7 @@
     font-size: 0.95em;
     cursor: pointer;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .filtro-status:hover {
@@ -51,6 +56,7 @@
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.95em;
+    box-sizing: border-box;
 }
 
 .acao-btn:hover {
@@ -70,8 +76,9 @@
 /* ==================== GRID DE CARDS ==================== */
 .cronograma-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
+    width: 100%;
 }
 
 .card-cronograma {
@@ -81,6 +88,9 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: all 0.3s;
     border-left: 4px solid #4f46e5;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .card-cronograma:hover {
@@ -106,6 +116,8 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .cronograma-title {
@@ -113,12 +125,15 @@
     align-items: center;
     gap: 8px;
     flex: 1;
+    min-width: 0;
 }
 
 .cronograma-title h4 {
     margin: 0;
     color: #1f2937;
     font-size: 1.1em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .ordem-badge {
@@ -128,6 +143,8 @@
     border-radius: 4px;
     font-size: 0.75em;
     font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .badge-status {
@@ -137,6 +154,7 @@
     font-weight: 600;
     color: white;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* ==================== PROGRESS BAR ==================== */
@@ -148,6 +166,7 @@
     overflow: hidden;
     margin: 16px 0;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-sizing: border-box;
 }
 
 .progress-bar {
@@ -178,6 +197,7 @@
     margin: 8px 0;
     font-size: 0.9em;
     color: #4b5563;
+    flex-wrap: wrap;
 }
 
 .arrow {
@@ -199,6 +219,8 @@
 /* ==================== MINI TIMELINE ==================== */
 .mini-timeline {
     margin: 16px 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .timeline-track {
@@ -207,6 +229,7 @@
     border-radius: 4px;
     position: relative;
     overflow: visible;
+    width: 100%;
 }
 
 .timeline-progress {
@@ -235,6 +258,9 @@
     padding: 8px;
     border-radius: 6px;
     margin-top: 12px;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .cronograma-obs small {
@@ -259,6 +285,7 @@
     font-size: 0.9em;
     font-weight: 600;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .btn-editar {
@@ -293,6 +320,7 @@
     z-index: 1000;
     padding: 20px;
     animation: fadeIn 0.2s ease;
+    box-sizing: border-box;
 }
 
 @keyframes fadeIn {
@@ -309,6 +337,7 @@
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     animation: slideUp 0.3s ease;
+    box-sizing: border-box;
 }
 
 @keyframes slideUp {
@@ -328,6 +357,7 @@
     align-items: center;
     padding: 24px;
     border-bottom: 2px solid #e5e7eb;
+    box-sizing: border-box;
 }
 
 .modal-header h3 {
@@ -359,6 +389,7 @@
 /* ==================== FORM STYLES ==================== */
 form {
     padding: 24px;
+    box-sizing: border-box;
 }
 
 .form-section {
@@ -381,6 +412,7 @@ form {
     font-size: 0.95em;
     transition: all 0.2s;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .form-input:focus, .form-textarea:focus {
@@ -416,6 +448,7 @@ form {
     cursor: pointer;
     transition: all 0.3s;
     background: white;
+    box-sizing: border-box;
 }
 
 .radio-card:hover {
@@ -466,6 +499,7 @@ form {
     padding: 16px;
     border-radius: 12px;
     border: 2px solid #bae6fd;
+    box-sizing: border-box;
 }
 
 .info-box {
@@ -476,6 +510,7 @@ form {
     font-size: 0.9em;
     color: #1e40af;
     margin-top: 12px;
+    box-sizing: border-box;
 }
 
 /* ==================== SLIDER ==================== */
@@ -529,6 +564,8 @@ form {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .readonly-progress .progress-bar {
@@ -560,6 +597,7 @@ form {
     font-size: 1em;
     cursor: pointer;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .btn-secondary {
@@ -588,6 +626,7 @@ form {
     background: #f9fafb;
     border-radius: 8px;
     margin-bottom: 16px;
+    box-sizing: border-box;
 }
 
 .servicos-list {
@@ -597,6 +636,7 @@ form {
     background: #f9fafb;
     border-radius: 8px;
     margin-bottom: 16px;
+    box-sizing: border-box;
 }
 
 .servicos-list h4 {
@@ -616,6 +656,7 @@ form {
     margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    box-sizing: border-box;
 }
 
 .servico-checkbox:hover {
@@ -633,6 +674,8 @@ form {
     flex: 1;
     font-weight: 600;
     color: #1f2937;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .servico-responsavel {
@@ -641,6 +684,7 @@ form {
     padding: 4px 8px;
     background: #f3f4f6;
     border-radius: 4px;
+    white-space: nowrap;
 }
 
 /* ==================== EMPTY STATE ==================== */
@@ -650,6 +694,7 @@ form {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-sizing: border-box;
 }
 
 .empty-state p {
@@ -669,13 +714,23 @@ form {
 
 /* ==================== RESPONSIVO ==================== */
 @media (max-width: 768px) {
+    .cronograma-container {
+        padding: 12px;
+    }
+
     .cronograma-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
     .card-header {
         flex-direction: column;
         gap: 16px;
+        padding: 12px;
+    }
+
+    .card-header h3 {
+        font-size: 1.25em;
     }
 
     .header-actions {
@@ -697,6 +752,19 @@ form {
 
     .modal-content-cronograma {
         max-height: 95vh;
+        margin: 0;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .modal-header h3 {
+        font-size: 1.25em;
+    }
+
+    form {
+        padding: 16px;
     }
 
     .cronograma-actions {
@@ -706,15 +774,44 @@ form {
     .btn-editar, .btn-delete {
         width: 100%;
     }
+
+    .card-cronograma {
+        padding: 16px;
+    }
+
+    .cronograma-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .badge-status {
+        align-self: flex-start;
+    }
+
+    .timeline-dates {
+        font-size: 0.85em;
+    }
+
+    .progress-container {
+        height: 24px;
+    }
+
+    .progress-text {
+        font-size: 0.8em;
+    }
 }
 
 @media (max-width: 480px) {
     .cronograma-container {
-        padding: 12px;
+        padding: 8px;
     }
 
     .card-cronograma {
-        padding: 16px;
+        padding: 12px;
+    }
+
+    .modal-overlay {
+        padding: 0;
     }
 
     .modal-content-cronograma {
@@ -724,6 +821,121 @@ form {
     }
 
     form {
-        padding: 16px;
+        padding: 12px;
+    }
+
+    .card-header {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+
+    .card-header h3 {
+        font-size: 1.1em;
+    }
+
+    .cronograma-title h4 {
+        font-size: 1em;
+    }
+
+    .badge-status {
+        font-size: 0.7em;
+        padding: 4px 8px;
+    }
+
+    .ordem-badge {
+        font-size: 0.7em;
+    }
+
+    .timeline-dates {
+        font-size: 0.8em;
+    }
+
+    .timeline-duration {
+        font-size: 0.8em;
+    }
+
+    .cronograma-obs {
+        padding: 6px;
+    }
+
+    .cronograma-obs small {
+        font-size: 0.8em;
+    }
+
+    .btn-editar, .btn-delete {
+        padding: 10px;
+        font-size: 0.85em;
+    }
+
+    .acao-btn {
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+
+    .modal-header {
+        padding: 12px;
+    }
+
+    .modal-header h3 {
+        font-size: 1.1em;
+    }
+
+    .btn-close {
+        width: 32px;
+        height: 32px;
+        font-size: 1.5em;
+    }
+
+    .form-label {
+        font-size: 0.9em;
+    }
+
+    .form-input, .form-textarea {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .btn-secondary, .btn-primary {
+        padding: 12px 16px;
+        font-size: 0.95em;
+    }
+
+    .radio-card {
+        padding: 12px;
+    }
+
+    .radio-icon {
+        font-size: 1.5em;
+    }
+
+    .radio-title {
+        font-size: 0.95em;
+    }
+
+    .radio-description {
+        font-size: 0.8em;
+    }
+}
+
+/* ==================== AJUSTES ADICIONAIS PARA MOBILE ==================== */
+* {
+    box-sizing: border-box;
+}
+
+@media (max-width: 360px) {
+    .cronograma-container {
+        padding: 4px;
+    }
+
+    .card-cronograma {
+        padding: 10px;
+    }
+
+    .card-header {
+        padding: 10px;
+    }
+
+    .cronograma-grid {
+        gap: 12px;
     }
 }
