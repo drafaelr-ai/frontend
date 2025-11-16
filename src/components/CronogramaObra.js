@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './CronogramaObra.css';
 
-const API_URL = 'http://localhost:5000'; // Para testes locais
+const API_URL = 'https://backend-production-78c9.up.railway.app';
 
 // Helper para formatar data brasileira
 const formatDateBR = (dateString) => {
