@@ -3298,8 +3298,16 @@ const totalOrcamentosPendentes = useMemo(() => {
             </div>
 
 
-            {/* --- MUDANÇA: CRONOGRAMA DA OBRA --- */}
-            <CronogramaObra obraId={obraSelecionada.id} />
+            {/* --- MUDANÇA: CRONOGRAMA DA OBRA COM WRAPPER MOBILE --- */}
+            <div style={{
+                display: 'block',
+                width: '100%',
+                margin: '20px 0',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch'
+            }}>
+                <CronogramaObra obraId={obraSelecionada.id} />
+            </div>
             {/* --- FIM DO CRONOGRAMA DA OBRA --- */}
 
 
