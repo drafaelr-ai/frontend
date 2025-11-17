@@ -3828,12 +3828,41 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
     const [formData, setFormData] = useState({
         descricao: '',
         fornecedor: '',
+        servico_id: '',  // Novo campo para vincular ao serviço
         valor_total: '',
         numero_parcelas: '1',
         periodicidade: 'Mensal',
         data_primeira_parcela: getTodayString(),
         observacoes: ''
     });
+    
+    const [servicos, setServicos] = useState([]);
+    const [loadingServicos, setLoadingServicos] = useState(true);
+
+    // Buscar serviços da obra
+    useEffect(() => {
+        const fetchServicos = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/obras/${obraId}/servicos-nomes`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setServicos(data.servicos || []);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar serviços:', error);
+            } finally {
+                setLoadingServicos(false);
+            }
+        };
+        
+        fetchServicos();
+    }, [obraId]);
 
     const valor_parcela = formData.valor_total && formData.numero_parcelas 
         ? (parseFloat(formData.valor_total) / parseInt(formData.numero_parcelas)).toFixed(2)
@@ -3865,6 +3894,25 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                         value={formData.fornecedor}
                         onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
                     />
+                </label>
+                
+                <label>
+                    Vincular ao Serviço (Opcional):
+                    <select
+                        value={formData.servico_id}
+                        onChange={(e) => setFormData({...formData, servico_id: e.target.value})}
+                        disabled={loadingServicos}
+                    >
+                        <option value="">-- Nenhum serviço --</option>
+                        {servicos.map(servico => (
+                            <option key={servico.id} value={servico.id}>
+                                {servico.nome}
+                            </option>
+                        ))}
+                    </select>
+                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
+                        💡 Vincule este pagamento a um serviço do cronograma para que os valores apareçam na Análise de Valor Agregado (EVM)
+                    </small>
                 </label>
 
                 <label>
