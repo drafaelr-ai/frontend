@@ -826,3 +826,185 @@ form {
         padding: 2px 5px;
     }
 }
+
+/* ==================== ANÁLISE FINANCEIRA ==================== */
+.analise-financeira {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 14px 0;
+    border: 2px solid #e5e7eb;
+}
+
+.analise-header h5 {
+    margin: 0 0 12px 0;
+    color: #1f2937;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.valores-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.valor-item {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.valor-label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.valor-numero {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.valor-numero.destaque {
+    color: #4f46e5;
+}
+
+/* Barras Comparativas */
+.barras-comparativas {
+    margin: 14px 0;
+}
+
+.barra-item {
+    margin-bottom: 10px;
+}
+
+.barra-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+}
+
+.barra-label span {
+    color: #4b5563;
+}
+
+.barra-label strong {
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.barra-track {
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.barra-fill {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+    position: relative;
+}
+
+.barra-fill.pago {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.barra-fill.executado {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Status da Análise */
+.status-analise {
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.status-analise-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.status-emoji {
+    font-size: 1.2rem;
+}
+
+.status-label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex: 1;
+}
+
+.status-diferenca {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.status-descricao {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #4b5563;
+    line-height: 1.4;
+}
+
+.alerta-critico {
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid #ef4444;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #991b1b;
+}
+
+.alerta-critico strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Mobile - Ajustes para análise financeira */
+@media screen and (max-width: 599px) {
+    .valores-resumo {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .analise-financeira {
+        padding: 12px;
+    }
+    
+    .barra-label {
+        font-size: 0.75rem;
+    }
+    
+    .barra-track {
+        height: 16px;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    .valores-resumo {
+        grid-template-columns: 1fr;
+    }
+    
+    .valor-numero {
+        font-size: 0.8rem;
+    }
+}

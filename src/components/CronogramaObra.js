@@ -3,6 +3,12 @@ import './CronogramaObra.css';
 
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
+// Helper para formatar moeda BRL
+const formatCurrency = (value) => {
+    if (typeof value !== 'number') value = 0;
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
 // Helper para formatar data brasileira
 const formatDateBR = (dateString) => {
     if (!dateString) return '-';
@@ -58,6 +64,148 @@ const determinarStatus = (item) => {
     return 'nao_iniciado';
 };
 
+// ==================== COMPONENTE DE ANÁLISE FINANCEIRA ====================
+const AnaliseFinanceira = ({ dadosFinanceiros, percentualConclusao }) => {
+    if (!dadosFinanceiros) return null;
+    
+    const { valor_total, valor_pago, area_total, area_executada } = dadosFinanceiros;
+    
+    // Calcular percentuais
+    const percPago = valor_total > 0 ? (valor_pago / valor_total) * 100 : 0;
+    const percExecutado = percentualConclusao || 0;
+    
+    // Calcular diferença (positivo = está adiantado, negativo = está atrasado)
+    const diferenca = percExecutado - percPago;
+    
+    // Determinar status
+    let statusAnalise = {
+        label: '',
+        cor: '',
+        emoji: '',
+        descricao: ''
+    };
+    
+    if (diferenca >= 5) {
+        statusAnalise = {
+            label: 'ADIANTADO',
+            cor: '#10b981',
+            emoji: '🟢',
+            descricao: 'Execução à frente do pagamento'
+        };
+    } else if (diferenca >= -5) {
+        statusAnalise = {
+            label: 'NO PRAZO',
+            cor: '#3b82f6',
+            emoji: '🔵',
+            descricao: 'Execução proporcional ao pagamento'
+        };
+    } else if (diferenca >= -15) {
+        statusAnalise = {
+            label: 'ATENÇÃO',
+            cor: '#f59e0b',
+            emoji: '🟡',
+            descricao: 'Execução levemente abaixo do pago'
+        };
+    } else {
+        statusAnalise = {
+            label: 'ATRASO CRÍTICO',
+            cor: '#ef4444',
+            emoji: '🔴',
+            descricao: 'Pagou muito mais do que executou'
+        };
+    }
+    
+    return (
+        <div className="analise-financeira">
+            <div className="analise-header">
+                <h5>💰 Análise de Valor Agregado (EVM)</h5>
+            </div>
+            
+            {/* Valores em reais */}
+            <div className="valores-resumo">
+                <div className="valor-item">
+                    <span className="valor-label">💵 Total Orçado:</span>
+                    <span className="valor-numero">{formatCurrency(valor_total)}</span>
+                </div>
+                <div className="valor-item">
+                    <span className="valor-label">✅ Já Pago:</span>
+                    <span className="valor-numero destaque">{formatCurrency(valor_pago)}</span>
+                </div>
+                {area_total && (
+                    <>
+                        <div className="valor-item">
+                            <span className="valor-label">📐 Área Total:</span>
+                            <span className="valor-numero">{area_total} m²</span>
+                        </div>
+                        <div className="valor-item">
+                            <span className="valor-label">✔️ Executado:</span>
+                            <span className="valor-numero destaque">{area_executada || 0} m²</span>
+                        </div>
+                    </>
+                )}
+            </div>
+            
+            {/* Barras Comparativas */}
+            <div className="barras-comparativas">
+                {/* Barra de Pagamento */}
+                <div className="barra-item">
+                    <div className="barra-label">
+                        <span>💰 Pago</span>
+                        <strong>{percPago.toFixed(1)}%</strong>
+                    </div>
+                    <div className="barra-track">
+                        <div 
+                            className="barra-fill pago"
+                            style={{ width: `${Math.min(100, percPago)}%` }}
+                        ></div>
+                    </div>
+                </div>
+                
+                {/* Barra de Execução */}
+                <div className="barra-item">
+                    <div className="barra-label">
+                        <span>🏗️ Executado</span>
+                        <strong>{percExecutado.toFixed(1)}%</strong>
+                    </div>
+                    <div className="barra-track">
+                        <div 
+                            className="barra-fill executado"
+                            style={{ width: `${Math.min(100, percExecutado)}%` }}
+                        ></div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Status da Análise */}
+            <div 
+                className="status-analise"
+                style={{ 
+                    backgroundColor: `${statusAnalise.cor}15`,
+                    borderLeft: `4px solid ${statusAnalise.cor}`
+                }}
+            >
+                <div className="status-analise-header">
+                    <span className="status-emoji">{statusAnalise.emoji}</span>
+                    <span className="status-label" style={{ color: statusAnalise.cor }}>
+                        {statusAnalise.label}
+                    </span>
+                    <span className="status-diferenca" style={{ color: statusAnalise.cor }}>
+                        {diferenca > 0 ? '+' : ''}{diferenca.toFixed(1)}%
+                    </span>
+                </div>
+                <p className="status-descricao">{statusAnalise.descricao}</p>
+                
+                {/* Alerta se estiver crítico */}
+                {diferenca < -15 && (
+                    <div className="alerta-critico">
+                        <strong>⚠️ Ação necessária:</strong> Revise os pagamentos ou acelere a execução!
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // Badge de Status
 const StatusBadge = ({ status }) => {
     const statusConfig = {
@@ -80,7 +228,10 @@ const StatusBadge = ({ status }) => {
 };
 
 // Card individual de cronograma
-const CardCronograma = ({ item, onEdit, onDelete }) => {
+const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
+    const [dadosFinanceiros, setDadosFinanceiros] = useState(null);
+    const [carregandoDados, setCarregandoDados] = useState(true);
+    
     const diasTotais = calcularDias(item.data_inicio, item.data_fim_prevista);
     const diasRestantes = calcularDiasRestantes(item.data_fim_prevista);
     const status = determinarStatus(item);
@@ -89,6 +240,40 @@ const CardCronograma = ({ item, onEdit, onDelete }) => {
     const diasReais = item.data_inicio_real && item.data_fim_real 
         ? calcularDias(item.data_inicio_real, item.data_fim_real)
         : null;
+    
+    // Buscar dados financeiros do serviço quando o card é montado
+    useEffect(() => {
+        const buscarDadosFinanceiros = async () => {
+            if (!item.servico_id && !item.servico_nome) {
+                setCarregandoDados(false);
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('token');
+                // Buscar dados financeiros do serviço
+                const response = await fetch(
+                    `${API_URL}/obras/${obraId}/servico-financeiro?servico_nome=${encodeURIComponent(item.servico_nome)}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const dados = await response.json();
+                    setDadosFinanceiros(dados);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados financeiros:', error);
+            } finally {
+                setCarregandoDados(false);
+            }
+        };
+        
+        buscarDadosFinanceiros();
+    }, [item.servico_id, item.servico_nome, obraId]);
     
     return (
         <div className={`card-cronograma ${status}`}>
@@ -223,6 +408,14 @@ const CardCronograma = ({ item, onEdit, onDelete }) => {
                     )}
                 </div>
             </div>
+
+            {/* Análise Financeira */}
+            {!carregandoDados && dadosFinanceiros && (
+                <AnaliseFinanceira 
+                    dadosFinanceiros={dadosFinanceiros}
+                    percentualConclusao={item.percentual_conclusao}
+                />
+            )}
 
             {/* Observações */}
             {item.observacoes && (
@@ -902,6 +1095,7 @@ const CronogramaObra = ({ obraId }) => {
                             item={item}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
+                            obraId={obraId}
                         />
                     ))}
                 </div>
