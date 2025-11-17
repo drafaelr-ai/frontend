@@ -3829,6 +3829,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         descricao: '',
         fornecedor: '',
         servico_id: '',  // Novo campo para vincular ao serviço
+        segmento: 'Material',  // Material ou Mão de Obra
         valor_total: '',
         numero_parcelas: '1',
         periodicidade: 'Mensal',
@@ -3912,6 +3913,21 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                     </select>
                     <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
                         💡 Vincule este pagamento a um serviço do cronograma para que os valores apareçam na Análise de Valor Agregado (EVM)
+                    </small>
+                </label>
+
+                <label>
+                    Segmento:
+                    <select
+                        value={formData.segmento}
+                        onChange={(e) => setFormData({...formData, segmento: e.target.value})}
+                        required
+                    >
+                        <option value="Material">Material</option>
+                        <option value="Mão de Obra">Mão de Obra</option>
+                    </select>
+                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
+                        💡 Selecione se este pagamento é referente a Material ou Mão de Obra para contabilizar corretamente no serviço vinculado
                     </small>
                 </label>
 
@@ -4057,7 +4073,56 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
 
             if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
 
+            const resultado = await response.json();
+            alert(`✅ ${resultado.mensagem}`);
             await carregarParcelas();
+            
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    const handleRecriarLancamentos = async () => {
+        if (!window.confirm('Deseja recriar os lançamentos de todas as parcelas pagas? Isso é útil se os lançamentos não foram criados corretamente.')) {
+            return;
+        }
+
+        try {
+            const parcelasPagas = parcelas.filter(p => p.status === 'Pago');
+            
+            if (parcelasPagas.length === 0) {
+                alert('Não há parcelas pagas para reprocessar.');
+                return;
+            }
+
+            let sucessos = 0;
+            let erros = 0;
+
+            for (const parcela of parcelasPagas) {
+                try {
+                    // Força a recriação do lançamento
+                    const response = await fetchWithAuth(
+                        `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
+                        {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                data_pagamento: parcela.data_pagamento || getTodayString()
+                            })
+                        }
+                    );
+
+                    if (response.ok) {
+                        sucessos++;
+                    } else {
+                        erros++;
+                    }
+                } catch (error) {
+                    erros++;
+                }
+            }
+
+            alert(`Reprocessamento concluído!\n✅ ${sucessos} lançamentos criados/verificados\n${erros > 0 ? `❌ ${erros} erros` : ''}`);
             
             if (onSave) onSave();
         } catch (err) {
@@ -4209,7 +4274,15 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                     </tbody>
                 </table>
 
-                <div className="modal-footer" style={{ marginTop: '20px' }}>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button 
+                        onClick={handleRecriarLancamentos}
+                        className="submit-btn"
+                        style={{ backgroundColor: '#ffc107', color: '#000' }}
+                        title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
+                    >
+                        🔄 Recriar Lançamentos
+                    </button>
                     <button onClick={onClose} className="voltar-btn">Fechar</button>
                 </div>
             </div>
@@ -5084,23 +5157,21 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         <td>
                                             <div style={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
                                                 {pag.status === 'Ativo' && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleMarcarParcelaPaga(pag)}
-                                                            className="submit-btn"
-                                                            style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                                        >
-                                                            ✓ Pagar Próxima Parcela
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleAbrirEditarParcelas(pag)}
-                                                            className="submit-btn"
-                                                            style={{ padding: '5px 10px', fontSize: '0.85em', backgroundColor: '#6c757d' }}
-                                                        >
-                                                            ✏️ Editar Parcelas
-                                                        </button>
-                                                    </>
+                                                    <button
+                                                        onClick={() => handleMarcarParcelaPaga(pag)}
+                                                        className="submit-btn"
+                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
+                                                    >
+                                                        ✓ Pagar Próxima Parcela
+                                                    </button>
                                                 )}
+                                                <button
+                                                    onClick={() => handleAbrirEditarParcelas(pag)}
+                                                    className="submit-btn"
+                                                    style={{ padding: '5px 10px', fontSize: '0.85em', backgroundColor: '#6c757d' }}
+                                                >
+                                                    ✏️ Editar Parcelas
+                                                </button>
                                                 <button
                                                     onClick={() => handleDeletePagamentoParcelado(pag.id)}
                                                     className="voltar-btn"
