@@ -4725,27 +4725,47 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
     // Marcar parcela como paga
     const handleMarcarParcelaPaga = async (pagamento) => {
-        const novasParcelas = pagamento.parcelas_pagas + 1;
-        
-        if (novasParcelas > pagamento.numero_parcelas) {
-            alert('Todas as parcelas já foram pagas!');
+        if (!window.confirm(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`)) {
             return;
         }
 
         try {
+            // 1. Buscar as parcelas individuais
+            const resListaParcelas = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas`
+            );
+
+            if (!resListaParcelas.ok) {
+                alert('Erro ao buscar parcelas');
+                return;
+            }
+
+            const parcelas = await resListaParcelas.json();
+            
+            // 2. Encontrar a próxima parcela não paga
+            const proximaParcela = parcelas.find(p => p.status !== 'Pago');
+
+            if (!proximaParcela) {
+                alert('Todas as parcelas já foram pagas!');
+                return;
+            }
+
+            // 3. Marcar a parcela como paga (isso criará o lançamento no backend)
             const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}`,
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas/${proximaParcela.id}/pagar`,
                 {
-                    method: 'PUT',
-                    body: JSON.stringify({ parcelas_pagas: novasParcelas })
+                    method: 'POST',
+                    body: JSON.stringify({ data_pagamento: getTodayString() })
                 }
             );
 
             if (res.ok) {
-                alert(`Parcela ${novasParcelas}/${pagamento.numero_parcelas} marcada como paga!`);
+                const resultado = await res.json();
+                alert(`✅ ${resultado.mensagem}`);
                 fetchData();
             } else {
-                alert('Erro ao marcar parcela como paga');
+                const erro = await res.json();
+                alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
             }
         } catch (error) {
             console.error('Erro ao marcar parcela:', error);
