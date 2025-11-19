@@ -228,7 +228,7 @@ const StatusBadge = ({ status }) => {
 };
 
 // Card individual de cronograma
-const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
+const CardCronograma = ({ item, onEdit, onDelete, obraId, isExpanded, onToggle }) => {
     const [dadosFinanceiros, setDadosFinanceiros] = useState(null);
     const [carregandoDados, setCarregandoDados] = useState(true);
     
@@ -277,16 +277,36 @@ const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
     
     return (
         <div className={`card-cronograma ${status}`}>
-            {/* Cabeçalho */}
-            <div className="cronograma-header">
+            {/* Cabeçalho - SEMPRE VISÍVEL + CLICÁVEL */}
+            <div 
+                className="cronograma-header"
+                onClick={onToggle}
+                style={{ cursor: 'pointer', marginBottom: isExpanded ? '12px' : '8px' }}
+            >
                 <div className="cronograma-title">
                     <h4>🏗️ {item.servico_nome}</h4>
                     {item.ordem && <span className="ordem-badge">#{item.ordem}</span>}
+                    <StatusBadge status={status} />
                 </div>
-                <StatusBadge status={status} />
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle();
+                    }}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '1.5em',
+                        cursor: 'pointer',
+                        padding: '5px',
+                        color: '#4a5568'
+                    }}
+                >
+                    {isExpanded ? '🔽' : '▶️'}
+                </button>
             </div>
 
-            {/* TIPO DE MEDIÇÃO */}
+            {/* TIPO DE MEDIÇÃO - SEMPRE VISÍVEL */}
             {item.tipo_medicao && (
                 <div style={{
                     fontSize: '0.75em', 
@@ -301,7 +321,7 @@ const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
                 </div>
             )}
 
-            {/* ÁREA/QUANTIDADE - só mostra se for tipo área */}
+            {/* ÁREA/QUANTIDADE - SEMPRE VISÍVEL se for tipo área */}
             {item.tipo_medicao === 'area' && (item.area_total || item.area_executada) && (
                 <div style={{
                     padding: '8px',
@@ -321,8 +341,8 @@ const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
                 </div>
             )}
 
-            {/* Progress Bar */}
-            <div className="progress-container">
+            {/* Progress Bar - SEMPRE VISÍVEL */}
+            <div className="progress-container" style={{ marginBottom: isExpanded ? '12px' : '0' }}>
                 <div 
                     className="progress-bar" 
                     style={{
@@ -336,18 +356,21 @@ const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
                 </div>
             </div>
 
-            {/* PLANEJAMENTO */}
-            <div className="timeline-info">
-                <h5 style={{margin: '8px 0 4px 0', fontSize: '0.85em', color: '#6b7280', fontWeight: 600}}>
-                    📋 PLANEJAMENTO
-                </h5>
-                <div className="timeline-dates">
-                    <span>📅 {formatDateBR(item.data_inicio)}</span>
-                    <span className="arrow">→</span>
-                    <span>📅 {formatDateBR(item.data_fim_prevista)}</span>
-                </div>
-                <div className="timeline-duration">
-                    <span>⏱️ {diasTotais} dias planejados</span>
+            {/* CONTEÚDO EXPANSÍVEL */}
+            {isExpanded && (
+                <>
+                    {/* PLANEJAMENTO */}
+                    <div className="timeline-info">
+                        <h5 style={{margin: '8px 0 4px 0', fontSize: '0.85em', color: '#6b7280', fontWeight: 600}}>
+                            📋 PLANEJAMENTO
+                        </h5>
+                        <div className="timeline-dates">
+                            <span>📅 {formatDateBR(item.data_inicio)}</span>
+                            <span className="arrow">→</span>
+                            <span>📅 {formatDateBR(item.data_fim_prevista)}</span>
+                        </div>
+                        <div className="timeline-duration">
+                            <span>⏱️ {diasTotais} dias planejados</span>
                 </div>
             </div>
 
@@ -433,6 +456,8 @@ const CardCronograma = ({ item, onEdit, onDelete, obraId }) => {
                     🗑️ Excluir
                 </button>
             </div>
+                </>
+            )}
         </div>
     );
 };
@@ -896,6 +921,8 @@ const CronogramaObra = ({ obraId }) => {
     const [showImportModal, setShowImportModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [filtroStatus, setFiltroStatus] = useState('todos');
+    const [expandedCards, setExpandedCards] = useState({});
+    const [globalExpanded, setGlobalExpanded] = useState(true);
 
     useEffect(() => {
         if (obraId) {
@@ -915,12 +942,37 @@ const CronogramaObra = ({ obraId }) => {
             if (response.ok) {
                 const data = await response.json();
                 setCronograma(data);
+                
+                // Inicializa todos os cards como expandidos
+                const initialExpanded = {};
+                data.forEach(item => {
+                    initialExpanded[item.id] = true;
+                });
+                setExpandedCards(initialExpanded);
             }
         } catch (error) {
             console.error('Erro ao buscar cronograma:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleCard = (itemId) => {
+        setExpandedCards(prev => ({
+            ...prev,
+            [itemId]: !prev[itemId]
+        }));
+    };
+
+    const toggleAllCards = () => {
+        const newState = !globalExpanded;
+        setGlobalExpanded(newState);
+        
+        const newExpandedState = {};
+        cronograma.forEach(item => {
+            newExpandedState[item.id] = newState;
+        });
+        setExpandedCards(newExpandedState);
     };
 
     const handleSave = async (data) => {
@@ -1068,9 +1120,22 @@ const CronogramaObra = ({ obraId }) => {
                         <option value="concluido">Concluídos</option>
                     </select>
                     <button 
+                        className="acao-btn"
+                        onClick={toggleAllCards}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            backgroundColor: '#6c757d'
+                        }}
+                    >
+                        <span>{globalExpanded ? '📕' : '📖'}</span>
+                        {globalExpanded ? 'Recolher Todos' : 'Expandir Todos'}
+                    </button>
+                    <button 
                         className="acao-btn" 
                         onClick={() => setShowImportModal(true)}
-                        style={{background: '#10b981', marginRight: '8px'}}
+                        style={{background: '#10b981'}}
                     >
                         📥 Importar Serviços
                     </button>
@@ -1096,6 +1161,8 @@ const CronogramaObra = ({ obraId }) => {
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             obraId={obraId}
+                            isExpanded={expandedCards[item.id]}
+                            onToggle={() => toggleCard(item.id)}
                         />
                     ))}
                 </div>
