@@ -3408,6 +3408,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                             <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
                         )}
                         
+                        {/* NOVO: Botão Gerar PDF */}
+                        <button 
+                            className="export-btn pdf" 
+                            onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/servicos/pdf`, '_blank')}
+                            title="Gerar PDF da planilha de serviços"
+                        >
+                            📄 Gerar PDF
+                        </button>
+                        
                         <button 
                             className="acao-btn" 
                             style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
@@ -4474,6 +4483,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
+    // NOVO: Estados para Expandir/Recolher seções
+    const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
+    const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
+    
     // MUDANÇA 5: Estados para seleção múltipla
     const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
@@ -4857,8 +4870,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                 <h2>💰 Cronograma Financeiro - {obraNome}</h2>
                 <QuadroAlertasVencimento obraId={obraId} /> 
-                {/* Botões de Cadastro */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                {/* Botões de Cadastro e Exportação */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                     <button 
                         onClick={() => setCadastrarFuturoVisible(true)} 
                         className="submit-btn"
@@ -4872,6 +4885,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     >
                         ➕ Cadastrar Pagamento Parcelado
                     </button>
+                    
+                    {/* NOVO: Botão Gerar PDF */}
+                    <button 
+                        onClick={() => window.open(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`, '_blank')} 
+                        className="export-btn pdf"
+                        title="Gerar relatório PDF do cronograma financeiro"
+                    >
+                        📄 Gerar PDF
+                    </button>
+                    
                     {itensSelecionados.length > 0 && (
                         <button 
                             onClick={handleMarcarMultiplosComoPago} 
@@ -5004,7 +5027,19 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
                 {/* Listagem de Pagamentos Futuros */}
                 <div className="card-full" style={{ marginBottom: '20px' }}>
-                    <h3>💵 Pagamentos Futuros (Únicos)</h3>
+                    <div className="card-header">
+                        <h3>💵 Pagamentos Futuros (Únicos)</h3>
+                        <button 
+                            className="acao-btn" 
+                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            onClick={() => setIsPagamentosFuturosCollapsed(prev => !prev)}
+                        >
+                            {isPagamentosFuturosCollapsed ? 'Expandir' : 'Recolher'}
+                        </button>
+                    </div>
+                    
+                    {!isPagamentosFuturosCollapsed && (
+                        <>
                     {pagamentosFuturos.length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
@@ -5090,11 +5125,25 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     ) : (
                         <p>Nenhum pagamento futuro cadastrado.</p>
                     )}
+                    </>
+                    )}
                 </div>
 
                 {/* Listagem de Pagamentos Parcelados */}
                 <div className="card-full">
-                    <h3>📋 Pagamentos Parcelados</h3>
+                    <div className="card-header">
+                        <h3>📋 Pagamentos Parcelados</h3>
+                        <button 
+                            className="acao-btn" 
+                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            onClick={() => setIsPagamentosParceladosCollapsed(prev => !prev)}
+                        >
+                            {isPagamentosParceladosCollapsed ? 'Expandir' : 'Recolher'}
+                        </button>
+                    </div>
+                    
+                    {!isPagamentosParceladosCollapsed && (
+                        <>
                     {pagamentosParcelados.length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
@@ -5187,6 +5236,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                         </table>
                     ) : (
                         <p>Nenhum pagamento parcelado cadastrado.</p>
+                    )}
+                    </>
                     )}
                 </div>
 
