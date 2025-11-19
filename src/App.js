@@ -2466,9 +2466,6 @@ function Dashboard() {
     // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
 
-    // NOVO: Estado para controlar o PIX de cada formulário de serviço
-    const [pixPorServico, setPixPorServico] = useState({}); // { servicoId: 'chave@pix.com' }
-
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
         // apenas os orçamentos com status 'Pendente' vindos do backend.
@@ -2858,42 +2855,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                 alert("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
-    };
-
-    // <--- MUDANÇA: Handler de Pagamento (usa 'valor' para 'valor_total') -->
-    const handleAddPagamentoServico = (e, servicoId) => {
-        e.preventDefault();
-        const valorPagamento = e.target.valorPagamento.value; // Este é o 'valor' do formulário
-        const statusPagamento = e.target.statusPagamento.value;
-        const tipoPagamento = e.target.tipoPagamento.value;
-        const dataPagamento = e.target.dataPagamento.value; 
-        const dataVencimento = e.target.dataVencimento.value;
-        const fornecedor = e.target.fornecedor.value;
-        const pixValue = pixPorServico[servicoId] || ''; // Pegar o PIX do state
-        
-        if (!valorPagamento || !tipoPagamento || !dataPagamento) return;
-        
-        const pagamento = {
-            valor: parseFloat(valorPagamento) || 0, // O backend espera 'valor'
-            data: dataPagamento, 
-            data_vencimento: dataVencimento,
-            status: statusPagamento,
-            tipo_pagamento: tipoPagamento,
-            pix: pixValue || null, // Campo PIX
-            fornecedor: fornecedor || null
-        };
-        console.log("Adicionando pagamento de serviço:", pagamento);
-        fetchWithAuth(`${API_URL}/servicos/${servicoId}/pagamentos`, {
-            method: 'POST',
-            body: JSON.stringify(pagamento)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             e.target.reset(); 
-             // Limpar o state de PIX desse serviço
-             setPixPorServico(prev => ({ ...prev, [servicoId]: '' }));
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao adicionar pagamento:", error));
     };
 
     // Handler de Prioridade
@@ -3411,7 +3372,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         {/* NOVO: Botão Gerar PDF */}
                         <button 
                             className="export-btn pdf" 
-                            onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/servicos/pdf`, '_blank')}
+                            onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/servicos/exportar-pdf`, '_blank')}
                             title="Gerar PDF da planilha de serviços"
                         >
                             📄 Gerar PDF
@@ -3484,34 +3445,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         </div>
                                     </div>
                                     
-                                    {(user.role === 'administrador' || user.role === 'master') && (
-                                        <form onSubmit={(e) => handleAddPagamentoServico(e, serv.id)} className="form-pagamento-parcial" onClick={e => e.stopPropagation()}>
-                                            <input type="date" name="dataPagamento" placeholder="Data Registro" defaultValue={getTodayString()} required style={{flex: 1, minWidth: '120px'}} title="Data do Registro" />
-                                            <input type="date" name="dataVencimento" placeholder="Vencimento" defaultValue={getTodayString()} required style={{flex: 1, minWidth: '120px'}} title="Data de Vencimento ⚠️" />
-                                            <input type="text" name="fornecedor" placeholder="Fornecedor" style={{flex: 1.2, minWidth: '120px'}} />
-                                            <input type="number" step="0.01" name="valorPagamento" placeholder="Valor" required style={{flex: 1, minWidth: '100px'}} />
-                                            
-                                            <input 
-                                                type="text" 
-                                                placeholder="Chave PIX" 
-                                                value={pixPorServico[serv.id] || ''}
-                                                onChange={(e) => setPixPorServico(prev => ({ ...prev, [serv.id]: e.target.value }))}
-                                                style={{flex: 1.2, minWidth: '120px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}
-                                            />
-                                            
-                                            <select name="tipoPagamento" required style={{flex: 1, minWidth: '100px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                                <option value="">Tipo...</option>
-                                                <option value="mao_de_obra">Mão de Obra</option>
-                                                <option value="material">Material</option>
-                                            </select>
-                                            
-                                            <select name="statusPagamento" defaultValue="Pago" required style={{flex: 0.8, minWidth: '80px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px'}}>
-                                                <option value="Pago">Pago</option>
-                                                <option value="A Pagar">A Pagar</option>
-                                            </select>
-                                            <button type="submit" style={{flex: 0.5, minWidth: '60px', maxWidth: '80px'}}>Adic.</button>
-                                        </form>
-                                    )}
                                 </div>
                             );
                         }) : <p>Nenhum serviço cadastrado.</p>}
