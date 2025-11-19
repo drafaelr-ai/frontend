@@ -3372,7 +3372,27 @@ const totalOrcamentosPendentes = useMemo(() => {
                         {/* NOVO: Botão Gerar PDF */}
                         <button 
                             className="export-btn pdf" 
-                            onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/servicos/exportar-pdf`, '_blank')}
+                            onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/exportar-pdf`);
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `servicos_obra_${obraSelecionada.id}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    } else {
+                                        alert('Erro ao gerar PDF');
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao exportar PDF:', error);
+                                    alert('Erro ao gerar PDF dos serviços');
+                                }
+                            }}
                             title="Gerar PDF da planilha de serviços"
                         >
                             📄 Gerar PDF
@@ -3463,7 +3483,32 @@ const totalOrcamentosPendentes = useMemo(() => {
                         {(user.role === 'administrador' || user.role === 'master') && (
                             <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Avulso</button>
                         )}
-                        <button onClick={() => window.open(`${API_URL}/obras/${obraSelecionada.id}/export/csv`)} className="export-btn">CSV (Geral)</button>
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/export/csv`);
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `historico_obra_${obraSelecionada.id}.csv`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    } else {
+                                        alert('Erro ao exportar CSV');
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao exportar CSV:', error);
+                                    alert('Erro ao exportar CSV');
+                                }
+                            }} 
+                            className="export-btn"
+                        >
+                            CSV (Geral)
+                        </button>
                     </div>
                 </div>
                 <div className="tabela-scroll-container">
@@ -4821,7 +4866,27 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     
                     {/* NOVO: Botão Gerar PDF */}
                     <button 
-                        onClick={() => window.open(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`, '_blank')} 
+                        onClick={async () => {
+                            try {
+                                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`);
+                                if (response.ok) {
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `cronograma_financeiro_obra_${obraId}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                } else {
+                                    alert('Erro ao gerar PDF');
+                                }
+                            } catch (error) {
+                                console.error('Erro ao exportar PDF:', error);
+                                alert('Erro ao gerar PDF do cronograma financeiro');
+                            }
+                        }} 
                         className="export-btn pdf"
                         title="Gerar relatório PDF do cronograma financeiro"
                     >
