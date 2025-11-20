@@ -2269,6 +2269,38 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
             });
     };
 
+    const handleDownloadRelatorioPagamentos = () => {
+        setIsDownloading(true);
+        setDownloadType('pagamentos');
+        setError(null);
+
+        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio/pagamentos-pdf`)
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório de pagamentos'); });
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio_pagamentos_${obraNome}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(err => {
+                console.error("Erro ao gerar relatório de pagamentos:", err);
+                setError(err.message);
+            })
+            .finally(() => {
+                setIsDownloading(false);
+                setDownloadType(null);
+            });
+    };
+
     return (
         <Modal onClose={onClose} customWidth="500px">
             <h2>📊 Relatórios da Obra</h2>
@@ -2353,7 +2385,45 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
                     </div>
                 </button>
 
-                {/* Opção 3: Orçamentos */}
+                {/* Opção 3: Relatório de Pagamentos */}
+                <button
+                    onClick={handleDownloadRelatorioPagamentos}
+                    disabled={isDownloading}
+                    style={{
+                        padding: '20px',
+                        border: '2px solid #28a745',
+                        borderRadius: '8px',
+                        background: 'white',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        opacity: isDownloading && downloadType !== 'pagamentos' ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isDownloading) {
+                            e.currentTarget.style.background = 'var(--cor-fundo)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontSize: '2em' }}>💳</span>
+                        <div>
+                            <strong style={{ fontSize: '1.1em', color: '#28a745' }}>
+                                {isDownloading && downloadType === 'pagamentos' ? 'Gerando...' : 'Relatório de Pagamentos'}
+                            </strong>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
+                                PDF detalhado com histórico completo de pagamentos
+                            </p>
+                        </div>
+                    </div>
+                </button>
+
+                {/* Opção 4: Orçamentos */}
                 <button
                     onClick={() => {
                         onClose(); // Fecha o modal de relatórios
