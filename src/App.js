@@ -1318,7 +1318,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// MUDANÇA 3: NOVO Modal "Inserir Pagamento"
+// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO
 const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString());
@@ -1329,10 +1329,17 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
     const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
     const [servicoId, setServicoId] = useState('');
+    
+    // 🆕 NOVOS ESTADOS PARA PARCELAMENTO
+    const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
+    const [numeroParcelas, setNumeroParcelas] = useState('');
+    const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
+    const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave({
+        
+        const dadosPagamento = {
             data,
             data_vencimento: dataVencimento,
             descricao,
@@ -1341,41 +1348,145 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             valor: parseFloat(valor) || 0,
             tipo,
             status,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null
-        });
+            servico_id: servicoId ? parseInt(servicoId, 10) : null,
+            tipo_forma_pagamento: tipoFormaPagamento
+        };
+        
+        // Adicionar campos de parcelamento se aplicável
+        if (tipoFormaPagamento === 'parcelado') {
+            dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
+            dadosPagamento.periodicidade = periodicidade;
+            dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
+        }
+        
+        onSave(dadosPagamento);
     };
 
     return (
         <Modal onClose={onClose}>
             <h2>💳 Inserir Pagamento</h2>
             <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Insira um novo pagamento. Você pode vincular a um serviço e escolher se foi pago ou está a pagar.
+                Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
             </p>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label>Data do Registro</label>
                     <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
                 </div>
-                <div className="form-group">
-                    <label>Data de Vencimento</label>
-                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                </div>
+                
                 <div className="form-group">
                     <label>Descrição</label>
                     <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
                 </div>
+                
                 <div className="form-group">
                     <label>Fornecedor (Opcional)</label>
                     <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
                 </div>
-                <div className="form-group">
-                    <label>Chave PIX (Opcional)</label>
-                    <input type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
-                </div>
+                
                 <div className="form-group">
                     <label>Valor Total (R$)</label>
                     <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
                 </div>
+                
+                {/* 🆕 TIPO DE FORMA DE PAGAMENTO */}
+                <div className="form-group">
+                    <label>Forma de Pagamento</label>
+                    <div style={{display: 'flex', gap: '20px', marginTop: '8px'}}>
+                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                            <input 
+                                type="radio" 
+                                value="avista" 
+                                checked={tipoFormaPagamento === 'avista'} 
+                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
+                                style={{marginRight: '8px'}}
+                            />
+                            À vista
+                        </label>
+                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                            <input 
+                                type="radio" 
+                                value="parcelado" 
+                                checked={tipoFormaPagamento === 'parcelado'} 
+                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
+                                style={{marginRight: '8px'}}
+                            />
+                            Parcelado
+                        </label>
+                    </div>
+                </div>
+                
+                {/* 🆕 CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
+                {tipoFormaPagamento === 'parcelado' && (
+                    <>
+                        <div style={{
+                            background: '#f0f8ff',
+                            padding: '15px',
+                            borderRadius: '8px',
+                            marginBottom: '15px',
+                            border: '1px solid #b3d9ff'
+                        }}>
+                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração do Parcelamento</h4>
+                            
+                            <div className="form-group">
+                                <label>Número de Parcelas</label>
+                                <input 
+                                    type="number" 
+                                    min="2" 
+                                    max="60" 
+                                    value={numeroParcelas} 
+                                    onChange={(e) => setNumeroParcelas(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Periodicidade</label>
+                                <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
+                                    <option value="Semanal">Semanal (7 dias)</option>
+                                    <option value="Quinzenal">Quinzenal (15 dias)</option>
+                                    <option value="Mensal">Mensal (30 dias)</option>
+                                </select>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Data da 1ª Parcela</label>
+                                <input 
+                                    type="date" 
+                                    value={dataPrimeiraParcela} 
+                                    onChange={(e) => setDataPrimeiraParcela(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                            
+                            {numeroParcelas && valor && (
+                                <div style={{
+                                    marginTop: '12px',
+                                    padding: '10px',
+                                    background: '#fff',
+                                    borderRadius: '6px',
+                                    fontSize: '0.9em'
+                                }}>
+                                    <strong>Valor por parcela:</strong> R$ {(parseFloat(valor) / parseInt(numeroParcelas)).toFixed(2)}
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+                
+                {/* CAMPOS ORIGINAIS CONTINUAM */}
+                {tipoFormaPagamento === 'avista' && (
+                    <div className="form-group">
+                        <label>Data de Vencimento</label>
+                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                    </div>
+                )}
+                
+                <div className="form-group">
+                    <label>Chave PIX / Forma de Pagamento (Opcional)</label>
+                    <input type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
+                </div>
+                
                 <div className="form-group">
                     <label>Tipo</label>
                     <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
@@ -1385,6 +1496,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                         <option value="Equipamentos">Equipamentos</option>
                     </select>
                 </div>
+                
                 <div className="form-group">
                     <label>Status</label>
                     <select value={status} onChange={(e) => setStatus(e.target.value)} required>
@@ -1392,6 +1504,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                         <option value="A Pagar">A Pagar</option>
                     </select>
                 </div>
+                
                 <div className="form-group">
                     <label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
@@ -1401,9 +1514,12 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                         ))}
                     </select>
                 </div>
+                
                 <div className="form-actions">
                     <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Inserir Pagamento</button>
+                    <button type="submit" className="submit-btn">
+                        {tipoFormaPagamento === 'parcelado' ? '📦 Criar Parcelamento' : '💰 Inserir Pagamento'}
+                    </button>
                 </div>
             </form>
         </Modal>
