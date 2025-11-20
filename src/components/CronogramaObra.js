@@ -1035,6 +1035,36 @@ const CronogramaObra = ({ obraId }) => {
         setShowModal(true);
     };
 
+    const handleExportPDF = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/obras/${obraId}/cronograma/exportar-pdf`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cronograma_obra_${obraId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                alert('PDF exportado com sucesso!');
+            } else {
+                alert('Erro ao exportar PDF');
+            }
+        } catch (error) {
+            console.error('Erro ao exportar PDF:', error);
+            alert('Erro ao exportar PDF');
+        }
+    };
+
     const handleImportServicos = async (servicosSelecionados, dataInicio, diasPorServico) => {
         try {
             const token = localStorage.getItem('token');
@@ -1141,6 +1171,13 @@ const CronogramaObra = ({ obraId }) => {
                     </button>
                     <button className="acao-btn add-btn" onClick={handleAdd}>
                         ➕ Nova Etapa
+                    </button>
+                    <button 
+                        className="acao-btn" 
+                        onClick={handleExportPDF}
+                        style={{background: '#dc3545'}}
+                    >
+                        📄 Exportar PDF
                     </button>
                 </div>
             </div>
