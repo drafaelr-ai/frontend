@@ -370,6 +370,47 @@ body {
     text-align: left;
 }
 
+/* Estilos específicos para tabelas do Cronograma Financeiro */
+.tabela-pendencias {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabela-pendencias th,
+.tabela-pendencias td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+/* Alinhamento centralizado para colunas específicas */
+.tabela-pendencias th:nth-last-child(1), /* Última coluna (Status) */
+.tabela-pendencias td:nth-last-child(1) {
+    text-align: center;
+    width: 120px;
+}
+
+.tabela-pendencias th:nth-last-child(2), /* Penúltima coluna */
+.tabela-pendencias td:nth-last-child(2) {
+    text-align: center;
+}
+
+.tabela-pendencias th:nth-last-child(3), /* Antepenúltima */
+.tabela-pendencias td:nth-last-child(3) {
+    text-align: center;
+}
+
+/* Checkbox column */
+.tabela-pendencias th:first-child {
+    width: 40px;
+    text-align: center;
+}
+
+.tabela-pendencias td:first-child {
+    text-align: center;
+}
+
 /* Container de ações dentro do modal */
 .modal-content .form-actions {
     display: flex;
