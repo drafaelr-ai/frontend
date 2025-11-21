@@ -542,11 +542,11 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
                     <div className="form-group">
                         <label>Valor Orçado - Mão de Obra (R$)</label>
-                        <input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || 0} onChange={handleChange} />
+                        <input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || ''} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                         <label>Valor Orçado - Material (R$)</label>
-                        <input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || 0} onChange={handleChange} />
+                        <input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || ''} onChange={handleChange} />
                     </div>
                     
                     <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
@@ -1093,8 +1093,8 @@ const AddServicoModal = ({ onClose, onSave }) => {
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [pix, setPix] = useState('');
-    const [valorMO, setValorMO] = useState(0); 
-    const [valorMaterial, setValorMaterial] = useState(0); 
+    const [valorMO, setValorMO] = useState(''); 
+    const [valorMaterial, setValorMaterial] = useState(''); 
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -1155,7 +1155,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState(''); 
     const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(0); // Este 'valor' será enviado como 'valor_total'
+    const [valor, setValor] = useState(''); // Este 'valor' será enviado como 'valor_total'
     const [tipo, setTipo] = useState('Material');
     // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
     const status = 'Pago';
@@ -1252,7 +1252,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     // ... (código inalterado, já usa FormData)
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
-    const [valor, setValor] = useState(0);
+    const [valor, setValor] = useState('');
     const [dadosPagamento, setDadosPagamento] = useState('');
     const [tipo, setTipo] = useState('Material'); 
     const [servicoId, setServicoId] = useState(''); 
