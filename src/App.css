@@ -243,7 +243,7 @@ body {
 .valor-segmento { font-weight: bold; }
 
 .tabela-historico { width: 100%; border-collapse: collapse; }
-.tabela-historico th, .tabela-historico td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+.tabela-historico th, .tabela-historico td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #ddd; }
 .tabela-historico th { background-color: #f8f9fa; }
 
 /* Estilos para descrições clicáveis nas tabelas */
@@ -300,7 +300,7 @@ body {
 
 .modal-content table th,
 .modal-content table td {
-    padding: 12px 10px;
+    padding: 10px 8px;  /* Reduzido de 12px 10px */
     text-align: left;
     border-bottom: 1px solid #ddd;
     vertical-align: middle;
@@ -334,9 +334,9 @@ body {
 /* Botões de ação dentro das tabelas */
 .modal-content table button {
     margin: 2px;
-    padding: 6px 12px;
+    padding: 5px 10px;  /* Reduzido de 6px 12px */
     font-size: 0.85em;
-    min-width: 70px;
+    min-width: 65px;  /* Reduzido de 70px */
 }
 
 /* Estilos específicos para tabela de parcelas */
@@ -378,36 +378,138 @@ body {
 
 .tabela-pendencias th,
 .tabela-pendencias td {
-    padding: 12px 15px;
+    padding: 10px 8px;  /* Reduzido de 12px 15px para 10px 8px */
     text-align: left;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
 }
 
 /* Alinhamento centralizado para colunas específicas */
-.tabela-pendencias th:nth-last-child(1), /* Última coluna (Status) */
+.tabela-pendencias th:nth-last-child(1), /* Última coluna (Status/Ações) */
 .tabela-pendencias td:nth-last-child(1) {
     text-align: center;
-    width: 120px;
+    width: 140px;  /* Reduzido de 120px para 140px para acomodar botões */
+    padding: 10px 5px;
 }
 
-.tabela-pendencias th:nth-last-child(2), /* Penúltima coluna */
+.tabela-pendencias th:nth-last-child(2), /* Penúltima coluna (geralmente Valor) */
 .tabela-pendencias td:nth-last-child(2) {
-    text-align: center;
+    text-align: right;
+    width: 120px;
+    padding-right: 15px;
 }
 
 .tabela-pendencias th:nth-last-child(3), /* Antepenúltima */
 .tabela-pendencias td:nth-last-child(3) {
     text-align: center;
+    padding: 10px 8px;
 }
 
 /* Checkbox column */
 .tabela-pendencias th:first-child {
     width: 40px;
     text-align: center;
+    padding: 10px 5px;
 }
 
 .tabela-pendencias td:first-child {
+    text-align: center;
+    padding: 10px 5px;
+}
+
+/* Otimizações específicas para tabela de Orçamentos (6 colunas) */
+.tabela-historico.tabela-orcamentos th,
+.tabela-historico.tabela-orcamentos td {
+    padding: 10px 8px;
+}
+
+/* Espaçamento mais compacto para células com botões */
+.tabela-historico .acoes-cell,
+.tabela-pendencias .acoes-cell {
+    padding: 8px 5px;
+}
+
+.tabela-historico .acoes-cell button,
+.tabela-pendencias .acoes-cell button {
+    margin: 2px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+}
+
+/* Estilos específicos para tabela de Pagamentos Parcelados (8 colunas) */
+/* Identificamos pela presença de 8 th's */
+.tabela-pendencias th:nth-child(8):last-child ~ * {
+    /* Força a tabela a usar auto layout quando tem 8 colunas */
+}
+
+/* Para tabelas com 8 colunas (Pagamentos Parcelados) */
+.tabela-pendencias thead tr:has(th:nth-child(8)) {
+    display: table-row;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th {
+    padding: 10px 6px;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td {
+    padding: 10px 6px;
+    font-size: 0.9em;
+}
+
+/* Larguras específicas para cada coluna da tabela de 8 colunas */
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(1) { /* Descrição */
+    width: 20%;
+    min-width: 150px;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(2) { /* Fornecedor */
+    width: 12%;
+    min-width: 100px;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(3) { /* Valor Total */
+    width: 12%;
+    text-align: right;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(4) { /* Parcelas */
+    width: 10%;
+    text-align: center;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(5) { /* Periodicidade */
+    width: 12%;
+    text-align: center;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(6) { /* Valor/Parcela */
+    width: 12%;
+    text-align: right;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(7) { /* Próx. Vencimento */
+    width: 12%;
+    text-align: center;
+}
+
+.tabela-pendencias thead tr:has(th:nth-child(8)) th:nth-child(8) { /* Status */
+    width: 10%;
+    text-align: center;
+}
+
+/* Alinhamento das células tbody para tabela de 8 colunas */
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(3), /* Valor Total */
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(6) { /* Valor/Parcela */
+    text-align: right;
+    font-weight: 600;
+}
+
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(4), /* Parcelas */
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(5), /* Periodicidade */
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(7), /* Próx. Vencimento */
+.tabela-pendencias tbody tr:has(td:nth-child(8)) td:nth-child(8) { /* Status */
     text-align: center;
 }
 
