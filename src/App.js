@@ -4313,7 +4313,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
 
     return (
         <Modal>
-            <div className="modal-content" style={{ maxWidth: '1400px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div className="modal-content" style={{ maxWidth: '1600px', maxHeight: '88vh', overflowY: 'auto' }}>
                 <h2>✏️ Editar Parcelas</h2>
                 <p style={{ marginBottom: '20px', color: '#666' }}>
                     <strong>{pagamentoParcelado.descricao}</strong><br />

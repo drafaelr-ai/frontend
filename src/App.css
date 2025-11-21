@@ -274,8 +274,8 @@ body {
     padding: 30px; 
     border-radius: 8px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
-    width: 95%; 
-    max-width: 1400px;  /* Aumentado para 1400px para melhor visualização das tabelas */
+    width: 98%; 
+    max-width: 1600px;  /* AUMENTADO: Modal muito maior para tabelas de parcelas */
     max-height: 90vh;   /* Limitar altura */
     overflow-y: auto;   /* Scroll se necessário */
 }
@@ -328,6 +328,37 @@ body {
     padding: 6px 12px;
     font-size: 0.85em;
     min-width: 70px;
+}
+
+/* Estilos específicos para tabela de parcelas */
+.modal-content .tabela-pendencias {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.modal-content .tabela-pendencias th:nth-child(1) { /* Parcela */
+    width: 10%;
+}
+
+.modal-content .tabela-pendencias th:nth-child(2) { /* Valor */
+    width: 15%;
+}
+
+.modal-content .tabela-pendencias th:nth-child(3) { /* Vencimento */
+    width: 15%;
+}
+
+.modal-content .tabela-pendencias th:nth-child(4) { /* Status */
+    width: 15%;
+}
+
+.modal-content .tabela-pendencias th:nth-child(5) { /* Ações */
+    width: 45%;
+    text-align: left;
+}
+
+.modal-content .tabela-pendencias td:nth-child(5) { /* Coluna Ações */
+    text-align: left;
 }
 
 /* Container de ações dentro do modal */
