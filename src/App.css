@@ -246,6 +246,15 @@ body {
 .tabela-historico th, .tabela-historico td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
 .tabela-historico th { background-color: #f8f9fa; }
 
+/* Estilos para descrições clicáveis nas tabelas */
+.tabela-pendencias td[style*="cursor: pointer"] {
+    position: relative;
+}
+
+.tabela-pendencias td[style*="cursor: pointer"]:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
 .tabela-historico tr.linha-clicavel:hover {
     background-color: #f8f9fa;
     cursor: pointer;

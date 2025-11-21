@@ -5227,6 +5227,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     
                     {!isPagamentosFuturosCollapsed && (
                         <>
+                    <p style={{ 
+                        fontSize: '0.9em', 
+                        color: 'var(--cor-texto-secundario)', 
+                        marginBottom: '15px',
+                        padding: '10px',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '6px',
+                        borderLeft: '3px solid var(--cor-primaria)'
+                    }}>
+                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para marcar como pago
+                    </p>
                     {pagamentosFuturos.length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
@@ -5237,7 +5248,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                     <th>Vencimento</th>
                                     <th>Valor</th>
                                     <th>Status</th>
-                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -5253,57 +5263,59 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                                 />
                                             )}
                                         </td>
-                                        <td>{pag.descricao}</td>
+                                        <td 
+                                            onClick={() => {
+                                                if (pag.status === 'Previsto') {
+                                                    setPagamentoFuturoSelecionado(pag);
+                                                    setEditarFuturoVisible(true);
+                                                }
+                                            }}
+                                            style={{ 
+                                                cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
+                                                color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'inherit',
+                                                fontWeight: pag.status === 'Previsto' ? '500' : 'normal',
+                                                textDecoration: pag.status === 'Previsto' ? 'underline' : 'none'
+                                            }}
+                                            title={pag.status === 'Previsto' ? 'Clique para editar' : ''}
+                                        >
+                                            {pag.descricao}
+                                        </td>
                                         <td>{pag.fornecedor || '-'}</td>
                                         <td>{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                         <td>{formatCurrency(pag.valor)}</td>
                                         <td>
-                                            <span style={{
-                                                padding: '3px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.85em',
-                                                backgroundColor: pag.status === 'Previsto' ? '#17a2b8' : 
-                                                               pag.status === 'Pago' ? '#28a745' : '#6c757d',
-                                                color: 'white'
-                                            }}>
-                                                {pag.status}
+                                            <span 
+                                                onClick={() => {
+                                                    if (pag.status === 'Previsto') {
+                                                        handleMarcarPagamentoFuturoPago(pag.id);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '5px 12px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.85em',
+                                                    fontWeight: '600',
+                                                    backgroundColor: pag.status === 'Previsto' ? '#ff9800' : 
+                                                                   pag.status === 'Pago' ? '#28a745' : '#6c757d',
+                                                    color: 'white',
+                                                    cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
+                                                    transition: 'all 0.2s ease',
+                                                    display: 'inline-block'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (pag.status === 'Previsto') {
+                                                        e.target.style.transform = 'scale(1.05)';
+                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.boxShadow = 'none';
+                                                }}
+                                                title={pag.status === 'Previsto' ? 'Clique para marcar como pago' : ''}
+                                            >
+                                                {pag.status === 'Previsto' ? 'Pendente' : pag.status}
                                             </span>
-                                        </td>
-                                        <td>
-                                            {pag.status === 'Previsto' && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleMarcarPagamentoFuturoPago(pag.id)}
-                                                        className="inserir-btn"
-                                                        style={{ padding: '5px 10px', fontSize: '0.85em', marginRight: '5px' }}
-                                                        title="Marcar como Pago"
-                                                    >
-                                                        ✓ Pagar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setPagamentoFuturoSelecionado(pag);
-                                                            setEditarFuturoVisible(true);
-                                                        }}
-                                                        className="submit-btn"
-                                                        style={{ padding: '5px 10px', fontSize: '0.85em', marginRight: '5px', backgroundColor: '#6c757d' }}
-                                                        title="Editar"
-                                                    >
-                                                        ✏️ Editar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeletePagamentoFuturo(pag.id)}
-                                                        className="voltar-btn"
-                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                                        title="Excluir"
-                                                    >
-                                                        🗑️ Excluir
-                                                    </button>
-                                                </>
-                                            )}
-                                            {pag.status === 'Pago' && (
-                                                <span style={{ color: '#28a745', fontWeight: 'bold' }}>✓ Pago</span>
-                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -5331,6 +5343,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     
                     {!isPagamentosParceladosCollapsed && (
                         <>
+                    <p style={{ 
+                        fontSize: '0.9em', 
+                        color: 'var(--cor-texto-secundario)', 
+                        marginBottom: '15px',
+                        padding: '10px',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '6px',
+                        borderLeft: '3px solid var(--cor-primaria)'
+                    }}>
+                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar parcelas ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para pagar próxima parcela
+                    </p>
                     {pagamentosParcelados.length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
@@ -5341,15 +5364,25 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                     <th>Parcelas</th>
                                     <th>Periodicidade</th>
                                     <th>Valor/Parcela</th>
-                                    <th>1ª Parcela</th>
+                                    <th>Próx. Vencimento</th>
                                     <th>Status</th>
-                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {pagamentosParcelados.map(pag => (
                                     <tr key={pag.id}>
-                                        <td>{pag.descricao}</td>
+                                        <td 
+                                            onClick={() => handleAbrirEditarParcelas(pag)}
+                                            style={{ 
+                                                cursor: 'pointer',
+                                                color: 'var(--cor-primaria)',
+                                                fontWeight: '500',
+                                                textDecoration: 'underline'
+                                            }}
+                                            title="Clique para editar parcelas"
+                                        >
+                                            {pag.descricao}
+                                        </td>
                                         <td>{pag.fornecedor || '-'}</td>
                                         <td>{formatCurrency(pag.valor_total)}</td>
                                         <td>
@@ -5362,10 +5395,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         </td>
                                         <td>
                                             <span style={{
-                                                padding: '3px 8px',
+                                                padding: '4px 10px',
                                                 borderRadius: '12px',
                                                 fontSize: '0.85em',
-                                                backgroundColor: pag.periodicidade === 'Semanal' ? '#ffc107' : '#6c757d',
+                                                fontWeight: '600',
+                                                backgroundColor: pag.periodicidade === 'Semanal' ? '#ffc107' : 
+                                                               pag.periodicidade === 'Quinzenal' ? '#ff9800' :
+                                                               pag.periodicidade === 'Mensal' ? '#6c757d' : '#17a2b8',
                                                 color: 'white'
                                             }}>
                                                 {pag.periodicidade || 'Mensal'}
@@ -5375,47 +5411,42 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         <td>
                                             {pag.proxima_parcela_vencimento ? 
                                                 new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
-                                                'Concluído'
+                                                '-'
                                             }
                                         </td>
                                         <td>
-                                            <span style={{
-                                                padding: '3px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.85em',
-                                                backgroundColor: pag.status === 'Ativo' ? '#17a2b8' : 
-                                                               pag.status === 'Concluído' ? '#28a745' : '#6c757d',
-                                                color: 'white'
-                                            }}>
-                                                {pag.status}
+                                            <span 
+                                                onClick={() => {
+                                                    if (pag.status === 'Ativo') {
+                                                        handleMarcarParcelaPaga(pag);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '5px 12px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.85em',
+                                                    fontWeight: '600',
+                                                    backgroundColor: pag.status === 'Ativo' ? '#ff9800' : 
+                                                                   pag.status === 'Concluído' ? '#28a745' : '#6c757d',
+                                                    color: 'white',
+                                                    cursor: pag.status === 'Ativo' ? 'pointer' : 'default',
+                                                    transition: 'all 0.2s ease',
+                                                    display: 'inline-block'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (pag.status === 'Ativo') {
+                                                        e.target.style.transform = 'scale(1.05)';
+                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.target.style.transform = 'scale(1)';
+                                                    e.target.style.boxShadow = 'none';
+                                                }}
+                                                title={pag.status === 'Ativo' ? 'Clique para pagar próxima parcela' : ''}
+                                            >
+                                                {pag.status === 'Ativo' ? 'Pendente' : pag.status}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
-                                                {pag.status === 'Ativo' && (
-                                                    <button
-                                                        onClick={() => handleMarcarParcelaPaga(pag)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                                    >
-                                                        ✓ Pagar Próxima Parcela
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => handleAbrirEditarParcelas(pag)}
-                                                    className="submit-btn"
-                                                    style={{ padding: '5px 10px', fontSize: '0.85em', backgroundColor: '#6c757d' }}
-                                                >
-                                                    ✏️ Editar Parcelas
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeletePagamentoParcelado(pag.id)}
-                                                    className="voltar-btn"
-                                                    style={{ padding: '5px 10px', fontSize: '0.85em' }}
-                                                >
-                                                    🗑️ Excluir
-                                                </button>
-                                            </div>
                                         </td>
                                     </tr>
                                 ))}
