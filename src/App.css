@@ -284,7 +284,7 @@ body {
     border-radius: 8px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
     width: 98%; 
-    max-width: 1600px;  /* AUMENTADO: Modal muito maior para tabelas de parcelas */
+    max-width: 1800px;  /* AUMENTADO para 1800px - máximo para tabelas grandes */
     max-height: 90vh;   /* Limitar altura */
     overflow-y: auto;   /* Scroll se necessário */
 }

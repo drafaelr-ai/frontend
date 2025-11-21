@@ -2601,6 +2601,326 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
 // --- FIM DO MODAL DE RELATÓRIOS ---
 
 
+// --- MODAL DE ORÇAMENTOS ---
+const OrcamentosModal = ({ obraId, onClose, onSave }) => {
+    const [orcamentos, setOrcamentos] = useState([]);
+    const [servicos, setServicos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const [editingOrcamento, setEditingOrcamento] = useState(null);
+    const [viewingAnexos, setViewingAnexos] = useState(null);
+    
+    // Estado para modal de aprovação com escolha de serviço
+    const [aprovandoOrcamento, setAprovandoOrcamento] = useState(null);
+
+    useEffect(() => {
+        carregarDados();
+    }, [obraId]);
+
+    const carregarDados = async () => {
+        try {
+            setIsLoading(true);
+            const [orcRes, servRes] = await Promise.all([
+                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`),
+                fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`)
+            ]);
+            
+            if (!orcRes.ok || !servRes.ok) throw new Error('Erro ao carregar dados');
+            
+            const orcData = await orcRes.json();
+            const servData = await servRes.json();
+            
+            setOrcamentos(Array.isArray(orcData) ? orcData : []);
+            setServicos(Array.isArray(servData) ? servData : []);
+        } catch (err) {
+            console.error('Erro:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAprovar = (orcamento) => {
+        setAprovandoOrcamento(orcamento);
+    };
+
+    const handleConfirmarAprovacao = async (opcao, servicoId = null) => {
+        try {
+            const body = { opcao }; // 'criar_novo' ou 'atrelar'
+            if (opcao === 'atrelar' && servicoId) {
+                body.servico_id = servicoId;
+            }
+
+            const response = await fetchWithAuth(
+                `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao aprovar orçamento');
+
+            alert('✅ Orçamento aprovado com sucesso!');
+            setAprovandoOrcamento(null);
+            carregarDados();
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    const handleRejeitar = async (orcamentoId) => {
+        if (!window.confirm('Confirma a rejeição deste orçamento?')) return;
+
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/orcamentos/${orcamentoId}`,
+                { method: 'DELETE' }
+            );
+
+            if (!response.ok) throw new Error('Erro ao rejeitar orçamento');
+
+            alert('✅ Orçamento rejeitado!');
+            carregarDados();
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    const totalPendente = orcamentos
+        .filter(orc => orc.status !== 'Rejeitado')
+        .reduce((sum, orc) => sum + (orc.valor || 0), 0);
+
+    if (isLoading) {
+        return (
+            <Modal onClose={onClose}>
+                <div className="modal-content">
+                    <h2>📋 Orçamentos</h2>
+                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
+                </div>
+            </Modal>
+        );
+    }
+
+    return (
+        <Modal onClose={onClose}>
+            <div className="modal-content" style={{ maxWidth: '1800px' }}>
+                <button onClick={onClose} className="close-modal-btn">×</button>
+                <h2>📋 Orçamentos para Aprovação</h2>
+                
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px'
+                }}>
+                    <div>
+                        <span style={{ fontSize: '1.1em', color: 'var(--cor-texto-secundario)' }}>
+                            Total Pendente: 
+                        </span>
+                        <span style={{ 
+                            fontSize: '1.5em', 
+                            fontWeight: 'bold',
+                            color: 'var(--cor-primaria)',
+                            marginLeft: '10px'
+                        }}>
+                            {formatCurrency(totalPendente)}
+                        </span>
+                    </div>
+                    <button 
+                        onClick={() => setAddModalVisible(true)}
+                        className="acao-btn add-btn"
+                        style={{ backgroundColor: 'var(--cor-info)' }}
+                    >
+                        + Novo Orçamento
+                    </button>
+                </div>
+
+                {orcamentos.filter(orc => orc.status !== 'Rejeitado').length > 0 ? (
+                    <table className="tabela-pendencias">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Segmento</th>
+                                <th>Serviço</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orcamentos.filter(orc => orc.status !== 'Rejeitado').map(orc => (
+                                <tr key={orc.id}>
+                                    <td
+                                        onClick={() => setEditingOrcamento(orc)}
+                                        style={{
+                                            cursor: 'pointer',
+                                            color: 'var(--cor-primaria)',
+                                            fontWeight: '500',
+                                            textDecoration: 'underline'
+                                        }}
+                                        title="Clique para editar"
+                                    >
+                                        {orc.descricao}
+                                    </td>
+                                    <td>{orc.fornecedor || 'N/A'}</td>
+                                    <td>{orc.tipo}</td>
+                                    <td>{orc.servico_nome || 'Geral'}</td>
+                                    <td><strong>{formatCurrency(orc.valor)}</strong></td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                            {orc.anexos_count > 0 && (
+                                                <button
+                                                    onClick={() => setViewingAnexos(orc)}
+                                                    className="acao-icon-btn"
+                                                    title={`${orc.anexos_count} anexo(s)`}
+                                                    style={{ fontSize: '1.3em', color: '#007bff' }}
+                                                >
+                                                    📎
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleRejeitar(orc.id)}
+                                                className="acao-btn"
+                                                style={{ backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 12px' }}
+                                            >
+                                                Rejeitar
+                                            </button>
+                                            <button
+                                                onClick={() => handleAprovar(orc)}
+                                                className="acao-btn"
+                                                style={{ backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 12px' }}
+                                            >
+                                                Aprovar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-secundario)' }}>
+                        Nenhum orçamento pendente.
+                    </p>
+                )}
+
+                {/* Modal de Aprovação com Escolha */}
+                {aprovandoOrcamento && (
+                    <Modal onClose={() => setAprovandoOrcamento(null)}>
+                        <div className="modal-content" style={{ maxWidth: '600px' }}>
+                            <h2>✅ Aprovar Orçamento</h2>
+                            <p style={{ marginBottom: '20px', color: '#666' }}>
+                                <strong>{aprovandoOrcamento.descricao}</strong><br />
+                                Valor: {formatCurrency(aprovandoOrcamento.valor)}
+                            </p>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <p style={{ fontWeight: 'bold', marginBottom: '15px' }}>
+                                    Como deseja proceder com este orçamento?
+                                </p>
+
+                                <button
+                                    onClick={() => handleConfirmarAprovacao('criar_novo')}
+                                    className="submit-btn"
+                                    style={{ 
+                                        width: '100%', 
+                                        marginBottom: '10px',
+                                        padding: '15px',
+                                        fontSize: '1em'
+                                    }}
+                                >
+                                    🆕 Criar Novo Serviço
+                                </button>
+
+                                <div style={{ margin: '15px 0', textAlign: 'center', color: '#999' }}>
+                                    ou
+                                </div>
+
+                                <select
+                                    id="servico-select"
+                                    className="form-control"
+                                    style={{ 
+                                        width: '100%', 
+                                        padding: '10px',
+                                        marginBottom: '10px'
+                                    }}
+                                    defaultValue=""
+                                >
+                                    <option value="">Selecione um serviço existente...</option>
+                                    {servicos.map(serv => (
+                                        <option key={serv.id} value={serv.id}>
+                                            {serv.nome} - {formatCurrency(serv.valor_total)}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <button
+                                    onClick={() => {
+                                        const servicoId = document.getElementById('servico-select').value;
+                                        if (!servicoId) {
+                                            alert('Por favor, selecione um serviço!');
+                                            return;
+                                        }
+                                        handleConfirmarAprovacao('atrelar', parseInt(servicoId));
+                                    }}
+                                    className="submit-btn"
+                                    style={{ 
+                                        width: '100%',
+                                        padding: '15px',
+                                        fontSize: '1em',
+                                        backgroundColor: '#6c757d'
+                                    }}
+                                >
+                                    🔗 Atrelar a Serviço Existente
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={() => setAprovandoOrcamento(null)}
+                                className="cancel-btn"
+                                style={{ width: '100%' }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </Modal>
+                )}
+
+                {/* Aqui vão os outros modais (add, edit, anexos) se necessário */}
+                {isAddModalVisible && (
+                    <AddOrcamentoModal
+                        obraId={obraId}
+                        onClose={() => setAddModalVisible(false)}
+                        onSave={() => {
+                            setAddModalVisible(false);
+                            carregarDados();
+                        }}
+                    />
+                )}
+
+                {editingOrcamento && (
+                    <EditOrcamentoModal
+                        orcamento={editingOrcamento}
+                        obraId={obraId}
+                        onClose={() => setEditingOrcamento(null)}
+                        onSave={() => {
+                            setEditingOrcamento(null);
+                            carregarDados();
+                        }}
+                    />
+                )}
+            </div>
+        </Modal>
+    );
+};
+// --- FIM DO MODAL DE ORÇAMENTOS ---
+
+
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -3317,10 +3637,10 @@ const totalOrcamentosPendentes = useMemo(() => {
             
             {/* <-- NOVO: Modal de Orçamentos --> */}
             {isOrcamentosModalVisible && (
-                <ModalOrcamentos
+                <OrcamentosModal
                     onClose={() => setOrcamentosModalVisible(false)}
                     obraId={obraSelecionada.id}
-                    obraNome={obraSelecionada.nome}
+                    onSave={() => fetchObraData(obraSelecionada.id)}
                 />
             )}
 
@@ -3374,6 +3694,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                     >
                         📊 Relatórios
                     </button>
+                    {/* <-- NOVO: Botão Orçamentos --> */}
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <button 
+                            onClick={() => setOrcamentosModalVisible(true)} 
+                            className="voltar-btn" 
+                            style={{ backgroundColor: '#9c27b0', color: 'white' }}
+                        >
+                            📋 Orçamentos
+                        </button>
+                    )}
                     {/* MUDANÇA 3: Botão Diário de Obras */}
                     <button 
                         onClick={() => setDiarioVisible(true)} 
@@ -3446,105 +3776,6 @@ const totalOrcamentosPendentes = useMemo(() => {
             </div>
             <CronogramaObra obraId={obraSelecionada.id} />
             {/* --- FIM DO CRONOGRAMA DA OBRA --- */}
-
-
-            {/* Tabela de Orçamentos */}
-            <div className="card-full">
-                <div className="card-header">
-                <h3>Orçamentos para Aprovação</h3>
-                
-                <div className="header-actions">
-                    <span style={{ 
-                        fontSize: '1.1em', 
-                        fontWeight: 'bold', 
-                        color: 'var(--cor-texto-secundario)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        marginRight: '20px' 
-                    }}>
-                        Total Pendente: 
-                        <span style={{ 
-                            color: 'var(--cor-primaria)', 
-                            fontSize: '1.2em', 
-                            marginLeft: '8px' 
-                        }}>
-                            {formatCurrency(totalOrcamentosPendentes)}
-                        </span>
-                    </span>
-                
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <button className="acao-btn add-btn" style={{backgroundColor: 'var(--cor-info)'}} onClick={() => setAddOrcamentoModalVisible(true)}>+ Novo Orçamento</button>
-                    )}
-                
-                </div>
-            </div>
-                <div className="tabela-scroll-container">
-                    <table className="tabela-historico">
-                        <thead>
-                            <tr>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Segmento</th>
-                                <th>Serviço</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {/* <-- MUDANÇA: Filtrar orçamentos rejeitados da lista principal */}
-                            {orcamentos.filter(orc => orc.status !== 'Rejeitado').length > 0 ? orcamentos.filter(orc => orc.status !== 'Rejeitado').map(orc => (
-                                <tr key={orc.id} className="linha-clicavel" onClick={() => setEditingOrcamento(orc)}>
-                                    <td>
-                                        {orc.descricao}
-                                    </td>
-                                    <td>{orc.fornecedor || 'N/A'}</td>
-                                    <td>{orc.tipo}</td>
-                                    <td>{orc.servico_nome || 'Geral'}</td>
-                                    <td>{formatCurrency(orc.valor)}</td>
-                                    <td className="acoes-cell" style={{display: 'flex', gap: '5px', justifyContent: 'center'}} onClick={e => e.stopPropagation()}>
-                                        
-                                        {orc.anexos_count > 0 && (
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setViewingAnexos(orc); }}
-                                                className="acao-icon-btn"
-                                                title={`${orc.anexos_count} anexo(s)`}
-                                                style={{ fontSize: '1.3em', color: '#007bff' }}
-                                            >
-                                                📎
-                                            </button>
-                                        )}
-
-                                        {(user.role === 'administrador' || user.role === 'master') && (
-                                            <>
-                                                <button 
-                                                    onClick={() => handleRejeitarOrcamento(orc.id)} 
-                                                    className="acao-btn" 
-                                                    title="Rejeitar"
-                                                    style={{backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 10px'}}
-                                                >
-                                                    Rejeitar
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleAprovarOrcamento(orc.id)} 
-                                                    className="acao-btn" 
-                                                    title="Aprovar"
-                                                    style={{backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 10px'}}
-                                                >
-                                                    Aprovar
-                                                </button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="6" style={{textAlign: 'center'}}>Nenhum orçamento pendente.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
 
             {/* Card de Serviços Colapsável */}
@@ -4313,7 +4544,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
 
     return (
         <Modal>
-            <div className="modal-content" style={{ maxWidth: '1600px', maxHeight: '88vh', overflowY: 'auto' }}>
+            <div className="modal-content" style={{ maxWidth: '1800px', maxHeight: '88vh', overflowY: 'auto' }}>
                 <h2>✏️ Editar Parcelas</h2>
                 <p style={{ marginBottom: '20px', color: '#666' }}>
                     <strong>{pagamentoParcelado.descricao}</strong><br />
