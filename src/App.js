@@ -5035,8 +5035,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
                 <h2>💰 Cronograma Financeiro - {obraNome}</h2>
                 <QuadroAlertasVencimento obraId={obraId} /> 
-                {/* Botões de Cadastro e Exportação */}
+                {/* Botões de Exportação */}
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                    {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
                     <button 
                         onClick={() => setCadastrarFuturoVisible(true)} 
                         className="submit-btn"
@@ -5050,6 +5051,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     >
                         ➕ Cadastrar Pagamento Parcelado
                     </button>
+                    */}
                     
                     {/* NOVO: Botão Gerar PDF */}
                     <button 
