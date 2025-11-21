@@ -283,8 +283,8 @@ body {
     padding: 30px; 
     border-radius: 8px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
-    width: 98%; 
-    max-width: 1800px;  /* AUMENTADO para 1800px - máximo para tabelas grandes */
+    width: 96%; 
+    max-width: 2000px;  /* Aumentado para praticamente tela cheia */
     max-height: 90vh;   /* Limitar altura */
     overflow-y: auto;   /* Scroll se necessário */
 }

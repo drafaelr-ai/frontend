@@ -5262,8 +5262,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
     return (
-        <Modal onClose={onClose} customWidth="1000px">
-            <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+        <Modal onClose={onClose} customWidth="96%">
+            <div style={{ maxHeight: '85vh', overflowY: 'auto' }}>
                 <h2>💰 Cronograma Financeiro - {obraNome}</h2>
                 <QuadroAlertasVencimento obraId={obraId} /> 
                 {/* Botões de Exportação */}
@@ -5469,7 +5469,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     }}>
                         💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para marcar como pago
                     </p>
-                    {pagamentosFuturos.length > 0 ? (
+                    {pagamentosFuturos.filter(pag => pag.status === 'Previsto').length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
@@ -5482,7 +5482,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagamentosFuturos.map(pag => (
+                                {pagamentosFuturos.filter(pag => pag.status === 'Previsto').map(pag => (
                                     <tr key={pag.id}>
                                         <td>
                                             {pag.status === 'Previsto' && (
@@ -5585,7 +5585,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     }}>
                         💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar parcelas ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para pagar próxima parcela
                     </p>
-                    {pagamentosParcelados.length > 0 ? (
+                    {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
@@ -5600,7 +5600,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagamentosParcelados.map(pag => (
+                                {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => (
                                     <tr key={pag.id}>
                                         <td 
                                             onClick={() => handleAbrirEditarParcelas(pag)}
