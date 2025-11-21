@@ -125,39 +125,44 @@ const LoginScreen = () => {
         });
     };
 
-    const loginStyles = {
-        container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--cor-fundo)' },
-        card: { padding: '40px', background: 'white', borderRadius: '8px', boxShadow: 'var(--sombra-card)', minWidth: '300px' },
-        form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-        input: { padding: '12px', fontSize: '1em', border: '1px solid #ccc', borderRadius: '4px' },
-        
-        h1: {
-            textAlign: 'center',
-            margin: 0,
-            marginBottom: '30px', 
-            color: 'var(--cor-primaria)', 
-            fontSize: '3em',
-            fontWeight: '700',
-            fontFamily: 'Segoe UI, sans-serif'
-        },
-
-        button: { padding: '12px', fontSize: '1em', background: 'var(--cor-primaria)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-        error: { color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '10px' }
-    };
-
     return (
-        <div style={loginStyles.container}>
-            <div style={loginStyles.card}>
-                
-                <h1 style={loginStyles.h1}>Obraly</h1>
+        <div className="login-screen">
+            {/* Overlay para profundidade */}
+            <div className="overlay"></div>
+            
+            {/* Elementos flutuantes decorativos */}
+            <div className="floating-shape circle-1"></div>
+            <div className="floating-shape square-1"></div>
+            <div className="floating-shape triangle-1"></div>
+            
+            {/* Card de login */}
+            <div className="login-card">
+                <h1 style={{
+                    color: '#4f46e5',
+                    textAlign: 'center',
+                    fontSize: '2.5em',
+                    marginBottom: '30px',
+                    fontWeight: '700',
+                    margin: '0 0 30px 0'
+                }}>
+                    Obraly
+                </h1>
 
-                <form onSubmit={handleLogin} style={loginStyles.form}>
+                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input
                         type="text"
                         placeholder="Usuário"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        style={loginStyles.input}
+                        style={{ 
+                            padding: '12px', 
+                            fontSize: '1em', 
+                            border: '1px solid #ccc', 
+                            borderRadius: '4px',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
                         required
                     />
                     <input
@@ -165,13 +170,37 @@ const LoginScreen = () => {
                         placeholder="Senha"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        style={loginStyles.input}
+                        style={{ 
+                            padding: '12px', 
+                            fontSize: '1em', 
+                            border: '1px solid #ccc', 
+                            borderRadius: '4px',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
                         required
                     />
-                    <button type="submit" style={loginStyles.button} disabled={isLoading}>
+                    <button 
+                        type="submit" 
+                        style={{ 
+                            padding: '12px', 
+                            fontSize: '1em', 
+                            background: '#4f46e5', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '4px', 
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontWeight: '600'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#4338ca'}
+                        onMouseLeave={(e) => e.target.style.background = '#4f46e5'}
+                        disabled={isLoading}
+                    >
                         {isLoading ? 'Entrando...' : 'Entrar'}
                     </button>
-                    {error && <p style={loginStyles.error}>{error}</p>}
+                    {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
                 </form>
             </div>
         </div>
