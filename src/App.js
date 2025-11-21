@@ -2694,8 +2694,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     if (isLoading) {
         return (
-            <Modal onClose={onClose}>
-                <div className="modal-content">
+            <Modal onClose={onClose} customWidth="96%">
+                <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
                     <h2>📋 Orçamentos</h2>
                     <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
                 </div>
@@ -2704,8 +2704,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     }
 
     return (
-        <Modal onClose={onClose}>
-            <div className="modal-content" style={{ maxWidth: '1800px' }}>
+        <Modal onClose={onClose} customWidth="96%">
+            <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="close-modal-btn">×</button>
                 <h2>📋 Orçamentos para Aprovação</h2>
                 
