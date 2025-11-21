@@ -420,6 +420,8 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border-left: 4px solid var(--cor-primaria, #4f46e5);
     transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden; /* Prevenir overflow */
+    word-wrap: break-word; /* Quebrar palavras longas */
 }
 
 .card-cronograma:hover {
@@ -613,12 +615,16 @@ body {
     border-radius: 8px;
     margin: 12px 0;
     border-left: 3px solid var(--cor-info, #3b82f6);
+    overflow-wrap: break-word; /* Quebrar palavras longas */
+    word-break: break-word; /* Forçar quebra se necessário */
 }
 
 .cronograma-obs small {
     color: var(--cor-texto-secundario, #4a5568);
     font-size: 0.85em;
     line-height: 1.4;
+    display: block; /* Para respeitar quebras de linha */
+    overflow-wrap: break-word;
 }
 
 .cronograma-actions {
