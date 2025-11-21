@@ -124,9 +124,33 @@ body {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-.kpi-card { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); color: white; }
-.kpi-card span { font-size: 1em; opacity: 0.9; }
-.kpi-card h2 { font-size: 2em; margin: 5px 0; }
+.kpi-card { 
+    background: var(--cor-card); 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: var(--sombra-card); 
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 120px;
+}
+.kpi-card span { 
+    font-size: 1em; 
+    opacity: 0.9;
+    display: block;
+    margin-bottom: 5px;
+}
+.kpi-card h2 { 
+    font-size: 2em; 
+    margin: 5px 0 0 0;
+    font-weight: 700;
+}
+.kpi-card p {
+    font-size: 0.85em;
+    opacity: 0.8;
+    margin: 5px 0 0 0;
+}
 
 /* --- MUDANÇA: Novas classes de cor do KPI --- */
 .kpi-card.orcamento-total { background: var(--cor-vermelho); }      /* Card 1 - Orçamento Total (Vermelho) */
@@ -170,9 +194,26 @@ body {
 }
 .card-main, .card-full { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); margin-bottom: 20px; }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-.card-header h3 { margin: 0; }
-.header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.card-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 10px; 
+    margin-bottom: 15px;
+    gap: 15px;
+}
+.card-header h3 { 
+    margin: 0;
+    flex-shrink: 0;
+}
+.header-actions { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+    align-items: center;
+    justify-content: flex-end;
+}
 
 .export-btn { background-color: #f8f9fa; color: var(--cor-texto); border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
 .export-btn.pdf { background-color: var(--cor-vermelho); color: white; border-color: var(--cor-vermelho); }
@@ -226,10 +267,77 @@ body {
 
 .loading-screen { text-align: center; padding: 50px; font-size: 1.5em; }
 
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { position: relative; background: var(--cor-card); padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 600px; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+.modal-content { 
+    position: relative; 
+    background: var(--cor-card); 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
+    width: 95%; 
+    max-width: 1000px;  /* Aumentado de 600px para 1000px */
+    max-height: 90vh;   /* Limitar altura */
+    overflow-y: auto;   /* Scroll se necessário */
+}
 .close-modal-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2em; color: #aaa; cursor: pointer; }
 .modal-content h2 { margin-top: 0; text-align: center; margin-bottom: 20px; }
+
+/* Tabelas dentro de modais */
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.modal-content table th,
+.modal-content table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.modal-content table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--cor-texto);
+}
+
+.modal-content table td {
+    font-size: 0.95em;
+}
+
+/* Alinhamento de valores nas tabelas */
+.modal-content table td:nth-child(2),  /* Coluna Valor */
+.modal-content table td:nth-child(3) { /* Coluna Vencimento */
+    text-align: center;
+}
+
+.modal-content table td:nth-child(4) { /* Coluna Status */
+    text-align: center;
+}
+
+.modal-content table td:nth-child(5) { /* Coluna Ações */
+    text-align: right;
+}
+
+/* Botões de ação dentro das tabelas */
+.modal-content table button {
+    margin: 2px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    min-width: 70px;
+}
+
+/* Container de ações dentro do modal */
+.modal-content .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
 .form-group { margin-bottom: 15px; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
@@ -241,6 +349,27 @@ body {
 .submit-btn { background-color: var(--cor-primaria); color: white; }
 .acao-btn.add-btn { background-color: var(--cor-primaria); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 .acao-btn { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+/* Responsividade do Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 95%;
+        padding: 20px;
+        max-height: 85vh;
+    }
+    
+    .modal-content table th,
+    .modal-content table td {
+        padding: 8px 5px;
+        font-size: 0.85em;
+    }
+    
+    .modal-content table button {
+        padding: 4px 8px;
+        font-size: 0.75em;
+        min-width: 60px;
+    }
+}
 
 
 .lista-empreitadas { display: flex; flex-direction: column; gap: 15px; }
