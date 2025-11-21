@@ -1992,6 +1992,300 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
 };
 // --- FIM DO MODAL DE UPLOAD DE NOTA FISCAL ---
 
+// --- MODAL PARA VISUALIZAR NOTA FISCAL ---
+const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { user } = useAuth();
+    
+    const handleDelete = async () => {
+        if (!window.confirm('Tem certeza que deseja excluir esta nota fiscal?')) {
+            return;
+        }
+        
+        setIsDeleting(true);
+        try {
+            const response = await fetchWithAuth(`${API_URL}/notas-fiscais/${nota.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Erro ao excluir nota fiscal');
+            }
+            
+            onDelete();
+            onClose();
+        } catch (error) {
+            console.error('Erro ao excluir nota fiscal:', error);
+            alert('Erro ao excluir nota fiscal');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+    
+    const handleDownload = () => {
+        window.open(`${API_URL}/notas-fiscais/${nota.id}`, '_blank');
+    };
+    
+    const isPDF = nota.mimetype === 'application/pdf';
+    const isImage = nota.mimetype?.startsWith('image/');
+    
+    return (
+        <Modal onClose={onClose} customWidth="800px">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2>📄 Nota Fiscal</h2>
+                {(user.role === 'administrador' || user.role === 'master') && (
+                    <button 
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        style={{
+                            background: 'var(--cor-vermelho)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontSize: '0.9em'
+                        }}
+                    >
+                        {isDeleting ? 'Excluindo...' : '🗑️ Excluir'}
+                    </button>
+                )}
+            </div>
+            
+            <div style={{ 
+                padding: '15px', 
+                background: '#f8f9fa', 
+                borderRadius: '8px',
+                marginBottom: '20px'
+            }}>
+                <p style={{ margin: '5px 0' }}>
+                    <strong>Arquivo:</strong> {nota.filename}
+                </p>
+                <p style={{ margin: '5px 0' }}>
+                    <strong>Tipo:</strong> {nota.mimetype}
+                </p>
+            </div>
+            
+            <div style={{ 
+                border: '1px solid #ddd', 
+                borderRadius: '8px',
+                overflow: 'hidden',
+                marginBottom: '20px',
+                maxHeight: '500px',
+                overflowY: 'auto'
+            }}>
+                {isPDF && (
+                    <iframe 
+                        src={`${API_URL}/notas-fiscais/${nota.id}`}
+                        style={{ 
+                            width: '100%', 
+                            height: '500px', 
+                            border: 'none' 
+                        }}
+                        title="Nota Fiscal PDF"
+                    />
+                )}
+                
+                {isImage && (
+                    <img 
+                        src={`${API_URL}/notas-fiscais/${nota.id}`}
+                        alt="Nota Fiscal"
+                        style={{ 
+                            width: '100%', 
+                            height: 'auto',
+                            display: 'block'
+                        }}
+                    />
+                )}
+                
+                {!isPDF && !isImage && (
+                    <div style={{ 
+                        padding: '40px', 
+                        textAlign: 'center',
+                        color: '#666'
+                    }}>
+                        <p>Pré-visualização não disponível para este tipo de arquivo.</p>
+                        <p>Clique em "Baixar" para visualizar o arquivo.</p>
+                    </div>
+                )}
+            </div>
+            
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button onClick={onClose} className="cancel-btn">
+                    Fechar
+                </button>
+                <button 
+                    onClick={handleDownload}
+                    className="submit-btn"
+                    style={{ background: 'var(--cor-acento)' }}
+                >
+                    📥 Baixar
+                </button>
+            </div>
+        </Modal>
+    );
+};
+
+// --- COMPONENTE DE ÍCONE DE NOTA FISCAL CLICÁVEL ---
+const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
+    const [nota, setNota] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [showVisualizacao, setShowVisualizacao] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const fileInputRef = React.useRef(null);
+    const { user } = useAuth();
+    
+    useEffect(() => {
+        carregarNotaFiscal();
+    }, [item.id]);
+    
+    const carregarNotaFiscal = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`);
+            const data = await response.json();
+            
+            const notaDoItem = data.find(n => 
+                n.item_id === item.id && n.item_type === itemType
+            );
+            
+            setNota(notaDoItem || null);
+        } catch (error) {
+            console.error('Erro ao carregar nota fiscal:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleFileSelect = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Apenas arquivos PDF, PNG ou JPG são permitidos');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Arquivo muito grande. Tamanho máximo: 10MB');
+            return;
+        }
+        
+        setIsUploading(true);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('item_id', item.id);
+        formData.append('item_type', itemType);
+        
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Erro ao fazer upload');
+            }
+            
+            const novaNota = await response.json();
+            setNota(novaNota);
+            
+            if (onNotaAdded) {
+                onNotaAdded();
+            }
+        } catch (error) {
+            console.error('Erro ao fazer upload:', error);
+            alert('Erro ao anexar nota fiscal');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+    
+    const handleClick = (e) => {
+        e.stopPropagation();
+        
+        if (nota) {
+            setShowVisualizacao(true);
+        } else if (user.role === 'administrador' || user.role === 'master') {
+            fileInputRef.current?.click();
+        }
+    };
+    
+    const canUpload = user.role === 'administrador' || user.role === 'master';
+    
+    if (isLoading) {
+        return (
+            <span style={{ 
+                fontSize: '1.2em', 
+                color: '#ccc',
+                cursor: 'default'
+            }}>
+                ⏳
+            </span>
+        );
+    }
+    
+    return (
+        <>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+                disabled={isUploading}
+            />
+            
+            <span
+                onClick={handleClick}
+                title={
+                    nota 
+                        ? 'Clique para visualizar a nota fiscal' 
+                        : canUpload 
+                            ? 'Clique para anexar nota fiscal'
+                            : 'Sem nota fiscal'
+                }
+                style={{
+                    fontSize: '1.2em',
+                    cursor: (nota || canUpload) ? 'pointer' : 'default',
+                    color: nota ? 'var(--cor-acento)' : '#ccc',
+                    transition: 'all 0.2s',
+                    display: 'inline-block',
+                    marginLeft: '8px'
+                }}
+                onMouseEnter={(e) => {
+                    if (nota || canUpload) {
+                        e.target.style.transform = 'scale(1.2)';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1)';
+                }}
+            >
+                {isUploading ? '⏳' : nota ? '📄' : canUpload ? '📎' : ''}
+            </span>
+            
+            {showVisualizacao && nota && (
+                <VisualizarNotaFiscalModal
+                    nota={nota}
+                    onClose={() => setShowVisualizacao(false)}
+                    onDelete={() => {
+                        setNota(null);
+                        if (onNotaAdded) {
+                            onNotaAdded();
+                        }
+                    }}
+                />
+            )}
+        </>
+    );
+};
+// --- FIM DOS COMPONENTES DE NOTAS FISCAIS ---
+
 
 // --- MODAL DE ORÇAMENTOS ---
 const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
@@ -3977,12 +4271,22 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 <tr key={item.id}>
                                     <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                                     <td>
-                                        {item.descricao}
-                                        {item.tipo_registro === 'pagamento_servico' && (
-                                            <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                                SERVIÇO
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>
+                                                {item.descricao}
+                                                {item.tipo_registro === 'pagamento_servico' && (
+                                                    <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                                        SERVIÇO
+                                                    </span>
+                                                )}
                                             </span>
-                                        )}
+                                            <NotaFiscalIcon 
+                                                item={item}
+                                                itemType={item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'despesa_geral'}
+                                                obraId={obraSelecionada.id}
+                                                onNotaAdded={() => carregarLancamentos()}
+                                            />
+                                        </span>
                                     </td>
                                     <td>{item.fornecedor || 'N/A'}</td>
                                     <td>{item.tipo}</td>
