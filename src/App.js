@@ -3188,9 +3188,9 @@ const totalOrcamentosPendentes = useMemo(() => {
                                             </strong>
                                         </div>
                                         <div>
-                                            <span>Residual</span>
-                                            <strong style={{ color: '#f0ad4e' }}>
-                                                {formatCurrency(obra.residual || 0)}
+                                            <span>Despesas Extras</span>
+                                            <strong style={{ color: '#9333ea' }}>
+                                                {formatCurrency(obra.despesas_extras || 0)}
                                             </strong>
                                         </div>
                                     </div>
@@ -3408,10 +3408,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                          <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
                      </div>
 
-                     {/* Card 4: Residual (Orçamento - Pago) */}
-                     <div className="kpi-card residual-servicos">
-                         <span>Residual (Orçado - Pago)</span>
-                         <h2>{formatCurrency(sumarios.residual)}</h2>
+                     {/* Card 4: Despesas Extras (Fora da Planilha) */}
+                     <div className="kpi-card despesas-extras">
+                         <span>Despesas Extras</span>
+                         <p style={{ fontSize: '0.75rem', opacity: 0.8, margin: '0.2rem 0' }}>Fora da Planilha</p>
+                         <h2>{formatCurrency(sumarios.despesas_extras || 0)}</h2>
                      </div>
                  </div>
              )}
