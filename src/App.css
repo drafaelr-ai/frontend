@@ -275,7 +275,7 @@ body {
     border-radius: 8px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
     width: 95%; 
-    max-width: 1000px;  /* Aumentado de 600px para 1000px */
+    max-width: 1400px;  /* Aumentado para 1400px para melhor visualização das tabelas */
     max-height: 90vh;   /* Limitar altura */
     overflow-y: auto;   /* Scroll se necessário */
 }
