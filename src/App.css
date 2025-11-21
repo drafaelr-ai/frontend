@@ -27,8 +27,20 @@ body {
     margin: 0; 
 }
 
-.container { max-width: 1200px; margin: 40px auto; padding: 20px; }
-.lista-obras { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+.container { max-width: 1600px; margin: 40px auto; padding: 20px; }
+/* Lista de Obras Responsiva */
+.lista-obras { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+    gap: 20px; 
+    margin-top: 20px; 
+}
+
+@media (max-width: 480px) {
+    .lista-obras {
+        grid-template-columns: 1fr;
+    }
+}
 
 .card-obra { 
     background-color: var(--cor-card); 
@@ -77,14 +89,41 @@ body {
 }
 
 
-.dashboard-container { max-width: 1200px; margin: auto; padding: 20px; }
+.dashboard-container { max-width: 1600px; margin: auto; padding: 20px; }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .dashboard-header h1 { margin: 0; }
 .dashboard-header p { margin: 0; color: var(--cor-texto-secundario); }
 
 .voltar-btn { background-color: #6c757d; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
 
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+/* Grid KPI Responsivo Inteligente */
+.kpi-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); /* Padrão: 2 cards */
+    gap: 20px; 
+    margin-bottom: 20px; 
+}
+
+/* Mobile pequeno: 1 card */
+@media (max-width: 480px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tela média: 3 cards */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Tela grande: 4 cards */
+@media (min-width: 1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
 .kpi-card { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); color: white; }
 .kpi-card span { font-size: 1em; opacity: 0.9; }
 .kpi-card h2 { font-size: 2em; margin: 5px 0; }
@@ -110,7 +149,25 @@ body {
 /* .kpi-card.residual-servicos { background: #f0ad4e; } */          /* REMOVIDO - Card 4 anterior */
 /* --- FIM DA MUDANÇA --- */
 
-.main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px; }
+/* Main Grid Responsivo */
+.main-grid { 
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 20px; 
+    margin-bottom: 20px; 
+}
+
+@media (min-width: 768px) {
+    .main-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1400px) {
+    .main-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 .card-main, .card-full { background: var(--cor-card); padding: 20px; border-radius: 8px; box-shadow: var(--sombra-card); margin-bottom: 20px; }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
@@ -170,7 +227,7 @@ body {
 .loading-screen { text-align: center; padding: 50px; font-size: 1.5em; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-content { position: relative; background: var(--cor-card); padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; }
+.modal-content { position: relative; background: var(--cor-card); padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 600px; }
 .close-modal-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2em; color: #aaa; cursor: pointer; }
 .modal-content h2 { margin-top: 0; text-align: center; margin-bottom: 20px; }
 .form-group { margin-bottom: 15px; }
@@ -341,6 +398,12 @@ body {
 @media (min-width: 768px) {
     .cronograma-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1400px) {
+    .cronograma-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
