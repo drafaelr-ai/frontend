@@ -375,7 +375,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
                         <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
+                        {(servicos || []).map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
                     </select>
@@ -1211,7 +1211,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
                         <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
+                        {(servicos || []).map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
                     </select>
@@ -1323,7 +1323,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
                         <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
+                        {(servicos || []).map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
                     </select>
@@ -1538,7 +1538,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                     <label>Vincular ao Serviço (Opcional)</label>
                     <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
                         <option value="">Nenhum</option>
-                        {servicos.map(s => (
+                        {(servicos || []).map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
                     </select>
@@ -1716,7 +1716,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                 <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
                     <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
                         <option value="">Nenhum (Gasto Geral)</option>
-                        {servicos.map(s => (
+                        {(servicos || []).map(s => (
                             <option key={s.id} value={s.id}>{s.nome}</option>
                         ))}
                     </select>
@@ -3175,7 +3175,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                     defaultValue=""
                                 >
                                     <option value="">Selecione um serviço existente...</option>
-                                    {servicos.map(serv => (
+                                    {(servicos || []).map(serv => (
                                         <option key={serv.id} value={serv.id}>
                                             {serv.nome} - {formatCurrency(serv.valor_total)}
                                         </option>
@@ -4736,7 +4736,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                         disabled={loadingServicos}
                     >
                         <option value="">-- Nenhum serviço --</option>
-                        {servicos.map(servico => (
+                        {(servicos || []).map(servico => (
                             <option key={servico.id} value={servico.id}>
                                 {servico.nome}
                             </option>
