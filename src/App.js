@@ -5410,21 +5410,39 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     const fetchData = async () => {
         setIsLoading(true);
         try {
+            // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
             const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`) // NOVO
+                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`)
             ]);
 
+            // Processar respostas principais
             if (futuroRes.ok) {
                 const data = await futuroRes.json();
                 setPagamentosFuturos(data);
             }
 
+            if (previsoesRes.ok) {
+                const data = await previsoesRes.json();
+                setPrevisoes(data);
+            }
+            
+            if (servicoPendentesRes.ok) {
+                const data = await servicoPendentesRes.json();
+                setPagamentosServicoPendentes(data);
+            }
+
+            // <--- MUDANÇA: Processar parcelados SEM bloquear a tela -->
             if (parceladoRes.ok) {
                 const data = await parceladoRes.json();
-                // MUDANÇA 5: Buscar parcelas individuais para cada pagamento parcelado
+                
+                // Mostrar dados básicos imediatamente (sem parcelas)
+                setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
+                setIsLoading(false); // <-- Libera a tela AQUI
+                
+                // Buscar parcelas em background (não bloqueia mais!)
                 const parceladosComParcelas = await Promise.all(
                     data.map(async (pagParcelado) => {
                         try {
@@ -5441,24 +5459,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                         return { ...pagParcelado, parcelas: [] };
                     })
                 );
+                
+                // Atualiza com parcelas quando disponíveis
                 setPagamentosParcelados(parceladosComParcelas);
-            }
-
-            if (previsoesRes.ok) {
-                const data = await previsoesRes.json();
-                setPrevisoes(data);
-            }
-            
-            // NOVO: Carregar pagamentos de serviço pendentes
-            if (servicoPendentesRes.ok) {
-                const data = await servicoPendentesRes.json();
-                setPagamentosServicoPendentes(data);
+            } else {
+                setIsLoading(false);
             }
         } catch (error) {
             console.error('Erro ao carregar cronograma financeiro:', error);
             alert('Erro ao carregar dados do cronograma');
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     useEffect(() => {
@@ -5596,9 +5607,29 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
             }
 
             if (res.ok) {
-                alert('Pagamento marcado como pago!');
-                // Importante pro item sumir do cronograma e entrar no histórico
-                fetchData();
+                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
+                if (idStr.startsWith('servico-')) {
+                    // Remove da lista de serviços pendentes
+                    const servPagId = parseInt(idStr.split('-').pop(), 10);
+                    setPagamentosServicoPendentes(prev => 
+                        prev.filter(p => p.id !== servPagId)
+                    );
+                } else {
+                    // Remove da lista de pagamentos futuros
+                    setPagamentosFuturos(prev => 
+                        prev.filter(pag => pag.id !== id)
+                    );
+                }
+                
+                // Feedback visual rápido
+                const toast = document.createElement('div');
+                toast.textContent = '✅ Pagamento marcado como pago!';
+                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+                
+                // Atualiza obra no background (sem bloquear UI)
+                setTimeout(() => fetchObraData(obraId), 500);
             } else {
                 const errorData = await res.json();
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
@@ -5669,8 +5700,47 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
 
             if (res.ok) {
                 const resultado = await res.json();
-                alert(`✅ ${resultado.mensagem}`);
-                fetchData();
+                
+                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
+                setPagamentosParcelados(prev => {
+                    return prev.map(pag => {
+                        if (pag.id === pagamento.id) {
+                            // Atualizar as parcelas
+                            const parcelasAtualizadas = pag.parcelas ? pag.parcelas.map(p => 
+                                p.id === proximaParcela.id 
+                                    ? { ...p, status: 'Pago', data_pagamento: getTodayString() }
+                                    : p
+                            ) : [];
+                            
+                            // Recalcular próxima parcela
+                            const proxima = parcelasAtualizadas.find(p => p.status !== 'Pago');
+                            const numeroProxima = proxima ? proxima.numero_parcela : null;
+                            const vencimentoProximo = proxima ? proxima.data_vencimento : null;
+                            
+                            // Se todas pagas, marcar como Concluído
+                            const todasPagas = parcelasAtualizadas.every(p => p.status === 'Pago');
+                            
+                            return {
+                                ...pag,
+                                parcelas: parcelasAtualizadas,
+                                proxima_parcela_numero: numeroProxima,
+                                proxima_parcela_vencimento: vencimentoProximo,
+                                status: todasPagas ? 'Concluído' : 'Ativo'
+                            };
+                        }
+                        return pag;
+                    });
+                });
+                
+                // Feedback visual rápido
+                const toast = document.createElement('div');
+                toast.textContent = `✅ ${resultado.mensagem}`;
+                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+                
+                // Atualiza obra no background (sem bloquear UI)
+                setTimeout(() => fetchObraData(obraId), 500);
             } else {
                 const erro = await res.json();
                 alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
