@@ -2985,7 +2985,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
             alert('✅ Orçamento aprovado com sucesso!');
             setAprovandoOrcamento(null);
-            carregarDados();
+            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
+            // O onSave() já vai recarregar todos os dados da obra
             if (onSave) onSave();
         } catch (err) {
             alert(`Erro: ${err.message}`);
@@ -3004,7 +3005,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             if (!response.ok) throw new Error('Erro ao rejeitar orçamento');
 
             alert('✅ Orçamento rejeitado!');
-            carregarDados();
+            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
             if (onSave) onSave();
         } catch (err) {
             alert(`Erro: ${err.message}`);
