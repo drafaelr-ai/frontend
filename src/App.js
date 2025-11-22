@@ -79,7 +79,14 @@ const fetchWithAuth = async (url, options = {}) => {
     if (response.status === 401 || response.status === 422) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.reload(); 
+        
+        // Mostrar alerta antes de recarregar
+        alert('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+        
         throw new Error('Sessão expirada. Faça o login novamente.');
     }
 
