@@ -3278,7 +3278,10 @@ function Dashboard() {
     
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
-    const [uploadingNFFor, setUploadingNFFor] = useState(null); // Item que está recebendo upload
+    const [uploadingNFFor, setUploadingNFFor] = useState(null);
+    
+    // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
+    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
     
     // <--- NOVO: Estado para modal de relatórios -->
     const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
@@ -3373,6 +3376,43 @@ const totalOrcamentosPendentes = useMemo(() => {
         ),
         [historicoUnificado]
     );
+    
+    // <--- NOVO: Função para agrupar pagamentos por mês -->
+    const pagamentosPorMes = useMemo(() => {
+        const grupos = {};
+        
+        itemsPagos.forEach(item => {
+            const dataItem = new Date((item.data_vencimento || item.data) + 'T00:00:00');
+            const mesAno = `${dataItem.getFullYear()}-${String(dataItem.getMonth() + 1).padStart(2, '0')}`;
+            const mesAnoLabel = dataItem.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                .replace(/^\w/, c => c.toUpperCase()); // Capitalizar primeira letra
+            
+            if (!grupos[mesAno]) {
+                grupos[mesAno] = {
+                    label: mesAnoLabel,
+                    items: [],
+                    total: 0,
+                    dataOrdem: dataItem // Para ordenação
+                };
+            }
+            
+            grupos[mesAno].items.push(item);
+            grupos[mesAno].total += item.valor_pago || 0;
+        });
+        
+        // Ordenar por data (mais recente primeiro)
+        return Object.entries(grupos)
+            .sort(([, a], [, b]) => b.dataOrdem - a.dataOrdem)
+            .map(([mesAno, dados]) => ({ mesAno, ...dados }));
+    }, [itemsPagos]);
+    
+    // <--- NOVO: Função para toggle de expandir/recolher mês -->
+    const toggleMes = (mesAno) => {
+        setMesesExpandidos(prev => ({
+            ...prev,
+            [mesAno]: !prev[mesAno]
+        }));
+    };
 
 
     // Efeito para buscar obras
@@ -4267,104 +4307,157 @@ const totalOrcamentosPendentes = useMemo(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            {itemsPagos.length > 0 ? itemsPagos.map(item => (
-                                <tr key={item.id}>
-                                    <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                    <td>
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>
-                                                {item.descricao}
-                                                {item.tipo_registro === 'pagamento_servico' && (
-                                                    <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
-                                                        SERVIÇO
+                            {pagamentosPorMes.length > 0 ? pagamentosPorMes.map(({ mesAno, label, items, total }) => {
+                                const isExpandido = mesesExpandidos[mesAno] !== false; // Por padrão expandido
+                                
+                                return (
+                                    <React.Fragment key={mesAno}>
+                                        {/* Cabeçalho do Mês */}
+                                        <tr 
+                                            className="mes-header"
+                                            onClick={() => toggleMes(mesAno)}
+                                            style={{
+                                                backgroundColor: '#f0f7ff',
+                                                cursor: 'pointer',
+                                                fontWeight: '600',
+                                                borderTop: '2px solid #4f46e5',
+                                                borderBottom: '1px solid #ddd'
+                                            }}
+                                        >
+                                            <td colSpan="6" style={{ padding: '12px', fontSize: '1.05em' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{ 
+                                                        fontSize: '1.2em', 
+                                                        transition: 'transform 0.2s',
+                                                        transform: isExpandido ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        ▼
                                                     </span>
-                                                )}
-                                            </span>
-                                            <NotaFiscalIcon 
-                                                item={item}
-                                                itemType={item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'despesa_geral'}
-                                                obraId={obraSelecionada.id}
-                                                onNotaAdded={() => carregarLancamentos()}
-                                            />
-                                        </span>
-                                    </td>
-                                    <td>{item.fornecedor || 'N/A'}</td>
-                                    <td>{item.tipo}</td>
-                                    <td className="status-cell">
-                                        <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
-                                    </td>
-                                    <td className="status-cell">
-                                        <span className="status pago">Pago</span>
-                                    </td>
-                                    <td>{formatCurrency(item.valor_pago)}</td>
-                                    <td className="acoes-cell">
-                                        {/* <--- NOVO: Botão Anexar NF --> */}
-                                        {(user.role === 'administrador' || user.role === 'master') && (
-                                            <button 
-                                                onClick={() => setUploadingNFFor(item)} 
-                                                className="acao-icon-btn" 
-                                                title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
-                                                style={{ 
-                                                    color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
-                                                    fontSize: '1.2em'
-                                                }}
-                                            >
-                                                📎
-                                            </button>
-                                        )}
+                                                    <span style={{ color: '#4f46e5' }}>📅 {label}</span>
+                                                    <span style={{ 
+                                                        fontSize: '0.9em', 
+                                                        color: '#6c757d',
+                                                        fontWeight: '400',
+                                                        marginLeft: '8px'
+                                                    }}>
+                                                        ({items.length} {items.length === 1 ? 'pagamento' : 'pagamentos'})
+                                                    </span>
+                                                </span>
+                                            </td>
+                                            <td colSpan="2" style={{ 
+                                                padding: '12px', 
+                                                textAlign: 'right',
+                                                fontSize: '1.05em',
+                                                color: '#10b981',
+                                                fontWeight: '700'
+                                            }}>
+                                                {formatCurrency(total)}
+                                            </td>
+                                        </tr>
                                         
-                                        {(user.role === 'administrador' || user.role === 'master') ? (
-                                            item.tipo_registro === 'lancamento' ? (
-                                                <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
-                                            ) : (
-                                                <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
-                                            )
-                                        ) : null}
-                                        
-                                        {/* NOVO: Botão Deletar - MASTER pode deletar QUALQUER pagamento PAGO */}
-                                        {user.role === 'master' && (
-                                            <button 
-                                                onClick={() => {
-                                                    if (window.confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR PERMANENTEMENTE este pagamento já executado:\n\n"${item.descricao}"\nValor: ${formatCurrency(item.valor_pago)}\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja realmente continuar?`)) {
-                                                        // Deletar de acordo com o tipo
-                                                        if (item.tipo_registro === 'lancamento') {
-                                                            handleDeletarLancamento(`lanc-${item.id}`);
-                                                        } else if (item.tipo_registro === 'pagamento_servico') {
-                                                            // Deletar pagamento de serviço
-                                                            fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/pagamentos/${item.id}`, {
-                                                                method: 'DELETE'
-                                                            })
-                                                            .then(res => {
-                                                                if (!res.ok) throw new Error('Erro ao deletar');
-                                                                return res.json();
-                                                            })
-                                                            .then(() => {
-                                                                fetchObraData(obraSelecionada.id);
-                                                            })
-                                                            .catch(err => {
-                                                                console.error('Erro ao deletar pagamento de serviço:', err);
-                                                                alert('Erro ao deletar pagamento: ' + err.message);
-                                                            });
-                                                        }
-                                                    }
-                                                }} 
-                                                className="acao-icon-btn delete-btn" 
-                                                title="Excluir Pagamento (Apenas MASTER)" 
-                                                style={{ 
-                                                    background: 'none', 
-                                                    border: 'none', 
-                                                    cursor: 'pointer', 
-                                                    fontSize: '1.2em', 
-                                                    padding: '5px', 
-                                                    color: '#dc3545' 
-                                                }}
-                                            >
-                                                🗑️
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            )) : (
+                                        {/* Itens do Mês (se expandido) */}
+                                        {isExpandido && items.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                                <td>
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span>
+                                                            {item.descricao}
+                                                            {item.tipo_registro === 'pagamento_servico' && (
+                                                                <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                                                    SERVIÇO
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        <NotaFiscalIcon 
+                                                            item={item}
+                                                            itemType={item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'despesa_geral'}
+                                                            obraId={obraSelecionada.id}
+                                                            onNotaAdded={() => carregarLancamentos()}
+                                                        />
+                                                    </span>
+                                                </td>
+                                                <td>{item.fornecedor || 'N/A'}</td>
+                                                <td>{item.tipo}</td>
+                                                <td className="status-cell">
+                                                    <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
+                                                </td>
+                                                <td className="status-cell">
+                                                    <span className="status pago">Pago</span>
+                                                </td>
+                                                <td>{formatCurrency(item.valor_pago)}</td>
+                                                <td className="acoes-cell">
+                                                    {/* <--- NOVO: Botão Anexar NF --> */}
+                                                    {(user.role === 'administrador' || user.role === 'master') && (
+                                                        <button 
+                                                            onClick={() => setUploadingNFFor(item)} 
+                                                            className="acao-icon-btn" 
+                                                            title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
+                                                            style={{ 
+                                                                color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
+                                                                fontSize: '1.2em'
+                                                            }}
+                                                        >
+                                                            📎
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                                        item.tipo_registro === 'lancamento' ? (
+                                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                                        ) : (
+                                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                                        )
+                                                    ) : null}
+                                                    
+                                                    {/* NOVO: Botão Deletar - MASTER pode deletar QUALQUER pagamento PAGO */}
+                                                    {user.role === 'master' && (
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (window.confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR PERMANENTEMENTE este pagamento já executado:\n\n"${item.descricao}"\nValor: ${formatCurrency(item.valor_pago)}\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja realmente continuar?`)) {
+                                                                    // Deletar de acordo com o tipo
+                                                                    if (item.tipo_registro === 'lancamento') {
+                                                                        handleDeletarLancamento(`lanc-${item.id}`);
+                                                                    } else if (item.tipo_registro === 'pagamento_servico') {
+                                                                        // Deletar pagamento de serviço
+                                                                        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/pagamentos/${item.id}`, {
+                                                                            method: 'DELETE'
+                                                                        })
+                                                                        .then(res => {
+                                                                            if (!res.ok) throw new Error('Erro ao deletar');
+                                                                            return res.json();
+                                                                        })
+                                                                        .then(() => {
+                                                                            fetchObraData(obraSelecionada.id);
+                                                                        })
+                                                                        .catch(err => {
+                                                                            console.error('Erro ao deletar pagamento de serviço:', err);
+                                                                            alert('Erro ao deletar pagamento: ' + err.message);
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }} 
+                                                            className="acao-icon-btn delete-btn" 
+                                                            title="Excluir Pagamento (Apenas MASTER)" 
+                                                            style={{ 
+                                                                background: 'none', 
+                                                                border: 'none', 
+                                                                cursor: 'pointer', 
+                                                                fontSize: '1.2em', 
+                                                                padding: '5px', 
+                                                                color: '#dc3545' 
+                                                            }}
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
+                                );
+                            }) : (
                                 <tr>
                                     <td colSpan="8" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td>
                                 </tr>
@@ -5828,6 +5921,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                             )}
                                         </td>
                                         <td 
+                                            data-label="Descrição"
                                             onClick={() => {
                                                 if (pag.status === 'Previsto') {
                                                     setPagamentoFuturoSelecionado(pag);
@@ -5844,10 +5938,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         >
                                             {pag.descricao}
                                         </td>
-                                        <td>{pag.fornecedor || '-'}</td>
-                                        <td>{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td>{formatCurrency(pag.valor)}</td>
-                                        <td>
+                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
+                                        <td data-label="Vencimento">{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td data-label="Valor">{formatCurrency(pag.valor)}</td>
+                                        <td data-label="Status">
                                             <span 
                                                 onClick={() => {
                                                     if (pag.status === 'Previsto') {
@@ -5936,6 +6030,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                 {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => (
                                     <tr key={pag.id}>
                                         <td 
+                                            data-label="Descrição"
                                             onClick={() => handleAbrirEditarParcelas(pag)}
                                             style={{ 
                                                 cursor: 'pointer',
@@ -5947,9 +6042,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                         >
                                             {pag.descricao}
                                         </td>
-                                        <td>{pag.fornecedor || '-'}</td>
-                                        <td>{formatCurrency(pag.valor_total)}</td>
-                                        <td>
+                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
+                                        <td data-label="Valor Total">{formatCurrency(pag.valor_total)}</td>
+                                        <td data-label="Parcelas">
                                             <strong>
                                                 {pag.proxima_parcela_numero ? 
                                                     `${pag.proxima_parcela_numero}/${pag.numero_parcelas}` : 
@@ -5957,7 +6052,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                                 }
                                             </strong>
                                         </td>
-                                        <td>
+                                        <td data-label="Periodicidade">
                                             <span style={{
                                                 padding: '4px 10px',
                                                 borderRadius: '12px',
@@ -5971,14 +6066,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                                 {pag.periodicidade || 'Mensal'}
                                             </span>
                                         </td>
-                                        <td>{formatCurrency(pag.valor_parcela)}</td>
-                                        <td>
+                                        <td data-label="Valor/Parcela">{formatCurrency(pag.valor_parcela)}</td>
+                                        <td data-label="Próx. Vencimento">
                                             {pag.proxima_parcela_vencimento ? 
                                                 new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
                                                 '-'
                                             }
                                         </td>
-                                        <td>
+                                        <td data-label="Status">
                                             <span 
                                                 onClick={() => {
                                                     if (pag.status === 'Ativo') {

@@ -1370,3 +1370,175 @@ body {
 /* =====================================================================
    FIM DOS ESTILOS DE NOTAS FISCAIS
    ===================================================================== */
+
+/* =====================================================================
+   ESTILOS RESPONSIVOS MOBILE - TABELAS DE PAGAMENTOS
+   ===================================================================== */
+
+/* MOBILE: Transformar tabelas em cards verticais */
+@media (max-width: 768px) {
+    /* Esconder thead em mobile */
+    .tabela-pendencias thead {
+        display: none;
+    }
+    
+    /* Tabela vira lista de cards */
+    .tabela-pendencias tbody {
+        display: block;
+    }
+    
+    /* Cada linha vira um card */
+    .tabela-pendencias tbody tr {
+        display: block;
+        margin-bottom: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 15px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    
+    /* Todas as células viram blocos verticais */
+    .tabela-pendencias tbody td {
+        display: block;
+        text-align: left !important;
+        padding: 8px 0 !important;
+        border: none;
+        white-space: normal !important;
+        width: 100% !important;
+    }
+    
+    /* Checkbox fica no canto superior esquerdo */
+    .tabela-pendencias tbody td:first-child {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: auto !important;
+        padding: 0 !important;
+    }
+    
+    /* Adicionar labels antes de cada campo (exceto checkbox) */
+    .tabela-pendencias tbody td:not(:first-child)::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--cor-primaria);
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Descrição com destaque */
+    .tabela-pendencias tbody td:nth-child(2) {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: var(--cor-primaria);
+        padding-top: 40px !important; /* Espaço para o checkbox */
+        margin-bottom: 10px;
+    }
+    
+    /* Fornecedor */
+    .tabela-pendencias tbody td:nth-child(3) {
+        padding-top: 12px !important;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    /* Valor com destaque */
+    .tabela-pendencias tbody td:nth-last-child(2) {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #2c5282;
+        padding: 12px 0 !important;
+    }
+    
+    /* Status badge centralizado e maior */
+    .tabela-pendencias tbody td:last-child {
+        text-align: center !important;
+        padding: 15px 0 5px 0 !important;
+    }
+    
+    .tabela-pendencias tbody td:last-child span {
+        display: inline-block;
+        padding: 10px 24px !important;
+        font-size: 1em !important;
+        min-width: 140px;
+    }
+    
+    /* Ajustes para a dica informativa */
+    .card-full p[style*="fontSize: '0.9em'"] {
+        font-size: 0.85em !important;
+        padding: 8px !important;
+    }
+}
+
+/* MOBILE EXTRA PEQUENO: Ajustes adicionais */
+@media (max-width: 480px) {
+    .tabela-pendencias tbody tr {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .tabela-pendencias tbody td:nth-child(2) {
+        font-size: 1em;
+        padding-top: 35px !important;
+    }
+    
+    .tabela-pendencias tbody td:nth-last-child(2) {
+        font-size: 1.1em;
+    }
+}
+
+/* =====================================================================
+   FIM DOS ESTILOS RESPONSIVOS MOBILE
+   ===================================================================== */
+
+/* =====================================================================
+   ESTILOS PARA HISTÓRICO AGRUPADO POR MÊS
+   ===================================================================== */
+
+/* Cabeçalho do mês */
+.tabela-historico .mes-header {
+    background-color: #f0f7ff !important;
+    cursor: pointer;
+    font-weight: 600;
+    border-top: 2px solid #4f46e5;
+    transition: background-color 0.2s ease;
+}
+
+.tabela-historico .mes-header:hover {
+    background-color: #e6f2ff !important;
+}
+
+.tabela-historico .mes-header td {
+    padding: 12px !important;
+}
+
+/* Animação da seta */
+.tabela-historico .mes-header span[style*="rotate"] {
+    transition: transform 0.2s ease;
+}
+
+/* Responsivo mobile para cabeçalhos de mês */
+@media (max-width: 768px) {
+    .tabela-historico .mes-header td {
+        font-size: 0.95em !important;
+        padding: 10px !important;
+    }
+    
+    .tabela-historico .mes-header td:first-child {
+        /* Descrição do mês */
+        white-space: normal !important;
+    }
+    
+    .tabela-historico .mes-header td:last-child {
+        /* Total do mês */
+        text-align: right !important;
+        font-size: 1.1em !important;
+    }
+}
+
+/* =====================================================================
+   FIM DOS ESTILOS DO HISTÓRICO AGRUPADO
+   ===================================================================== */
