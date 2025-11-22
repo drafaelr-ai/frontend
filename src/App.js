@@ -3280,6 +3280,7 @@ function Dashboard() {
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
     const [uploadingNFFor, setUploadingNFFor] = useState(null);
+    const isLoadingNotasFiscais = React.useRef(false); // Proteção contra múltiplas requisições
     
     // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
     const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
@@ -3462,6 +3463,13 @@ const totalOrcamentosPendentes = useMemo(() => {
     
     // <--- NOVO: Função para buscar notas fiscais -->
     const fetchNotasFiscais = (obraId) => {
+        // Proteção contra múltiplas requisições simultâneas
+        if (isLoadingNotasFiscais.current) {
+            console.log("Já está carregando notas fiscais, ignorando requisição duplicada");
+            return;
+        }
+        
+        isLoadingNotasFiscais.current = true;
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
@@ -3471,6 +3479,9 @@ const totalOrcamentosPendentes = useMemo(() => {
             .catch(error => {
                 console.error("Erro ao buscar notas fiscais:", error);
                 setNotasFiscais([]);
+            })
+            .finally(() => {
+                isLoadingNotasFiscais.current = false;
             });
     };
     

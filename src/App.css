@@ -1599,3 +1599,30 @@ body {
 /* =====================================================================
    FIM DOS ESTILOS DE TOASTS
    ===================================================================== */
+
+/* =====================================================================
+   ESTILOS PARA TABELA DE ORÇAMENTOS - Quebra de Texto
+   ===================================================================== */
+.modal-content table td {
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+/* Colunas específicas da tabela de orçamentos */
+.modal-content table th:nth-child(4), /* Coluna Serviço */
+.modal-content table td:nth-child(4) {
+    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.modal-content table th:nth-child(1), /* Coluna Descrição */
+.modal-content table td:nth-child(1) {
+    max-width: 250px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+/* ===================================================================== */
+
