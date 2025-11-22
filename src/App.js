@@ -3019,6 +3019,83 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         }
     };
 
+    // CORREÇÃO: Função para salvar novo orçamento
+    const handleSaveOrcamento = async (formData) => {
+        try {
+            console.log("Salvando novo orçamento...");
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/orcamentos`,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.erro || 'Erro ao salvar orçamento');
+            }
+
+            alert('✅ Orçamento salvo com sucesso!');
+            setAddModalVisible(false);
+            carregarDados(); // Recarrega a lista de orçamentos
+            if (onSave) onSave(); // Notifica o Dashboard também
+        } catch (err) {
+            console.error("Erro ao salvar orçamento:", err);
+            alert(`Erro ao salvar orçamento: ${err.message}`);
+        }
+    };
+
+    // CORREÇÃO: Função para editar orçamento
+    const handleEditOrcamento = async (orcamentoId, formData, newFiles) => {
+        try {
+            console.log("Salvando edição do orçamento:", orcamentoId);
+            
+            // 1. Atualizar dados do orçamento
+            const response = await fetchWithAuth(
+                `${API_URL}/orcamentos/${orcamentoId}`,
+                {
+                    method: 'PUT',
+                    body: formData
+                }
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.erro || 'Erro ao salvar edição');
+            }
+
+            // 2. Upload de novos anexos (se houver)
+            if (newFiles.length > 0) {
+                const fileFormData = new FormData();
+                newFiles.forEach(file => {
+                    fileFormData.append('anexos', file);
+                });
+                
+                const fileResponse = await fetchWithAuth(
+                    `${API_URL}/orcamentos/${orcamentoId}/anexos`,
+                    {
+                        method: 'POST',
+                        body: fileFormData
+                    }
+                );
+
+                if (!fileResponse.ok) {
+                    const error = await fileResponse.json();
+                    throw new Error(error.erro || 'Erro ao enviar anexos');
+                }
+            }
+
+            alert('✅ Orçamento atualizado com sucesso!');
+            setEditingOrcamento(null);
+            carregarDados(); // Recarrega a lista de orçamentos
+            if (onSave) onSave(); // Notifica o Dashboard também
+        } catch (err) {
+            console.error("Erro ao salvar edição do orçamento:", err);
+            alert(`Erro ao salvar edição: ${err.message}`);
+        }
+    };
+
     const totalPendente = orcamentos
         .filter(orc => orc.status !== 'Rejeitado')
         .reduce((sum, orc) => sum + (orc.valor || 0), 0);
@@ -3227,10 +3304,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                     <AddOrcamentoModal
                         obraId={obraId}
                         onClose={() => setAddModalVisible(false)}
-                        onSave={() => {
-                            setAddModalVisible(false);
-                            carregarDados();
-                        }}
+                        onSave={handleSaveOrcamento}
+                        servicos={servicos}
                     />
                 )}
 
@@ -3239,10 +3314,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                         orcamento={editingOrcamento}
                         obraId={obraId}
                         onClose={() => setEditingOrcamento(null)}
-                        onSave={() => {
-                            setEditingOrcamento(null);
-                            carregarDados();
-                        }}
+                        onSave={handleEditOrcamento}
+                        servicos={servicos}
                     />
                 )}
             </div>
