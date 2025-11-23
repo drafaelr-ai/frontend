@@ -524,6 +524,13 @@ body {
     width: 100%;
 }
 
+/* Aumentar tamanho de fonte do cabeçalho dentro do modal */
+.modal-content .tabela-pendencias th {
+    font-size: 1.15em;
+    font-weight: bold;
+    padding: 16px 12px;
+}
+
 .modal-content .tabela-pendencias th:nth-child(1) { /* Parcela */
     width: 10%;
 }
@@ -541,7 +548,7 @@ body {
 }
 
 .modal-content .tabela-pendencias th:nth-child(5) { /* Ações */
-    width: 45%;
+    width: 50%;
     text-align: left;
 }
 
@@ -557,10 +564,11 @@ body {
 
 .tabela-pendencias th,
 .tabela-pendencias td {
-    padding: 10px 8px;  /* Reduzido de 12px 15px para 10px 8px */
+    padding: 16px 12px;  /* Aumentado de 10px 8px para 16px 12px */
     text-align: left;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
+    font-size: 1.05em;  /* Aumentado tamanho de fonte */
 }
 
 /* Alinhamento centralizado para colunas específicas */

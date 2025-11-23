@@ -4987,30 +4987,30 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         return parcelas.reduce((sum, p) => sum + p.valor_parcela, 0);
     };
 
-    if (isLoading) return <Modal customWidth="95%"><div className="modal-content">Carregando...</div></Modal>;
-    if (error) return <Modal customWidth="95%"><div className="modal-content">Erro: {error}</div></Modal>;
+    if (isLoading) return <Modal customWidth="1400px"><div className="modal-content">Carregando...</div></Modal>;
+    if (error) return <Modal customWidth="1400px"><div className="modal-content">Erro: {error}</div></Modal>;
 
     return (
-        <Modal customWidth="95%">
-            <div style={{ maxHeight: '90vh', overflowY: 'auto', padding: '20px' }}>
-                <h2>✏️ Editar Parcelas</h2>
-                <p style={{ marginBottom: '20px', color: '#666' }}>
-                    <strong>{pagamentoParcelado.descricao}</strong><br />
-                    Fornecedor: {pagamentoParcelado.fornecedor || '-'}
+        <Modal customWidth="1400px">
+            <div style={{ maxHeight: '90vh', overflowY: 'auto', padding: '30px' }}>
+                <h2 style={{ fontSize: '2em', marginBottom: '15px' }}>✏️ Editar Parcelas</h2>
+                <p style={{ marginBottom: '25px', color: '#666', fontSize: '1.1em' }}>
+                    <strong style={{ fontSize: '1.2em' }}>{pagamentoParcelado.descricao}</strong><br />
+                    <span style={{ fontSize: '1em' }}>Fornecedor: {pagamentoParcelado.fornecedor || '-'}</span>
                 </p>
                 <div style={{ 
-                    marginBottom: '20px', 
-                    padding: '15px', 
+                    marginBottom: '25px', 
+                    padding: '20px', 
                     backgroundColor: '#f8f9fa', 
                     borderRadius: '8px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                 }}>
-                    <div>
+                    <div style={{ fontSize: '1.3em' }}>
                         <strong>Valor Total Calculado:</strong> {formatCurrency(calcularValorTotal())}
                     </div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>
+                    <div style={{ fontSize: '1.1em', color: '#666' }}>
                         {parcelas.filter(p => p.status === 'Pago').length} de {parcelas.length} pagas
                     </div>
                 </div>
@@ -5032,7 +5032,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                                new Date(parcela.data_vencimento) < new Date() ? '#ffebee' : 'white'
                             }}>
                                 <td>
-                                    <strong>#{parcela.numero_parcela}</strong>
+                                    <strong style={{ fontSize: '1.3em' }}>#{parcela.numero_parcela}</strong>
                                 </td>
                                 <td>
                                     {parcelaEditando === parcela.id ? (
@@ -5041,10 +5041,10 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                             step="0.01"
                                             defaultValue={parcela.valor_parcela}
                                             id={`valor-${parcela.id}`}
-                                            style={{ width: '140px', padding: '8px', fontSize: '1em' }}
+                                            style={{ width: '180px', padding: '12px', fontSize: '1.1em' }}
                                         />
                                     ) : (
-                                        formatCurrency(parcela.valor_parcela)
+                                        <span style={{ fontSize: '1.1em' }}>{formatCurrency(parcela.valor_parcela)}</span>
                                     )}
                                 </td>
                                 <td>
@@ -5053,17 +5053,18 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                             type="date"
                                             defaultValue={parcela.data_vencimento}
                                             id={`data-${parcela.id}`}
-                                            style={{ padding: '8px', fontSize: '1em' }}
+                                            style={{ padding: '12px', fontSize: '1.1em' }}
                                         />
                                     ) : (
-                                        new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')
+                                        <span style={{ fontSize: '1.1em' }}>{new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                                     )}
                                 </td>
                                 <td>
                                     <span style={{
-                                        padding: '3px 8px',
-                                        borderRadius: '12px',
-                                        fontSize: '0.85em',
+                                        padding: '8px 15px',
+                                        borderRadius: '15px',
+                                        fontSize: '1em',
+                                        fontWeight: 'bold',
                                         backgroundColor: parcela.status === 'Pago' ? '#28a745' : 
                                                        new Date(parcela.data_vencimento) < new Date() ? '#dc3545' : '#17a2b8',
                                         color: 'white'
@@ -5074,7 +5075,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                 </td>
                                 <td>
                                     {parcela.status !== 'Pago' && (
-                                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                             {parcelaEditando === parcela.id ? (
                                                 <>
                                                     <button
@@ -5084,14 +5085,14 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                                             handleEditarParcela(parcela, novoValor, novaData);
                                                         }}
                                                         className="submit-btn"
-                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
                                                     >
                                                         ✓ Salvar
                                                     </button>
                                                     <button
                                                         onClick={() => setParcelaEditando(null)}
                                                         className="voltar-btn"
-                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
                                                     >
                                                         ✕ Cancelar
                                                     </button>
@@ -5101,14 +5102,14 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                                     <button
                                                         onClick={() => setParcelaEditando(parcela.id)}
                                                         className="submit-btn"
-                                                        style={{ padding: '3px 8px', fontSize: '0.8em' }}
+                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
                                                     >
                                                         ✏️ Editar
                                                     </button>
                                                     <button
                                                         onClick={() => handleMarcarPaga(parcela)}
                                                         className="submit-btn"
-                                                        style={{ padding: '3px 8px', fontSize: '0.8em', backgroundColor: '#28a745' }}
+                                                        style={{ padding: '10px 18px', fontSize: '1em', backgroundColor: '#28a745' }}
                                                     >
                                                         ✓ Pagar
                                                     </button>
@@ -5117,7 +5118,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                         </div>
                                     )}
                                     {parcela.status === 'Pago' && parcela.data_pagamento && (
-                                        <span style={{ fontSize: '0.8em', color: '#666' }}>
+                                        <span style={{ fontSize: '1em', color: '#666' }}>
                                             Paga em {new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}
                                         </span>
                                     )}
@@ -5127,16 +5128,16 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                     </tbody>
                 </table>
 
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="modal-footer" style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <button 
                         onClick={handleRecriarLancamentos}
                         className="submit-btn"
-                        style={{ backgroundColor: '#ffc107', color: '#000' }}
+                        style={{ backgroundColor: '#ffc107', color: '#000', padding: '12px 24px', fontSize: '1.1em' }}
                         title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
                     >
                         🔄 Recriar Lançamentos
                     </button>
-                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>Fechar</button>
                 </div>
             </div>
         </Modal>
