@@ -1634,3 +1634,85 @@ body {
 }
 /* ===================================================================== */
 
+
+/* ===================================================================== */
+/* ESTILOS DO CAIXA DE OBRA */
+/* ===================================================================== */
+
+/* Cards de movimentação */
+.movimentacao-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.movimentacao-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Dashboard cards do caixa */
+.caixa-dashboard-card {
+    transition: transform 0.2s;
+}
+
+.caixa-dashboard-card:hover {
+    transform: scale(1.02);
+}
+
+/* Botões de filtro do caixa */
+.caixa-filtro-btn {
+    transition: all 0.2s;
+    font-size: 1em;
+}
+
+.caixa-filtro-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Preview de comprovante */
+.comprovante-preview {
+    transition: transform 0.3s;
+}
+
+.comprovante-preview:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+/* Responsividade para mobile */
+@media (max-width: 768px) {
+    .caixa-dashboard-card {
+        padding: 20px !important;
+    }
+    
+    .movimentacao-card {
+        padding: 15px !important;
+    }
+    
+    .movimentacao-card > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .movimentacao-valor {
+        margin-top: 10px;
+        text-align: left !important;
+    }
+}
+
+/* Animação de entrada para movimentações */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.movimentacao-card {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* ===================================================================== */

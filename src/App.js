@@ -3309,6 +3309,9 @@ function Dashboard() {
     
     // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
+    
+    // NOVO: Estado para modal do Caixa de Obra
+    const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
 
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
@@ -4049,6 +4052,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                 />
             )}
 
+            {/* NOVO: Modal do Caixa de Obra */}
+            {isCaixaObraVisible && (
+                <CaixaObraModal
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                    onClose={() => setCaixaObraVisible(false)}
+                />
+            )}
+
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
@@ -4096,6 +4108,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                         style={{ backgroundColor: '#17a2b8', color: 'white' }}
                     >
                         📔 Diário de Obras
+                    </button>
+                    {/* NOVO: Botão Caixa de Obra */}
+                    <button 
+                        onClick={() => setCaixaObraVisible(true)} 
+                        className="voltar-btn" 
+                        style={{ backgroundColor: '#ff9800', color: 'white' }}
+                    >
+                        💰 Caixa de Obra
                     </button>
                     <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
                     <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
@@ -4857,6 +4877,564 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
 // ==========================================
 // COMPONENTE: MODAL DE EDIÇÃO DE PARCELAS
 // ==========================================
+
+// ==========================================
+// COMPONENTE: CAIXA DE OBRA
+// ==========================================
+
+const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
+    const [caixa, setCaixa] = useState(null);
+    const [movimentacoes, setMovimentacoes] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [modalAberto, setModalAberto] = useState(false);
+    const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
+    const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
+
+    useEffect(() => {
+        carregarDados();
+    }, [obraId, mesAno]);
+
+    const carregarDados = async () => {
+        try {
+            setIsLoading(true);
+            
+            // Carregar informações do caixa
+            const resCaixa = await fetchWithAuth(`${API_URL}/obras/${obraId}/caixa`);
+            if (!resCaixa.ok) throw new Error('Erro ao carregar caixa');
+            const dataCaixa = await resCaixa.json();
+            setCaixa(dataCaixa);
+
+            // Carregar movimentações do mês
+            const resMovs = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/caixa/movimentacoes?mes=${mesAno.mes}&ano=${mesAno.ano}`
+            );
+            if (!resMovs.ok) throw new Error('Erro ao carregar movimentações');
+            const dataMovs = await resMovs.json();
+            setMovimentacoes(dataMovs);
+        } catch (err) {
+            console.error('Erro ao carregar dados do caixa:', err);
+            alert('Erro ao carregar dados do caixa');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleNovaMovimentacao = () => {
+        setModalAberto(true);
+    };
+
+    const handleGerarRelatorio = async () => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/caixa/relatorio-pdf`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ mes: mesAno.mes, ano: mesAno.ano })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao gerar relatório');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Caixa_${obraNome}_${mesAno.mes}_${mesAno.ano}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Erro ao gerar relatório:', err);
+            alert('Erro ao gerar relatório PDF');
+        }
+    };
+
+    const movimentacoesFiltradas = filtroTipo 
+        ? movimentacoes.filter(m => m.tipo === filtroTipo)
+        : movimentacoes;
+
+    if (isLoading) {
+        return (
+            <Modal customWidth="1200px">
+                <div style={{ padding: '40px', textAlign: 'center' }}>
+                    Carregando...
+                </div>
+            </Modal>
+        );
+    }
+
+    return (
+        <Modal customWidth="1200px">
+            <div style={{ padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
+                {/* Cabeçalho */}
+                <h2 style={{ fontSize: '2em', marginBottom: '10px' }}>💰 Caixa de Obra</h2>
+                <p style={{ color: '#666', marginBottom: '30px', fontSize: '1.1em' }}>
+                    <strong>{obraNome}</strong>
+                </p>
+
+                {/* Dashboard do Caixa */}
+                {caixa && (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '20px',
+                        marginBottom: '30px'
+                    }}>
+                        <div style={{
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            padding: '25px',
+                            borderRadius: '10px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saldo Atual</div>
+                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
+                                {formatCurrency(caixa.saldo_atual)}
+                            </div>
+                        </div>
+
+                        <div style={{
+                            backgroundColor: '#2196F3',
+                            color: 'white',
+                            padding: '25px',
+                            borderRadius: '10px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Entradas (mês)</div>
+                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
+                                {formatCurrency(caixa.total_entradas_mes || 0)}
+                            </div>
+                        </div>
+
+                        <div style={{
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            padding: '25px',
+                            borderRadius: '10px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saídas (mês)</div>
+                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
+                                {formatCurrency(caixa.total_saidas_mes || 0)}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Controles */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '25px',
+                    flexWrap: 'wrap',
+                    gap: '15px'
+                }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <label style={{ fontSize: '1.1em' }}>Período:</label>
+                        <select
+                            value={mesAno.mes}
+                            onChange={e => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })}
+                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px' }}
+                        >
+                            <option value={1}>Janeiro</option>
+                            <option value={2}>Fevereiro</option>
+                            <option value={3}>Março</option>
+                            <option value={4}>Abril</option>
+                            <option value={5}>Maio</option>
+                            <option value={6}>Junho</option>
+                            <option value={7}>Julho</option>
+                            <option value={8}>Agosto</option>
+                            <option value={9}>Setembro</option>
+                            <option value={10}>Outubro</option>
+                            <option value={11}>Novembro</option>
+                            <option value={12}>Dezembro</option>
+                        </select>
+                        <input
+                            type="number"
+                            value={mesAno.ano}
+                            onChange={e => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })}
+                            min="2020"
+                            max="2100"
+                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px', width: '100px' }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={handleNovaMovimentacao}
+                            className="submit-btn"
+                            style={{ padding: '12px 24px', fontSize: '1.1em' }}
+                        >
+                            + Nova Movimentação
+                        </button>
+                        <button
+                            onClick={handleGerarRelatorio}
+                            className="submit-btn"
+                            style={{ padding: '12px 24px', fontSize: '1.1em', backgroundColor: '#ff9800' }}
+                        >
+                            📊 Gerar Relatório PDF
+                        </button>
+                    </div>
+                </div>
+
+                {/* Filtros */}
+                <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+                    <button
+                        onClick={() => setFiltroTipo('')}
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            border: filtroTipo === '' ? '2px solid #4CAF50' : '1px solid #ccc',
+                            backgroundColor: filtroTipo === '' ? '#e8f5e9' : 'white',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Todas
+                    </button>
+                    <button
+                        onClick={() => setFiltroTipo('Entrada')}
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            border: filtroTipo === 'Entrada' ? '2px solid #2196F3' : '1px solid #ccc',
+                            backgroundColor: filtroTipo === 'Entrada' ? '#e3f2fd' : 'white',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📥 Entradas
+                    </button>
+                    <button
+                        onClick={() => setFiltroTipo('Saída')}
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            border: filtroTipo === 'Saída' ? '2px solid #f44336' : '1px solid #ccc',
+                            backgroundColor: filtroTipo === 'Saída' ? '#ffebee' : 'white',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📤 Saídas
+                    </button>
+                </div>
+
+                {/* Lista de Movimentações */}
+                <div style={{ marginBottom: '30px' }}>
+                    <h3 style={{ marginBottom: '15px', fontSize: '1.3em' }}>Movimentações</h3>
+                    {movimentacoesFiltradas.length === 0 ? (
+                        <p style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                            Nenhuma movimentação registrada neste período
+                        </p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {movimentacoesFiltradas.map(mov => (
+                                <div
+                                    key={mov.id}
+                                    style={{
+                                        border: '1px solid #ddd',
+                                        borderRadius: '8px',
+                                        padding: '20px',
+                                        backgroundColor: mov.tipo === 'Entrada' ? '#e3f2fd' : '#ffebee'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                marginBottom: '8px'
+                                            }}>
+                                                <span style={{ fontSize: '1.5em' }}>
+                                                    {mov.tipo === 'Entrada' ? '📥' : '📤'}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.9em',
+                                                    color: '#666'
+                                                }}>
+                                                    {new Date(mov.data).toLocaleString('pt-BR')}
+                                                </span>
+                                                {mov.comprovante_url && (
+                                                    <span style={{ fontSize: '1.2em' }}>📎</span>
+                                                )}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '1.1em',
+                                                fontWeight: 'bold',
+                                                marginBottom: '8px'
+                                            }}>
+                                                {mov.descricao}
+                                            </div>
+                                            {mov.observacoes && (
+                                                <div style={{ fontSize: '0.9em', color: '#666', fontStyle: 'italic' }}>
+                                                    Obs: {mov.observacoes}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '1.8em',
+                                            fontWeight: 'bold',
+                                            color: mov.tipo === 'Entrada' ? '#2196F3' : '#f44336',
+                                            textAlign: 'right',
+                                            minWidth: '150px'
+                                        }}>
+                                            {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
+                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
+                        Fechar
+                    </button>
+                </div>
+            </div>
+
+            {/* Modal de Nova Movimentação */}
+            {modalAberto && (
+                <ModalNovaMovimentacaoCaixa
+                    obraId={obraId}
+                    onClose={() => setModalAberto(false)}
+                    onSave={() => {
+                        setModalAberto(false);
+                        carregarDados();
+                    }}
+                />
+            )}
+        </Modal>
+    );
+};
+
+// Modal de Nova Movimentação
+const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
+    const [tipo, setTipo] = useState('Saída');
+    const [valor, setValor] = useState('');
+    const [descricao, setDescricao] = useState('');
+    const [observacoes, setObservacoes] = useState('');
+    const [comprovante, setComprovante] = useState(null);
+    const [previewComprovante, setPreviewComprovante] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleComprovanteChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setComprovante(reader.result);
+                setPreviewComprovante(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!valor || parseFloat(valor) <= 0) {
+            alert('Por favor, informe um valor válido');
+            return;
+        }
+
+        if (!descricao.trim()) {
+            alert('Por favor, informe uma descrição');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+
+            let comprovanteUrl = null;
+
+            // Upload do comprovante se houver
+            if (comprovante) {
+                const resUpload = await fetchWithAuth(
+                    `${API_URL}/obras/${obraId}/caixa/upload-comprovante`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({ imagem: comprovante })
+                    }
+                );
+
+                if (resUpload.ok) {
+                    const dataUpload = await resUpload.json();
+                    comprovanteUrl = dataUpload.comprovante_url;
+                }
+            }
+
+            // Criar movimentação
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/caixa/movimentacoes`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        tipo,
+                        valor: parseFloat(valor),
+                        descricao: descricao.trim(),
+                        observacoes: observacoes.trim() || null,
+                        comprovante_url: comprovanteUrl
+                    })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao salvar movimentação');
+
+            alert('✅ Movimentação registrada com sucesso!');
+            onSave();
+        } catch (err) {
+            console.error('Erro ao salvar movimentação:', err);
+            alert('Erro ao salvar movimentação');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal customWidth="600px">
+            <div style={{ padding: '30px' }}>
+                <h2 style={{ fontSize: '1.8em', marginBottom: '25px' }}>💸 Nova Movimentação</h2>
+
+                {/* Tipo */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        Tipo:
+                    </label>
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                                type="radio"
+                                value="Saída"
+                                checked={tipo === 'Saída'}
+                                onChange={e => setTipo(e.target.value)}
+                                style={{ transform: 'scale(1.3)' }}
+                            />
+                            <span style={{ fontSize: '1.1em' }}>📤 Saída</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                                type="radio"
+                                value="Entrada"
+                                checked={tipo === 'Entrada'}
+                                onChange={e => setTipo(e.target.value)}
+                                style={{ transform: 'scale(1.3)' }}
+                            />
+                            <span style={{ fontSize: '1.1em' }}>📥 Entrada</span>
+                        </label>
+                    </div>
+                </div>
+
+                {/* Valor */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        Valor (R$):
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={valor}
+                        onChange={e => setValor(e.target.value)}
+                        placeholder="0,00"
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            fontSize: '1.1em',
+                            borderRadius: '5px',
+                            border: '1px solid #ddd'
+                        }}
+                    />
+                </div>
+
+                {/* Descrição */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        Descrição:
+                    </label>
+                    <textarea
+                        value={descricao}
+                        onChange={e => setDescricao(e.target.value)}
+                        placeholder="Ex: Cimento urgência laje 3º andar"
+                        rows={3}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            fontSize: '1.1em',
+                            borderRadius: '5px',
+                            border: '1px solid #ddd',
+                            resize: 'vertical'
+                        }}
+                    />
+                </div>
+
+                {/* Observações */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        Observações (opcional):
+                    </label>
+                    <textarea
+                        value={observacoes}
+                        onChange={e => setObservacoes(e.target.value)}
+                        placeholder="Informações adicionais..."
+                        rows={2}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            fontSize: '1em',
+                            borderRadius: '5px',
+                            border: '1px solid #ddd',
+                            resize: 'vertical'
+                        }}
+                    />
+                </div>
+
+                {/* Comprovante */}
+                <div style={{ marginBottom: '25px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
+                        Comprovante (opcional):
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleComprovanteChange}
+                        style={{ marginBottom: '15px' }}
+                    />
+                    {previewComprovante && (
+                        <div style={{ marginTop: '15px' }}>
+                            <img
+                                src={previewComprovante}
+                                alt="Preview"
+                                style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '300px',
+                                    borderRadius: '8px',
+                                    border: '2px solid #ddd'
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Botões */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
+                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="submit-btn"
+                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
+                    >
+                        {isSubmitting ? 'Salvando...' : '💾 Salvar'}
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
 
 const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) => {
     const [parcelas, setParcelas] = useState([]);
