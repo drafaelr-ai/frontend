@@ -6067,6 +6067,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                     <th>Vencimento</th>
                                     <th>Valor</th>
                                     <th>Status</th>
+                                    <th style={{width: '60px'}}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -6137,6 +6138,30 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                                 {pag.status === 'Previsto' ? 'Pendente' : pag.status}
                                             </span>
                                         </td>
+                                        <td data-label="Ações" style={{textAlign: 'center'}}>
+                                            {pag.status === 'Previsto' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeletePagamentoFuturo(pag.id);
+                                                    }}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '1.3em',
+                                                        color: '#dc3545',
+                                                        padding: '5px',
+                                                        transition: 'transform 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                    title="Excluir pagamento"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -6186,6 +6211,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                     <th>Valor/Parcela</th>
                                     <th>Próx. Vencimento</th>
                                     <th>Status</th>
+                                    <th style={{width: '60px'}}>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -6268,6 +6294,30 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                                             >
                                                 {pag.status === 'Ativo' ? 'Pendente' : pag.status}
                                             </span>
+                                        </td>
+                                        <td data-label="Ações" style={{textAlign: 'center'}}>
+                                            {pag.status === 'Ativo' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeletePagamentoParcelado(pag.id);
+                                                    }}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '1.3em',
+                                                        color: '#dc3545',
+                                                        padding: '5px',
+                                                        transition: 'transform 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
+                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                    title="Excluir pagamento parcelado"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
