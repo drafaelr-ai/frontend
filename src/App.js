@@ -2650,6 +2650,39 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
     const [downloadType, setDownloadType] = useState(null);
     const [error, setError] = useState(null);
 
+    // NOVO: Função para baixar Relatório Financeiro (Cronograma)
+    const handleDownloadRelatorioFinanceiro = () => {
+        setIsDownloading(true);
+        setDownloadType('financeiro');
+        setError(null);
+
+        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio-cronograma-pdf`)
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório financeiro'); });
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Cronograma_Financeiro_${obraNome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(err => {
+                console.error("Erro ao baixar relatório financeiro:", err);
+                setError(err.message);
+            })
+            .finally(() => {
+                setIsDownloading(false);
+                setDownloadType(null);
+            });
+    };
+
     const handleDownloadNotasFiscais = () => {
         setIsDownloading(true);
         setDownloadType('notas');
@@ -2723,6 +2756,44 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {/* NOVO: Opção 0: Relatório Financeiro (Cronograma) */}
+                <button
+                    onClick={handleDownloadRelatorioFinanceiro}
+                    disabled={isDownloading}
+                    style={{
+                        padding: '20px',
+                        border: '2px solid #e91e63',
+                        borderRadius: '8px',
+                        background: 'white',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        opacity: isDownloading && downloadType !== 'financeiro' ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                        if (!isDownloading) {
+                            e.currentTarget.style.background = '#fce4ec';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <span style={{ fontSize: '2em' }}>📊</span>
+                        <div>
+                            <strong style={{ fontSize: '1.1em', color: '#e91e63' }}>
+                                {isDownloading && downloadType === 'financeiro' ? 'Gerando...' : 'Relatório Financeiro'}
+                            </strong>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
+                                Cronograma com pagamentos futuros, parcelados e previsões
+                            </p>
+                        </div>
+                    </div>
+                </button>
+
                 {/* Opção 1: Baixar Notas Fiscais */}
                 <button
                     onClick={handleDownloadNotasFiscais}
