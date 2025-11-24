@@ -3467,8 +3467,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // <--- NOVO: Buscar notas fiscais -->
-                fetchNotasFiscais(obraId);
+                // <--- NOVO: Buscar notas fiscais (opcional) -->
+                // CORREÇÃO: Tentar buscar mas não bloquear se falhar
+                try {
+                    fetchNotasFiscais(obraId);
+                } catch (error) {
+                    // Ignorar erro silenciosamente - notas fiscais são opcionais
+                    console.log("Notas fiscais não disponíveis");
+                }
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
             .finally(() => setIsLoading(false));
@@ -3483,15 +3489,38 @@ const totalOrcamentosPendentes = useMemo(() => {
         }
         
         isLoadingNotasFiscais.current = true;
+        
+        // CORREÇÃO: Verificar se a rota existe antes de fazer a requisição
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
-            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
+            .then(res => {
+                if (!res.ok) {
+                    // Se for 404, significa que a rota não existe - ignorar silenciosamente
+                    if (res.status === 404) {
+                        console.log("Rota de notas fiscais não disponível (404) - ignorando");
+                        throw new Error('NOT_FOUND');
+                    }
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
                 console.log("Notas fiscais recebidas:", data);
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
-                console.error("Erro ao buscar notas fiscais:", error);
-                setNotasFiscais([]);
+                // CORREÇÃO: Não logar erro se for NOT_FOUND ou erro de rede
+                if (error.message === 'NOT_FOUND') {
+                    // Silencioso - rota não implementada ainda
+                    setNotasFiscais([]);
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    // Erro de rede - não logar (evita spam no console)
+                    console.warn("Notas fiscais: rota não disponível");
+                    setNotasFiscais([]);
+                } else {
+                    // Outros erros - logar normalmente
+                    console.error("Erro ao buscar notas fiscais:", error);
+                    setNotasFiscais([]);
+                }
             })
             .finally(() => {
                 isLoadingNotasFiscais.current = false;
@@ -4010,7 +4039,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                     item={uploadingNFFor}
                     obraId={obraSelecionada.id}
                     onClose={() => setUploadingNFFor(null)}
-                    onSuccess={() => fetchNotasFiscais(obraSelecionada.id)}
+                    onSuccess={() => {
+                        try {
+                            fetchNotasFiscais(obraSelecionada.id);
+                        } catch (error) {
+                            console.log("Erro ao recarregar notas fiscais:", error);
+                        }
+                    }}
                 />
             )}
             
@@ -5925,18 +5960,40 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     
     // MUDANÇA 5: Funções de seleção
     const toggleSelecao = (tipo, id) => {
+        // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-71" e converter
+        let tipoFinal = tipo;
+        let idFinal = id;
+        
+        // Se o ID é uma string tipo "servico-X", extrair o ID numérico
+        if (typeof id === 'string' && id.startsWith('servico-')) {
+            const idNumerico = parseInt(id.split('-')[1], 10);
+            tipoFinal = 'servico';
+            idFinal = idNumerico;
+            console.log(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
+        }
+        
         setItensSelecionados(prev => {
-            const exists = prev.find(item => item.tipo === tipo && item.id === id);
+            const exists = prev.find(item => item.tipo === tipoFinal && item.id === idFinal);
             if (exists) {
-                return prev.filter(item => !(item.tipo === tipo && item.id === id));
+                return prev.filter(item => !(item.tipo === tipoFinal && item.id === idFinal));
             } else {
-                return [...prev, { tipo, id }];
+                return [...prev, { tipo: tipoFinal, id: idFinal }];
             }
         });
     };
     
     const isItemSelecionado = (tipo, id) => {
-        return itensSelecionados.some(item => item.tipo === tipo && item.id === id);
+        // CORREÇÃO CRÍTICA: Verificar com conversão também
+        let tipoCheck = tipo;
+        let idCheck = id;
+        
+        if (typeof id === 'string' && id.startsWith('servico-')) {
+            const idNumerico = parseInt(id.split('-')[1], 10);
+            tipoCheck = 'servico';
+            idCheck = idNumerico;
+        }
+        
+        return itensSelecionados.some(item => item.tipo === tipoCheck && item.id === idCheck);
     };
     
     const selecionarTodos = () => {
@@ -5945,7 +6002,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
         // Pagamentos Futuros
         pagamentosFuturos.forEach(pag => {
             if (pag.status === 'Previsto') {
-                todos.push({ tipo: 'futuro', id: pag.id });
+                // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-X"
+                if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
+                    const idNumerico = parseInt(pag.id.split('-')[1], 10);
+                    todos.push({ tipo: 'servico', id: idNumerico });
+                    console.log(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
+                } else {
+                    todos.push({ tipo: 'futuro', id: pag.id });
+                }
             }
         });
         
@@ -6229,8 +6293,26 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2000);
                 
-                // Atualiza obra no background (sem bloquear UI)
-                setTimeout(() => fetchObraData(obraId), 500);
+                // CORREÇÃO: Atualiza apenas os dados essenciais (evita erro de notas fiscais)
+                setTimeout(() => {
+                    fetchWithAuth(`${API_URL}/obras/${obraId}`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => {
+                            if (data) {
+                                setObraSelecionada(data.obra || null);
+                                setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
+                                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
+                                    ...serv,
+                                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
+                                }));
+                                setServicos(servicosComPagamentosArray);
+                                setSumarios(data.sumarios || null);
+                                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
+                                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
+                            }
+                        })
+                        .catch(error => console.error('Erro ao recarregar obra:', error));
+                }, 500);
             } else {
                 const errorData = await res.json();
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
@@ -6340,8 +6422,26 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2000);
                 
-                // Atualiza obra no background (sem bloquear UI)
-                setTimeout(() => fetchObraData(obraId), 500);
+                // CORREÇÃO: Atualiza apenas os dados essenciais (evita erro de notas fiscais)
+                setTimeout(() => {
+                    fetchWithAuth(`${API_URL}/obras/${obraId}`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => {
+                            if (data) {
+                                setObraSelecionada(data.obra || null);
+                                setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
+                                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
+                                    ...serv,
+                                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
+                                }));
+                                setServicos(servicosComPagamentosArray);
+                                setSumarios(data.sumarios || null);
+                                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
+                                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
+                            }
+                        })
+                        .catch(error => console.error('Erro ao recarregar obra:', error));
+                }, 500);
             } else {
                 const erro = await res.json();
                 alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
