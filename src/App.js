@@ -4170,63 +4170,182 @@ const totalOrcamentosPendentes = useMemo(() => {
             {/* --- Cabeçalho --- */}
             <header className="dashboard-header">
                 <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '8px', 
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                    maxWidth: '100%',
+                    overflowX: 'auto'
+                }} className="header-buttons-container">
                     {/* <-- NOVO: Botão Cronograma Financeiro --> */}
                     <button 
                         onClick={() => setCronogramaFinanceiroVisible(true)} 
-                        className="voltar-btn" 
+                        className="voltar-btn header-btn-mobile" 
                         style={{ backgroundColor: '#28a745', color: 'white' }}
                     >
-                        💰 Cronograma Financeiro
+                        <span className="btn-icon">💰</span>
+                        <span className="btn-text">Cronograma Financeiro</span>
+                        <span className="btn-text-short">Cronograma</span>
                     </button>
                     {/* MUDANÇA 3: NOVO botão Inserir Pagamento */}
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <button 
                             onClick={() => setInserirPagamentoModalVisible(true)} 
-                            className="voltar-btn" 
+                            className="voltar-btn header-btn-mobile" 
                             style={{ backgroundColor: '#007bff', color: 'white' }}
                         >
-                            💳 Inserir Pagamento
+                            <span className="btn-icon">💳</span>
+                            <span className="btn-text">Inserir Pagamento</span>
+                            <span className="btn-text-short">Pagamento</span>
                         </button>
                     )}
                     {/* <-- NOVO: Botão Relatórios --> */}
                     <button 
                         onClick={() => setRelatoriosModalVisible(true)} 
-                        className="voltar-btn" 
+                        className="voltar-btn header-btn-mobile" 
                         style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
                     >
-                        📊 Relatórios
+                        <span className="btn-icon">📊</span>
+                        <span className="btn-text">Relatórios</span>
+                        <span className="btn-text-short">Relatórios</span>
                     </button>
                     {/* <-- NOVO: Botão Orçamentos --> */}
                     {(user.role === 'administrador' || user.role === 'master') && (
                         <button 
                             onClick={() => setOrcamentosModalVisible(true)} 
-                            className="voltar-btn" 
+                            className="voltar-btn header-btn-mobile" 
                             style={{ backgroundColor: '#9c27b0', color: 'white' }}
                         >
-                            📋 Orçamentos
+                            <span className="btn-icon">📋</span>
+                            <span className="btn-text">Orçamentos</span>
+                            <span className="btn-text-short">Orçamentos</span>
                         </button>
                     )}
                     {/* MUDANÇA 3: Botão Diário de Obras */}
                     <button 
                         onClick={() => setDiarioVisible(true)} 
-                        className="voltar-btn" 
+                        className="voltar-btn header-btn-mobile" 
                         style={{ backgroundColor: '#17a2b8', color: 'white' }}
                     >
-                        📔 Diário de Obras
+                        <span className="btn-icon">📔</span>
+                        <span className="btn-text">Diário de Obras</span>
+                        <span className="btn-text-short">Diário</span>
                     </button>
                     {/* NOVO: Botão Caixa de Obra */}
                     <button 
                         onClick={() => setCaixaObraVisible(true)} 
-                        className="voltar-btn" 
+                        className="voltar-btn header-btn-mobile" 
                         style={{ backgroundColor: '#ff9800', color: 'white' }}
                     >
-                        💰 Caixa de Obra
+                        <span className="btn-icon">💰</span>
+                        <span className="btn-text">Caixa de Obra</span>
+                        <span className="btn-text-short">Caixa</span>
                     </button>
-                    <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
-                    <button onClick={() => setObraSelecionada(null)} className="voltar-btn">&larr; Ver Todas as Obras</button>
+                    <button onClick={logout} className="voltar-btn header-btn-mobile" style={{backgroundColor: '#6c757d'}}>
+                        <span className="btn-text">Sair</span>
+                        <span className="btn-text-short">Sair</span>
+                    </button>
+                    <button onClick={() => setObraSelecionada(null)} className="voltar-btn header-btn-mobile">
+                        <span className="btn-text">&larr; Ver Todas</span>
+                        <span className="btn-text-short">&larr;</span>
+                    </button>
                 </div>
             </header>
+
+            <style>{`
+                /* CSS para botões responsivos do cabeçalho */
+                .header-btn-mobile {
+                    white-space: nowrap;
+                    min-width: auto;
+                    flex-shrink: 0;
+                }
+                
+                .btn-icon {
+                    margin-right: 5px;
+                }
+                
+                .btn-text-short {
+                    display: none;
+                }
+                
+                .header-buttons-container {
+                    scrollbar-width: thin;
+                }
+                
+                .header-buttons-container::-webkit-scrollbar {
+                    height: 4px;
+                }
+                
+                .header-buttons-container::-webkit-scrollbar-thumb {
+                    background: rgba(0,0,0,0.3);
+                    border-radius: 2px;
+                }
+                
+                /* Tablet: telas menores que 900px */
+                @media (max-width: 900px) {
+                    .dashboard-header {
+                        flex-direction: column;
+                        gap: 10px;
+                        align-items: flex-start;
+                    }
+                    
+                    .header-buttons-container {
+                        width: 100%;
+                        justify-content: flex-start !important;
+                    }
+                    
+                    .header-btn-mobile {
+                        padding: 8px 12px !important;
+                        font-size: 13px !important;
+                    }
+                }
+                
+                /* Mobile: telas menores que 768px */
+                @media (max-width: 768px) {
+                    .dashboard-header {
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+                    
+                    .header-buttons-container {
+                        flex-wrap: nowrap !important;
+                        overflow-x: auto;
+                        width: 100%;
+                        padding-bottom: 5px;
+                    }
+                    
+                    .header-btn-mobile {
+                        padding: 8px 10px !important;
+                        font-size: 12px !important;
+                        min-width: auto;
+                    }
+                    
+                    .btn-text {
+                        display: none;
+                    }
+                    
+                    .btn-text-short {
+                        display: inline;
+                    }
+                    
+                    .btn-icon {
+                        margin-right: 3px;
+                    }
+                }
+                
+                /* Mobile pequeno: telas menores que 480px */
+                @media (max-width: 480px) {
+                    .header-btn-mobile {
+                        padding: 6px 8px !important;
+                        font-size: 11px !important;
+                    }
+                    
+                    .btn-icon {
+                        font-size: 14px;
+                    }
+                }
+            `}</style>
 
             {/* --- *** KPIs *** --- */}
              {sumarios && (
@@ -6364,26 +6483,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2000);
                 
-                // CORREÇÃO: Atualiza apenas os dados essenciais (evita erro de notas fiscais)
-                setTimeout(() => {
-                    fetchWithAuth(`${API_URL}/obras/${obraId}`)
-                        .then(res => res.ok ? res.json() : null)
-                        .then(data => {
-                            if (data) {
-                                setObraSelecionada(data.obra || null);
-                                setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
-                                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
-                                    ...serv,
-                                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
-                                }));
-                                setServicos(servicosComPagamentosArray);
-                                setSumarios(data.sumarios || null);
-                                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
-                                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
-                            }
-                        })
-                        .catch(error => console.error('Erro ao recarregar obra:', error));
-                }, 500);
+                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
+                setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json();
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
@@ -6493,26 +6594,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2000);
                 
-                // CORREÇÃO: Atualiza apenas os dados essenciais (evita erro de notas fiscais)
-                setTimeout(() => {
-                    fetchWithAuth(`${API_URL}/obras/${obraId}`)
-                        .then(res => res.ok ? res.json() : null)
-                        .then(data => {
-                            if (data) {
-                                setObraSelecionada(data.obra || null);
-                                setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
-                                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
-                                    ...serv,
-                                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
-                                }));
-                                setServicos(servicosComPagamentosArray);
-                                setSumarios(data.sumarios || null);
-                                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
-                                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
-                            }
-                        })
-                        .catch(error => console.error('Erro ao recarregar obra:', error));
-                }, 500);
+                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
+                setTimeout(() => fetchData(), 500);
             } else {
                 const erro = await res.json();
                 alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
