@@ -7210,8 +7210,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     onClose={() => setCadastrarParceladoVisible(false)}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
-                    
-                )}
+                />
+            )}
             
             {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
                 <EditarPagamentoFuturoModal
