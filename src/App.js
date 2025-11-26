@@ -69,14 +69,13 @@ const Sidebar = ({
     isCollapsed,
     setIsCollapsed 
 }) => {
+    // Menu items - só aparece quando obra está selecionada
     const menuItems = [
-        { id: 'obras', icon: '🏗️', label: 'Obras', shortLabel: 'Obras' },
-        { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro', requiresObra: true },
-        { id: 'pagamento', icon: '💳', label: 'Inserir Pagamento', shortLabel: 'Pagamento', requiresObra: true, adminOnly: true },
-        { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios', requiresObra: true },
-        { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', requiresObra: true, adminOnly: true },
-        { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário', requiresObra: true },
-        { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa', requiresObra: true },
+        { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
+        { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
+        { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
+        { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
+        { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
 
     const bottomItems = [
@@ -84,10 +83,6 @@ const Sidebar = ({
     ];
 
     const handleItemClick = (item) => {
-        if (item.requiresObra && !obraSelecionada) {
-            alert('Selecione uma obra primeiro');
-            return;
-        }
         setCurrentPage(item.id);
     };
 
@@ -154,14 +149,12 @@ const Sidebar = ({
                             }
                             
                             const isActive = currentPage === item.id;
-                            const isDisabled = item.requiresObra && !obraSelecionada;
                             
                             return (
                                 <li key={item.id}>
                                     <button
-                                        className={`sidebar-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
+                                        className={`sidebar-item ${isActive ? 'active' : ''}`}
                                         onClick={() => handleItemClick(item)}
-                                        disabled={isDisabled}
                                         title={isCollapsed ? item.label : ''}
                                     >
                                         <span className="item-icon">{item.icon}</span>
@@ -4481,13 +4474,118 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     // --- RENDERIZAÇÃO ---
     
-    // Função para selecionar obra e ir para página inicial
+    // Função para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        setCurrentPage('obras'); // Vai para página da obra
+        setCurrentPage('financeiro'); // Vai direto para Cronograma Financeiro
     };
 
-    // === NOVO LAYOUT COM SIDEBAR ===
+    // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
+    if (!obraSelecionada) {
+        return (
+            <div className="container">
+                {isAdminPanelVisible && <AdminPanelModal 
+                    allObras={obras}
+                    onClose={() => setAdminPanelVisible(false)} 
+                />}
+                
+                {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
+                    obras={obras}
+                    onClose={() => setRelatorioCronogramaVisible(false)} 
+                />}
+                
+                <header className="dashboard-header">
+                    <h1>Minhas Obras</h1>
+                    <div className="header-actions">
+                        <button 
+                            onClick={() => setRelatorioCronogramaVisible(true)} 
+                            className="export-btn pdf" 
+                            style={{marginRight: '10px'}}
+                        >
+                            📊 Relatório Financeiro
+                        </button>
+                        
+                        {user.role === 'master' && (
+                            <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
+                                Gerenciar Usuários
+                            </button>
+                        )}
+                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+                    </div>
+                </header>
+
+                {(user.role === 'administrador' || user.role === 'master') && (
+                    <div className="card-full">
+                        <h3>Cadastrar Nova Obra</h3>
+                        <form onSubmit={handleAddObra} className="form-add-obra">
+                            <input type="text" name="nome" placeholder="Nome da Obra" required />
+                            <input type="text" name="cliente" placeholder="Nome do Cliente" />
+                            <button type="submit" className="submit-btn">Adicionar Obra</button>
+                        </form>
+                    </div>
+                )}
+                
+                <div className="lista-obras">
+                    {obras.length > 0 ? (
+                        obras.map(obra => (
+                            <div key={obra.id} className="card-obra">
+                                {(user.role === 'administrador' || user.role === 'master') && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
+                                        className="card-obra-delete-btn"
+                                        title="Excluir Obra"
+                                    >
+                                        🗑️
+                                    </button>
+                                )}
+                                
+                                <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
+                                    <h3>{obra.nome}</h3>
+                                    <p>Cliente: {obra.cliente || 'N/A'}</p>
+                                    
+                                    <div className="obra-kpi-summary">
+                                        <div>
+                                            <span>Orçamento Total</span>
+                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
+                                                {formatCurrency(obra.orcamento_total || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Valores Pagos</span>
+                                            <strong style={{ color: 'var(--cor-primaria)' }}>
+                                                {formatCurrency(obra.total_pago || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Liberado (Fila)</span>
+                                            <strong style={{ color: 'var(--cor-acento)' }}>
+                                                {formatCurrency(obra.liberado_pagamento || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Despesas Extras</span>
+                                            <strong style={{ color: '#9333ea' }}>
+                                                {formatCurrency(obra.despesas_extras || 0)}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // === TELA DE LOADING ===
+    if (isLoading || !sumarios) {
+        return <div className="loading-screen">Carregando dados da obra...</div>;
+    }
+
+    // === LAYOUT COM SIDEBAR (OBRA SELECIONADA) ===
     return (
         <>
             <SidebarStyles />
@@ -4516,230 +4614,107 @@ const totalOrcamentosPendentes = useMemo(() => {
                             ☰
                         </button>
                         <span className="mobile-logo">OBRALY</span>
-                        {obraSelecionada && (
-                            <span className="mobile-obra-badge">{obraSelecionada.nome}</span>
-                        )}
+                        <span className="mobile-obra-badge">{obraSelecionada.nome}</span>
                     </div>
 
-                    {/* Modais Globais */}
-                    {isAdminPanelVisible && <AdminPanelModal 
-                        allObras={obras}
-                        onClose={() => setAdminPanelVisible(false)} 
-                    />}
-                    
-                    {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
-                        obras={obras}
-                        onClose={() => setRelatorioCronogramaVisible(false)} 
-                    />}
-
-                    {/* === PÁGINA: OBRAS (Lista de Obras) === */}
-                    {(currentPage === 'obras' && !obraSelecionada) && (
-                        <div className="page-content">
-                            <div className="page-header">
-                                <h1>🏗️ Minhas Obras</h1>
-                                <p className="page-subtitle">Selecione uma obra para gerenciar</p>
-                            </div>
-
-                            {(user.role === 'administrador' || user.role === 'master') && (
-                                <div className="card-full" style={{ marginBottom: '25px' }}>
-                                    <h3>➕ Cadastrar Nova Obra</h3>
-                                    <form onSubmit={handleAddObra} className="form-add-obra">
-                                        <input type="text" name="nome" placeholder="Nome da Obra" required />
-                                        <input type="text" name="cliente" placeholder="Nome do Cliente" />
-                                        <button type="submit" className="submit-btn">Adicionar Obra</button>
-                                    </form>
-                                </div>
-                            )}
-
-                            <div className="lista-obras">
-                                {obras.length > 0 ? (
-                                    obras.map(obra => (
-                                        <div key={obra.id} className="card-obra">
-                                            {(user.role === 'administrador' || user.role === 'master') && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                                    className="card-obra-delete-btn"
-                                                    title="Excluir Obra"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                            
-                                            <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
-                                                <h3>{obra.nome}</h3>
-                                                <p>Cliente: {obra.cliente || 'N/A'}</p>
-                                                
-                                                <div className="obra-kpi-summary">
-                                                    <div>
-                                                        <span>Orçamento Total</span>
-                                                        <strong style={{ color: 'var(--cor-vermelho)' }}>
-                                                            {formatCurrency(obra.orcamento_total || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Valores Pagos</span>
-                                                        <strong style={{ color: 'var(--cor-primaria)' }}>
-                                                            {formatCurrency(obra.total_pago || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Liberado (Fila)</span>
-                                                        <strong style={{ color: 'var(--cor-acento)' }}>
-                                                            {formatCurrency(obra.liberado_pagamento || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Despesas Extras</span>
-                                                        <strong style={{ color: '#9333ea' }}>
-                                                            {formatCurrency(obra.despesas_extras || 0)}
-                                                        </strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
-                                )}
-                            </div>
+                    {/* Header com botão Inserir Pagamento */}
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <div className="page-top-header">
+                            <button 
+                                onClick={() => setCurrentPage('pagamento')}
+                                className="submit-btn"
+                                style={{ background: '#007bff' }}
+                            >
+                                💳 Inserir Pagamento
+                            </button>
                         </div>
                     )}
 
-                    {/* === PÁGINA: USUÁRIOS (Admin) === */}
-                    {currentPage === 'usuarios' && (
-                        <div className="page-content">
-                            <div className="page-header">
-                                <h1>👥 Gerenciar Usuários</h1>
-                                <p className="page-subtitle">Administração de usuários do sistema</p>
-                            </div>
-                            <AdminPanelModal 
-                                allObras={obras}
-                                onClose={() => setCurrentPage('obras')} 
-                                embedded={true}
-                            />
-                        </div>
-                    )}
-
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO === */}
-                    {currentPage === 'financeiro' && obraSelecionada && (
+                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Página Inicial) === */}
+                    {currentPage === 'financeiro' && (
                         <CronogramaFinanceiroModal 
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
-                    {currentPage === 'pagamento' && obraSelecionada && (
-                        <InserirPagamentoModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            onSave={(formData) => {
-                                handleInserirPagamento(formData);
+                            onClose={() => {
+                                setObraSelecionada(null);
                                 setCurrentPage('obras');
                             }}
                             embedded={true}
                         />
                     )}
 
+                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
+                    {currentPage === 'pagamento' && (
+                        <InserirPagamentoModal
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            onClose={() => setCurrentPage('financeiro')}
+                            onSave={(formData) => {
+                                handleInserirPagamento(formData);
+                                setCurrentPage('financeiro');
+                            }}
+                            servicos={servicos}
+                            embedded={true}
+                        />
+                    )}
+
                     {/* === PÁGINA: RELATÓRIOS === */}
-                    {currentPage === 'relatorios' && obraSelecionada && (
+                    {currentPage === 'relatorios' && (
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
+                            onClose={() => setCurrentPage('financeiro')}
                             embedded={true}
                         />
                     )}
 
                     {/* === PÁGINA: ORÇAMENTOS === */}
-                    {currentPage === 'orcamentos' && obraSelecionada && (
+                    {currentPage === 'orcamentos' && (
                         <OrcamentosModal
                             obraId={obraSelecionada.id}
-                            onClose={() => setCurrentPage('obras')}
+                            onClose={() => setCurrentPage('financeiro')}
                             onSave={() => fetchObraData(obraSelecionada.id)}
                             embedded={true}
                         />
                     )}
 
                     {/* === PÁGINA: DIÁRIO DE OBRAS === */}
-                    {currentPage === 'diario' && obraSelecionada && (
+                    {currentPage === 'diario' && (
                         <DiarioObras 
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
+                            onClose={() => setCurrentPage('financeiro')}
                             embedded={true}
                         />
                     )}
 
                     {/* === PÁGINA: CAIXA DE OBRA === */}
-                    {currentPage === 'caixa' && obraSelecionada && (
+                    {currentPage === 'caixa' && (
                         <CaixaObraModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
+                            onClose={() => setCurrentPage('financeiro')}
                             embedded={true}
                         />
                     )}
 
-                    {/* === PÁGINA: OBRA SELECIONADA (Dashboard da Obra) === */}
-                    {currentPage === 'obras' && obraSelecionada && !isLoading && sumarios && (
-                        <ObraDashboard 
-                            obraSelecionada={obraSelecionada}
-                            sumarios={sumarios}
-                            servicos={servicos}
-                            lancamentos={lancamentos}
-                            historicoUnificado={historicoUnificado}
-                            orcamentos={orcamentos}
-                            user={user}
-                            formatCurrency={formatCurrency}
-                            fetchObraData={fetchObraData}
-                            setCurrentPage={setCurrentPage}
-                            // Estados de modais
-                            setViewingServico={setViewingServico}
-                            setEditingLancamento={setEditingLancamento}
-                            setPayingItem={setPayingItem}
-                            setAddServicoModalVisible={setAddServicoModalVisible}
-                            setAddLancamentoModalVisible={setAddLancamentoModalVisible}
-                            // Outros
-                            mesesExpandidos={mesesExpandidos}
-                            setMesesExpandidos={setMesesExpandidos}
-                            isServicosCollapsed={isServicosCollapsed}
-                            setIsServicosCollapsed={setIsServicosCollapsed}
+                    {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
+                    {currentPage === 'usuarios' && (
+                        <AdminPanelModal 
+                            allObras={obras}
+                            onClose={() => setCurrentPage('financeiro')} 
+                            embedded={true}
                         />
                     )}
 
-                    {/* Loading */}
-                    {obraSelecionada && (isLoading || !sumarios) && (
-                        <div className="loading-screen">Carregando dados da obra...</div>
-                    )}
-
                     {/* Modais que aparecem por cima */}
-                    {editingLancamento && <EditLancamentoModal 
-                        lancamento={editingLancamento} 
-                        onClose={() => setEditingLancamento(null)} 
-                        onSave={handleSaveEdit}
-                    />}
-
-                    {isAddServicoModalVisible && <AddServicoModal 
-                        onClose={() => setAddServicoModalVisible(false)} 
-                        onSave={handleAddServico} 
-                    />}
-
-                    {isAddLancamentoModalVisible && <AddLancamentoModal 
-                        onClose={() => setAddLancamentoModalVisible(false)} 
-                        onSave={handleAddLancamento} 
-                    />}
-
                     {viewingServico && (
                         <ServicoDetailsModal
                             servico={viewingServico}
                             onClose={() => setViewingServico(null)}
-                            onSave={handleSaveServicoDetails}
+                            onSave={handleSaveEditServico}
                             fetchObraData={fetchObraData}
-                            obraId={obraSelecionada?.id}
+                            obraId={obraSelecionada.id}
                         />
                     )}
 
@@ -4758,314 +4733,50 @@ const totalOrcamentosPendentes = useMemo(() => {
                             onSave={handleSaveServicoPrioridade}
                         />
                     )}
+                    
+                    {editingLancamento && <EditLancamentoModal 
+                        lancamento={editingLancamento} 
+                        onClose={() => setEditingLancamento(null)} 
+                        onSave={handleSaveEdit}
+                    />}
+
+                    {isAddServicoModalVisible && <AddServicoModal 
+                        onClose={() => setAddServicoModalVisible(false)} 
+                        onSave={handleAddServico} 
+                    />}
+
+                    {isAddLancamentoModalVisible && <AddLancamentoModal 
+                        onClose={() => setAddLancamentoModalVisible(false)} 
+                        onSave={handleAddLancamento} 
+                    />}
                 </main>
             </div>
 
-            {/* Estilos adicionais da página */}
+            {/* Estilos adicionais */}
             <style>{`
-                .page-content {
-                    max-width: 1400px;
-                    margin: 0 auto;
+                .page-top-header {
+                    display: flex;
+                    justify-content: flex-end;
+                    margin-bottom: 20px;
+                    padding: 0 10px;
                 }
                 
-                .page-header {
-                    margin-bottom: 30px;
-                }
-                
-                .page-header h1 {
-                    font-size: 28px;
-                    color: #1a1f36;
-                    margin: 0 0 8px 0;
-                }
-                
-                .page-subtitle {
-                    color: #6b7280;
+                .page-top-header .submit-btn {
+                    padding: 10px 20px;
                     font-size: 14px;
-                    margin: 0;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
                 }
                 
-                .card-obra {
-                    transition: all 0.2s;
-                    border: 2px solid transparent;
-                }
-                
-                .card-obra:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-                    border-color: #00d9ff;
-                }
-                
-                /* Estilo embedded para modais */
-                .modal-embedded {
-                    position: relative;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                    padding: 25px;
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-                
-                .modal-embedded .modal-content {
-                    max-height: none;
-                    overflow: visible;
+                @media (max-width: 768px) {
+                    .page-top-header {
+                        margin-top: 10px;
+                    }
                 }
             `}</style>
         </>
     );
 }
-
-// === NOVO COMPONENTE: Dashboard da Obra ===
-const ObraDashboard = ({
-    obraSelecionada,
-    sumarios,
-    servicos,
-    lancamentos,
-    historicoUnificado,
-    orcamentos,
-    user,
-    formatCurrency,
-    fetchObraData,
-    setCurrentPage,
-    setViewingServico,
-    setEditingLancamento,
-    setPayingItem,
-    setAddServicoModalVisible,
-    setAddLancamentoModalVisible,
-    mesesExpandidos,
-    setMesesExpandidos,
-    isServicosCollapsed,
-    setIsServicosCollapsed
-}) => {
-    return (
-        <div className="obra-dashboard">
-            {/* KPIs */}
-            <div className="kpi-grid">
-                <div className="kpi-card orcamento-total">
-                    <span>Orçamento Total (Orçado)</span>
-                    <h2>{formatCurrency(sumarios.orcamento_total)}</h2>
-                </div>
-                <div className="kpi-card total-pago">
-                    <span>Valores Efetivados (Pagos)</span>
-                    <h2>{formatCurrency(sumarios.valores_pagos)}</h2>
-                </div>
-                <div className="kpi-card liberado-pagamento">
-                    <span>Liberado p/ Pagamento (Fila)</span>
-                    <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
-                </div>
-                <div className="kpi-card despesas-extras">
-                    <span>Despesas Extras</span>
-                    <p style={{ fontSize: '0.75rem', opacity: 0.8, margin: '0.2rem 0' }}>Fora da Planilha</p>
-                    <h2>{formatCurrency(sumarios.despesas_extras || 0)}</h2>
-                </div>
-            </div>
-
-            {/* Ações Rápidas */}
-            <div className="quick-actions" style={{ 
-                display: 'flex', 
-                gap: '10px', 
-                flexWrap: 'wrap',
-                marginBottom: '25px',
-                padding: '20px',
-                background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-            }}>
-                <h3 style={{ width: '100%', margin: '0 0 15px 0', color: '#1a1f36' }}>⚡ Ações Rápidas</h3>
-                <button 
-                    onClick={() => setCurrentPage('financeiro')}
-                    className="submit-btn"
-                    style={{ background: '#28a745' }}
-                >
-                    💰 Cronograma Financeiro
-                </button>
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <button 
-                        onClick={() => setCurrentPage('pagamento')}
-                        className="submit-btn"
-                        style={{ background: '#007bff' }}
-                    >
-                        💳 Inserir Pagamento
-                    </button>
-                )}
-                <button 
-                    onClick={() => setCurrentPage('relatorios')}
-                    className="submit-btn"
-                    style={{ background: '#6366f1' }}
-                >
-                    📊 Relatórios
-                </button>
-                <button 
-                    onClick={() => setCurrentPage('diario')}
-                    className="submit-btn"
-                    style={{ background: '#17a2b8' }}
-                >
-                    📔 Diário de Obras
-                </button>
-                <button 
-                    onClick={() => setCurrentPage('caixa')}
-                    className="submit-btn"
-                    style={{ background: '#ff9800' }}
-                >
-                    🏦 Caixa de Obra
-                </button>
-            </div>
-
-            {/* Serviços */}
-            <div className="card-full" style={{ marginBottom: '25px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0 }}>🔧 Serviços ({servicos.length})</h3>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button 
-                            onClick={() => setIsServicosCollapsed(!isServicosCollapsed)}
-                            className="voltar-btn"
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                        >
-                            {isServicosCollapsed ? '▼ Expandir' : '▲ Recolher'}
-                        </button>
-                        {(user.role === 'administrador' || user.role === 'master') && (
-                            <button 
-                                onClick={() => setAddServicoModalVisible(true)}
-                                className="submit-btn"
-                                style={{ fontSize: '12px', padding: '6px 12px' }}
-                            >
-                                + Novo Serviço
-                            </button>
-                        )}
-                    </div>
-                </div>
-                
-                {!isServicosCollapsed && (
-                    <div className="servicos-grid">
-                        {servicos.length > 0 ? (
-                            servicos.map(servico => (
-                                <div 
-                                    key={servico.id}
-                                    className="servico-card"
-                                    onClick={() => setViewingServico(servico)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <h4>{servico.nome}</h4>
-                                    <p>{servico.tipo_medicao || 'N/A'}</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>MO: {formatCurrency(servico.valor_global_mao_de_obra || 0)}</span>
-                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>Mat: {formatCurrency(servico.valor_global_material || 0)}</span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p style={{ color: '#6b7280' }}>Nenhum serviço cadastrado</p>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Lançamentos Gerais */}
-            <div className="card-full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0 }}>📝 Lançamentos Gerais ({lancamentos.length})</h3>
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <button 
-                            onClick={() => setAddLancamentoModalVisible(true)}
-                            className="submit-btn"
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                        >
-                            + Novo Lançamento
-                        </button>
-                    )}
-                </div>
-                
-                {lancamentos.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th>Descrição</th>
-                                    <th>Tipo</th>
-                                    <th>Valor Total</th>
-                                    <th>Pago</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {lancamentos.slice(0, 10).map(lanc => (
-                                    <tr 
-                                        key={lanc.id}
-                                        onClick={() => setEditingLancamento(lanc)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <td>{lanc.descricao}</td>
-                                        <td>{lanc.tipo}</td>
-                                        <td>{formatCurrency(lanc.valor_total)}</td>
-                                        <td>{formatCurrency(lanc.valor_pago)}</td>
-                                        <td>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '11px',
-                                                fontWeight: '600',
-                                                background: lanc.status === 'Pago' ? '#d1fae5' : '#fef3c7',
-                                                color: lanc.status === 'Pago' ? '#065f46' : '#92400e'
-                                            }}>
-                                                {lanc.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {lancamentos.length > 10 && (
-                            <p style={{ textAlign: 'center', color: '#6b7280', marginTop: '10px' }}>
-                                Mostrando 10 de {lancamentos.length} lançamentos
-                            </p>
-                        )}
-                    </div>
-                ) : (
-                    <p style={{ color: '#6b7280' }}>Nenhum lançamento cadastrado</p>
-                )}
-            </div>
-
-            <style>{`
-                .obra-dashboard {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-                
-                .servicos-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 15px;
-                }
-                
-                .servico-card {
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 10px;
-                    padding: 15px;
-                    transition: all 0.2s;
-                }
-                
-                .servico-card:hover {
-                    background: #f1f5f9;
-                    border-color: #00d9ff;
-                    transform: translateY(-2px);
-                }
-                
-                .servico-card h4 {
-                    margin: 0 0 5px 0;
-                    color: #1a1f36;
-                }
-                
-                .servico-card p {
-                    margin: 0;
-                    color: #6b7280;
-                    font-size: 13px;
-                }
-            `}</style>
-        </div>
-    );
-};
-
 
 // ===================================
 // COMPONENTE CRONOGRAMA FINANCEIRO
