@@ -71,6 +71,7 @@ const Sidebar = ({
 }) => {
     // Menu items - só aparece quando obra está selecionada
     const menuItems = [
+        { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
         { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
         { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
@@ -4477,7 +4478,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     // Função para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        setCurrentPage('financeiro'); // Vai direto para Cronograma Financeiro
+        setCurrentPage('home'); // Vai direto para tela inicial da obra
     };
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
@@ -4630,7 +4631,21 @@ const totalOrcamentosPendentes = useMemo(() => {
                         </div>
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Página Inicial) === */}
+                    {/* === PÁGINA: HOME (Quadro Informativo + Previsões) === */}
+                    {currentPage === 'home' && (
+                        <CronogramaFinanceiro 
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            onClose={() => {
+                                setObraSelecionada(null);
+                                setCurrentPage('obras');
+                            }}
+                            embedded={true}
+                            simplified={true}
+                        />
+                    )}
+
+                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Completo) === */}
                     {currentPage === 'financeiro' && (
                         <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
@@ -4640,6 +4655,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 setCurrentPage('obras');
                             }}
                             embedded={true}
+                            simplified={false}
                         />
                     )}
 
@@ -4648,10 +4664,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <InserirPagamentoModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('financeiro')}
+                            onClose={() => setCurrentPage('home')}
                             onSave={(formData) => {
                                 handleInserirPagamento(formData);
-                                setCurrentPage('financeiro');
+                                setCurrentPage('home');
                             }}
                             servicos={servicos}
                             embedded={true}
@@ -4663,7 +4679,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('financeiro')}
+                            onClose={() => setCurrentPage('home')}
                             embedded={true}
                         />
                     )}
@@ -4672,7 +4688,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {currentPage === 'orcamentos' && (
                         <OrcamentosModal
                             obraId={obraSelecionada.id}
-                            onClose={() => setCurrentPage('financeiro')}
+                            onClose={() => setCurrentPage('home')}
                             onSave={() => fetchObraData(obraSelecionada.id)}
                             embedded={true}
                         />
@@ -4683,7 +4699,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <DiarioObras 
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('financeiro')}
+                            onClose={() => setCurrentPage('home')}
                             embedded={true}
                         />
                     )}
@@ -4693,7 +4709,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <CaixaObraModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('financeiro')}
+                            onClose={() => setCurrentPage('home')}
                             embedded={true}
                         />
                     )}
@@ -4702,7 +4718,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {currentPage === 'usuarios' && (
                         <AdminPanelModal 
                             allObras={obras}
-                            onClose={() => setCurrentPage('financeiro')} 
+                            onClose={() => setCurrentPage('home')} 
                             embedded={true}
                         />
                     )}
@@ -6162,7 +6178,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     );
 };
 // Modal Principal do Cronograma Financeiro
-const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) => {
+const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, simplified = false }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
     const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
     const [pagamentosServicoPendentes, setPagamentosServicoPendentes] = useState([]); // NOVO
@@ -6658,7 +6674,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
     // Conteúdo do cronograma (usado tanto em embedded quanto em modal)
     const cronogramaContent = (
         <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>💰 Cronograma Financeiro - {obraNome}</h2>
+            <h2>{simplified ? '🏠' : '💰'} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
             <QuadroAlertasVencimento obraId={obraId} /> 
             {/* Botões de Exportação */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -6678,7 +6694,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                 </button>
                 */}
                 
-                {/* NOVO: Botão Gerar PDF */}
+                {/* NOVO: Botão Gerar PDF - apenas no modo completo */}
+                {!simplified && (
                 <button 
                     onClick={async () => {
                             try {
@@ -6706,8 +6723,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     >
                         📄 Gerar PDF
                     </button>
+                )}
                     
-                    {itensSelecionados.length > 0 && (
+                    {!simplified && itensSelecionados.length > 0 && (
                         <button 
                             onClick={handleMarcarMultiplosComoPago} 
                             className="inserir-btn"
@@ -6837,7 +6855,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     </div>
                 )}
 
-                {/* Listagem de Pagamentos Futuros */}
+                {/* Listagem de Pagamentos Futuros - APENAS no modo completo */}
+                {!simplified && (
                 <div className="card-full" style={{ marginBottom: '20px' }}>
                     <div className="card-header">
                         <h3>💵 Pagamentos Futuros (Únicos)</h3>
@@ -6978,8 +6997,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     </>
                     )}
                 </div>
+                )}
 
-                {/* Listagem de Pagamentos Parcelados */}
+                {/* Listagem de Pagamentos Parcelados - APENAS no modo completo */}
+                {!simplified && (
                 <div className="card-full">
                     <div className="card-header">
                         <h3>📋 Pagamentos Parcelados</h3>
@@ -7135,6 +7156,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     </>
                     )}
                 </div>
+                )}
 
                 <div className="modal-footer" style={{ marginTop: '20px' }}>
                     <button onClick={onClose} className="voltar-btn">
