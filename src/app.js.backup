@@ -58,573 +58,6 @@ const getTodayString = () => {
     return todayWithOffset.toISOString().split('T')[0];
 };
 
-// --- COMPONENTE SIDEBAR ---
-const Sidebar = ({ 
-    user, 
-    currentPage, 
-    setCurrentPage, 
-    obraSelecionada, 
-    setObraSelecionada,
-    onLogout,
-    isCollapsed,
-    setIsCollapsed 
-}) => {
-    const menuItems = [
-        { id: 'obras', icon: '🏗️', label: 'Obras', shortLabel: 'Obras' },
-        { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro', requiresObra: true },
-        { id: 'pagamento', icon: '💳', label: 'Inserir Pagamento', shortLabel: 'Pagamento', requiresObra: true, adminOnly: true },
-        { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios', requiresObra: true },
-        { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', requiresObra: true, adminOnly: true },
-        { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário', requiresObra: true },
-        { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa', requiresObra: true },
-    ];
-
-    const bottomItems = [
-        { id: 'usuarios', icon: '👥', label: 'Gerenciar Usuários', shortLabel: 'Usuários', masterOnly: true },
-    ];
-
-    const handleItemClick = (item) => {
-        if (item.requiresObra && !obraSelecionada) {
-            alert('Selecione uma obra primeiro');
-            return;
-        }
-        setCurrentPage(item.id);
-    };
-
-    return (
-        <>
-            {/* Overlay para mobile */}
-            {!isCollapsed && (
-                <div 
-                    className="sidebar-overlay"
-                    onClick={() => setIsCollapsed(true)}
-                />
-            )}
-            
-            <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-                {/* Logo/Header */}
-                <div className="sidebar-header">
-                    <div className="sidebar-logo">
-                        <span className="logo-icon">🏗️</span>
-                        {!isCollapsed && <span className="logo-text">OBRALY</span>}
-                    </div>
-                    <button 
-                        className="sidebar-toggle"
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        title={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-                    >
-                        {isCollapsed ? '→' : '←'}
-                    </button>
-                </div>
-
-                {/* Obra Selecionada */}
-                {obraSelecionada && (
-                    <div className="sidebar-obra-info">
-                        <div className="obra-badge">
-                            <span className="obra-icon">📍</span>
-                            {!isCollapsed && (
-                                <div className="obra-details">
-                                    <span className="obra-nome">{obraSelecionada.nome}</span>
-                                    <span className="obra-cliente">{obraSelecionada.cliente || 'N/A'}</span>
-                                </div>
-                            )}
-                        </div>
-                        {!isCollapsed && (
-                            <button 
-                                className="trocar-obra-btn"
-                                onClick={() => {
-                                    setObraSelecionada(null);
-                                    setCurrentPage('obras');
-                                }}
-                                title="Trocar obra"
-                            >
-                                ↻
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                {/* Menu Principal */}
-                <nav className="sidebar-nav">
-                    <ul className="sidebar-menu">
-                        {menuItems.map(item => {
-                            // Verificar permissões
-                            if (item.adminOnly && user.role !== 'administrador' && user.role !== 'master') {
-                                return null;
-                            }
-                            
-                            const isActive = currentPage === item.id;
-                            const isDisabled = item.requiresObra && !obraSelecionada;
-                            
-                            return (
-                                <li key={item.id}>
-                                    <button
-                                        className={`sidebar-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
-                                        onClick={() => handleItemClick(item)}
-                                        disabled={isDisabled}
-                                        title={isCollapsed ? item.label : ''}
-                                    >
-                                        <span className="item-icon">{item.icon}</span>
-                                        {!isCollapsed && <span className="item-label">{item.label}</span>}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-
-                    {/* Separador */}
-                    <div className="sidebar-divider"></div>
-
-                    {/* Menu Inferior */}
-                    <ul className="sidebar-menu bottom">
-                        {bottomItems.map(item => {
-                            if (item.masterOnly && user.role !== 'master') {
-                                return null;
-                            }
-                            
-                            const isActive = currentPage === item.id;
-                            
-                            return (
-                                <li key={item.id}>
-                                    <button
-                                        className={`sidebar-item ${isActive ? 'active' : ''}`}
-                                        onClick={() => setCurrentPage(item.id)}
-                                        title={isCollapsed ? item.label : ''}
-                                    >
-                                        <span className="item-icon">{item.icon}</span>
-                                        {!isCollapsed && <span className="item-label">{item.label}</span>}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
-
-                {/* Footer com usuário */}
-                <div className="sidebar-footer">
-                    <div className="user-info">
-                        <div className="user-avatar">
-                            {user.nome ? user.nome.charAt(0).toUpperCase() : '?'}
-                        </div>
-                        {!isCollapsed && (
-                            <div className="user-details">
-                                <span className="user-name">{user.nome || 'Usuário'}</span>
-                                <span className="user-role">
-                                    {user.role === 'master' ? '👑 Master' : 
-                                     user.role === 'administrador' ? '⭐ Admin' : '👤 Usuário'}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                    <button 
-                        className="logout-btn"
-                        onClick={onLogout}
-                        title="Sair"
-                    >
-                        {isCollapsed ? '🚪' : '🚪 Sair'}
-                    </button>
-                </div>
-            </aside>
-        </>
-    );
-};
-
-// CSS da Sidebar (inline para facilitar)
-const SidebarStyles = () => (
-    <style>{`
-        /* === LAYOUT COM SIDEBAR === */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-            background: #f5f7fa;
-        }
-        
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 20px;
-            transition: margin-left 0.3s ease;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        
-        .main-content.sidebar-collapsed {
-            margin-left: 70px;
-        }
-        
-        /* === SIDEBAR === */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(180deg, #1a1f36 0%, #252b42 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            transition: width 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-        }
-        
-        .sidebar.collapsed {
-            width: 70px;
-        }
-        
-        /* Header da Sidebar */
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-icon {
-            font-size: 28px;
-        }
-        
-        .logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
-        }
-        
-        .sidebar-toggle {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .sidebar-toggle:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        /* Obra Info */
-        .sidebar-obra-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: rgba(0,217,255,0.1);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .obra-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .obra-icon {
-            font-size: 18px;
-        }
-        
-        .obra-details {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        
-        .obra-nome {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #00d9ff;
-        }
-        
-        .obra-cliente {
-            font-size: 11px;
-            opacity: 0.7;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .trocar-obra-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        
-        .trocar-obra-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: rotate(180deg);
-        }
-        
-        /* Navegação */
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px 0;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: calc(100% - 20px);
-            margin: 4px 10px;
-            padding: 12px 15px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-        }
-        
-        .sidebar-item:hover:not(.disabled) {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        
-        .sidebar-item.active {
-            background: linear-gradient(135deg, #00d9ff 0%, #00b8d9 100%);
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,217,255,0.3);
-        }
-        
-        .sidebar-item.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        .item-icon {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        .item-label {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .sidebar-divider {
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-            margin: 15px 20px;
-        }
-        
-        /* Footer */
-        .sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            color: #1a1f36;
-            flex-shrink: 0;
-        }
-        
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .user-role {
-            font-size: 11px;
-            opacity: 0.7;
-        }
-        
-        .logout-btn {
-            width: 100%;
-            padding: 10px;
-            background: rgba(220,53,69,0.2);
-            border: 1px solid rgba(220,53,69,0.3);
-            color: #ff6b6b;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(220,53,69,0.3);
-            border-color: rgba(220,53,69,0.5);
-        }
-        
-        /* Collapsed state */
-        .sidebar.collapsed .sidebar-header {
-            justify-content: center;
-            padding: 20px 10px;
-        }
-        
-        .sidebar.collapsed .sidebar-obra-info {
-            justify-content: center;
-            padding: 15px 10px;
-        }
-        
-        .sidebar.collapsed .sidebar-item {
-            justify-content: center;
-            padding: 12px;
-            margin: 4px 8px;
-            width: calc(100% - 16px);
-        }
-        
-        .sidebar.collapsed .user-info {
-            justify-content: center;
-        }
-        
-        .sidebar.collapsed .logout-btn {
-            padding: 10px;
-            font-size: 18px;
-        }
-        
-        /* Overlay para mobile */
-        .sidebar-overlay {
-            display: none;
-        }
-        
-        /* === MOBILE === */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            
-            .sidebar:not(.collapsed) {
-                transform: translateX(0);
-            }
-            
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar-overlay {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-            
-            .mobile-header {
-                display: flex !important;
-                position: sticky;
-                top: 0;
-                background: #1a1f36;
-                color: white;
-                padding: 15px 20px;
-                margin: -20px -20px 20px -20px;
-                align-items: center;
-                justify-content: space-between;
-                z-index: 100;
-            }
-            
-            .mobile-menu-btn {
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-                padding: 5px;
-            }
-            
-            .mobile-logo {
-                font-size: 18px;
-                font-weight: 700;
-                background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-            
-            .mobile-obra-badge {
-                font-size: 12px;
-                background: rgba(0,217,255,0.2);
-                padding: 5px 10px;
-                border-radius: 12px;
-                color: #00d9ff;
-                max-width: 120px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-        }
-        
-        @media (min-width: 769px) {
-            .mobile-header {
-                display: none !important;
-            }
-        }
-    `}</style>
-);
-
-
 // --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
@@ -3950,10 +3383,6 @@ function Dashboard() {
     
     // NOVO: Estado para modal do Caixa de Obra
     const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
-    
-    // === NOVO: Estados para Sidebar ===
-    const [currentPage, setCurrentPage] = useState('obras');
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
@@ -4481,590 +3910,832 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     // --- RENDERIZAÇÃO ---
     
-    // Função para selecionar obra e ir para página inicial
-    const handleSelectObra = (obraId) => {
-        fetchObraData(obraId);
-        setCurrentPage('obras'); // Vai para página da obra
-    };
-
-    // === NOVO LAYOUT COM SIDEBAR ===
-    return (
-        <>
-            <SidebarStyles />
-            <div className="app-layout">
-                {/* Sidebar */}
-                <Sidebar 
-                    user={user}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    obraSelecionada={obraSelecionada}
-                    setObraSelecionada={setObraSelecionada}
-                    onLogout={logout}
-                    isCollapsed={isSidebarCollapsed}
-                    setIsCollapsed={setIsSidebarCollapsed}
-                />
+    // TELA DE SELEÇÃO DE OBRAS
+    if (!obraSelecionada) {
+        // ... (código inalterado) ...
+        return (
+            <div className="container">
+                {isAdminPanelVisible && <AdminPanelModal 
+                    allObras={obras}
+                    onClose={() => setAdminPanelVisible(false)} 
+                />}
                 
-                {/* Conteúdo Principal */}
-                <main className={`main-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+                {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
+                    obras={obras}
+                    onClose={() => setRelatorioCronogramaVisible(false)} 
+                />}
+                
+                <header className="dashboard-header">
+                    <h1>Minhas Obras</h1>
+                    <div className="header-actions">
                     
-                    {/* Header Mobile */}
-                    <div className="mobile-header">
                         <button 
-                            className="mobile-menu-btn"
-                            onClick={() => setIsSidebarCollapsed(false)}
+                            onClick={() => setRelatorioCronogramaVisible(true)} 
+                            className="export-btn pdf" 
+                            style={{marginRight: '10px'}}
                         >
-                            ☰
+                            📊 Relatório Financeiro
                         </button>
-                        <span className="mobile-logo">OBRALY</span>
-                        {obraSelecionada && (
-                            <span className="mobile-obra-badge">{obraSelecionada.nome}</span>
-                        )}
-                    </div>
-
-                    {/* Modais Globais */}
-                    {isAdminPanelVisible && <AdminPanelModal 
-                        allObras={obras}
-                        onClose={() => setAdminPanelVisible(false)} 
-                    />}
-                    
-                    {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
-                        obras={obras}
-                        onClose={() => setRelatorioCronogramaVisible(false)} 
-                    />}
-
-                    {/* === PÁGINA: OBRAS (Lista de Obras) === */}
-                    {(currentPage === 'obras' && !obraSelecionada) && (
-                        <div className="page-content">
-                            <div className="page-header">
-                                <h1>🏗️ Minhas Obras</h1>
-                                <p className="page-subtitle">Selecione uma obra para gerenciar</p>
-                            </div>
-
-                            {(user.role === 'administrador' || user.role === 'master') && (
-                                <div className="card-full" style={{ marginBottom: '25px' }}>
-                                    <h3>➕ Cadastrar Nova Obra</h3>
-                                    <form onSubmit={handleAddObra} className="form-add-obra">
-                                        <input type="text" name="nome" placeholder="Nome da Obra" required />
-                                        <input type="text" name="cliente" placeholder="Nome do Cliente" />
-                                        <button type="submit" className="submit-btn">Adicionar Obra</button>
-                                    </form>
-                                </div>
-                            )}
-
-                            <div className="lista-obras">
-                                {obras.length > 0 ? (
-                                    obras.map(obra => (
-                                        <div key={obra.id} className="card-obra">
-                                            {(user.role === 'administrador' || user.role === 'master') && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                                    className="card-obra-delete-btn"
-                                                    title="Excluir Obra"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                            
-                                            <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
-                                                <h3>{obra.nome}</h3>
-                                                <p>Cliente: {obra.cliente || 'N/A'}</p>
-                                                
-                                                <div className="obra-kpi-summary">
-                                                    <div>
-                                                        <span>Orçamento Total</span>
-                                                        <strong style={{ color: 'var(--cor-vermelho)' }}>
-                                                            {formatCurrency(obra.orcamento_total || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Valores Pagos</span>
-                                                        <strong style={{ color: 'var(--cor-primaria)' }}>
-                                                            {formatCurrency(obra.total_pago || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Liberado (Fila)</span>
-                                                        <strong style={{ color: 'var(--cor-acento)' }}>
-                                                            {formatCurrency(obra.liberado_pagamento || 0)}
-                                                        </strong>
-                                                    </div>
-                                                    <div>
-                                                        <span>Despesas Extras</span>
-                                                        <strong style={{ color: '#9333ea' }}>
-                                                            {formatCurrency(obra.despesas_extras || 0)}
-                                                        </strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* === PÁGINA: USUÁRIOS (Admin) === */}
-                    {currentPage === 'usuarios' && (
-                        <div className="page-content">
-                            <div className="page-header">
-                                <h1>👥 Gerenciar Usuários</h1>
-                                <p className="page-subtitle">Administração de usuários do sistema</p>
-                            </div>
-                            <AdminPanelModal 
-                                allObras={obras}
-                                onClose={() => setCurrentPage('obras')} 
-                                embedded={true}
-                            />
-                        </div>
-                    )}
-
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO === */}
-                    {currentPage === 'financeiro' && obraSelecionada && (
-                        <CronogramaFinanceiroModal 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
-                    {currentPage === 'pagamento' && obraSelecionada && (
-                        <InserirPagamentoModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            onSave={(formData) => {
-                                handleInserirPagamento(formData);
-                                setCurrentPage('obras');
-                            }}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: RELATÓRIOS === */}
-                    {currentPage === 'relatorios' && obraSelecionada && (
-                        <RelatoriosModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: ORÇAMENTOS === */}
-                    {currentPage === 'orcamentos' && obraSelecionada && (
-                        <OrcamentosModal
-                            obraId={obraSelecionada.id}
-                            onClose={() => setCurrentPage('obras')}
-                            onSave={() => fetchObraData(obraSelecionada.id)}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: DIÁRIO DE OBRAS === */}
-                    {currentPage === 'diario' && obraSelecionada && (
-                        <DiarioObras 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: CAIXA DE OBRA === */}
-                    {currentPage === 'caixa' && obraSelecionada && (
-                        <CaixaObraModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('obras')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: OBRA SELECIONADA (Dashboard da Obra) === */}
-                    {currentPage === 'obras' && obraSelecionada && !isLoading && sumarios && (
-                        <ObraDashboard 
-                            obraSelecionada={obraSelecionada}
-                            sumarios={sumarios}
-                            servicos={servicos}
-                            lancamentos={lancamentos}
-                            historicoUnificado={historicoUnificado}
-                            orcamentos={orcamentos}
-                            user={user}
-                            formatCurrency={formatCurrency}
-                            fetchObraData={fetchObraData}
-                            setCurrentPage={setCurrentPage}
-                            // Estados de modais
-                            setViewingServico={setViewingServico}
-                            setEditingLancamento={setEditingLancamento}
-                            setPayingItem={setPayingItem}
-                            setAddServicoModalVisible={setAddServicoModalVisible}
-                            setAddLancamentoModalVisible={setAddLancamentoModalVisible}
-                            // Outros
-                            mesesExpandidos={mesesExpandidos}
-                            setMesesExpandidos={setMesesExpandidos}
-                            isServicosCollapsed={isServicosCollapsed}
-                            setIsServicosCollapsed={setIsServicosCollapsed}
-                        />
-                    )}
-
-                    {/* Loading */}
-                    {obraSelecionada && (isLoading || !sumarios) && (
-                        <div className="loading-screen">Carregando dados da obra...</div>
-                    )}
-
-                    {/* Modais que aparecem por cima */}
-                    {editingLancamento && <EditLancamentoModal 
-                        lancamento={editingLancamento} 
-                        onClose={() => setEditingLancamento(null)} 
-                        onSave={handleSaveEdit}
-                    />}
-
-                    {isAddServicoModalVisible && <AddServicoModal 
-                        onClose={() => setAddServicoModalVisible(false)} 
-                        onSave={handleAddServico} 
-                    />}
-
-                    {isAddLancamentoModalVisible && <AddLancamentoModal 
-                        onClose={() => setAddLancamentoModalVisible(false)} 
-                        onSave={handleAddLancamento} 
-                    />}
-
-                    {viewingServico && (
-                        <ServicoDetailsModal
-                            servico={viewingServico}
-                            onClose={() => setViewingServico(null)}
-                            onSave={handleSaveServicoDetails}
-                            fetchObraData={fetchObraData}
-                            obraId={obraSelecionada?.id}
-                        />
-                    )}
-
-                    {payingItem && (
-                        <PagamentoModal
-                            item={payingItem}
-                            onClose={() => setPayingItem(null)}
-                            onSave={handleSavePartialPayment}
-                        />
-                    )}
-
-                    {editingServicoPrioridade && (
-                        <PrioridadeModal
-                            currentValue={editingServicoPrioridade.prioridade}
-                            onClose={() => setEditingServicoPrioridade(null)}
-                            onSave={handleSaveServicoPrioridade}
-                        />
-                    )}
-                </main>
-            </div>
-
-            {/* Estilos adicionais da página */}
-            <style>{`
-                .page-content {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-                
-                .page-header {
-                    margin-bottom: 30px;
-                }
-                
-                .page-header h1 {
-                    font-size: 28px;
-                    color: #1a1f36;
-                    margin: 0 0 8px 0;
-                }
-                
-                .page-subtitle {
-                    color: #6b7280;
-                    font-size: 14px;
-                    margin: 0;
-                }
-                
-                .card-obra {
-                    transition: all 0.2s;
-                    border: 2px solid transparent;
-                }
-                
-                .card-obra:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-                    border-color: #00d9ff;
-                }
-                
-                /* Estilo embedded para modais */
-                .modal-embedded {
-                    position: relative;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-                    padding: 25px;
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-                
-                .modal-embedded .modal-content {
-                    max-height: none;
-                    overflow: visible;
-                }
-            `}</style>
-        </>
-    );
-}
-
-// === NOVO COMPONENTE: Dashboard da Obra ===
-const ObraDashboard = ({
-    obraSelecionada,
-    sumarios,
-    servicos,
-    lancamentos,
-    historicoUnificado,
-    orcamentos,
-    user,
-    formatCurrency,
-    fetchObraData,
-    setCurrentPage,
-    setViewingServico,
-    setEditingLancamento,
-    setPayingItem,
-    setAddServicoModalVisible,
-    setAddLancamentoModalVisible,
-    mesesExpandidos,
-    setMesesExpandidos,
-    isServicosCollapsed,
-    setIsServicosCollapsed
-}) => {
-    return (
-        <div className="obra-dashboard">
-            {/* KPIs */}
-            <div className="kpi-grid">
-                <div className="kpi-card orcamento-total">
-                    <span>Orçamento Total (Orçado)</span>
-                    <h2>{formatCurrency(sumarios.orcamento_total)}</h2>
-                </div>
-                <div className="kpi-card total-pago">
-                    <span>Valores Efetivados (Pagos)</span>
-                    <h2>{formatCurrency(sumarios.valores_pagos)}</h2>
-                </div>
-                <div className="kpi-card liberado-pagamento">
-                    <span>Liberado p/ Pagamento (Fila)</span>
-                    <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
-                </div>
-                <div className="kpi-card despesas-extras">
-                    <span>Despesas Extras</span>
-                    <p style={{ fontSize: '0.75rem', opacity: 0.8, margin: '0.2rem 0' }}>Fora da Planilha</p>
-                    <h2>{formatCurrency(sumarios.despesas_extras || 0)}</h2>
-                </div>
-            </div>
-
-            {/* Ações Rápidas */}
-            <div className="quick-actions" style={{ 
-                display: 'flex', 
-                gap: '10px', 
-                flexWrap: 'wrap',
-                marginBottom: '25px',
-                padding: '20px',
-                background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-            }}>
-                <h3 style={{ width: '100%', margin: '0 0 15px 0', color: '#1a1f36' }}>⚡ Ações Rápidas</h3>
-                <button 
-                    onClick={() => setCurrentPage('financeiro')}
-                    className="submit-btn"
-                    style={{ background: '#28a745' }}
-                >
-                    💰 Cronograma Financeiro
-                </button>
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <button 
-                        onClick={() => setCurrentPage('pagamento')}
-                        className="submit-btn"
-                        style={{ background: '#007bff' }}
-                    >
-                        💳 Inserir Pagamento
-                    </button>
-                )}
-                <button 
-                    onClick={() => setCurrentPage('relatorios')}
-                    className="submit-btn"
-                    style={{ background: '#6366f1' }}
-                >
-                    📊 Relatórios
-                </button>
-                <button 
-                    onClick={() => setCurrentPage('diario')}
-                    className="submit-btn"
-                    style={{ background: '#17a2b8' }}
-                >
-                    📔 Diário de Obras
-                </button>
-                <button 
-                    onClick={() => setCurrentPage('caixa')}
-                    className="submit-btn"
-                    style={{ background: '#ff9800' }}
-                >
-                    🏦 Caixa de Obra
-                </button>
-            </div>
-
-            {/* Serviços */}
-            <div className="card-full" style={{ marginBottom: '25px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0 }}>🔧 Serviços ({servicos.length})</h3>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button 
-                            onClick={() => setIsServicosCollapsed(!isServicosCollapsed)}
-                            className="voltar-btn"
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                        >
-                            {isServicosCollapsed ? '▼ Expandir' : '▲ Recolher'}
-                        </button>
-                        {(user.role === 'administrador' || user.role === 'master') && (
-                            <button 
-                                onClick={() => setAddServicoModalVisible(true)}
-                                className="submit-btn"
-                                style={{ fontSize: '12px', padding: '6px 12px' }}
-                            >
-                                + Novo Serviço
+                        
+                        {user.role === 'master' && (
+                            <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
+                                Gerenciar Usuários
                             </button>
                         )}
+                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+                    </div>
+                </header>
+
+                {(user.role === 'administrador' || user.role === 'master') && (
+                    <div className="card-full">
+                        <h3>Cadastrar Nova Obra</h3>
+                        <form onSubmit={handleAddObra} className="form-add-obra">
+                            <input type="text" name="nome" placeholder="Nome da Obra" required />
+                            <input type="text" name="cliente" placeholder="Nome do Cliente" />
+                            <button type="submit" className="submit-btn">Adicionar Obra</button>
+                        </form>
+                    </div>
+                )}
+                <div className="lista-obras">
+                    {obras.length > 0 ? (
+                        
+                        obras.map(obra => (
+                            <div key={obra.id} className="card-obra">
+                                
+                                {(user.role === 'administrador' || user.role === 'master') && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
+                                        className="card-obra-delete-btn"
+                                        title="Excluir Obra"
+                                    >
+                                        🗑️
+                                    </button>
+                                )}
+                                
+                                <div onClick={() => fetchObraData(obra.id)} className="card-obra-content">
+                                    <h3>{obra.nome}</h3>
+                                    <p>Cliente: {obra.cliente || 'N/A'}</p>
+                                    
+                                    <div className="obra-kpi-summary">
+                                        <div>
+                                            <span>Orçamento Total</span>
+                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
+                                                {formatCurrency(obra.orcamento_total || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Valores Pagos</span>
+                                            <strong style={{ color: 'var(--cor-primaria)' }}>
+                                                {formatCurrency(obra.total_pago || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Liberado (Fila)</span>
+                                            <strong style={{ color: 'var(--cor-acento)' }}>
+                                                {formatCurrency(obra.liberado_pagamento || 0)}
+                                            </strong>
+                                        </div>
+                                        <div>
+                                            <span>Despesas Extras</span>
+                                            <strong style={{ color: '#9333ea' }}>
+                                                {formatCurrency(obra.despesas_extras || 0)}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        ))
+
+                    ) : (
+                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma. Fale com o administrador.</p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // TELA DE LOADING
+    if (isLoading || !sumarios) { return <div className="loading-screen">Carregando...</div>; }
+
+    
+    // TELA PRINCIPAL DO DASHBOARD
+    return (
+        <div className="dashboard-container">
+            {/* --- Modais --- */}
+            {editingLancamento && <EditLancamentoModal 
+                lancamento={editingLancamento} 
+                onClose={() => setEditingLancamento(null)} 
+                onSave={handleSaveEdit}
+                servicos={servicos} 
+            />}
+            
+            {isAddServicoModalVisible && (
+                <AddServicoModal
+                    onClose={() => setAddServicoModalVisible(false)}
+                    onSave={handleSaveServico}
+                />
+            )}
+            
+            {isAddLancamentoModalVisible && (
+                <AddLancamentoModal
+                    onClose={() => setAddLancamentoModalVisible(false)}
+                    onSave={handleSaveLancamento}
+                    servicos={servicos} 
+                />
+            )}
+            
+            {/* MUDANÇA 3: NOVO modal Inserir Pagamento */}
+            {isInserirPagamentoModalVisible && (
+                <InserirPagamentoModal
+                    onClose={() => setInserirPagamentoModalVisible(false)}
+                    onSave={handleInserirPagamento}
+                    servicos={servicos}
+                    obraId={obraSelecionada.id}
+                />
+            )}
+            
+            {viewingServico && <ServicoDetailsModal
+                                     servico={viewingServico}
+                                     onClose={() => setViewingServico(null)}
+                                     onSave={handleSaveEditServico}
+                                     fetchObraData={fetchObraData}
+                                     obraId={obraSelecionada.id}
+                                 />}
+
+            {isAddOrcamentoModalVisible && (
+                <AddOrcamentoModal
+                    onClose={() => setAddOrcamentoModalVisible(false)}
+                    onSave={handleSaveOrcamento}
+                    servicos={servicos}
+                />
+            )}
+
+            {editingOrcamento && (
+                <EditOrcamentoModal
+                    orcamento={editingOrcamento}
+                    onClose={() => setEditingOrcamento(null)}
+                    onSave={(orcamentoId, formData, newFiles) => handleSaveEditOrcamento(orcamentoId, formData, newFiles)}
+                    servicos={servicos}
+                />
+            )}
+
+            {viewingAnexos && (
+                <ViewAnexosModal
+                    orcamento={viewingAnexos}
+                    onClose={() => setViewingAnexos(null)}
+                />
+            )}
+
+            {/* <-- MUDANÇA: Renderiza o novo modal de pagamento --> */}
+            {payingItem && (
+                <PartialPaymentModal
+                    item={payingItem}
+                    onClose={() => setPayingItem(null)}
+                    onSave={handleSavePartialPayment}
+                />
+            )}
+
+            {editingServicoPrioridade && (
+                <EditPrioridadeModal
+                    item={editingServicoPrioridade}
+                    onClose={() => setEditingServicoPrioridade(null)}
+                    onSave={handleSaveServicoPrioridade}
+                />
+            )}
+            
+            {/* <-- NOVO: Modal de Upload de Nota Fiscal --> */}
+            {uploadingNFFor && (
+                <UploadNotaFiscalModal
+                    item={uploadingNFFor}
+                    obraId={obraSelecionada.id}
+                    onClose={() => setUploadingNFFor(null)}
+                    onSuccess={() => {
+                        try {
+                            fetchNotasFiscais(obraSelecionada.id);
+                        } catch (error) {
+                            console.log("Erro ao recarregar notas fiscais:", error);
+                        }
+                    }}
+                />
+            )}
+            
+            {/* <-- NOVO: Modal de Relatórios --> */}
+            {isRelatoriosModalVisible && (
+                <RelatoriosModal
+                    onClose={() => setRelatoriosModalVisible(false)}
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                />
+            )}
+            
+            {/* <-- NOVO: Modal de Orçamentos --> */}
+            {isOrcamentosModalVisible && (
+                <OrcamentosModal
+                    onClose={() => setOrcamentosModalVisible(false)}
+                    obraId={obraSelecionada.id}
+                    onSave={() => fetchObraData(obraSelecionada.id)}
+                />
+            )}
+
+            {/* <-- NOVO: Modal do Cronograma Financeiro --> */}
+            {isCronogramaFinanceiroVisible && (
+                <CronogramaFinanceiro
+                    onClose={() => {
+                        setCronogramaFinanceiroVisible(false);
+                        fetchObraData(obraSelecionada.id); // Recarrega dados da obra ao fechar
+                    }}
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                />
+            )}
+
+            {/* MUDANÇA 4: Modal do Diário de Obras */}
+            {isDiarioVisible && (
+                <DiarioObras
+                    obra={obraSelecionada}
+                    onClose={() => setDiarioVisible(false)}
+                />
+            )}
+
+            {/* NOVO: Modal do Caixa de Obra */}
+            {isCaixaObraVisible && (
+                <CaixaObraModal
+                    obraId={obraSelecionada.id}
+                    obraNome={obraSelecionada.nome}
+                    onClose={() => setCaixaObraVisible(false)}
+                />
+            )}
+
+            {/* --- Cabeçalho --- */}
+            <header className="dashboard-header">
+                <div><h1>{obraSelecionada.nome}</h1><p>Cliente: {obraSelecionada.cliente || 'N/A'}</p></div>
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '8px', 
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
+                    maxWidth: '100%',
+                    overflowX: 'auto'
+                }} className="header-buttons-container">
+                    {/* <-- NOVO: Botão Cronograma Financeiro --> */}
+                    <button 
+                        onClick={() => setCronogramaFinanceiroVisible(true)} 
+                        className="voltar-btn header-btn-mobile" 
+                        style={{ backgroundColor: '#28a745', color: 'white' }}
+                    >
+                        <span className="btn-icon">💰</span>
+                        <span className="btn-text">Cronograma Financeiro</span>
+                        <span className="btn-text-short">Cronograma</span>
+                    </button>
+                    {/* MUDANÇA 3: NOVO botão Inserir Pagamento */}
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <button 
+                            onClick={() => setInserirPagamentoModalVisible(true)} 
+                            className="voltar-btn header-btn-mobile" 
+                            style={{ backgroundColor: '#007bff', color: 'white' }}
+                        >
+                            <span className="btn-icon">💳</span>
+                            <span className="btn-text">Inserir Pagamento</span>
+                            <span className="btn-text-short">Pagamento</span>
+                        </button>
+                    )}
+                    {/* <-- NOVO: Botão Relatórios --> */}
+                    <button 
+                        onClick={() => setRelatoriosModalVisible(true)} 
+                        className="voltar-btn header-btn-mobile" 
+                        style={{ backgroundColor: 'var(--cor-acento)', color: 'white' }}
+                    >
+                        <span className="btn-icon">📊</span>
+                        <span className="btn-text">Relatórios</span>
+                        <span className="btn-text-short">Relatórios</span>
+                    </button>
+                    {/* <-- NOVO: Botão Orçamentos --> */}
+                    {(user.role === 'administrador' || user.role === 'master') && (
+                        <button 
+                            onClick={() => setOrcamentosModalVisible(true)} 
+                            className="voltar-btn header-btn-mobile" 
+                            style={{ backgroundColor: '#9c27b0', color: 'white' }}
+                        >
+                            <span className="btn-icon">📋</span>
+                            <span className="btn-text">Orçamentos</span>
+                            <span className="btn-text-short">Orçamentos</span>
+                        </button>
+                    )}
+                    {/* MUDANÇA 3: Botão Diário de Obras */}
+                    <button 
+                        onClick={() => setDiarioVisible(true)} 
+                        className="voltar-btn header-btn-mobile" 
+                        style={{ backgroundColor: '#17a2b8', color: 'white' }}
+                    >
+                        <span className="btn-icon">📔</span>
+                        <span className="btn-text">Diário de Obras</span>
+                        <span className="btn-text-short">Diário</span>
+                    </button>
+                    {/* NOVO: Botão Caixa de Obra */}
+                    <button 
+                        onClick={() => setCaixaObraVisible(true)} 
+                        className="voltar-btn header-btn-mobile" 
+                        style={{ backgroundColor: '#ff9800', color: 'white' }}
+                    >
+                        <span className="btn-icon">💰</span>
+                        <span className="btn-text">Caixa de Obra</span>
+                        <span className="btn-text-short">Caixa</span>
+                    </button>
+                    <button onClick={logout} className="voltar-btn header-btn-mobile" style={{backgroundColor: '#6c757d'}}>
+                        <span className="btn-text">Sair</span>
+                        <span className="btn-text-short">Sair</span>
+                    </button>
+                    <button onClick={() => setObraSelecionada(null)} className="voltar-btn header-btn-mobile">
+                        <span className="btn-text">&larr; Ver Todas</span>
+                        <span className="btn-text-short">&larr;</span>
+                    </button>
+                </div>
+            </header>
+
+            <style>{`
+                /* CSS para botões responsivos do cabeçalho */
+                .header-btn-mobile {
+                    white-space: nowrap;
+                    min-width: auto;
+                    flex-shrink: 0;
+                }
+                
+                .btn-icon {
+                    margin-right: 5px;
+                }
+                
+                .btn-text-short {
+                    display: none;
+                }
+                
+                .header-buttons-container {
+                    scrollbar-width: thin;
+                }
+                
+                .header-buttons-container::-webkit-scrollbar {
+                    height: 4px;
+                }
+                
+                .header-buttons-container::-webkit-scrollbar-thumb {
+                    background: rgba(0,0,0,0.3);
+                    border-radius: 2px;
+                }
+                
+                /* Tablet: telas menores que 900px */
+                @media (max-width: 900px) {
+                    .dashboard-header {
+                        flex-direction: column;
+                        gap: 10px;
+                        align-items: flex-start;
+                    }
+                    
+                    .header-buttons-container {
+                        width: 100%;
+                        justify-content: flex-start !important;
+                    }
+                    
+                    .header-btn-mobile {
+                        padding: 8px 12px !important;
+                        font-size: 13px !important;
+                    }
+                }
+                
+                /* Mobile: telas menores que 768px */
+                @media (max-width: 768px) {
+                    .dashboard-header {
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+                    
+                    .header-buttons-container {
+                        flex-wrap: nowrap !important;
+                        overflow-x: auto;
+                        width: 100%;
+                        padding-bottom: 5px;
+                    }
+                    
+                    .header-btn-mobile {
+                        padding: 8px 10px !important;
+                        font-size: 12px !important;
+                        min-width: auto;
+                    }
+                    
+                    .btn-text {
+                        display: none;
+                    }
+                    
+                    .btn-text-short {
+                        display: inline;
+                    }
+                    
+                    .btn-icon {
+                        margin-right: 3px;
+                    }
+                }
+                
+                /* Mobile pequeno: telas menores que 480px */
+                @media (max-width: 480px) {
+                    .header-btn-mobile {
+                        padding: 6px 8px !important;
+                        font-size: 11px !important;
+                    }
+                    
+                    .btn-icon {
+                        font-size: 14px;
+                    }
+                }
+            `}</style>
+
+            {/* --- *** KPIs *** --- */}
+             {sumarios && (
+                 <div className="kpi-grid">
+                     {/* Card 1: Orçamento Total */}
+                     <div className="kpi-card orcamento-total">
+                         <span>Orçamento Total (Orçado)</span>
+                         <h2>{formatCurrency(sumarios.orcamento_total)}</h2>
+                     </div>
+
+                     {/* Card 2: Valores Efetivados/Pagos */}
+                     <div className="kpi-card total-pago">
+                         <span>Valores Efetivados (Pagos)</span>
+                         <h2>{formatCurrency(sumarios.valores_pagos)}</h2>
+                     </div>
+                     
+                     {/* Card 3: Liberado para Pagamento (Fila) */}
+                     <div className="kpi-card liberado-pagamento">
+                         <span>Liberado p/ Pagamento (Fila)</span>
+                         <h2>{formatCurrency(sumarios.liberado_pagamento)}</h2>
+                     </div>
+
+                     {/* Card 4: Despesas Extras (Fora da Planilha) */}
+                     <div className="kpi-card despesas-extras">
+                         <span>Despesas Extras</span>
+                         <p style={{ fontSize: '0.75rem', opacity: 0.8, margin: '0.2rem 0' }}>Fora da Planilha</p>
+                         <h2>{formatCurrency(sumarios.despesas_extras || 0)}</h2>
+                     </div>
+                 </div>
+             )}
+            
+            
+            {/* --- Quadro Informativo do Cronograma Financeiro --- */}
+            <QuadroAlertasVencimento obraId={obraSelecionada.id} />
+            {/* --- Fim do Quadro Informativo --- */}
+            
+            {/* Grid com Gráfico e Sumário */}
+            <div className="main-grid">
+                <div className="card-main">
+                    <div className="card-header"><h3>Gráfico de Gastos (Gerais)</h3></div>
+                    <GastosPorSegmentoChart data={sumarios.total_por_segmento_geral} />
+                </div>
+                <div className="card-main">
+                    <div className="card-header"><h3>Total por Segmento (Geral)</h3></div>
+                    <div className="lista-segmento tabela-scroll-container">
+                        {sumarios.total_por_segmento_geral && Object.keys(sumarios.total_por_segmento_geral).length > 0 ? (
+                            Object.entries(sumarios.total_por_segmento_geral).map(([segmento, valor]) => (
+                                <div key={segmento} className="item-segmento">
+                                    <span>{segmento}</span>
+                                    <span className="valor-segmento">{formatCurrency(valor)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p>Nenhum gasto geral registrado.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <CronogramaObra obraId={obraSelecionada.id} />
+            {/* --- FIM DO CRONOGRAMA DA OBRA --- */}
+
+
+            {/* Card de Serviços Colapsável */}
+            <div className="card-full">
+                 <div className="card-header">
+                    <h3>Serviços (Planilha de Custos)</h3>
+                    <div className="header-actions">
+                        {(user.role === 'administrador' || user.role === 'master') && (
+                            <button className="acao-btn add-btn" onClick={() => setAddServicoModalVisible(true)}>+ Novo Serviço</button>
+                        )}
+                        
+                        {/* NOVO: Botão Gerar PDF */}
+                        <button 
+                            className="export-btn pdf" 
+                            onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/exportar-pdf`);
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `servicos_obra_${obraSelecionada.id}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    } else {
+                                        alert('Erro ao gerar PDF');
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao exportar PDF:', error);
+                                    alert('Erro ao gerar PDF dos serviços');
+                                }
+                            }}
+                            title="Gerar PDF da planilha de serviços"
+                        >
+                            📄 Gerar PDF
+                        </button>
+                        
+                        <button 
+                            className="acao-btn" 
+                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            onClick={() => setIsServicosCollapsed(prev => !prev)}
+                        >
+                            {isServicosCollapsed ? 'Expandir' : 'Recolher'}
+                        </button>
                     </div>
                 </div>
                 
                 {!isServicosCollapsed && (
-                    <div className="servicos-grid">
-                        {servicos.length > 0 ? (
-                            servicos.map(servico => (
-                                <div 
-                                    key={servico.id}
-                                    className="servico-card"
-                                    onClick={() => setViewingServico(servico)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <h4>{servico.nome}</h4>
-                                    <p>{servico.tipo_medicao || 'N/A'}</p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>MO: {formatCurrency(servico.valor_global_mao_de_obra || 0)}</span>
-                                        <span style={{ fontSize: '12px', color: '#6b7280' }}>Mat: {formatCurrency(servico.valor_global_material || 0)}</span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p style={{ color: '#6b7280' }}>Nenhum serviço cadastrado</p>
-                        )}
-                    </div>
-                )}
-            </div>
+                    <div className="lista-empreitadas tabela-scroll-container" style={{marginTop: '15px'}}>
+                        {(Array.isArray(servicos) ? servicos : []).length > 0 ? (Array.isArray(servicos) ? servicos : []).map(serv => {
+                            
+                            const safePagamentos = Array.isArray(serv.pagamentos) ? serv.pagamentos : [];
+                            
+                            // --- Lógica de Mão de Obra ---
+                            const pagamentosMO = safePagamentos.filter(p => p.tipo_pagamento === 'mao_de_obra');
+                            const valorPagoTotalMO = pagamentosMO.reduce((total, pag) => total + (pag.valor_pago || 0), 0);
+                            const valorComprometidoMO = pagamentosMO.reduce((total, pag) => total + (pag.valor_total || 0), 0) + (serv.total_gastos_vinculados_mo || 0);
+                            const valorGlobalMO = serv.valor_global_mao_de_obra || 0;
+                            const progressoMOPct = valorGlobalMO > 0 ? ((valorPagoTotalMO / valorGlobalMO) * 100).toFixed(0) : 0;
 
-            {/* Lançamentos Gerais */}
-            <div className="card-full">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0 }}>📝 Lançamentos Gerais ({lancamentos.length})</h3>
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <button 
-                            onClick={() => setAddLancamentoModalVisible(true)}
-                            className="submit-btn"
-                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                        >
-                            + Novo Lançamento
-                        </button>
-                    )}
-                </div>
-                
-                {lancamentos.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th>Descrição</th>
-                                    <th>Tipo</th>
-                                    <th>Valor Total</th>
-                                    <th>Pago</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {lancamentos.slice(0, 10).map(lanc => (
-                                    <tr 
-                                        key={lanc.id}
-                                        onClick={() => setEditingLancamento(lanc)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <td>{lanc.descricao}</td>
-                                        <td>{lanc.tipo}</td>
-                                        <td>{formatCurrency(lanc.valor_total)}</td>
-                                        <td>{formatCurrency(lanc.valor_pago)}</td>
-                                        <td>
-                                            <span style={{
-                                                padding: '4px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '11px',
-                                                fontWeight: '600',
-                                                background: lanc.status === 'Pago' ? '#d1fae5' : '#fef3c7',
-                                                color: lanc.status === 'Pago' ? '#065f46' : '#92400e'
-                                            }}>
-                                                {lanc.status}
+                            // --- Lógica de Material ---
+                            const pagamentosMat = safePagamentos.filter(p => p.tipo_pagamento === 'material');
+                            const valorPagoTotalMat = pagamentosMat.reduce((total, pag) => total + (pag.valor_pago || 0), 0);
+                            const valorComprometidoMat = pagamentosMat.reduce((total, pag) => total + (pag.valor_total || 0), 0) + (serv.total_gastos_vinculados_mat || 0);
+                            const valorGlobalMat = serv.valor_global_material || 0;
+                            const progressoMatPct = valorGlobalMat > 0 ? ((valorPagoTotalMat / valorGlobalMat) * 100).toFixed(0) : 0;
+
+
+                            return (
+                                <div key={serv.id} className="card-empreitada-item">
+                                    <div onClick={() => setViewingServico(serv)} className="card-empreitada-item-clickable">
+                                        <div className="empreitada-header">
+                                            <h4>{serv.nome}</h4>
+                                            <span style={{textAlign: 'right'}}>
+                                                <strong style={{fontSize: '1.1em', color: 'var(--cor-primaria)'}}>
+                                                    Valor Total em Andamento: {formatCurrency(valorGlobalMO + valorGlobalMat)}
+                                                </strong><br/>
+                                                <small>Orçado (MO): {formatCurrency(valorGlobalMO)}</small><br/>
+                                                <small>Orçado (Mat): {formatCurrency(valorGlobalMat)}</small>
                                             </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {lancamentos.length > 10 && (
-                            <p style={{ textAlign: 'center', color: '#6b7280', marginTop: '10px' }}>
-                                Mostrando 10 de {lancamentos.length} lançamentos
-                            </p>
-                        )}
-                    </div>
-                ) : (
-                    <p style={{ color: '#6b7280' }}>Nenhum lançamento cadastrado</p>
+                                        </div>
+                                        <small>Responsável: {serv.responsavel || 'N/A'}</small>
+                                        
+                                        <div style={{marginTop: '10px'}}>
+                                            <small>
+                                                Mão de Obra (Pago/Comprometido): {formatCurrency(valorPagoTotalMO)} / {formatCurrency(valorComprometidoMO)}
+                                                <span style={{fontWeight: 'bold', marginLeft: '8px', color: 'var(--cor-primaria)'}}>({progressoMOPct}%)</span>
+                                            </small>
+                                            <div className="progress-bar-container">
+                                                <div className="progress-bar" style={{ width: `${progressoMOPct}%` }}></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{marginTop: '5px'}}>
+                                            <small>
+                                                Material (Pago/Comprometido): {formatCurrency(valorPagoTotalMat)} / {formatCurrency(valorComprometidoMat)}
+                                                <span style={{fontWeight: 'bold', marginLeft: '8px', color: '#fd7e14'}}>({progressoMatPct}%)</span>
+                                            </small>
+                                            <div className="progress-bar-container">
+                                                <div className="progress-bar" style={{ width: `${progressoMatPct}%`, backgroundColor: '#fd7e14' }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            );
+                        }) : <p>Nenhum serviço cadastrado.</p>}
+                    </div> 
                 )}
-            </div>
+            </div> 
 
-            <style>{`
-                .obra-dashboard {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                }
-                
-                .servicos-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 15px;
-                }
-                
-                .servico-card {
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 10px;
-                    padding: 15px;
-                    transition: all 0.2s;
-                }
-                
-                .servico-card:hover {
-                    background: #f1f5f9;
-                    border-color: #00d9ff;
-                    transform: translateY(-2px);
-                }
-                
-                .servico-card h4 {
-                    margin: 0 0 5px 0;
-                    color: #1a1f36;
-                }
-                
-                .servico-card p {
-                    margin: 0;
-                    color: #6b7280;
-                    font-size: 13px;
-                }
-            `}</style>
+            {/* MUDANÇA 1 e 4: Card de Pendências REMOVIDO - substituído pelo Cronograma Financeiro */}
+
+            {/* <--- MUDANÇA: Tabela de Histórico (Pagos) ATUALIZADA --> */}
+            <div className="card-full">
+                <div className="card-header">
+                    <h3>Histórico de Pagamentos (Pagos)</h3>
+                    <div className="header-actions">
+                        {/* MUDANÇA 2: Botão Novo Gasto Avulso movido para cá (sempre marca como Pago) */}
+                        {(user.role === 'administrador' || user.role === 'master') && (
+                            <button className="acao-btn add-btn" onClick={() => setAddLancamentoModalVisible(true)}>+ Novo Gasto Avulso</button>
+                        )}
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/export/csv`);
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `historico_obra_${obraSelecionada.id}.csv`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    } else {
+                                        alert('Erro ao exportar CSV');
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao exportar CSV:', error);
+                                    alert('Erro ao exportar CSV');
+                                }
+                            }} 
+                            className="export-btn"
+                        >
+                            CSV (Geral)
+                        </button>
+                    </div>
+                </div>
+                <div className="tabela-scroll-container">
+                    <table className="tabela-historico">
+                        <thead>
+                            <tr>
+                                <th style={{width: '120px'}}>Vencimento</th>
+                                <th>Descrição</th>
+                                <th>Fornecedor</th>
+                                <th>Segmento</th>
+                                <th>Prior.</th>
+                                <th>Status</th>
+                                <th>Valor Pago</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pagamentosPorMes.length > 0 ? pagamentosPorMes.map(({ mesAno, label, items, total }) => {
+                                const isExpandido = mesesExpandidos[mesAno] !== false; // Por padrão expandido
+                                
+                                return (
+                                    <React.Fragment key={mesAno}>
+                                        {/* Cabeçalho do Mês */}
+                                        <tr 
+                                            className="mes-header"
+                                            onClick={() => toggleMes(mesAno)}
+                                            style={{
+                                                backgroundColor: '#f0f7ff',
+                                                cursor: 'pointer',
+                                                fontWeight: '600',
+                                                borderTop: '2px solid #4f46e5',
+                                                borderBottom: '1px solid #ddd'
+                                            }}
+                                        >
+                                            <td colSpan="6" style={{ padding: '12px', fontSize: '1.05em' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{ 
+                                                        fontSize: '1.2em', 
+                                                        transition: 'transform 0.2s',
+                                                        transform: isExpandido ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        ▼
+                                                    </span>
+                                                    <span style={{ color: '#4f46e5' }}>📅 {label}</span>
+                                                    <span style={{ 
+                                                        fontSize: '0.9em', 
+                                                        color: '#6c757d',
+                                                        fontWeight: '400',
+                                                        marginLeft: '8px'
+                                                    }}>
+                                                        ({items.length} {items.length === 1 ? 'pagamento' : 'pagamentos'})
+                                                    </span>
+                                                </span>
+                                            </td>
+                                            <td colSpan="2" style={{ 
+                                                padding: '12px', 
+                                                textAlign: 'right',
+                                                fontSize: '1.05em',
+                                                color: '#10b981',
+                                                fontWeight: '700'
+                                            }}>
+                                                {formatCurrency(total)}
+                                            </td>
+                                        </tr>
+                                        
+                                        {/* Itens do Mês (se expandido) */}
+                                        {isExpandido && items.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                                <td>
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span>
+                                                            {item.descricao}
+                                                            {item.tipo_registro === 'pagamento_servico' && (
+                                                                <span style={{ marginLeft: '8px', padding: '2px 6px', backgroundColor: 'var(--cor-info)', color: 'white', borderRadius: '4px', fontSize: '0.75em', fontWeight: '500' }}>
+                                                                    SERVIÇO
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        <NotaFiscalIcon 
+                                                            item={item}
+                                                            itemType={item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'despesa_geral'}
+                                                            obraId={obraSelecionada.id}
+                                                            onNotaAdded={() => carregarLancamentos()}
+                                                        />
+                                                    </span>
+                                                </td>
+                                                <td>{item.fornecedor || 'N/A'}</td>
+                                                <td>{item.tipo}</td>
+                                                <td className="status-cell">
+                                                    <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>
+                                                </td>
+                                                <td className="status-cell">
+                                                    <span className="status pago">Pago</span>
+                                                </td>
+                                                <td>{formatCurrency(item.valor_pago)}</td>
+                                                <td className="acoes-cell">
+                                                    {/* <--- NOVO: Botão Anexar NF --> */}
+                                                    {(user.role === 'administrador' || user.role === 'master') && (
+                                                        <button 
+                                                            onClick={() => setUploadingNFFor(item)} 
+                                                            className="acao-icon-btn" 
+                                                            title={itemHasNotaFiscal(item) ? "Nota fiscal anexada ✓" : "Anexar Nota Fiscal"}
+                                                            style={{ 
+                                                                color: itemHasNotaFiscal(item) ? 'var(--cor-acento)' : 'var(--cor-primaria)',
+                                                                fontSize: '1.2em'
+                                                            }}
+                                                        >
+                                                            📎
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {(user.role === 'administrador' || user.role === 'master') ? (
+                                                        item.tipo_registro === 'lancamento' ? (
+                                                            <button onClick={() => handleEditLancamento(item)} className="acao-icon-btn edit-btn" title="Editar Lançamento" > ✏️ </button>
+                                                        ) : (
+                                                            <button onClick={() => setEditingServicoPrioridade(item)} className="acao-icon-btn edit-btn" title="Editar Prioridade" > ✏️ </button>
+                                                        )
+                                                    ) : null}
+                                                    
+                                                    {/* NOVO: Botão Deletar - MASTER pode deletar QUALQUER pagamento PAGO */}
+                                                    {user.role === 'master' && (
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (window.confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a EXCLUIR PERMANENTEMENTE este pagamento já executado:\n\n"${item.descricao}"\nValor: ${formatCurrency(item.valor_pago)}\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja realmente continuar?`)) {
+                                                                    // Deletar de acordo com o tipo
+                                                                    if (item.tipo_registro === 'lancamento') {
+                                                                        handleDeletarLancamento(`lanc-${item.id}`);
+                                                                    } else if (item.tipo_registro === 'pagamento_servico') {
+                                                                        // Deletar pagamento de serviço
+                                                                        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos/pagamentos/${item.id}`, {
+                                                                            method: 'DELETE'
+                                                                        })
+                                                                        .then(res => {
+                                                                            if (!res.ok) throw new Error('Erro ao deletar');
+                                                                            return res.json();
+                                                                        })
+                                                                        .then(() => {
+                                                                            fetchObraData(obraSelecionada.id);
+                                                                        })
+                                                                        .catch(err => {
+                                                                            console.error('Erro ao deletar pagamento de serviço:', err);
+                                                                            alert('Erro ao deletar pagamento: ' + err.message);
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }} 
+                                                            className="acao-icon-btn delete-btn" 
+                                                            title="Excluir Pagamento (Apenas MASTER)" 
+                                                            style={{ 
+                                                                background: 'none', 
+                                                                border: 'none', 
+                                                                cursor: 'pointer', 
+                                                                fontSize: '1.2em', 
+                                                                padding: '5px', 
+                                                                color: '#dc3545' 
+                                                            }}
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
+                                );
+                            }) : (
+                                <tr>
+                                    <td colSpan="8" style={{textAlign: 'center'}}>Nenhum pagamento encontrado.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
-};
+}
 
 
 // ===================================
