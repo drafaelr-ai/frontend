@@ -72,6 +72,7 @@ const Sidebar = ({
     // Menu items - só aparece quando obra está selecionada
     const menuItems = [
         { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
+        { id: 'cronograma-obra', icon: '📅', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
         { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
         { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
@@ -4642,6 +4643,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                             }}
                             embedded={true}
                             simplified={true}
+                        />
+                    )}
+
+                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM) === */}
+                    {currentPage === 'cronograma-obra' && (
+                        <CronogramaObra 
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            onClose={() => setCurrentPage('home')}
+                            embedded={true}
                         />
                     )}
 
