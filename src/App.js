@@ -4632,7 +4632,7 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                     {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Página Inicial) === */}
                     {currentPage === 'financeiro' && (
-                        <CronogramaFinanceiroModal 
+                        <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onClose={() => {
@@ -6162,7 +6162,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     );
 };
 // Modal Principal do Cronograma Financeiro
-const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
+const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
     const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
     const [pagamentosServicoPendentes, setPagamentosServicoPendentes] = useState([]); // NOVO
@@ -6647,37 +6647,40 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
     };
 
     if (isLoading) {
+        if (embedded) {
+            return <div className="loading-screen">Carregando cronograma...</div>;
+        }
         return <Modal onClose={onClose}><div className="loading-screen">Carregando cronograma...</div></Modal>;
     }
 
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
-    return (
-        <Modal onClose={onClose} customWidth="96%">
-            <div style={{ maxHeight: '85vh', overflowY: 'auto' }}>
-                <h2>💰 Cronograma Financeiro - {obraNome}</h2>
-                <QuadroAlertasVencimento obraId={obraId} /> 
-                {/* Botões de Exportação */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                    {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
-                    <button 
-                        onClick={() => setCadastrarFuturoVisible(true)} 
-                        className="submit-btn"
-                    >
-                        ➕ Cadastrar Pagamento Futuro (Único)
-                    </button>
-                    <button 
-                        onClick={() => setCadastrarParceladoVisible(true)} 
-                        className="submit-btn"
-                        style={{ backgroundColor: 'var(--cor-acento)' }}
-                    >
-                        ➕ Cadastrar Pagamento Parcelado
-                    </button>
-                    */}
-                    
-                    {/* NOVO: Botão Gerar PDF */}
-                    <button 
-                        onClick={async () => {
+    // Conteúdo do cronograma (usado tanto em embedded quanto em modal)
+    const cronogramaContent = (
+        <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
+            <h2>💰 Cronograma Financeiro - {obraNome}</h2>
+            <QuadroAlertasVencimento obraId={obraId} /> 
+            {/* Botões de Exportação */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
+                <button 
+                    onClick={() => setCadastrarFuturoVisible(true)} 
+                    className="submit-btn"
+                >
+                    ➕ Cadastrar Pagamento Futuro (Único)
+                </button>
+                <button 
+                    onClick={() => setCadastrarParceladoVisible(true)} 
+                    className="submit-btn"
+                    style={{ backgroundColor: 'var(--cor-acento)' }}
+                >
+                    ➕ Cadastrar Pagamento Parcelado
+                </button>
+                */}
+                
+                {/* NOVO: Botão Gerar PDF */}
+                <button 
+                    onClick={async () => {
                             try {
                                 const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`);
                                 if (response.ok) {
@@ -7134,9 +7137,65 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                 </div>
 
                 <div className="modal-footer" style={{ marginTop: '20px' }}>
-                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                    <button onClick={onClose} className="voltar-btn">
+                        {embedded ? '← Voltar às Obras' : 'Fechar'}
+                    </button>
                 </div>
             </div>
+        </div>
+    );
+
+    // Retornar com ou sem Modal dependendo do modo
+    if (embedded) {
+        return (
+            <>
+                {cronogramaContent}
+                
+                {/* Modais de Cadastro */}
+                {isCadastrarFuturoVisible && (
+                    <CadastrarPagamentoFuturoModal
+                        onClose={() => setCadastrarFuturoVisible(false)}
+                        onSave={handleSavePagamentoFuturo}
+                        obraId={obraId}
+                    />
+                )}
+
+                {isCadastrarParceladoVisible && (
+                    <CadastrarPagamentoParceladoModal
+                        onClose={() => setCadastrarParceladoVisible(false)}
+                        onSave={handleSavePagamentoParcelado}
+                        obraId={obraId}
+                    />
+                )}
+                
+                {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
+                    <EditarPagamentoFuturoModal
+                        onClose={() => {
+                            setEditarFuturoVisible(false);
+                            setPagamentoFuturoSelecionado(null);
+                        }}
+                        onSave={handleEditarPagamentoFuturo}
+                        pagamento={pagamentoFuturoSelecionado}
+                    />
+                )}
+                
+                {isEditarParcelasVisible && pagamentoParceladoSelecionado && (
+                    <EditarParcelasModal
+                        obraId={obraId}
+                        pagamentoParcelado={pagamentoParceladoSelecionado}
+                        onClose={() => {
+                            setEditarParcelasVisible(false);
+                            setPagamentoParceladoSelecionado(null);
+                        }}
+                    />
+                )}
+            </>
+        );
+    }
+
+    return (
+        <Modal onClose={onClose} customWidth="96%">
+            {cronogramaContent}
 
             {/* Modais de Cadastro */}
             {isCadastrarFuturoVisible && (
@@ -7152,9 +7211,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome }) => {
                     onClose={() => setCadastrarParceladoVisible(false)}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
-                />
-                
-            )}
+                    
+                )}
             
             {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
                 <EditarPagamentoFuturoModal
