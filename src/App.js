@@ -7142,7 +7142,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false }) =
                     </button>
                 </div>
             </div>
-        </div>
     );
 
     // Retornar com ou sem Modal dependendo do modo
