@@ -1093,12 +1093,180 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
         </div>
     );
 
-    // Se embedded, retorna apenas o conteúdo sem modal
+    // RENDERIZAÇÃO PRINCIPAL
+    // Se embedded=true, renderiza inline (sem modal)
+    // Se embedded=false/undefined, renderiza como modal
+    
     if (embedded) {
-        return diarioContent;
+        // MODO EMBEDDED: Renderiza diretamente na área de conteúdo
+        return (
+            <div style={{ padding: '20px', background: 'white', minHeight: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
+                        📔 Diário de Obras - {obraData.nome}
+                    </h2>
+                </div>
+
+                {/* Barra de ações */}
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    marginBottom: '20px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <button
+                        onClick={() => {
+                            setEntradaSelecionada(null);
+                            setIsFormModalOpen(true);
+                        }}
+                        className="submit-btn"
+                    >
+                        ➕ Nova Entrada
+                    </button>
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <input
+                            type="date"
+                            value={filtroData}
+                            onChange={(e) => setFiltroData(e.target.value)}
+                            style={{
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #ddd'
+                            }}
+                        />
+                        {filtroData && (
+                            <button
+                                onClick={() => setFiltroData('')}
+                                style={{
+                                    padding: '8px 12px',
+                                    background: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Limpar
+                            </button>
+                        )}
+                        <button
+                            onClick={handleGerarRelatorio}
+                            className="submit-btn"
+                            style={{ background: '#17a2b8' }}
+                        >
+                            📄 Gerar PDF
+                        </button>
+                    </div>
+                </div>
+
+                {/* Lista de Entradas */}
+                {isLoading ? (
+                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
+                ) : entradasFiltradas.length === 0 ? (
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '40px',
+                        color: '#666',
+                        background: '#f8f9fa',
+                        borderRadius: '8px'
+                    }}>
+                        <p>📝 Nenhuma entrada encontrada.</p>
+                        <p>Clique em "Nova Entrada" para começar.</p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {entradasFiltradas.map(entrada => (
+                            <div
+                                key={entrada.id}
+                                onClick={() => {
+                                    setEntradaSelecionada(entrada);
+                                    setIsDetalhesModalOpen(true);
+                                }}
+                                style={{
+                                    padding: '15px',
+                                    background: '#f8f9fa',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: '1px solid #e9ecef',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
+                                            {entrada.titulo || `Entrada de ${formatDate(entrada.data)}`}
+                                        </h4>
+                                        <p style={{ margin: 0, color: '#666', fontSize: '0.9em' }}>
+                                            📅 {formatDate(entrada.data)}
+                                            {entrada.clima && ` • ${entrada.clima}`}
+                                            {entrada.temperatura && ` • ${entrada.temperatura}°C`}
+                                        </p>
+                                    </div>
+                                    {entrada.fotos && entrada.fotos.length > 0 && (
+                                        <span style={{
+                                            background: '#007bff',
+                                            color: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            fontSize: '0.8em'
+                                        }}>
+                                            📷 {entrada.fotos.length}
+                                        </span>
+                                    )}
+                                </div>
+                                {entrada.descricao && (
+                                    <p style={{
+                                        margin: '10px 0 0 0',
+                                        color: '#555',
+                                        fontSize: '0.95em',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        {entrada.descricao.substring(0, 200)}
+                                        {entrada.descricao.length > 200 && '...'}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Modais */}
+                {isFormModalOpen && (
+                    <DiarioFormModal
+                        entrada={entradaSelecionada}
+                        obraId={obraData.id}
+                        onClose={() => {
+                            setIsFormModalOpen(false);
+                            setEntradaSelecionada(null);
+                        }}
+                        onSave={handleSaveEntrada}
+                    />
+                )}
+
+                {isDetalhesModalOpen && entradaSelecionada && (
+                    <DiarioDetalhesModal
+                        entrada={entradaSelecionada}
+                        onClose={() => {
+                            setIsDetalhesModalOpen(false);
+                            setEntradaSelecionada(null);
+                        }}
+                        onEdit={(entrada) => {
+                            setIsDetalhesModalOpen(false);
+                            setEntradaSelecionada(entrada);
+                            setIsFormModalOpen(true);
+                        }}
+                        onDelete={handleDeleteEntrada}
+                        onAddImage={carregarEntradas}
+                    />
+                )}
+            </div>
+        );
     }
 
-    // Se não embedded, retorna como modal/popup
+    // MODO MODAL: Renderiza como popup
     return (
         <div style={{
             position: 'fixed',
