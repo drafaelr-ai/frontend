@@ -773,6 +773,13 @@ const DiarioObras = ({ obra, onClose }) => {
     const [filtroData, setFiltroData] = useState('');
 
     const carregarEntradas = async () => {
+        // Verificar se obra existe antes de carregar
+        if (!obra?.id) {
+            console.log('Obra não disponível ainda');
+            setIsLoading(false);
+            return;
+        }
+        
         try {
             setIsLoading(true);
             console.log('Carregando entradas da obra:', obra.id);
@@ -808,9 +815,11 @@ const DiarioObras = ({ obra, onClose }) => {
     };
 
     useEffect(() => {
-        carregarEntradas();
+        if (obra?.id) {
+            carregarEntradas();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [obra.id]);
+    }, [obra?.id]);
 
     const handleSaveEntrada = async (novaEntrada) => {
         console.log('Entrada salva, recarregando lista...', novaEntrada);
@@ -868,6 +877,35 @@ const DiarioObras = ({ obra, onClose }) => {
     const entradasFiltradas = filtroData
         ? (Array.isArray(entradas) ? entradas : []).filter(e => e.data === filtroData)
         : (Array.isArray(entradas) ? entradas : []);
+
+    // Verificar se obra existe antes de renderizar
+    if (!obra) {
+        return (
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 999,
+                padding: '20px'
+            }}>
+                <div style={{
+                    background: 'white',
+                    borderRadius: '8px',
+                    padding: '30px',
+                    textAlign: 'center'
+                }}>
+                    <p>Carregando dados da obra...</p>
+                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div style={{

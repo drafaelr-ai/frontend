@@ -89,7 +89,12 @@ const Sidebar = ({
         if (item.id === 'obras') {
             setObraSelecionada(null);
         }
-        setCurrentPage(item.id);
+        // Usar navigateTo para atualizar histórico do browser
+        if (typeof window.navigateTo === 'function') {
+            window.navigateTo(item.id, item.id !== 'obras' ? obraSelecionada?.id : null);
+        } else {
+            setCurrentPage(item.id);
+        }
     };
 
     return (
@@ -3960,6 +3965,67 @@ function Dashboard() {
     const [currentPage, setCurrentPage] = useState('obras');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+    // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
+    // Função para navegar COM histórico do browser (botão voltar funciona)
+    const navigateTo = (page, obraId = null) => {
+        const state = { page, obraId };
+        const url = obraId ? `?obra=${obraId}&page=${page}` : `?page=${page}`;
+        window.history.pushState(state, '', url);
+        setCurrentPage(page);
+    };
+
+    // Expor navigateTo globalmente para uso no Sidebar
+    window.navigateTo = navigateTo;
+
+    // Escutar botão voltar do navegador
+    useEffect(() => {
+        const handlePopState = (event) => {
+            console.log('PopState event:', event.state);
+            if (event.state) {
+                setCurrentPage(event.state.page || 'obras');
+                if (event.state.obraId) {
+                    fetchObraData(event.state.obraId);
+                } else {
+                    setObraSelecionada(null);
+                }
+            } else {
+                // Se não tem estado, voltar para lista de obras
+                setCurrentPage('obras');
+                setObraSelecionada(null);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        // Definir estado inicial na URL (apenas se não houver estado)
+        if (!window.history.state) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageFromUrl = urlParams.get('page');
+            const obraFromUrl = urlParams.get('obra');
+            
+            if (pageFromUrl) {
+                setCurrentPage(pageFromUrl);
+            }
+            if (obraFromUrl) {
+                const obraId = parseInt(obraFromUrl);
+                if (!isNaN(obraId)) {
+                    fetchObraData(obraId);
+                }
+            }
+            
+            // Definir estado inicial
+            window.history.replaceState(
+                { page: pageFromUrl || 'obras', obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
+                '',
+                window.location.href
+            );
+        }
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
+
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
         // apenas os orçamentos com status 'Pendente' vindos do backend.
@@ -4489,7 +4555,12 @@ const totalOrcamentosPendentes = useMemo(() => {
     // Função para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        setCurrentPage('home'); // Vai direto para tela inicial da obra
+        // Usar navigateTo para atualizar histórico do browser
+        if (typeof window.navigateTo === 'function') {
+            window.navigateTo('home', obraId);
+        } else {
+            setCurrentPage('home');
+        }
     };
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
