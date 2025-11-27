@@ -253,7 +253,7 @@
     color: #c2410c;
 }
 
-/* ETAPAS E SUBETAPAS SECTION */
+/* ETAPAS HIERÁRQUICAS */
 .etapas-section {
     margin: 15px 20px;
     border: 1px solid #e2e8f0;
@@ -278,33 +278,41 @@
     font-weight: 600;
 }
 
-/* Container de cada etapa */
-.etapa-container {
+/* Container da Etapa Pai */
+.etapa-pai-container {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.etapa-container:last-child {
+.etapa-pai-container:last-child {
     border-bottom: none;
 }
 
-.etapa-header {
+/* Header da Etapa Pai */
+.etapa-pai-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 15px;
     background: #f1f5f9;
     cursor: pointer;
+    transition: background 0.2s;
 }
 
-.etapa-header:hover {
+.etapa-pai-header:hover {
     background: #e2e8f0;
 }
 
-.etapa-title {
+.etapa-pai-left {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.etapa-expand-icon {
+    font-size: 0.75rem;
+    color: #64748b;
+    width: 16px;
 }
 
 .etapa-numero {
@@ -322,7 +330,7 @@
     font-size: 0.95rem;
 }
 
-.etapa-dias-total {
+.etapa-dias-badge {
     background: #dbeafe;
     color: #1e40af;
     padding: 3px 8px;
@@ -331,27 +339,66 @@
     font-weight: 500;
 }
 
-.etapa-condicao {
-    font-size: 0.9rem;
+.etapa-condicao-badge {
+    font-size: 0.85rem;
     cursor: help;
 }
 
-.etapa-actions {
+.etapa-pai-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.etapa-datas {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.mini-progress-container {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.etapa-percent {
-    background: #dbeafe;
-    color: #1e40af;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
+.mini-progress-bar {
+    width: 80px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-/* Lista de subetapas */
+.mini-progress-bar.small {
+    width: 60px;
+    height: 6px;
+}
+
+.mini-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.etapa-percent {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    min-width: 40px;
+    text-align: right;
+}
+
+.etapa-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* Container das Subetapas */
+.subetapas-container {
+    background: white;
+    border-top: 1px solid #e2e8f0;
+}
+
 .subetapas-list {
     padding: 0;
 }
@@ -361,9 +408,8 @@
     grid-template-columns: 1fr auto auto auto;
     gap: 15px;
     align-items: center;
-    padding: 10px 15px 10px 30px;
+    padding: 10px 15px 10px 45px;
     border-bottom: 1px solid #f1f5f9;
-    background: white;
 }
 
 .subetapa-item:hover {
@@ -434,15 +480,15 @@
     gap: 5px;
 }
 
-/* Botões de ícone */
+/* Botões de Ícone */
 .btn-icon {
     background: none;
     border: none;
+    padding: 5px 8px;
     cursor: pointer;
-    font-size: 1rem;
-    padding: 5px;
     border-radius: 4px;
     transition: background 0.2s;
+    font-size: 1rem;
 }
 
 .btn-icon:hover {
@@ -451,15 +497,14 @@
 
 .btn-icon.small {
     font-size: 0.85rem;
-    padding: 3px;
+    padding: 3px 5px;
 }
 
-.btn-icon.delete:hover,
 .btn-icon.danger:hover {
     background: #fee2e2;
 }
 
-/* Botão adicionar subetapa */
+/* Botão Adicionar Subetapa */
 .btn-add-subetapa {
     width: 100%;
     padding: 10px;
@@ -477,46 +522,51 @@
     color: #334155;
 }
 
-/* Botão adicionar etapa */
-.btn-add-etapa {
-    background: #4f46e5;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.btn-add-etapa:hover {
-    background: #4338ca;
-    transform: translateY(-1px);
-}
-
-/* Mini progress bar */
-.mini-progress-bar {
-    width: 60px;
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.mini-progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
-/* Ajustado badge */
+/* Badge Ajustado */
 .ajustado-badge {
+    color: #f59e0b;
     font-size: 0.75rem;
     cursor: help;
-    color: #f59e0b;
 }
 
-/* EVM Section */
+/* Form Hint */
+.form-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .etapa-pai-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .etapa-pai-right {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    .subetapa-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 12px 15px 12px 30px;
+    }
+    
+    .subetapa-info {
+        flex-wrap: wrap;
+    }
+    
+    .subetapa-datas,
+    .subetapa-progress,
+    .subetapa-actions {
+        justify-content: flex-start;
+    }
+}
 .evm-section {
     margin: 15px 20px;
     padding: 15px;
@@ -1009,4 +1059,98 @@
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+
+/* EVM Section */
+.evm-section {
+    margin: 15px 20px;
+    padding: 15px;
+    background: #fef3c7;
+    border: 2px solid #fbbf24;
+    border-radius: 8px;
+}
+
+.evm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.evm-header span:first-child {
+    font-weight: 600;
+    color: #92400e;
+}
+
+.evm-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.evm-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evm-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #78350f;
+}
+
+.evm-bars {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evm-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.evm-bar-row span:first-child {
+    min-width: 50px;
+    font-size: 0.85rem;
+    color: #92400e;
+}
+
+.evm-bar-row span:last-child {
+    min-width: 40px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #92400e;
+}
+
+.evm-bar {
+    flex: 1;
+    height: 12px;
+    background: #fde68a;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.evm-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.evm-bar-fill.paid {
+    background: #f59e0b;
+}
+
+.evm-bar-fill.executed {
+    background: #10b981;
 }
