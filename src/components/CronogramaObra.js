@@ -348,6 +348,29 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         return { label: 'CRÍTICO', color: '#dc3545', icon: '🔴' };
     };
 
+    // Gerar relatório PDF
+    const handleGerarRelatorioPDF = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-obra/relatorio-pdf`);
+            
+            if (!response.ok) {
+                throw new Error('Erro ao gerar relatório');
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cronograma_obras_${obraNome}_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            alert('Erro ao gerar relatório: ' + err.message);
+        }
+    };
+
     if (loading) {
         return <div className="loading-container">Carregando cronograma...</div>;
     }
@@ -361,6 +384,13 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             <div className="cronograma-header">
                 <h2>📅 Cronograma de Obras - {obraNome}</h2>
                 <div className="header-actions">
+                    <button 
+                        className="btn-pdf"
+                        onClick={handleGerarRelatorioPDF}
+                        title="Gerar Relatório PDF"
+                    >
+                        📄 Gerar PDF
+                    </button>
                     <button 
                         className="btn-primary"
                         onClick={() => setShowAddModal(true)}
