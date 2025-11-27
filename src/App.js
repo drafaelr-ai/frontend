@@ -81,10 +81,14 @@ const Sidebar = ({
     ];
 
     const bottomItems = [
+        { id: 'obras', icon: '🏗️', label: 'Minhas Obras', shortLabel: 'Obras' },
         { id: 'usuarios', icon: '👥', label: 'Gerenciar Usuários', shortLabel: 'Usuários', masterOnly: true },
     ];
 
     const handleItemClick = (item) => {
+        if (item.id === 'obras') {
+            setObraSelecionada(null);
+        }
         setCurrentPage(item.id);
     };
 
@@ -177,13 +181,18 @@ const Sidebar = ({
                                 return null;
                             }
                             
+                            // Mostrar "Minhas Obras" apenas quando há obra selecionada
+                            if (item.id === 'obras' && !obraSelecionada) {
+                                return null;
+                            }
+                            
                             const isActive = currentPage === item.id;
                             
                             return (
                                 <li key={item.id}>
                                     <button
                                         className={`sidebar-item ${isActive ? 'active' : ''}`}
-                                        onClick={() => setCurrentPage(item.id)}
+                                        onClick={() => handleItemClick(item)}
                                         title={isCollapsed ? item.label : ''}
                                     >
                                         <span className="item-icon">{item.icon}</span>
@@ -1513,11 +1522,12 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
                         display: 'grid', 
                         gap: '10px',
                         maxHeight: '400px',
-                        overflowY: 'auto',
+                        overflowY: 'scroll',
                         padding: '10px',
                         border: '1px solid #ddd',
                         borderRadius: '5px'
-                    }}>
+                    }} 
+                    className="hide-scrollbar modal-lista-obras">
                         {obras.map(obra => (
                             <div
                                 key={obra.id}
@@ -4646,7 +4656,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM) === */}
+                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
                     {currentPage === 'cronograma-obra' && (
                         <CronogramaObra 
                             obraId={obraSelecionada.id}

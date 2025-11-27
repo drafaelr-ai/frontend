@@ -49,51 +49,95 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         observacoes: ''
     });
     
-    // Estados para edição de serviço
-    const [editingServico, setEditingServico] = useState(null);
+    // Estados para modal de edição
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [servicoEditando, setServicoEditando] = useState(null);
     
-    // Estados para etapas
-    const [showEtapasModal, setShowEtapasModal] = useState(null); // ID do cronograma
+    // Estados para modal de importar serviço
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [servicosDisponiveis, setServicosDisponiveis] = useState([]);
+    
+    // Estados para ETAPA
+    const [showAddEtapaModal, setShowAddEtapaModal] = useState(false);
+    const [servicoParaEtapa, setServicoParaEtapa] = useState(null);
     const [novaEtapa, setNovaEtapa] = useState({
+        nome: '',
+        etapa_anterior_id: null,
+        tipo_condicao: 'apos_termino',
+        dias_offset: 0,
+        data_inicio: '',
+        observacoes: ''
+    });
+    
+    // Estados para SUBETAPA
+    const [showAddSubetapaModal, setShowAddSubetapaModal] = useState(false);
+    const [etapaParaSubetapa, setEtapaParaSubetapa] = useState(null);
+    const [novaSubetapa, setNovaSubetapa] = useState({
         nome: '',
         duracao_dias: 1,
         data_inicio: '',
         percentual_conclusao: 0,
         observacoes: ''
     });
-    const [editingEtapa, setEditingEtapa] = useState(null);
     
-    // Estados para serviços vinculados (importar)
-    const [servicosDisponiveis, setServicosDisponiveis] = useState([]);
-    const [showImportModal, setShowImportModal] = useState(false);
+    // Estados para edição de etapa
+    const [showEditEtapaModal, setShowEditEtapaModal] = useState(false);
+    const [etapaEditando, setEtapaEditando] = useState(null);
     
-    // Estados para EVM
+    // Estados para edição de subetapa
+    const [showEditSubetapaModal, setShowEditSubetapaModal] = useState(false);
+    const [subetapaEditando, setSubetapaEditando] = useState(null);
+    
+    // EVM data
     const [evmData, setEvmData] = useState({});
 
-    // Função para buscar com autenticação
-    const fetchWithAuth = useCallback(async (url, options = {}) => {
+    // Função de fetch com autenticação
+    const fetchWithAuth = useCallback((url, options = {}) => {
         const token = localStorage.getItem('token');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
-        };
-        return fetch(url, { ...options, headers });
+        return fetch(url, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            }
+        });
     }, []);
 
-    // Carregar cronograma
+    // Buscar cronograma
     const fetchCronograma = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma`);
             if (!response.ok) throw new Error('Erro ao carregar cronograma');
             const data = await response.json();
             setCronograma(data);
             
-            // Carregar dados EVM para cada serviço
-            for (const item of data) {
-                fetchEVMData(item.servico_nome);
-            }
+            // Buscar EVM para cada serviço
+            const evmPromises = data.map(async (item) => {
+                try {
+                    const evmResponse = await fetchWithAuth(
+                        `${API_URL}/obras/${obraId}/servico-financeiro?servico_nome=${encodeURIComponent(item.servico_nome)}`
+                    );
+                    if (evmResponse.ok) {
+                        const evmData = await evmResponse.json();
+                        return { nome: item.servico_nome, data: evmData };
+                    }
+                } catch (e) {
+                    console.log('EVM não disponível para:', item.servico_nome);
+                }
+                return null;
+            });
+            
+            const evmResults = await Promise.all(evmPromises);
+            const evmMap = {};
+            evmResults.forEach(result => {
+                if (result) {
+                    evmMap[result.nome] = result.data;
+                }
+            });
+            setEvmData(evmMap);
+            
         } catch (err) {
             setError(err.message);
         } finally {
@@ -101,66 +145,240 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     }, [obraId, fetchWithAuth]);
 
-    // Carregar serviços disponíveis para importar
-    const fetchServicosDisponiveis = useCallback(async () => {
+    useEffect(() => {
+        fetchCronograma();
+    }, [fetchCronograma]);
+
+    // Buscar serviços disponíveis para importar
+    const fetchServicosDisponiveis = async () => {
         try {
             const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`);
             if (response.ok) {
                 const data = await response.json();
-                setServicosDisponiveis(data);
+                const servicosNoCronograma = cronograma.map(c => c.servico_nome);
+                const disponiveis = data.filter(s => !servicosNoCronograma.includes(s.nome));
+                setServicosDisponiveis(disponiveis);
             }
         } catch (err) {
-            console.error('Erro ao carregar serviços:', err);
+            console.error('Erro ao buscar serviços:', err);
         }
-    }, [obraId, fetchWithAuth]);
+    };
 
-    // Carregar dados EVM
-    const fetchEVMData = useCallback(async (servicoNome) => {
+    // Abrir modal de adicionar etapa
+    const handleAddEtapa = (servico) => {
+        setServicoParaEtapa(servico);
+        const ultimaEtapa = servico.etapas && servico.etapas.length > 0 
+            ? servico.etapas[servico.etapas.length - 1] 
+            : null;
+        setNovaEtapa({
+            nome: '',
+            etapa_anterior_id: ultimaEtapa ? ultimaEtapa.id : null,
+            tipo_condicao: 'apos_termino',
+            dias_offset: 0,
+            data_inicio: '',
+            observacoes: ''
+        });
+        setShowAddEtapaModal(true);
+    };
+
+    // Abrir modal de adicionar subetapa
+    const handleAddSubetapa = (etapa) => {
+        setEtapaParaSubetapa(etapa);
+        setNovaSubetapa({
+            nome: '',
+            duracao_dias: 1,
+            data_inicio: '',
+            percentual_conclusao: 0,
+            observacoes: ''
+        });
+        setShowAddSubetapaModal(true);
+    };
+
+    // Criar nova etapa
+    const handleSaveEtapa = async () => {
+        if (!novaEtapa.nome.trim()) {
+            alert('Informe o nome da etapa');
+            return;
+        }
+        
+        try {
+            const payload = {
+                nome: novaEtapa.nome,
+                etapa_anterior_id: novaEtapa.etapa_anterior_id,
+                tipo_condicao: novaEtapa.tipo_condicao,
+                dias_offset: parseInt(novaEtapa.dias_offset) || 0,
+                observacoes: novaEtapa.observacoes
+            };
+            
+            if (novaEtapa.tipo_condicao === 'manual' && novaEtapa.data_inicio) {
+                payload.data_inicio = novaEtapa.data_inicio;
+            }
+            
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${servicoParaEtapa.id}/etapas/nova`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao criar etapa');
+            
+            fetchCronograma();
+            setShowAddEtapaModal(false);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Criar nova subetapa
+    const handleSaveSubetapa = async () => {
+        if (!novaSubetapa.nome.trim()) {
+            alert('Informe o nome da subetapa');
+            return;
+        }
+        
+        try {
+            const payload = {
+                nome: novaSubetapa.nome,
+                duracao_dias: parseInt(novaSubetapa.duracao_dias) || 1,
+                percentual_conclusao: parseFloat(novaSubetapa.percentual_conclusao) || 0,
+                observacoes: novaSubetapa.observacoes
+            };
+            
+            if (novaSubetapa.data_inicio) {
+                payload.data_inicio = novaSubetapa.data_inicio;
+            }
+            
+            const response = await fetchWithAuth(
+                `${API_URL}/etapa/${etapaParaSubetapa.id}/subetapas`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao criar subetapa');
+            
+            fetchCronograma();
+            setShowAddSubetapaModal(false);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Editar etapa
+    const handleEditEtapa = (etapa) => {
+        setEtapaEditando({
+            ...etapa,
+            servico_id: etapa.cronograma_id
+        });
+        setShowEditEtapaModal(true);
+    };
+
+    // Salvar edição de etapa
+    const handleSaveEditEtapa = async () => {
         try {
             const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/servico-financeiro?servico_nome=${encodeURIComponent(servicoNome)}`
+                `${API_URL}/cronograma/${etapaEditando.cronograma_id}/etapas/${etapaEditando.id}/atualizar`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        nome: etapaEditando.nome,
+                        etapa_anterior_id: etapaEditando.etapa_anterior_id,
+                        tipo_condicao: etapaEditando.tipo_condicao,
+                        dias_offset: parseInt(etapaEditando.dias_offset) || 0,
+                        observacoes: etapaEditando.observacoes
+                    })
+                }
             );
-            if (response.ok) {
-                const data = await response.json();
-                setEvmData(prev => ({ ...prev, [servicoNome]: data }));
-            }
+            
+            if (!response.ok) throw new Error('Erro ao atualizar etapa');
+            
+            fetchCronograma();
+            setShowEditEtapaModal(false);
         } catch (err) {
-            console.error('Erro ao carregar EVM:', err);
+            alert(err.message);
         }
-    }, [obraId, fetchWithAuth]);
-
-    useEffect(() => {
-        fetchCronograma();
-        fetchServicosDisponiveis();
-    }, [fetchCronograma, fetchServicosDisponiveis]);
-
-    // Calcular data fim baseado em duração
-    const calcularDataFim = (dataInicio, duracaoDias) => {
-        if (!dataInicio || !duracaoDias) return '';
-        return addDays(dataInicio, duracaoDias - 1);
     };
 
-    // Handler para mudança de duração no novo serviço
-    const handleDuracaoChange = (dias) => {
-        const duracaoDias = parseInt(dias) || 1;
-        setNovoServico(prev => ({
-            ...prev,
-            duracao_dias: duracaoDias,
-            data_fim_prevista: calcularDataFim(prev.data_inicio, duracaoDias)
-        }));
+    // Excluir etapa
+    const handleDeleteEtapa = async (etapa) => {
+        if (!window.confirm(`Excluir etapa "${etapa.nome}" e todas suas subetapas?`)) return;
+        
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${etapa.cronograma_id}/etapas/${etapa.id}`,
+                { method: 'DELETE' }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao excluir etapa');
+            
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
     };
 
-    // Handler para mudança de data início no novo serviço
-    const handleDataInicioChange = (data) => {
-        setNovoServico(prev => ({
-            ...prev,
-            data_inicio: data,
-            data_fim_prevista: calcularDataFim(data, prev.duracao_dias)
-        }));
+    // Editar subetapa
+    const handleEditSubetapa = (subetapa, etapa) => {
+        setSubetapaEditando({
+            ...subetapa,
+            etapa_id: etapa.id
+        });
+        setShowEditSubetapaModal(true);
+    };
+
+    // Salvar edição de subetapa
+    const handleSaveEditSubetapa = async () => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/etapa/${subetapaEditando.etapa_id}/subetapas/${subetapaEditando.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        nome: subetapaEditando.nome,
+                        duracao_dias: parseInt(subetapaEditando.duracao_dias) || 1,
+                        percentual_conclusao: parseFloat(subetapaEditando.percentual_conclusao) || 0,
+                        observacoes: subetapaEditando.observacoes
+                    })
+                }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao atualizar subetapa');
+            
+            fetchCronograma();
+            setShowEditSubetapaModal(false);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Excluir subetapa
+    const handleDeleteSubetapa = async (subetapa, etapa) => {
+        if (!window.confirm(`Excluir subetapa "${subetapa.nome}"?`)) return;
+        
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/etapa/${etapa.id}/subetapas/${subetapa.id}`,
+                { method: 'DELETE' }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao excluir subetapa');
+            
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
     };
 
     // Criar novo serviço
-    const handleCreateServico = async () => {
+    const handleAddServico = async () => {
+        if (!novoServico.servico_nome.trim()) {
+            alert('Informe o nome do serviço');
+            return;
+        }
+        
         try {
             const payload = {
                 obra_id: obraId,
@@ -171,22 +389,20 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 percentual_conclusao: 0,
                 observacoes: novoServico.observacoes
             };
-
-            if (novoServico.tipo_medicao === 'area' && novoServico.area_total) {
-                payload.area_total = parseFloat(novoServico.area_total);
+            
+            if (novoServico.tipo_medicao === 'area') {
+                payload.area_total = parseFloat(novoServico.area_total) || 0;
                 payload.unidade_medida = novoServico.unidade_medida;
             }
-
+            
             const response = await fetchWithAuth(`${API_URL}/cronograma`, {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Erro ao criar serviço');
-            }
-
+            
+            if (!response.ok) throw new Error('Erro ao criar serviço');
+            
+            fetchCronograma();
             setShowAddModal(false);
             setNovoServico({
                 servico_nome: '',
@@ -198,99 +414,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 unidade_medida: 'm²',
                 observacoes: ''
             });
-            fetchCronograma();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Atualizar serviço
-    const handleUpdateServico = async (id, updates) => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify(updates)
-            });
-
-            if (!response.ok) throw new Error('Erro ao atualizar');
-            fetchCronograma();
-            setEditingServico(null);
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Excluir serviço
-    const handleDeleteServico = async (id) => {
-        if (!window.confirm('Excluir este serviço do cronograma?')) return;
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${id}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) throw new Error('Erro ao excluir');
-            fetchCronograma();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // ==================== ETAPAS ====================
-
-    // Criar nova etapa
-    const handleCreateEtapa = async (cronogramaId) => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${cronogramaId}/etapas`, {
-                method: 'POST',
-                body: JSON.stringify(novaEtapa)
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Erro ao criar etapa');
-            }
-
-            setNovaEtapa({
-                nome: '',
-                duracao_dias: 1,
-                data_inicio: '',
-                percentual_conclusao: 0,
-                observacoes: ''
-            });
-            fetchCronograma();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Atualizar etapa
-    const handleUpdateEtapa = async (cronogramaId, etapaId, updates) => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${cronogramaId}/etapas/${etapaId}`, {
-                method: 'PUT',
-                body: JSON.stringify(updates)
-            });
-
-            if (!response.ok) throw new Error('Erro ao atualizar etapa');
-            fetchCronograma();
-            setEditingEtapa(null);
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    // Excluir etapa
-    const handleDeleteEtapa = async (cronogramaId, etapaId) => {
-        if (!window.confirm('Excluir esta etapa?')) return;
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${cronogramaId}/etapas/${etapaId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) throw new Error('Erro ao excluir etapa');
-            fetchCronograma();
         } catch (err) {
             alert(err.message);
         }
@@ -304,7 +427,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 body: JSON.stringify({
                     obra_id: obraId,
                     servico_nome: servico.nome,
-                    tipo_medicao: 'empreitada',
+                    tipo_medicao: 'etapas',
                     data_inicio: getTodayString(),
                     data_fim_prevista: addDays(getTodayString(), 6),
                     percentual_conclusao: 0
@@ -316,6 +439,55 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             setShowImportModal(false);
         } catch (err) {
             alert(err.message);
+        }
+    };
+
+    // Excluir serviço
+    const handleDeleteServico = async (servico) => {
+        if (!window.confirm(`Excluir serviço "${servico.servico_nome}" e todas suas etapas?`)) return;
+        
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${servico.id}`,
+                { method: 'DELETE' }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao excluir serviço');
+            
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Atualizar data_fim quando mudar data_inicio ou duracao
+    useEffect(() => {
+        if (novoServico.data_inicio && novoServico.duracao_dias) {
+            const novaDataFim = addDays(novoServico.data_inicio, novoServico.duracao_dias - 1);
+            setNovoServico(prev => ({ ...prev, data_fim_prevista: novaDataFim }));
+        }
+    }, [novoServico.data_inicio, novoServico.duracao_dias]);
+
+    // Gerar relatório PDF
+    const handleGerarRelatorioPDF = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-obra/relatorio-pdf`);
+            
+            if (!response.ok) {
+                throw new Error('Erro ao gerar relatório');
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cronograma_obras_${obraNome}_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            alert('Erro ao gerar relatório: ' + err.message);
         }
     };
 
@@ -348,29 +520,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         return { label: 'CRÍTICO', color: '#dc3545', icon: '🔴' };
     };
 
-    // Gerar relatório PDF
-    const handleGerarRelatorioPDF = async () => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-obra/relatorio-pdf`);
-            
-            if (!response.ok) {
-                throw new Error('Erro ao gerar relatório');
-            }
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cronograma_obras_${obraNome}_${new Date().toISOString().slice(0,10)}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (err) {
-            alert('Erro ao gerar relatório: ' + err.message);
-        }
-    };
-
     if (loading) {
         return <div className="loading-container">Carregando cronograma...</div>;
     }
@@ -399,7 +548,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     </button>
                     <button 
                         className="btn-secondary"
-                        onClick={() => setShowImportModal(true)}
+                        onClick={() => {
+                            fetchServicosDisponiveis();
+                            setShowImportModal(true);
+                        }}
                     >
                         📋 Importar Serviço
                     </button>
@@ -442,18 +594,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                         </span>
                                     </div>
                                     <div className="header-right">
-                                        <span className="tipo-badge">
-                                            {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
+                                        <span className="tipo-medicao">
+                                            {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' :
                                              servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* Barra de Progresso Principal */}
+                                {/* Progresso */}
                                 <div className="progress-section">
                                     <div className="progress-header">
                                         <span>Execução Física</span>
-                                        <span className="progress-value">{servico.percentual_conclusao.toFixed(1)}%</span>
+                                        <span>{servico.percentual_conclusao?.toFixed(1)}%</span>
                                     </div>
                                     <div className="progress-bar">
                                         <div 
@@ -467,7 +619,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 </div>
 
                                 {/* Datas */}
-                                <div className="datas-section">
+                                <div className="datas-grid">
                                     <div className="data-item">
                                         <span className="data-label">📅 Início Previsto</span>
                                         <span className="data-value">{formatDate(servico.data_inicio)}</span>
@@ -490,70 +642,110 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     )}
                                 </div>
 
-                                {/* Medição por Área */}
-                                {servico.tipo_medicao === 'area' && servico.area_total && (
-                                    <div className="area-section">
-                                        <span>📐 Área: {servico.area_executada || 0} / {servico.area_total} {servico.unidade_medida}</span>
-                                    </div>
-                                )}
-
-                                {/* ETAPAS */}
+                                {/* ETAPAS E SUBETAPAS */}
                                 {servico.tipo_medicao === 'etapas' && servico.etapas && servico.etapas.length > 0 && (
                                     <div className="etapas-section">
                                         <div className="etapas-header">
-                                            <h4>📋 Etapas ({servico.etapas.length}) - {servico.etapas.reduce((acc, e) => acc + (e.duracao_dias || 0), 0)} dias</h4>
+                                            <h4>📋 Etapas ({servico.etapas.length}) - {servico.etapas.reduce((acc, e) => acc + (e.total_dias || 0), 0)} dias</h4>
                                         </div>
-                                        <div className="etapas-list">
-                                            {servico.etapas.map((etapa, idx) => (
-                                                <div key={etapa.id} className="etapa-item">
-                                                    <div className="etapa-info">
-                                                        <span className="etapa-ordem">{idx + 1}.</span>
+                                        
+                                        {servico.etapas.map((etapa, etapaIdx) => (
+                                            <div key={etapa.id} className="etapa-container">
+                                                {/* Header da Etapa */}
+                                                <div className="etapa-header">
+                                                    <div className="etapa-title">
+                                                        <span className="etapa-numero">Etapa {etapaIdx + 1}</span>
                                                         <span className="etapa-nome">{etapa.nome}</span>
-                                                        <span className="etapa-dias">{etapa.duracao_dias} dias</span>
-                                                    </div>
-                                                    <div className="etapa-datas">
-                                                        <span>{formatDate(etapa.data_inicio)} → {formatDate(etapa.data_fim)}</span>
-                                                        {etapa.inicio_ajustado_manualmente && (
-                                                            <span className="ajustado-badge" title="Data ajustada manualmente">✏️</span>
+                                                        <span className="etapa-dias-total">{etapa.total_dias || 0} dias</span>
+                                                        {etapa.tipo_condicao && etapa.tipo_condicao !== 'manual' && etapaIdx > 0 && (
+                                                            <span className="etapa-condicao" title={`Condição: ${etapa.tipo_condicao}`}>
+                                                                🔗
+                                                            </span>
                                                         )}
                                                     </div>
-                                                    <div className="etapa-progress">
-                                                        <div className="mini-progress-bar">
-                                                            <div 
-                                                                className="mini-progress-fill"
-                                                                style={{ 
-                                                                    width: `${etapa.percentual_conclusao}%`,
-                                                                    backgroundColor: etapa.percentual_conclusao >= 100 ? '#28a745' : '#007bff'
-                                                                }}
-                                                            ></div>
-                                                        </div>
-                                                        <span className="etapa-percent">{etapa.percentual_conclusao}%</span>
-                                                    </div>
                                                     <div className="etapa-actions">
+                                                        <span className="etapa-percent">{etapa.percentual_conclusao?.toFixed(0)}%</span>
                                                         <button 
                                                             className="btn-icon"
-                                                            onClick={() => setEditingEtapa({ ...etapa, cronograma_id: servico.id })}
-                                                            title="Editar"
+                                                            onClick={() => handleEditEtapa(etapa)}
+                                                            title="Editar etapa"
                                                         >
                                                             ✏️
                                                         </button>
                                                         <button 
-                                                            className="btn-icon danger"
-                                                            onClick={() => handleDeleteEtapa(servico.id, etapa.id)}
-                                                            title="Excluir"
+                                                            className="btn-icon delete"
+                                                            onClick={() => handleDeleteEtapa(etapa)}
+                                                            title="Excluir etapa"
                                                         >
                                                             🗑️
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                
+                                                {/* Subetapas */}
+                                                {etapa.subetapas && etapa.subetapas.length > 0 && (
+                                                    <div className="subetapas-list">
+                                                        {etapa.subetapas.map((sub, subIdx) => (
+                                                            <div key={sub.id} className="subetapa-item">
+                                                                <div className="subetapa-info">
+                                                                    <span className="subetapa-ordem">{etapaIdx + 1}.{subIdx + 1}</span>
+                                                                    <span className="subetapa-nome">{sub.nome}</span>
+                                                                    <span className="subetapa-dias">{sub.duracao_dias} dias</span>
+                                                                </div>
+                                                                <div className="subetapa-datas">
+                                                                    <span>{formatDate(sub.data_inicio)} → {formatDate(sub.data_fim)}</span>
+                                                                    {sub.inicio_ajustado_manualmente && (
+                                                                        <span className="ajustado-badge" title="Data ajustada manualmente">✏️</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="subetapa-progress">
+                                                                    <div className="mini-progress-bar">
+                                                                        <div 
+                                                                            className="mini-progress-fill"
+                                                                            style={{ 
+                                                                                width: `${sub.percentual_conclusao}%`,
+                                                                                backgroundColor: sub.percentual_conclusao >= 100 ? '#28a745' : '#007bff'
+                                                                            }}
+                                                                        ></div>
+                                                                    </div>
+                                                                    <span className="subetapa-percent">{sub.percentual_conclusao}%</span>
+                                                                </div>
+                                                                <div className="subetapa-actions">
+                                                                    <button 
+                                                                        className="btn-icon small"
+                                                                        onClick={() => handleEditSubetapa(sub, etapa)}
+                                                                        title="Editar"
+                                                                    >
+                                                                        ✏️
+                                                                    </button>
+                                                                    <button 
+                                                                        className="btn-icon small delete"
+                                                                        onClick={() => handleDeleteSubetapa(sub, etapa)}
+                                                                        title="Excluir"
+                                                                    >
+                                                                        🗑️
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Botão adicionar subetapa */}
+                                                <button 
+                                                    className="btn-add-subetapa"
+                                                    onClick={() => handleAddSubetapa(etapa)}
+                                                >
+                                                    ➕ Adicionar Subetapa
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 
-                                {/* Análise EVM */}
+                                {/* EVM */}
                                 {evm && evm.valor_total > 0 && (
-                                    <div className="evm-section" style={{ borderColor: evmIndicator?.color }}>
+                                    <div className="evm-section">
                                         <div className="evm-header">
                                             <span>💰 Análise de Valor Agregado (EVM)</span>
                                             {evmIndicator && (
@@ -579,21 +771,21 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                     <span>💰 Pago</span>
                                                     <div className="evm-bar">
                                                         <div 
-                                                            className="evm-bar-fill paid"
-                                                            style={{ width: `${Math.min(evm.percentual_pago || 0, 100)}%` }}
+                                                            className="evm-bar-fill pago"
+                                                            style={{ width: `${evm.percentual_pago}%` }}
                                                         ></div>
                                                     </div>
-                                                    <span>{(evm.percentual_pago || 0).toFixed(0)}%</span>
+                                                    <span>{evm.percentual_pago?.toFixed(0)}%</span>
                                                 </div>
                                                 <div className="evm-bar-row">
-                                                    <span>🏗️ Exec</span>
+                                                    <span>📊 Exec</span>
                                                     <div className="evm-bar">
                                                         <div 
-                                                            className="evm-bar-fill executed"
-                                                            style={{ width: `${Math.min(evm.percentual_executado || 0, 100)}%` }}
+                                                            className="evm-bar-fill exec"
+                                                            style={{ width: `${evm.percentual_executado}%` }}
                                                         ></div>
                                                     </div>
-                                                    <span>{(evm.percentual_executado || 0).toFixed(0)}%</span>
+                                                    <span>{evm.percentual_executado?.toFixed(0)}%</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -602,30 +794,26 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
                                 {/* Ações */}
                                 <div className="card-actions">
-                                    {servico.tipo_medicao === 'etapas' || servico.etapas?.length > 0 ? (
+                                    {servico.tipo_medicao === 'etapas' && (
                                         <button 
-                                            className="btn-action"
-                                            onClick={() => setShowEtapasModal(servico.id)}
+                                            className="btn-add-etapa"
+                                            onClick={() => handleAddEtapa(servico)}
                                         >
                                             ➕ Adicionar Etapa
                                         </button>
-                                    ) : (
-                                        <button 
-                                            className="btn-action secondary"
-                                            onClick={() => setShowEtapasModal(servico.id)}
-                                        >
-                                            📋 Converter para Etapas
-                                        </button>
                                     )}
                                     <button 
-                                        className="btn-action"
-                                        onClick={() => setEditingServico(servico)}
+                                        className="btn-edit"
+                                        onClick={() => {
+                                            setServicoEditando(servico);
+                                            setShowEditModal(true);
+                                        }}
                                     >
                                         ✏️ Editar
                                     </button>
                                     <button 
-                                        className="btn-action danger"
-                                        onClick={() => handleDeleteServico(servico.id)}
+                                        className="btn-delete"
+                                        onClick={() => handleDeleteServico(servico)}
                                     >
                                         🗑️ Excluir
                                     </button>
@@ -636,110 +824,98 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 </div>
             )}
 
-            {/* Modal: Adicionar Serviço */}
+            {/* ========== MODAIS ========== */}
+            
+            {/* Modal Adicionar Serviço */}
             {showAddModal && (
-                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>➕ Novo Serviço no Cronograma</h3>
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>➕ Novo Serviço</h3>
                         
                         <div className="form-group">
                             <label>Nome do Serviço *</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={novoServico.servico_nome}
-                                onChange={e => setNovoServico(prev => ({ ...prev, servico_nome: e.target.value }))}
-                                placeholder="Ex: Construção Piscina"
+                                onChange={(e) => setNovoServico({...novoServico, servico_nome: e.target.value})}
+                                placeholder="Ex: Construção da Piscina"
                             />
                         </div>
-
+                        
                         <div className="form-group">
                             <label>Tipo de Medição</label>
                             <select
                                 value={novoServico.tipo_medicao}
-                                onChange={e => setNovoServico(prev => ({ ...prev, tipo_medicao: e.target.value }))}
+                                onChange={(e) => setNovoServico({...novoServico, tipo_medicao: e.target.value})}
                             >
-                                <option value="empreitada">🔧 Empreitada (% manual)</option>
+                                <option value="empreitada">🔧 Empreitada (global)</option>
                                 <option value="area">📐 Por Área (m², m³, etc)</option>
                                 <option value="etapas">📋 Por Etapas (subdivisões)</option>
                             </select>
                         </div>
-
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Data Início</label>
+                                <input
+                                    type="date"
+                                    value={novoServico.data_inicio}
+                                    onChange={(e) => setNovoServico({...novoServico, data_inicio: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Duração (dias)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={novoServico.duracao_dias}
+                                    onChange={(e) => setNovoServico({...novoServico, duracao_dias: parseInt(e.target.value) || 1})}
+                                />
+                            </div>
+                        </div>
+                        
                         {novoServico.tipo_medicao === 'area' && (
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Área Total</label>
-                                    <input 
+                                    <input
                                         type="number"
+                                        step="0.01"
                                         value={novoServico.area_total}
-                                        onChange={e => setNovoServico(prev => ({ ...prev, area_total: e.target.value }))}
-                                        placeholder="100"
+                                        onChange={(e) => setNovoServico({...novoServico, area_total: e.target.value})}
+                                        placeholder="Ex: 150"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Unidade</label>
                                     <select
                                         value={novoServico.unidade_medida}
-                                        onChange={e => setNovoServico(prev => ({ ...prev, unidade_medida: e.target.value }))}
+                                        onChange={(e) => setNovoServico({...novoServico, unidade_medida: e.target.value})}
                                     >
                                         <option value="m²">m²</option>
                                         <option value="m³">m³</option>
                                         <option value="m">m</option>
                                         <option value="un">un</option>
                                         <option value="kg">kg</option>
-                                        <option value="L">L</option>
                                     </select>
                                 </div>
                             </div>
                         )}
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Data Início *</label>
-                                <input 
-                                    type="date"
-                                    value={novoServico.data_inicio}
-                                    onChange={e => handleDataInicioChange(e.target.value)}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Duração (dias)</label>
-                                <input 
-                                    type="number"
-                                    min="1"
-                                    value={novoServico.duracao_dias}
-                                    onChange={e => handleDuracaoChange(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Data Término (calculada)</label>
-                            <input 
-                                type="date"
-                                value={novoServico.data_fim_prevista}
-                                disabled
-                                className="calculated"
-                            />
-                        </div>
-
+                        
                         <div className="form-group">
                             <label>Observações</label>
                             <textarea
                                 value={novoServico.observacoes}
-                                onChange={e => setNovoServico(prev => ({ ...prev, observacoes: e.target.value }))}
-                                rows={3}
+                                onChange={(e) => setNovoServico({...novoServico, observacoes: e.target.value})}
+                                rows="2"
                             />
                         </div>
-
+                        
                         <div className="modal-actions">
                             <button className="btn-cancel" onClick={() => setShowAddModal(false)}>
                                 Cancelar
                             </button>
-                            <button 
-                                className="btn-save"
-                                onClick={handleCreateServico}
-                                disabled={!novoServico.servico_nome}
-                            >
+                            <button className="btn-save" onClick={handleAddServico}>
                                 Salvar
                             </button>
                         </div>
@@ -747,263 +923,222 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 </div>
             )}
 
-            {/* Modal: Editar Serviço */}
-            {editingServico && (
-                <div className="modal-overlay" onClick={() => setEditingServico(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar Serviço</h3>
-                        
-                        <div className="form-group">
-                            <label>Nome do Serviço</label>
-                            <input 
-                                type="text"
-                                value={editingServico.servico_nome}
-                                onChange={e => setEditingServico(prev => ({ ...prev, servico_nome: e.target.value }))}
-                            />
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Data Início</label>
-                                <input 
-                                    type="date"
-                                    value={editingServico.data_inicio}
-                                    onChange={e => setEditingServico(prev => ({ ...prev, data_inicio: e.target.value }))}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Data Término Previsto</label>
-                                <input 
-                                    type="date"
-                                    value={editingServico.data_fim_prevista}
-                                    onChange={e => setEditingServico(prev => ({ ...prev, data_fim_prevista: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Início Real</label>
-                                <input 
-                                    type="date"
-                                    value={editingServico.data_inicio_real || ''}
-                                    onChange={e => setEditingServico(prev => ({ ...prev, data_inicio_real: e.target.value }))}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Término Real</label>
-                                <input 
-                                    type="date"
-                                    value={editingServico.data_fim_real || ''}
-                                    onChange={e => setEditingServico(prev => ({ ...prev, data_fim_real: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-
-                        {editingServico.tipo_medicao !== 'etapas' && (
-                            <div className="form-group">
-                                <label>Percentual de Conclusão: {editingServico.percentual_conclusao}%</label>
-                                <input 
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={editingServico.percentual_conclusao}
-                                    onChange={e => setEditingServico(prev => ({ 
-                                        ...prev, 
-                                        percentual_conclusao: parseFloat(e.target.value) 
-                                    }))}
-                                />
-                            </div>
-                        )}
-
-                        {editingServico.tipo_medicao === 'area' && (
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Área Executada</label>
-                                    <input 
-                                        type="number"
-                                        value={editingServico.area_executada || 0}
-                                        onChange={e => setEditingServico(prev => ({ 
-                                            ...prev, 
-                                            area_executada: parseFloat(e.target.value) 
-                                        }))}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>de {editingServico.area_total} {editingServico.unidade_medida}</label>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={editingServico.observacoes || ''}
-                                onChange={e => setEditingServico(prev => ({ ...prev, observacoes: e.target.value }))}
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setEditingServico(null)}>
-                                Cancelar
-                            </button>
-                            <button 
-                                className="btn-save"
-                                onClick={() => handleUpdateServico(editingServico.id, editingServico)}
-                            >
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal: Adicionar Etapa */}
-            {showEtapasModal && (
-                <div className="modal-overlay" onClick={() => setShowEtapasModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>➕ Nova Etapa</h3>
+            {/* Modal Adicionar Etapa */}
+            {showAddEtapaModal && servicoParaEtapa && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>➕ Nova Etapa - {servicoParaEtapa.servico_nome}</h3>
                         
                         <div className="form-group">
                             <label>Nome da Etapa *</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={novaEtapa.nome}
-                                onChange={e => setNovaEtapa(prev => ({ ...prev, nome: e.target.value }))}
-                                placeholder="Ex: Escavação"
+                                onChange={(e) => setNovaEtapa({...novaEtapa, nome: e.target.value})}
+                                placeholder="Ex: Primeira Fase, Revestimento, etc"
                             />
                         </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Duração (dias) *</label>
-                                <input 
-                                    type="number"
-                                    min="1"
-                                    value={novaEtapa.duracao_dias}
-                                    onChange={e => setNovaEtapa(prev => ({ ...prev, duracao_dias: parseInt(e.target.value) || 1 }))}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Data Início (opcional)</label>
-                                <input 
-                                    type="date"
-                                    value={novaEtapa.data_inicio}
-                                    onChange={e => setNovaEtapa(prev => ({ ...prev, data_inicio: e.target.value }))}
-                                />
-                                <small>Deixe vazio para calcular automaticamente</small>
-                            </div>
-                        </div>
-
+                        
+                        {servicoParaEtapa.etapas && servicoParaEtapa.etapas.length > 0 && (
+                            <>
+                                <div className="form-group">
+                                    <label>Condição de Início</label>
+                                    <select
+                                        value={novaEtapa.tipo_condicao}
+                                        onChange={(e) => setNovaEtapa({...novaEtapa, tipo_condicao: e.target.value})}
+                                    >
+                                        <option value="apos_termino">Após término da etapa anterior (D+1)</option>
+                                        <option value="dias_apos">X dias após término da etapa anterior</option>
+                                        <option value="dias_antes">X dias antes do término da etapa anterior</option>
+                                        <option value="manual">Data específica (manual)</option>
+                                    </select>
+                                </div>
+                                
+                                {novaEtapa.tipo_condicao === 'dias_apos' && (
+                                    <div className="form-group">
+                                        <label>Quantos dias após o término?</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={novaEtapa.dias_offset}
+                                            onChange={(e) => setNovaEtapa({...novaEtapa, dias_offset: e.target.value})}
+                                            placeholder="Ex: 3"
+                                        />
+                                        <small>A etapa iniciará {novaEtapa.dias_offset || 0} dias após o término da anterior</small>
+                                    </div>
+                                )}
+                                
+                                {novaEtapa.tipo_condicao === 'dias_antes' && (
+                                    <div className="form-group">
+                                        <label>Quantos dias antes do término?</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={novaEtapa.dias_offset}
+                                            onChange={(e) => setNovaEtapa({...novaEtapa, dias_offset: e.target.value})}
+                                            placeholder="Ex: 5"
+                                        />
+                                        <small>A etapa iniciará {novaEtapa.dias_offset || 0} dias antes do término da anterior (permite sobreposição)</small>
+                                    </div>
+                                )}
+                                
+                                {novaEtapa.tipo_condicao === 'manual' && (
+                                    <div className="form-group">
+                                        <label>Data de Início</label>
+                                        <input
+                                            type="date"
+                                            value={novaEtapa.data_inicio}
+                                            onChange={(e) => setNovaEtapa({...novaEtapa, data_inicio: e.target.value})}
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        
                         <div className="form-group">
                             <label>Observações</label>
                             <textarea
                                 value={novaEtapa.observacoes}
-                                onChange={e => setNovaEtapa(prev => ({ ...prev, observacoes: e.target.value }))}
-                                rows={2}
+                                onChange={(e) => setNovaEtapa({...novaEtapa, observacoes: e.target.value})}
+                                rows="2"
                             />
                         </div>
-
+                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowEtapasModal(null)}>
+                            <button className="btn-cancel" onClick={() => setShowAddEtapaModal(false)}>
                                 Cancelar
                             </button>
-                            <button 
-                                className="btn-save"
-                                onClick={() => handleCreateEtapa(showEtapasModal)}
-                                disabled={!novaEtapa.nome}
-                            >
-                                Adicionar Etapa
+                            <button className="btn-save" onClick={handleSaveEtapa}>
+                                Salvar Etapa
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal: Editar Etapa */}
-            {editingEtapa && (
-                <div className="modal-overlay" onClick={() => setEditingEtapa(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar Etapa</h3>
+            {/* Modal Adicionar Subetapa */}
+            {showAddSubetapaModal && etapaParaSubetapa && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>➕ Nova Subetapa - {etapaParaSubetapa.nome}</h3>
                         
                         <div className="form-group">
-                            <label>Nome da Etapa</label>
-                            <input 
+                            <label>Nome da Subetapa *</label>
+                            <input
                                 type="text"
-                                value={editingEtapa.nome}
-                                onChange={e => setEditingEtapa(prev => ({ ...prev, nome: e.target.value }))}
+                                value={novaSubetapa.nome}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, nome: e.target.value})}
+                                placeholder="Ex: Escavação, Tubulação, Armadura"
                             />
                         </div>
-
+                        
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Duração (dias)</label>
-                                <input 
+                                <input
                                     type="number"
                                     min="1"
-                                    value={editingEtapa.duracao_dias}
-                                    onChange={e => setEditingEtapa(prev => ({ ...prev, duracao_dias: parseInt(e.target.value) || 1 }))}
+                                    value={novaSubetapa.duracao_dias}
+                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, duracao_dias: e.target.value})}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Data Início</label>
-                                <input 
+                                <label>Data Início (opcional)</label>
+                                <input
                                     type="date"
-                                    value={editingEtapa.data_inicio}
-                                    onChange={e => setEditingEtapa(prev => ({ ...prev, data_inicio: e.target.value }))}
+                                    value={novaSubetapa.data_inicio}
+                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, data_inicio: e.target.value})}
                                 />
+                                <small>Deixe em branco para calcular automaticamente</small>
                             </div>
                         </div>
-
+                        
                         <div className="form-group">
-                            <label>Percentual de Conclusão: {editingEtapa.percentual_conclusao}%</label>
-                            <input 
-                                type="range"
+                            <label>Percentual de Conclusão</label>
+                            <input
+                                type="number"
                                 min="0"
                                 max="100"
-                                step="5"
-                                value={editingEtapa.percentual_conclusao}
-                                onChange={e => setEditingEtapa(prev => ({ 
-                                    ...prev, 
-                                    percentual_conclusao: parseFloat(e.target.value) 
-                                }))}
+                                value={novaSubetapa.percentual_conclusao}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, percentual_conclusao: e.target.value})}
                             />
                         </div>
-
-                        {editingEtapa.inicio_ajustado_manualmente && (
-                            <div className="form-group">
-                                <label>
-                                    <input 
-                                        type="checkbox"
-                                        checked={editingEtapa.resetar_ajuste_manual}
-                                        onChange={e => setEditingEtapa(prev => ({ 
-                                            ...prev, 
-                                            resetar_ajuste_manual: e.target.checked 
-                                        }))}
-                                    />
-                                    Resetar ajuste manual (recalcular data automaticamente)
-                                </label>
-                            </div>
-                        )}
-
+                        
                         <div className="form-group">
                             <label>Observações</label>
                             <textarea
-                                value={editingEtapa.observacoes || ''}
-                                onChange={e => setEditingEtapa(prev => ({ ...prev, observacoes: e.target.value }))}
-                                rows={2}
+                                value={novaSubetapa.observacoes}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, observacoes: e.target.value})}
+                                rows="2"
                             />
                         </div>
-
+                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setEditingEtapa(null)}>
+                            <button className="btn-cancel" onClick={() => setShowAddSubetapaModal(false)}>
                                 Cancelar
                             </button>
-                            <button 
-                                className="btn-save"
-                                onClick={() => handleUpdateEtapa(editingEtapa.cronograma_id, editingEtapa.id, editingEtapa)}
+                            <button className="btn-save" onClick={handleSaveSubetapa}>
+                                Salvar Subetapa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar Etapa */}
+            {showEditEtapaModal && etapaEditando && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>✏️ Editar Etapa</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome da Etapa *</label>
+                            <input
+                                type="text"
+                                value={etapaEditando.nome}
+                                onChange={(e) => setEtapaEditando({...etapaEditando, nome: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Condição de Início</label>
+                            <select
+                                value={etapaEditando.tipo_condicao || 'apos_termino'}
+                                onChange={(e) => setEtapaEditando({...etapaEditando, tipo_condicao: e.target.value})}
                             >
+                                <option value="apos_termino">Após término da etapa anterior (D+1)</option>
+                                <option value="dias_apos">X dias após término da etapa anterior</option>
+                                <option value="dias_antes">X dias antes do término da etapa anterior</option>
+                                <option value="manual">Data específica (manual)</option>
+                            </select>
+                        </div>
+                        
+                        {(etapaEditando.tipo_condicao === 'dias_apos' || etapaEditando.tipo_condicao === 'dias_antes') && (
+                            <div className="form-group">
+                                <label>Dias de offset</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={etapaEditando.dias_offset || 0}
+                                    onChange={(e) => setEtapaEditando({...etapaEditando, dias_offset: e.target.value})}
+                                />
+                            </div>
+                        )}
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={etapaEditando.observacoes || ''}
+                                onChange={(e) => setEtapaEditando({...etapaEditando, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowEditEtapaModal(false)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleSaveEditEtapa}>
                                 Salvar
                             </button>
                         </div>
@@ -1011,55 +1146,90 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 </div>
             )}
 
-            {/* Modal: Importar Serviço */}
-            {showImportModal && (
-                <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>📋 Importar Serviço</h3>
+            {/* Modal Editar Subetapa */}
+            {showEditSubetapaModal && subetapaEditando && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>✏️ Editar Subetapa</h3>
                         
-                        <p className="modal-description">
-                            Selecione um serviço cadastrado na planilha de custos para importar ao cronograma:
-                        </p>
+                        <div className="form-group">
+                            <label>Nome da Subetapa *</label>
+                            <input
+                                type="text"
+                                value={subetapaEditando.nome}
+                                onChange={(e) => setSubetapaEditando({...subetapaEditando, nome: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Duração (dias)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={subetapaEditando.duracao_dias}
+                                    onChange={(e) => setSubetapaEditando({...subetapaEditando, duracao_dias: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Percentual de Conclusão</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={subetapaEditando.percentual_conclusao}
+                                    onChange={(e) => setSubetapaEditando({...subetapaEditando, percentual_conclusao: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={subetapaEditando.observacoes || ''}
+                                onChange={(e) => setSubetapaEditando({...subetapaEditando, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowEditSubetapaModal(false)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleSaveEditSubetapa}>
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
+            {/* Modal Importar Serviço */}
+            {showImportModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>📋 Importar Serviço</h3>
+                        <p>Selecione um serviço da planilha de custos:</p>
+                        
                         {servicosDisponiveis.length === 0 ? (
-                            <p className="empty-message">Nenhum serviço cadastrado na obra.</p>
+                            <p className="empty-message">Todos os serviços já foram importados.</p>
                         ) : (
                             <div className="servicos-import-list">
-                                {servicosDisponiveis.map(servico => {
-                                    // Verificar se já está no cronograma
-                                    const jaImportado = cronograma.some(c => 
-                                        c.servico_nome.toLowerCase() === servico.nome.toLowerCase()
-                                    );
-                                    
-                                    return (
-                                        <div 
-                                            key={servico.id} 
-                                            className={`servico-import-item ${jaImportado ? 'disabled' : ''}`}
-                                        >
-                                            <div className="servico-import-info">
-                                                <span className="servico-import-nome">{servico.nome}</span>
-                                                {servico.responsavel && (
-                                                    <span className="servico-import-responsavel">
-                                                        👤 {servico.responsavel}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {jaImportado ? (
-                                                <span className="ja-importado-badge">Já importado</span>
-                                            ) : (
-                                                <button 
-                                                    className="btn-import"
-                                                    onClick={() => handleImportServico(servico)}
-                                                >
-                                                    Importar
-                                                </button>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                {servicosDisponiveis.map(servico => (
+                                    <div 
+                                        key={servico.id} 
+                                        className="servico-import-item"
+                                        onClick={() => handleImportServico(servico)}
+                                    >
+                                        <span>{servico.nome}</span>
+                                        <span className="valor">
+                                            {formatCurrency((servico.valor_global_mao_de_obra || 0) + (servico.valor_global_material || 0))}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
-
+                        
                         <div className="modal-actions">
                             <button className="btn-cancel" onClick={() => setShowImportModal(false)}>
                                 Fechar
@@ -1071,18 +1241,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         </div>
     );
 
-    // Se embedded, retorna só o conteúdo
     if (embedded) {
         return content;
     }
 
-    // Se modal, envolve em overlay
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-fullscreen" onClick={e => e.stopPropagation()}>
-                <button className="close-btn" onClick={onClose}>✕</button>
-                {content}
+        <div className="cronograma-obra-fullscreen">
+            <div className="fullscreen-header">
+                <button className="btn-back" onClick={onClose}>
+                    ← Voltar
+                </button>
             </div>
+            {content}
         </div>
     );
 };
