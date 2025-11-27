@@ -764,7 +764,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 };
 
 // --- COMPONENTE PRINCIPAL DO DIÁRIO ---
-const DiarioObras = ({ obra, onClose }) => {
+const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
+    // Suporte a ambos formatos de props
+    const obraData = obra || { id: obraId, nome: obraNome };
+    
     const [entradas, setEntradas] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -774,7 +777,7 @@ const DiarioObras = ({ obra, onClose }) => {
 
     const carregarEntradas = async () => {
         // Verificar se obra existe antes de carregar
-        if (!obra?.id) {
+        if (!obraData?.id) {
             console.log('Obra não disponível ainda');
             setIsLoading(false);
             return;
@@ -782,8 +785,8 @@ const DiarioObras = ({ obra, onClose }) => {
         
         try {
             setIsLoading(true);
-            console.log('Carregando entradas da obra:', obra.id);
-            const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}/diario`);
+            console.log('Carregando entradas da obra:', obraData.id);
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraData.id}/diario`);
             
             if (!response.ok) {
                 throw new Error('Erro ao carregar diário');
@@ -815,11 +818,11 @@ const DiarioObras = ({ obra, onClose }) => {
     };
 
     useEffect(() => {
-        if (obra?.id) {
+        if (obraData?.id) {
             carregarEntradas();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [obra?.id]);
+    }, [obraData?.id]);
 
     const handleSaveEntrada = async (novaEntrada) => {
         console.log('Entrada salva, recarregando lista...', novaEntrada);
@@ -848,7 +851,7 @@ const DiarioObras = ({ obra, onClose }) => {
 
     const handleGerarRelatorio = async () => {
         try {
-            let url = `${API_URL}/obras/${obra.id}/diario/relatorio`;
+            let url = `${API_URL}/obras/${obraData.id}/diario/relatorio`;
             
             if (filtroData) {
                 url += `?data_inicio=${filtroData}&data_fim=${filtroData}`;
@@ -864,7 +867,7 @@ const DiarioObras = ({ obra, onClose }) => {
             const downloadUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = downloadUrl;
-            a.download = `diario_${obra.nome}_${new Date().toISOString().split('T')[0]}.pdf`;
+            a.download = `diario_${obraData.nome || 'obra'}_${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(downloadUrl);
@@ -879,7 +882,7 @@ const DiarioObras = ({ obra, onClose }) => {
         : (Array.isArray(entradas) ? entradas : []);
 
     // Verificar se obra existe antes de renderizar
-    if (!obra) {
+    if (!obraData?.id) {
         return (
             <div style={{
                 position: 'fixed',
@@ -933,7 +936,7 @@ const DiarioObras = ({ obra, onClose }) => {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                        📔 Diário de Obras - {obra.nome}
+                        📔 Diário de Obras - {obraData.nome}
                     </h2>
                     <button onClick={onClose} className="voltar-btn">✕ Fechar</button>
                 </div>
@@ -1064,7 +1067,7 @@ const DiarioObras = ({ obra, onClose }) => {
             {isFormModalOpen && (
                 <DiarioFormModal
                     entrada={entradaSelecionada}
-                    obraId={obra.id}
+                    obraId={obraData.id}
                     onClose={() => {
                         setIsFormModalOpen(false);
                         setEntradaSelecionada(null);
