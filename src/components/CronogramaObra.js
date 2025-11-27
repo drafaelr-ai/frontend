@@ -501,7 +501,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 {servico.tipo_medicao === 'etapas' && servico.etapas && servico.etapas.length > 0 && (
                                     <div className="etapas-section">
                                         <div className="etapas-header">
-                                            <h4>📋 Etapas ({servico.etapas.length})</h4>
+                                            <h4>📋 Etapas ({servico.etapas.length}) - {servico.etapas.reduce((acc, e) => acc + (e.duracao_dias || 0), 0)} dias</h4>
                                         </div>
                                         <div className="etapas-list">
                                             {servico.etapas.map((etapa, idx) => (
