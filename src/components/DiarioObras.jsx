@@ -883,6 +883,22 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
 
     // Verificar se obra existe antes de renderizar
     if (!obraData?.id) {
+        const loadingContent = (
+            <div style={{
+                background: 'white',
+                borderRadius: embedded ? '0' : '8px',
+                padding: '30px',
+                textAlign: 'center'
+            }}>
+                <p>Carregando dados da obra...</p>
+                {!embedded && <button onClick={onClose} className="voltar-btn">Fechar</button>}
+            </div>
+        );
+
+        if (embedded) {
+            return loadingContent;
+        }
+
         return (
             <div style={{
                 position: 'fixed',
@@ -894,52 +910,34 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                zIndex: 999,
+                zIndex: 9999,
                 padding: '20px'
             }}>
-                <div style={{
-                    background: 'white',
-                    borderRadius: '8px',
-                    padding: '30px',
-                    textAlign: 'center'
-                }}>
-                    <p>Carregando dados da obra...</p>
-                    <button onClick={onClose} className="voltar-btn">Fechar</button>
-                </div>
+                {loadingContent}
             </div>
         );
     }
 
-    return (
+    // Conteúdo do diário
+    const diarioContent = (
         <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 999,
-            padding: '20px'
+            background: 'white',
+            borderRadius: embedded ? '0' : '8px',
+            padding: embedded ? '20px' : '30px',
+            maxWidth: embedded ? '100%' : '1200px',
+            width: '100%',
+            maxHeight: embedded ? '100%' : '90vh',
+            overflowY: 'auto',
+            boxShadow: embedded ? 'none' : '0 4px 6px rgba(0,0,0,0.1)'
         }}>
-            <div style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '30px',
-                maxWidth: '1200px',
-                width: '100%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                        📔 Diário de Obras - {obraData.nome}
-                    </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
+                    📔 Diário de Obras - {obraData.nome}
+                </h2>
+                {!embedded && (
                     <button onClick={onClose} className="voltar-btn">✕ Fechar</button>
-                </div>
+                )}
+            </div>
 
                 {/* Barra de ações */}
                 <div style={{
@@ -1092,6 +1090,30 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                     onAddImage={carregarEntradas}
                 />
             )}
+        </div>
+    );
+
+    // Se embedded, retorna apenas o conteúdo sem modal
+    if (embedded) {
+        return diarioContent;
+    }
+
+    // Se não embedded, retorna como modal/popup
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            padding: '20px'
+        }}>
+            {diarioContent}
         </div>
     );
 };
