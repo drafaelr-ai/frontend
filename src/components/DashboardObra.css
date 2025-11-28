@@ -222,6 +222,48 @@
     font-weight: 600;
 }
 
+/* Header de Serviço */
+.gantt-row.gantt-servico-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    border-left: 4px solid #f59e0b;
+    margin-top: 10px;
+}
+
+.gantt-row.gantt-servico-header:first-child {
+    margin-top: 0;
+}
+
+.gantt-servico-label {
+    color: white !important;
+    font-weight: 600 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gantt-servico-icon {
+    font-size: 1em;
+}
+
+.gantt-servico-nome {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gantt-servico-bar {
+    background: rgba(30, 58, 95, 0.3);
+}
+
+.gantt-bar-servico {
+    height: 6px !important;
+    background: rgba(245, 158, 11, 0.8) !important;
+    border-radius: 3px !important;
+    position: absolute;
+    top: 50% !important;
+    transform: translateY(-50%);
+}
+
 .gantt-row.subetapa .gantt-label {
     padding-left: 30px;
 }

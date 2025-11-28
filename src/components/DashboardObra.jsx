@@ -165,12 +165,46 @@ const PieChart = ({ data, onSegmentClick, title }) => {
 const GanttChart = ({ cronograma }) => {
     const [zoomLevel, setZoomLevel] = useState('mes'); // 'semana' ou 'mes'
     
-    // Coletar todas as etapas e subetapas
+    // Coletar todas as etapas e subetapas, agrupadas por serviço
     const todasEtapas = useMemo(() => {
         const etapas = [];
         
-        cronograma.forEach(servico => {
+        cronograma.forEach((servico, servicoIdx) => {
+            // Adicionar linha de cabeçalho do serviço
             if (servico.etapas && servico.etapas.length > 0) {
+                // Calcular datas min/max do serviço
+                let servicoInicio = null;
+                let servicoFim = null;
+                let servicoPercentual = 0;
+                let totalEtapas = 0;
+                
+                servico.etapas.forEach(etapa => {
+                    if (etapa.data_inicio) {
+                        const inicio = new Date(etapa.data_inicio);
+                        if (!servicoInicio || inicio < servicoInicio) servicoInicio = inicio;
+                    }
+                    if (etapa.data_fim) {
+                        const fim = new Date(etapa.data_fim);
+                        if (!servicoFim || fim > servicoFim) servicoFim = fim;
+                    }
+                    servicoPercentual += etapa.percentual_conclusao || 0;
+                    totalEtapas++;
+                });
+                
+                // Header do serviço
+                etapas.push({
+                    id: `servico-${servico.cronograma_id || servicoIdx}`,
+                    nome: servico.servico_nome || `Serviço ${servicoIdx + 1}`,
+                    nivel: -1, // Nível especial para serviço
+                    numero: `#${servicoIdx + 1}`,
+                    dataInicio: servicoInicio ? servicoInicio.toISOString().split('T')[0] : null,
+                    dataFim: servicoFim ? servicoFim.toISOString().split('T')[0] : null,
+                    percentual: totalEtapas > 0 ? servicoPercentual / totalEtapas : 0,
+                    servico: servico.servico_nome,
+                    isServico: true,
+                    isEtapaPai: false
+                });
+                
                 servico.etapas.forEach((etapa, etapaIdx) => {
                     // Adicionar etapa pai
                     etapas.push({
@@ -182,6 +216,7 @@ const GanttChart = ({ cronograma }) => {
                         dataFim: etapa.data_fim,
                         percentual: etapa.percentual_conclusao || 0,
                         servico: servico.servico_nome,
+                        isServico: false,
                         isEtapaPai: true
                     });
                     
@@ -197,6 +232,7 @@ const GanttChart = ({ cronograma }) => {
                                 dataFim: sub.data_fim,
                                 percentual: sub.percentual_conclusao || 0,
                                 servico: servico.servico_nome,
+                                isServico: false,
                                 isEtapaPai: false
                             });
                         });
@@ -369,6 +405,34 @@ const GanttChart = ({ cronograma }) => {
                         const { left, width } = calcularBarra(etapa.dataInicio, etapa.dataFim);
                         const cor = getCorBarra(etapa);
                         
+                        // Linha de serviço (cabeçalho)
+                        if (etapa.isServico) {
+                            return (
+                                <div key={etapa.id} className="gantt-row gantt-servico-header">
+                                    <div className="gantt-label gantt-servico-label">
+                                        <span className="gantt-servico-icon">📋</span>
+                                        <span className="gantt-servico-nome" title={etapa.nome}>
+                                            {etapa.nome.length > 35 ? etapa.nome.substring(0, 35) + '...' : etapa.nome}
+                                        </span>
+                                    </div>
+                                    <div className="gantt-bar-container gantt-servico-bar">
+                                        {/* Barra do serviço (mais fina, tracejada) */}
+                                        {width > 0 && (
+                                            <div 
+                                                className="gantt-bar gantt-bar-servico"
+                                                style={{ 
+                                                    left: `${left}%`, 
+                                                    width: `${width}%`
+                                                }}
+                                                title={`${etapa.nome}: ${formatDate(etapa.dataInicio)} - ${formatDate(etapa.dataFim)}`}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        
+                        // Linha de etapa ou subetapa
                         return (
                             <div key={etapa.id} className={`gantt-row ${etapa.isEtapaPai ? 'etapa-pai' : 'subetapa'}`}>
                                 <div className="gantt-label">
