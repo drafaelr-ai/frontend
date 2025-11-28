@@ -11,6 +11,10 @@ import DiarioObras from './components/DiarioObras';
 // MUDANÇA 2: Import do componente CronogramaObra
 import CronogramaObra from './components/CronogramaObra';
 
+// NOVO: Import do Dashboard com gráficos
+import DashboardObra from './components/DashboardObra';
+import './components/DashboardObra.css';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -3925,6 +3929,9 @@ function Dashboard() {
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     
+    // NOVO: Estado para cronograma de obras (Gantt)
+    const [cronogramaObras, setCronogramaObras] = useState([]);
+    
     const [editingOrcamento, setEditingOrcamento] = useState(null);
     const [viewingAnexos, setViewingAnexos] = useState(null);
     
@@ -4180,6 +4187,9 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
+                // NOVO: Buscar cronograma de obras para o Gantt
+                fetchCronogramaObras(obraId);
+                
                 // <--- NOVO: Buscar notas fiscais (opcional) -->
                 // CORREÇÃO: Tentar buscar mas não bloquear se falhar
                 try {
@@ -4191,6 +4201,45 @@ const totalOrcamentosPendentes = useMemo(() => {
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
             .finally(() => setIsLoading(false));
+    };
+    
+    // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
+    const fetchCronogramaObras = async (obraId) => {
+        try {
+            // Buscar serviços que têm cronograma
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}`);
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            const servicosData = Array.isArray(data.servicos) ? data.servicos : [];
+            
+            // Para cada serviço, buscar as etapas do cronograma
+            const cronogramaPromises = servicosData
+                .filter(s => s.cronograma_id)
+                .map(async (servico) => {
+                    try {
+                        const cronResp = await fetchWithAuth(`${API_URL}/cronograma/${servico.cronograma_id}`);
+                        if (!cronResp.ok) return null;
+                        const cronData = await cronResp.json();
+                        return {
+                            servico_id: servico.id,
+                            servico_nome: servico.nome,
+                            cronograma_id: servico.cronograma_id,
+                            etapas: cronData.etapas || []
+                        };
+                    } catch (e) {
+                        console.log(`Erro ao buscar cronograma do serviço ${servico.id}:`, e);
+                        return null;
+                    }
+                });
+            
+            const cronogramas = (await Promise.all(cronogramaPromises)).filter(c => c !== null);
+            console.log("Cronogramas de obras carregados:", cronogramas);
+            setCronogramaObras(cronogramas);
+        } catch (error) {
+            console.log("Erro ao buscar cronograma de obras:", error);
+            setCronogramaObras([]);
+        }
     };
     
     // <--- NOVO: Função para buscar notas fiscais -->
@@ -4713,18 +4762,30 @@ const totalOrcamentosPendentes = useMemo(() => {
                         </div>
                     )}
 
-                    {/* === PÁGINA: HOME (Quadro Informativo + Previsões) === */}
+                    {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
-                        <CronogramaFinanceiro 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => {
-                                setObraSelecionada(null);
-                                setCurrentPage('obras');
-                            }}
-                            embedded={true}
-                            simplified={true}
-                        />
+                        <div className="home-page-container">
+                            {/* Dashboard com Gráficos */}
+                            <DashboardObra 
+                                obraId={obraSelecionada.id}
+                                obraNome={obraSelecionada.nome}
+                                servicos={servicos}
+                                lancamentos={lancamentos}
+                                cronograma={cronogramaObras}
+                            />
+                            
+                            {/* Cronograma Financeiro Simplificado */}
+                            <CronogramaFinanceiro 
+                                obraId={obraSelecionada.id}
+                                obraNome={obraSelecionada.nome}
+                                onClose={() => {
+                                    setObraSelecionada(null);
+                                    setCurrentPage('obras');
+                                }}
+                                embedded={true}
+                                simplified={true}
+                            />
+                        </div>
                     )}
 
                     {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
