@@ -1,122 +1,113 @@
 /**
- * Função para comprimir e redimensionar imagens automaticamente
- * 
- * @param {File} file - Arquivo de imagem original
- * @param {Object} options - Opções de compressão
- * @returns {Promise<File>} - Arquivo comprimido
+ * Utilitário para compressão de imagens
+ * Usado no Diário de Obras e Caixa de Obra
  */
 
-const compressImage = async (file, options = {}) => {
+/**
+ * Comprime uma única imagem
+ * @param {File} file - Arquivo de imagem
+ * @param {Object} options - Opções de compressão
+ * @returns {Promise<{base64: string, nome: string}>}
+ */
+export const compressImage = (file, options = {}) => {
     const {
-        maxWidth = 1920,           // Largura máxima (pixels)
-        maxHeight = 1920,          // Altura máxima (pixels)
-        quality = 0.8,             // Qualidade JPEG (0.0 a 1.0)
-        outputFormat = 'image/jpeg' // Formato de saída
+        maxWidth = 1200,
+        maxHeight = 1200,
+        quality = 0.7,
     } = options;
 
     return new Promise((resolve, reject) => {
-        // Criar um leitor de arquivo
+        // Se não for imagem, retornar como está
+        if (!file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve({
+                    base64: reader.result,
+                    nome: file.name
+                });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+            return;
+        }
+
         const reader = new FileReader();
-        
         reader.onload = (e) => {
-            // Criar elemento de imagem
             const img = new Image();
-            
             img.onload = () => {
-                // Criar canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                // Calcular dimensões mantendo proporção
+                let { width, height } = img;
                 
-                // Calcular novas dimensões mantendo proporção
-                let width = img.width;
-                let height = img.height;
-                
-                if (width > maxWidth || height > maxHeight) {
-                    const ratio = Math.min(maxWidth / width, maxHeight / height);
-                    width = Math.round(width * ratio);
-                    height = Math.round(height * ratio);
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
                 }
                 
-                // Configurar canvas com novas dimensões
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+
+                // Criar canvas e desenhar imagem redimensionada
+                const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 
-                // Desenhar imagem redimensionada
+                const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
+
+                // Converter para base64 com qualidade reduzida
+                const base64 = canvas.toDataURL('image/jpeg', quality);
                 
-                // Converter canvas para Blob
-                canvas.toBlob(
-                    (blob) => {
-                        if (!blob) {
-                            reject(new Error('Erro ao comprimir imagem'));
-                            return;
-                        }
-                        
-                        // Criar novo arquivo com o blob comprimido
-                        const compressedFile = new File(
-                            [blob],
-                            file.name.replace(/\.[^/.]+$/, '.jpg'), // Força extensão .jpg
-                            {
-                                type: outputFormat,
-                                lastModified: Date.now()
-                            }
-                        );
-                        
-                        console.log(`📸 Imagem comprimida:`);
-                        console.log(`   Original: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-                        console.log(`   Comprimida: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
-                        console.log(`   Redução: ${(((file.size - compressedFile.size) / file.size) * 100).toFixed(1)}%`);
-                        
-                        resolve(compressedFile);
-                    },
-                    outputFormat,
-                    quality
-                );
+                console.log(`📸 Imagem comprimida: ${file.name}`);
+                console.log(`   Original: ${(file.size / 1024).toFixed(1)}KB`);
+                console.log(`   Comprimida: ${(base64.length * 0.75 / 1024).toFixed(1)}KB`);
+                console.log(`   Dimensões: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}`);
+
+                resolve({
+                    base64,
+                    nome: file.name.replace(/\.[^/.]+$/, '.jpg') // Trocar extensão para .jpg
+                });
             };
-            
-            img.onerror = () => {
-                reject(new Error('Erro ao carregar imagem'));
-            };
-            
+            img.onerror = () => reject(new Error('Erro ao carregar imagem'));
             img.src = e.target.result;
         };
-        
-        reader.onerror = () => {
-            reject(new Error('Erro ao ler arquivo'));
-        };
-        
+        reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
         reader.readAsDataURL(file);
     });
 };
 
 /**
- * Função para comprimir múltiplas imagens
- * 
- * @param {FileList|Array} files - Lista de arquivos
+ * Comprime múltiplas imagens
+ * @param {File[]} files - Array de arquivos
  * @param {Object} options - Opções de compressão
- * @returns {Promise<Array>} - Array de arquivos comprimidos
+ * @returns {Promise<Array<{base64: string, nome: string}>>}
  */
-const compressImages = async (files, options = {}) => {
-    const fileArray = Array.from(files);
-    const compressedFiles = [];
+export const compressImages = async (files, options = {}) => {
+    const results = [];
     
-    for (const file of fileArray) {
-        // Verificar se é imagem
-        if (!file.type.startsWith('image/')) {
-            compressedFiles.push(file); // Manter arquivo original se não for imagem
-            continue;
-        }
-        
+    for (const file of files) {
         try {
             const compressed = await compressImage(file, options);
-            compressedFiles.push(compressed);
-        } catch (error) {
-            console.error('Erro ao comprimir imagem:', error);
-            compressedFiles.push(file); // Em caso de erro, usar arquivo original
+            results.push(compressed);
+        } catch (err) {
+            console.error(`Erro ao comprimir ${file.name}:`, err);
+            // Em caso de erro, tenta usar a imagem original
+            try {
+                const reader = new FileReader();
+                const base64 = await new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                results.push({ base64, nome: file.name });
+            } catch (fallbackErr) {
+                console.error(`Erro no fallback para ${file.name}:`, fallbackErr);
+            }
         }
     }
     
-    return compressedFiles;
+    return results;
 };
 
-export { compressImage, compressImages };
+export default { compressImage, compressImages };

@@ -15,6 +15,9 @@ import CronogramaObra from './components/CronogramaObra';
 import DashboardObra from './components/DashboardObra';
 import './components/DashboardObra.css';
 
+// Import para compressão de imagens
+import { compressImages } from './utils/imageCompression';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -5693,16 +5696,49 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
     const [comprovante, setComprovante] = useState(null);
     const [previewComprovante, setPreviewComprovante] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCompressing, setIsCompressing] = useState(false);
 
-    const handleComprovanteChange = (e) => {
+    const handleComprovanteChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (!file) return;
+        
+        // Se for PDF, não comprimir
+        if (file.type === 'application/pdf') {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setComprovante(reader.result);
-                setPreviewComprovante(reader.result);
+                setPreviewComprovante(null); // PDF não tem preview
             };
             reader.readAsDataURL(file);
+            return;
+        }
+        
+        // Se for imagem, comprimir
+        if (file.type.startsWith('image/')) {
+            try {
+                setIsCompressing(true);
+                console.log('🔄 Comprimindo imagem do comprovante...');
+                
+                const compressedImages = await compressImages([file]);
+                
+                if (compressedImages && compressedImages.length > 0) {
+                    const compressed = compressedImages[0];
+                    setComprovante(compressed.base64);
+                    setPreviewComprovante(compressed.base64);
+                    console.log('✅ Imagem comprimida com sucesso');
+                }
+            } catch (err) {
+                console.error('Erro ao comprimir imagem:', err);
+                // Fallback: usar imagem original
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setComprovante(reader.result);
+                    setPreviewComprovante(reader.result);
+                };
+                reader.readAsDataURL(file);
+            } finally {
+                setIsCompressing(false);
+            }
         }
     };
 
@@ -5871,8 +5907,14 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                         type="file"
                         accept="image/*,application/pdf"
                         onChange={handleComprovanteChange}
+                        disabled={isCompressing}
                         style={{ marginBottom: '15px' }}
                     />
+                    {isCompressing && (
+                        <div style={{ color: '#007bff', fontSize: '0.9em', marginBottom: '10px' }}>
+                            ⏳ Comprimindo imagem...
+                        </div>
+                    )}
                     {previewComprovante && (
                         <div style={{ marginTop: '15px' }}>
                             <img
@@ -5896,11 +5938,11 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isCompressing}
                         className="submit-btn"
                         style={{ padding: '12px 24px', fontSize: '1.1em' }}
                     >
-                        {isSubmitting ? 'Salvando...' : '💾 Salvar'}
+                        {isCompressing ? '⏳ Comprimindo...' : isSubmitting ? 'Salvando...' : '💾 Salvar'}
                     </button>
                 </div>
             </div>
