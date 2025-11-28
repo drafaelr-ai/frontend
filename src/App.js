@@ -5606,54 +5606,55 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                     style={{
                                         border: '1px solid #ddd',
                                         borderRadius: '8px',
-                                        padding: '20px',
+                                        padding: '15px',
                                         backgroundColor: mov.tipo === 'Entrada' ? '#e3f2fd' : '#ffebee'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '10px',
-                                                marginBottom: '8px'
-                                            }}>
-                                                <span style={{ fontSize: '1.5em' }}>
-                                                    {mov.tipo === 'Entrada' ? '📥' : '📤'}
-                                                </span>
-                                                <span style={{
-                                                    fontSize: '0.9em',
-                                                    color: '#666'
-                                                }}>
-                                                    {new Date(mov.data).toLocaleString('pt-BR')}
-                                                </span>
-                                                {mov.comprovante_url && (
-                                                    <span style={{ fontSize: '1.2em' }}>📎</span>
-                                                )}
-                                            </div>
-                                            <div style={{
-                                                fontSize: '1.1em',
-                                                fontWeight: 'bold',
-                                                marginBottom: '8px'
-                                            }}>
-                                                {mov.descricao}
-                                            </div>
-                                            {mov.observacoes && (
-                                                <div style={{ fontSize: '0.9em', color: '#666', fontStyle: 'italic' }}>
-                                                    Obs: {mov.observacoes}
-                                                </div>
+                                    {/* Header: Ícone, Data, Anexo e Valor */}
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center',
+                                        marginBottom: '10px',
+                                        flexWrap: 'wrap',
+                                        gap: '5px'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '1.3em' }}>
+                                                {mov.tipo === 'Entrada' ? '📥' : '📤'}
+                                            </span>
+                                            <span style={{ fontSize: '0.85em', color: '#666' }}>
+                                                {new Date(mov.data).toLocaleString('pt-BR')}
+                                            </span>
+                                            {mov.comprovante_url && (
+                                                <span style={{ fontSize: '1em' }}>📎</span>
                                             )}
                                         </div>
                                         <div style={{
-                                            fontSize: '1.8em',
+                                            fontSize: '1.4em',
                                             fontWeight: 'bold',
                                             color: mov.tipo === 'Entrada' ? '#2196F3' : '#f44336',
-                                            textAlign: 'right',
-                                            minWidth: '150px'
+                                            whiteSpace: 'nowrap'
                                         }}>
                                             {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
                                         </div>
                                     </div>
+                                    
+                                    {/* Descrição */}
+                                    <div style={{
+                                        fontSize: '1.05em',
+                                        fontWeight: '600',
+                                        color: '#333'
+                                    }}>
+                                        {mov.descricao}
+                                    </div>
+                                    
+                                    {/* Observações */}
+                                    {mov.observacoes && (
+                                        <div style={{ fontSize: '0.85em', color: '#666', fontStyle: 'italic', marginTop: '5px' }}>
+                                            Obs: {mov.observacoes}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
