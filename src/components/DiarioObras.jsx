@@ -38,6 +38,185 @@ const fetchWithAuth = async (url, options = {}) => {
     return response;
 };
 
+// Componente para carregar imagem sob demanda
+const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
+    const [imageData, setImageData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    
+    const isPDF = arquivoNome && arquivoNome.toLowerCase().endsWith('.pdf');
+    
+    const loadImage = async () => {
+        if (imageData || loading) return;
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const response = await fetchWithAuth(`${API_URL}/diario/imagens/${imagemId}`);
+            if (!response.ok) throw new Error('Erro ao carregar imagem');
+            const data = await response.json();
+            setImageData(data.arquivo_base64);
+        } catch (err) {
+            console.error('Erro ao carregar imagem:', err);
+            setError('Erro ao carregar');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Carregar automaticamente quando o componente montar
+    useEffect(() => {
+        loadImage();
+    }, [imagemId]);
+    
+    if (loading) {
+        return (
+            <div style={{
+                width: '100%',
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px'
+            }}>
+                <span>⏳ Carregando...</span>
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+            <div style={{
+                width: '100%',
+                height: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#ffebee',
+                borderRadius: '8px'
+            }}>
+                <span>❌ {error}</span>
+                <button onClick={loadImage} style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer' }}>
+                    🔄 Tentar novamente
+                </button>
+            </div>
+        );
+    }
+    
+    if (!imageData) {
+        return (
+            <div style={{
+                width: '100%',
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px',
+                cursor: 'pointer'
+            }} onClick={loadImage}>
+                <span>📷 Clique para carregar</span>
+            </div>
+        );
+    }
+    
+    if (isPDF) {
+        return (
+            <div style={{
+                width: '100%',
+                height: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px',
+                position: 'relative'
+            }}>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
+                <div style={{ fontSize: '0.9em', fontWeight: 'bold', textAlign: 'center', padding: '0 10px' }}>
+                    {arquivoNome || 'Documento PDF'}
+                </div>
+                <a
+                    href={`data:application/pdf;base64,${imageData}`}
+                    download={arquivoNome || 'documento.pdf'}
+                    style={{
+                        marginTop: '10px',
+                        padding: '5px 10px',
+                        backgroundColor: 'var(--cor-primaria)',
+                        color: 'white',
+                        borderRadius: '4px',
+                        textDecoration: 'none',
+                        fontSize: '0.85em'
+                    }}
+                >
+                    📥 Baixar
+                </a>
+                {onDelete && (
+                    <button
+                        onClick={onDelete}
+                        style={{
+                            position: 'absolute',
+                            top: '5px',
+                            right: '5px',
+                            background: '#ff4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '30px',
+                            height: '30px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🗑️
+                    </button>
+                )}
+            </div>
+        );
+    }
+    
+    return (
+        <div style={{ position: 'relative', ...style }}>
+            <img
+                src={`data:image/jpeg;base64,${imageData}`}
+                alt={legenda || arquivoNome || 'Imagem do diário'}
+                style={{
+                    width: '100%',
+                    height: '200px',
+                    objectFit: 'cover',
+                    borderRadius: '8px'
+                }}
+            />
+            {onDelete && (
+                <button
+                    onClick={onDelete}
+                    style={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '5px',
+                        background: '#ff4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '30px',
+                        height: '30px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    🗑️
+                </button>
+            )}
+            {legenda && (
+                <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
+                    {legenda}
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- MODAL PARA ADICIONAR/EDITAR ENTRADA ---
 const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
     const [formData, setFormData] = useState({
@@ -673,70 +852,16 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                     {/* Grid de anexos existentes */}
                     {entrada.imagens && entrada.imagens.length > 0 ? (
                         <div style={modalStyles.imageGrid}>
-                            {entrada.imagens.map(img => {
-                                const isPDF = img.arquivo_nome && img.arquivo_nome.toLowerCase().endsWith('.pdf');
-                                
-                                return (
-                                    <div key={img.id} style={modalStyles.imageCard}>
-                                        {isPDF ? (
-                                            // Visualização para PDFs
-                                            <div style={{
-                                                width: '100%',
-                                                height: '200px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                backgroundColor: '#f0f0f0',
-                                                borderRadius: '8px'
-                                            }}>
-                                                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
-                                                <div style={{ fontSize: '0.9em', fontWeight: 'bold', textAlign: 'center', padding: '0 10px' }}>
-                                                    {img.arquivo_nome || 'Documento PDF'}
-                                                </div>
-                                                <a
-                                                    href={`data:application/pdf;base64,${img.arquivo_base64 || img.imagem_base64}`}
-                                                    download={img.arquivo_nome || 'documento.pdf'}
-                                                    style={{
-                                                        marginTop: '10px',
-                                                        padding: '5px 10px',
-                                                        backgroundColor: 'var(--cor-primaria)',
-                                                        color: 'white',
-                                                        borderRadius: '4px',
-                                                        textDecoration: 'none',
-                                                        fontSize: '0.85em'
-                                                    }}
-                                                >
-                                                    📥 Baixar
-                                                </a>
-                                            </div>
-                                        ) : (
-                                            // Visualização para imagens
-                                            <img
-                                                src={`data:image/jpeg;base64,${img.arquivo_base64 || img.imagem_base64}`}
-                                                alt={img.legenda || img.arquivo_nome || 'Imagem do diário'}
-                                                style={modalStyles.image}
-                                            />
-                                        )}
-                                        <button
-                                            onClick={() => handleDeleteImage(img.id)}
-                                            style={modalStyles.deleteImageBtn}
-                                        >
-                                            🗑️
-                                        </button>
-                                        {img.legenda && (
-                                            <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
-                                                {img.legenda}
-                                            </div>
-                                        )}
-                                        {!isPDF && img.arquivo_nome && (
-                                            <div style={{ padding: '8px', fontSize: '0.85em', backgroundColor: 'white', color: '#666' }}>
-                                                {img.arquivo_nome}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                            {entrada.imagens.map(img => (
+                                <div key={img.id} style={modalStyles.imageCard}>
+                                    <LazyImage
+                                        imagemId={img.id}
+                                        arquivoNome={img.arquivo_nome}
+                                        legenda={img.legenda}
+                                        onDelete={() => handleDeleteImage(img.id)}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
