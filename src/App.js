@@ -4206,36 +4206,52 @@ const totalOrcamentosPendentes = useMemo(() => {
     // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
         try {
-            // Buscar serviços que têm cronograma
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}`);
-            if (!response.ok) return;
+            // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
+            const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
+            if (!response.ok) {
+                console.log("Erro ao buscar cronogramas:", response.status);
+                setCronogramaObras([]);
+                return;
+            }
             
-            const data = await response.json();
-            const servicosData = Array.isArray(data.servicos) ? data.servicos : [];
+            const cronogramasData = await response.json();
+            console.log("Cronogramas da obra (raw):", cronogramasData);
             
-            // Para cada serviço, buscar as etapas do cronograma
-            const cronogramaPromises = servicosData
-                .filter(s => s.cronograma_id)
-                .map(async (servico) => {
+            if (!Array.isArray(cronogramasData) || cronogramasData.length === 0) {
+                console.log("Nenhum cronograma encontrado");
+                setCronogramaObras([]);
+                return;
+            }
+            
+            // Para cada cronograma, buscar as etapas
+            const cronogramasComEtapas = await Promise.all(
+                cronogramasData.map(async (cron) => {
                     try {
-                        const cronResp = await fetchWithAuth(`${API_URL}/cronograma/${servico.cronograma_id}`);
-                        if (!cronResp.ok) return null;
-                        const cronData = await cronResp.json();
+                        const etapasResp = await fetchWithAuth(`${API_URL}/cronograma/${cron.id}/etapas`);
+                        let etapas = [];
+                        if (etapasResp.ok) {
+                            etapas = await etapasResp.json();
+                        }
                         return {
-                            servico_id: servico.id,
-                            servico_nome: servico.nome,
-                            cronograma_id: servico.cronograma_id,
-                            etapas: cronData.etapas || []
+                            servico_id: cron.servico_id,
+                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
+                            cronograma_id: cron.id,
+                            etapas: Array.isArray(etapas) ? etapas : []
                         };
                     } catch (e) {
-                        console.log(`Erro ao buscar cronograma do serviço ${servico.id}:`, e);
-                        return null;
+                        console.log(`Erro ao buscar etapas do cronograma ${cron.id}:`, e);
+                        return {
+                            servico_id: cron.servico_id,
+                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
+                            cronograma_id: cron.id,
+                            etapas: []
+                        };
                     }
-                });
+                })
+            );
             
-            const cronogramas = (await Promise.all(cronogramaPromises)).filter(c => c !== null);
-            console.log("Cronogramas de obras carregados:", cronogramas);
-            setCronogramaObras(cronogramas);
+            console.log("Cronogramas de obras carregados:", cronogramasComEtapas);
+            setCronogramaObras(cronogramasComEtapas);
         } catch (error) {
             console.log("Erro ao buscar cronograma de obras:", error);
             setCronogramaObras([]);
