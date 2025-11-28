@@ -5846,8 +5846,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                     </label>
                     <input
                         type="file"
-                        accept="image/*"
-                        capture="environment"
+                        accept="image/*,application/pdf"
                         onChange={handleComprovanteChange}
                         style={{ marginBottom: '15px' }}
                     />
