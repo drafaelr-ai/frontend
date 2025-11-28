@@ -883,43 +883,30 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
 
     // Verificar se obra existe antes de renderizar
     if (!obraData?.id) {
-        const loadingContent = (
-            <div style={{
-                background: 'white',
-                borderRadius: embedded ? '0' : '8px',
-                padding: '30px',
-                textAlign: 'center'
-            }}>
-                <p>Carregando dados da obra...</p>
-                {!embedded && <button onClick={onClose} className="voltar-btn">Fechar</button>}
-            </div>
-        );
-
         if (embedded) {
-            return loadingContent;
+            return (
+                <div style={{ padding: '30px', textAlign: 'center', background: 'white' }}>
+                    <p>Carregando dados da obra...</p>
+                </div>
+            );
         }
-
         return (
             <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                 backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 9999,
-                padding: '20px'
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                zIndex: 9999, padding: '20px'
             }}>
-                {loadingContent}
+                <div style={{ background: 'white', borderRadius: '8px', padding: '30px', textAlign: 'center' }}>
+                    <p>Carregando dados da obra...</p>
+                    <button onClick={onClose} className="voltar-btn">Fechar</button>
+                </div>
             </div>
         );
     }
 
-    // Conteúdo do diário
-    const diarioContent = (
+    // Conteúdo principal do diário
+    const content = (
         <div style={{
             background: 'white',
             borderRadius: embedded ? '0' : '8px',
@@ -939,137 +926,94 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 )}
             </div>
 
-                {/* Barra de ações */}
-                <div style={{
-                    display: 'flex',
-                    gap: '10px',
-                    marginBottom: '20px',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <button
-                        onClick={() => {
-                            setEntradaSelecionada(null);
-                            setIsFormModalOpen(true);
-                        }}
-                        className="submit-btn"
-                    >
-                        ➕ Nova Entrada
-                    </button>
+            {/* Barra de ações */}
+            <div style={{
+                display: 'flex', gap: '10px', marginBottom: '20px',
+                flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+                <button
+                    onClick={() => { setEntradaSelecionada(null); setIsFormModalOpen(true); }}
+                    className="submit-btn"
+                >
+                    ➕ Nova Entrada
+                </button>
 
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <input
-                            type="date"
-                            value={filtroData}
-                            onChange={(e) => setFiltroData(e.target.value)}
-                            style={{
-                                padding: '8px',
-                                border: '1px solid #ddd',
-                                borderRadius: '4px'
-                            }}
-                        />
-                        {filtroData && (
-                            <button
-                                onClick={() => setFiltroData('')}
-                                className="voltar-btn"
-                                style={{ padding: '8px 12px' }}
-                            >
-                                Limpar
-                            </button>
-                        )}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                        type="date"
+                        value={filtroData}
+                        onChange={(e) => setFiltroData(e.target.value)}
+                        style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd' }}
+                    />
+                    {filtroData && (
                         <button
-                            onClick={handleGerarRelatorio}
-                            className="submit-btn"
-                            style={{ backgroundColor: '#6c757d' }}
+                            onClick={() => setFiltroData('')}
+                            style={{ padding: '8px 12px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                         >
-                            📄 Gerar PDF
+                            Limpar
                         </button>
-                    </div>
+                    )}
+                    <button onClick={handleGerarRelatorio} className="submit-btn" style={{ background: '#17a2b8' }}>
+                        📄 Gerar PDF
+                    </button>
                 </div>
+            </div>
 
-                {/* Lista de entradas */}
-                {isLoading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>Carregando...</div>
-                ) : entradasFiltradas.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                        {filtroData ? 'Nenhuma entrada encontrada para esta data' : 'Nenhuma entrada no diário ainda'}
-                    </div>
-                ) : (
-                    <div style={{ display: 'grid', gap: '15px' }}>
-                        {entradasFiltradas.map(entrada => (
-                            <div
-                                key={entrada.id}
-                                onClick={() => {
-                                    setEntradaSelecionada(entrada);
-                                    setIsDetalhesModalOpen(true);
-                                }}
-                                style={{
-                                    padding: '20px',
-                                    border: '1px solid #e0e0e0',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    backgroundColor: 'white'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                                    e.currentTarget.style.borderColor = 'var(--cor-primaria)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.boxShadow = 'none';
-                                    e.currentTarget.style.borderColor = '#e0e0e0';
-                                }}
-                            >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
-                                    <div>
-                                        <h3 style={{ margin: 0, color: 'var(--cor-primaria)' }}>{entrada.titulo}</h3>
-                                        <div style={{ fontSize: '0.9em', color: '#666', marginTop: '5px' }}>
-                                            📅 {formatDate(entrada.data)}
-                                            {entrada.clima && ` • ${entrada.clima}`}
-                                            {entrada.temperatura && ` • ${entrada.temperatura}`}
-                                        </div>
-                                    </div>
-                                    {entrada.imagens && entrada.imagens.length > 0 && (
-                                        <div style={{
-                                            backgroundColor: 'var(--cor-primaria)',
-                                            color: 'white',
-                                            padding: '4px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '0.85em'
-                                        }}>
-                                            📎 {entrada.imagens.length}
-                                        </div>
-                                    )}
-                                </div>
-                                {entrada.descricao && (
-                                    <p style={{
-                                        margin: '10px 0 0 0',
-                                        color: '#555',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: 'vertical'
-                                    }}>
-                                        {entrada.descricao}
+            {/* Lista de Entradas */}
+            {isLoading ? (
+                <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
+            ) : entradasFiltradas.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#666', background: '#f8f9fa', borderRadius: '8px' }}>
+                    <p>📝 Nenhuma entrada encontrada.</p>
+                    <p>Clique em "Nova Entrada" para começar.</p>
+                </div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {entradasFiltradas.map(entrada => (
+                        <div
+                            key={entrada.id}
+                            onClick={() => { setEntradaSelecionada(entrada); setIsDetalhesModalOpen(true); }}
+                            style={{
+                                padding: '15px', background: '#f8f9fa', borderRadius: '8px',
+                                cursor: 'pointer', border: '1px solid #e9ecef', transition: 'all 0.2s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
+                                        {entrada.titulo || `Entrada de ${formatDate(entrada.data)}`}
+                                    </h4>
+                                    <p style={{ margin: 0, color: '#666', fontSize: '0.9em' }}>
+                                        📅 {formatDate(entrada.data)}
+                                        {entrada.clima && ` • ${entrada.clima}`}
+                                        {entrada.temperatura && ` • ${entrada.temperatura}°C`}
                                     </p>
+                                </div>
+                                {entrada.fotos && entrada.fotos.length > 0 && (
+                                    <span style={{
+                                        background: '#007bff', color: 'white', padding: '4px 8px',
+                                        borderRadius: '12px', fontSize: '0.8em'
+                                    }}>
+                                        📷 {entrada.fotos.length}
+                                    </span>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                            {entrada.descricao && (
+                                <p style={{ margin: '10px 0 0 0', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {entrada.descricao.substring(0, 150)}{entrada.descricao.length > 150 && '...'}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Modais */}
             {isFormModalOpen && (
                 <DiarioFormModal
                     entrada={entradaSelecionada}
                     obraId={obraData.id}
-                    onClose={() => {
-                        setIsFormModalOpen(false);
-                        setEntradaSelecionada(null);
-                    }}
+                    onClose={() => { setIsFormModalOpen(false); setEntradaSelecionada(null); }}
                     onSave={handleSaveEntrada}
                 />
             )}
@@ -1077,15 +1021,8 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             {isDetalhesModalOpen && entradaSelecionada && (
                 <DiarioDetalhesModal
                     entrada={entradaSelecionada}
-                    onClose={() => {
-                        setIsDetalhesModalOpen(false);
-                        setEntradaSelecionada(null);
-                    }}
-                    onEdit={(entrada) => {
-                        setIsDetalhesModalOpen(false);
-                        setEntradaSelecionada(entrada);
-                        setIsFormModalOpen(true);
-                    }}
+                    onClose={() => { setIsDetalhesModalOpen(false); setEntradaSelecionada(null); }}
+                    onEdit={(entrada) => { setIsDetalhesModalOpen(false); setEntradaSelecionada(entrada); setIsFormModalOpen(true); }}
                     onDelete={handleDeleteEntrada}
                     onAddImage={carregarEntradas}
                 />
@@ -1093,27 +1030,19 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
         </div>
     );
 
-    // RENDERIZAÇÃO
+    // Renderização
     if (embedded) {
-        return diarioContent;
+        return content;
     }
 
-    // MODO MODAL: Renderiza como popup
     return (
         <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-            padding: '20px'
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 9999, padding: '20px'
         }}>
-            {diarioContent}
+            {content}
         </div>
     );
 };
