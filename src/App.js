@@ -849,10 +849,32 @@ const GastosPorSegmentoChart = ({ data }) => {
 
 // --- COMPONENTES DE MODAL (Existentes) ---
 const Modal = ({ children, onClose, customWidth }) => (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        zIndex: 9999,
+        padding: '20px',
+        overflowY: 'auto'
+    }}>
         <div 
             className="modal-content" 
-            style={{ maxWidth: customWidth || '500px' }}  // <-- MUDANÇA AQUI
+            style={{ 
+                maxWidth: customWidth || '500px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                margin: 'auto',
+                background: 'white',
+                borderRadius: '12px',
+                position: 'relative'
+            }}
             onClick={e => e.stopPropagation()}
         >
             <button onClick={onClose} className="close-modal-btn">&times;</button>
