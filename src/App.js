@@ -5802,7 +5802,16 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 }
             );
 
-            if (!response.ok) throw new Error('Erro ao gerar relatório');
+            if (!response.ok) {
+                // Tentar pegar mensagem de erro do servidor
+                try {
+                    const errorData = await response.json();
+                    console.error('Erro do servidor:', errorData);
+                    throw new Error(errorData.mensagem || errorData.erro || 'Erro ao gerar relatório');
+                } catch (jsonErr) {
+                    throw new Error('Erro ao gerar relatório');
+                }
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -5815,7 +5824,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             document.body.removeChild(a);
         } catch (err) {
             console.error('Erro ao gerar relatório:', err);
-            alert('Erro ao gerar relatório PDF');
+            alert('Erro ao gerar relatório PDF: ' + err.message);
         }
     };
 
