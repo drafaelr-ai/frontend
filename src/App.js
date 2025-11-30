@@ -5067,6 +5067,123 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 embedded={true}
                                 simplified={true}
                             />
+                            
+                            {/* Histórico de Pagamentos Recentes */}
+                            <div className="card" style={{ marginTop: '20px' }}>
+                                <h2 style={{ 
+                                    fontSize: '1.5em', 
+                                    marginBottom: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}>
+                                    💰 Histórico de Pagamentos
+                                    <span style={{ 
+                                        fontSize: '0.6em', 
+                                        backgroundColor: '#4CAF50', 
+                                        color: 'white',
+                                        padding: '4px 10px',
+                                        borderRadius: '12px'
+                                    }}>
+                                        {itemsPagos.length} pagos
+                                    </span>
+                                </h2>
+                                
+                                {itemsPagos.length === 0 ? (
+                                    <div style={{ 
+                                        textAlign: 'center', 
+                                        padding: '30px', 
+                                        color: '#999',
+                                        backgroundColor: '#f9f9f9',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <div style={{ fontSize: '2em', marginBottom: '10px' }}>📋</div>
+                                        <p>Nenhum pagamento registrado</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="tabela-scroll-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                            <table className="tabela-pagamentos" style={{ width: '100%' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Data</th>
+                                                        <th>Descrição</th>
+                                                        <th>Fornecedor</th>
+                                                        <th>Valor</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {itemsPagos.slice(0, 15).map((item, idx) => (
+                                                        <tr key={item.id || idx}>
+                                                            <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                                            <td>
+                                                                <div style={{ fontWeight: '500' }}>{item.descricao}</div>
+                                                                {item.servico_nome && (
+                                                                    <div style={{ fontSize: '0.85em', color: '#666' }}>
+                                                                        Serviço: {item.servico_nome}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td>{item.fornecedor || '-'}</td>
+                                                            <td style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                                                {formatCurrency(item.valor_pago || item.valor_total || 0)}
+                                                            </td>
+                                                            <td>
+                                                                <span style={{
+                                                                    padding: '3px 8px',
+                                                                    borderRadius: '4px',
+                                                                    backgroundColor: '#4CAF50',
+                                                                    color: 'white',
+                                                                    fontSize: '0.8em'
+                                                                }}>
+                                                                    ✓ Pago
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        {itemsPagos.length > 15 && (
+                                            <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                                                <button 
+                                                    onClick={() => setCurrentPage('financeiro')}
+                                                    className="voltar-btn"
+                                                >
+                                                    Ver todos os {itemsPagos.length} pagamentos →
+                                                </button>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Resumo de totais */}
+                                        <div style={{ 
+                                            marginTop: '15px', 
+                                            padding: '15px',
+                                            backgroundColor: '#e8f5e9',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            justifyContent: 'space-around',
+                                            flexWrap: 'wrap',
+                                            gap: '15px'
+                                        }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Pago</div>
+                                                <div style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.2em' }}>
+                                                    {formatCurrency(itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0))}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Pendente</div>
+                                                <div style={{ fontWeight: 'bold', color: '#f57c00', fontSize: '1.2em' }}>
+                                                    {formatCurrency(itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
 
