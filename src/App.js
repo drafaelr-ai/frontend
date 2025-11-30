@@ -7811,7 +7811,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 {pag.periodicidade || 'Mensal'}
                                             </span>
                                         </td>
-                                        <td data-label="Valor/Parcela">{formatCurrency(pag.valor_parcela)}</td>
+                                        <td data-label="Valor/Parcela">{formatCurrency(pag.valor_proxima_parcela || pag.valor_parcela_real || pag.valor_parcela)}</td>
                                         <td data-label="Próx. Vencimento">
                                             {pag.proxima_parcela_vencimento ? 
                                                 new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
