@@ -4815,6 +4815,190 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 cronograma={cronogramaObras}
                             />
                             
+                            {/* Quadro de Serviços */}
+                            <div className="card" style={{ marginTop: '20px' }}>
+                                <h2 style={{ 
+                                    fontSize: '1.5em', 
+                                    marginBottom: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}>
+                                    🔧 Serviços da Obra
+                                    <span style={{ 
+                                        fontSize: '0.6em', 
+                                        backgroundColor: 'var(--cor-primaria)', 
+                                        color: 'white',
+                                        padding: '4px 10px',
+                                        borderRadius: '12px'
+                                    }}>
+                                        {servicos.length}
+                                    </span>
+                                </h2>
+                                
+                                {servicos.length === 0 ? (
+                                    <div style={{ 
+                                        textAlign: 'center', 
+                                        padding: '40px', 
+                                        color: '#999',
+                                        backgroundColor: '#f9f9f9',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
+                                        <p>Nenhum serviço cadastrado</p>
+                                        <button 
+                                            onClick={() => setCurrentPage('financeiro')}
+                                            className="submit-btn"
+                                            style={{ marginTop: '15px' }}
+                                        >
+                                            + Adicionar Serviço
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ 
+                                            display: 'grid', 
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                            gap: '15px'
+                                        }}>
+                                            {servicos.slice(0, 6).map(servico => {
+                                                const totalServico = parseFloat(servico.valor_mo || 0) + parseFloat(servico.valor_material || 0) + parseFloat(servico.valor_equipamento || 0);
+                                                const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
+                                                                   servico.status === 'Em Andamento' ? '#2196F3' : 
+                                                                   servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
+                                                
+                                                return (
+                                                    <div 
+                                                        key={servico.id}
+                                                        style={{
+                                                            backgroundColor: '#f8f9fa',
+                                                            borderRadius: '8px',
+                                                            padding: '15px',
+                                                            borderLeft: `4px solid ${statusColor}`,
+                                                            cursor: 'pointer',
+                                                            transition: 'transform 0.2s, box-shadow 0.2s'
+                                                        }}
+                                                        onClick={() => setCurrentPage('financeiro')}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = 'translateY(0)';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                        }}
+                                                    >
+                                                        <div style={{ 
+                                                            fontWeight: 'bold', 
+                                                            marginBottom: '8px',
+                                                            fontSize: '1.05em',
+                                                            color: '#333'
+                                                        }}>
+                                                            {servico.nome}
+                                                        </div>
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <span style={{
+                                                                fontSize: '0.8em',
+                                                                padding: '3px 8px',
+                                                                borderRadius: '4px',
+                                                                backgroundColor: statusColor,
+                                                                color: 'white'
+                                                            }}>
+                                                                {servico.status || 'A Iniciar'}
+                                                            </span>
+                                                            <span style={{ 
+                                                                fontWeight: 'bold',
+                                                                color: 'var(--cor-primaria)'
+                                                            }}>
+                                                                {formatCurrency(totalServico)}
+                                                            </span>
+                                                        </div>
+                                                        {servico.execucao > 0 && (
+                                                            <div style={{ marginTop: '10px' }}>
+                                                                <div style={{ 
+                                                                    display: 'flex', 
+                                                                    justifyContent: 'space-between',
+                                                                    fontSize: '0.8em',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    <span>Execução</span>
+                                                                    <span>{servico.execucao}%</span>
+                                                                </div>
+                                                                <div style={{
+                                                                    height: '6px',
+                                                                    backgroundColor: '#e0e0e0',
+                                                                    borderRadius: '3px',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: `${servico.execucao}%`,
+                                                                        height: '100%',
+                                                                        backgroundColor: statusColor,
+                                                                        borderRadius: '3px'
+                                                                    }} />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        
+                                        {servicos.length > 6 && (
+                                            <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                                                <button 
+                                                    onClick={() => setCurrentPage('financeiro')}
+                                                    className="voltar-btn"
+                                                >
+                                                    Ver todos os {servicos.length} serviços →
+                                                </button>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Resumo financeiro dos serviços */}
+                                        <div style={{ 
+                                            marginTop: '20px', 
+                                            padding: '15px',
+                                            backgroundColor: '#e8f5e9',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            justifyContent: 'space-around',
+                                            flexWrap: 'wrap',
+                                            gap: '15px'
+                                        }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total MO</div>
+                                                <div style={{ fontWeight: 'bold', color: '#1565c0' }}>
+                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0), 0))}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Material</div>
+                                                <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_material || 0), 0))}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Equipamento</div>
+                                                <div style={{ fontWeight: 'bold', color: '#f57c00' }}>
+                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_equipamento || 0), 0))}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>TOTAL GERAL</div>
+                                                <div style={{ fontWeight: 'bold', fontSize: '1.2em', color: '#333' }}>
+                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0) + parseFloat(s.valor_material || 0) + parseFloat(s.valor_equipamento || 0), 0))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            
                             {/* Cronograma Financeiro Simplificado */}
                             <CronogramaFinanceiro 
                                 obraId={obraSelecionada.id}
@@ -6556,62 +6740,78 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         try {
             // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
             const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes] = await Promise.all([
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`),
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`),
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`)
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
+                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`).catch(e => ({ ok: false, error: e })),
+                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`).catch(e => ({ ok: false, error: e }))
             ]);
 
             // Processar respostas principais
             if (futuroRes.ok) {
-                const data = await futuroRes.json();
-                setPagamentosFuturos(data);
+                try {
+                    const data = await futuroRes.json();
+                    setPagamentosFuturos(data);
+                } catch (e) {
+                    console.error('Erro ao processar pagamentos futuros:', e);
+                }
             }
 
             if (previsoesRes.ok) {
-                const data = await previsoesRes.json();
-                setPrevisoes(data);
+                try {
+                    const data = await previsoesRes.json();
+                    setPrevisoes(data);
+                } catch (e) {
+                    console.error('Erro ao processar previsões:', e);
+                }
             }
             
             if (servicoPendentesRes.ok) {
-                const data = await servicoPendentesRes.json();
-                setPagamentosServicoPendentes(data);
+                try {
+                    const data = await servicoPendentesRes.json();
+                    setPagamentosServicoPendentes(data);
+                } catch (e) {
+                    console.error('Erro ao processar pagamentos pendentes:', e);
+                }
             }
 
             // <--- MUDANÇA: Processar parcelados SEM bloquear a tela -->
             if (parceladoRes.ok) {
-                const data = await parceladoRes.json();
-                
-                // Mostrar dados básicos imediatamente (sem parcelas)
-                setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
-                setIsLoading(false); // <-- Libera a tela AQUI
-                
-                // Buscar parcelas em background (não bloqueia mais!)
-                const parceladosComParcelas = await Promise.all(
-                    data.map(async (pagParcelado) => {
-                        try {
-                            const parcelasRes = await fetchWithAuth(
-                                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParcelado.id}/parcelas`
-                            );
-                            if (parcelasRes.ok) {
-                                const parcelas = await parcelasRes.json();
-                                return { ...pagParcelado, parcelas };
+                try {
+                    const data = await parceladoRes.json();
+                    
+                    // Mostrar dados básicos imediatamente (sem parcelas)
+                    setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
+                    setIsLoading(false); // <-- Libera a tela AQUI
+                    
+                    // Buscar parcelas em background (não bloqueia mais!)
+                    const parceladosComParcelas = await Promise.all(
+                        data.map(async (pagParcelado) => {
+                            try {
+                                const parcelasRes = await fetchWithAuth(
+                                    `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParcelado.id}/parcelas`
+                                );
+                                if (parcelasRes.ok) {
+                                    const parcelas = await parcelasRes.json();
+                                    return { ...pagParcelado, parcelas };
+                                }
+                            } catch (err) {
+                                console.error('Erro ao buscar parcelas:', err);
                             }
-                        } catch (err) {
-                            console.error('Erro ao buscar parcelas:', err);
-                        }
-                        return { ...pagParcelado, parcelas: [] };
-                    })
-                );
-                
-                // Atualiza com parcelas quando disponíveis
-                setPagamentosParcelados(parceladosComParcelas);
+                            return { ...pagParcelado, parcelas: [] };
+                        })
+                    );
+                    
+                    // Atualiza com parcelas quando disponíveis
+                    setPagamentosParcelados(parceladosComParcelas);
+                } catch (e) {
+                    console.error('Erro ao processar parcelados:', e);
+                    setIsLoading(false);
+                }
             } else {
                 setIsLoading(false);
             }
         } catch (error) {
             console.error('Erro ao carregar cronograma financeiro:', error);
-            alert('Erro ao carregar dados do cronograma');
             setIsLoading(false);
         }
     };
