@@ -850,6 +850,202 @@ const GastosPorSegmentoChart = ({ data }) => {
 // ---------------------------------
 
 
+// --- COMPONENTE: SERVIÇOS DA OBRA (Card para Home) ---
+const ServicosDaObraCard = ({ servicos, onNavigateToFinanceiro }) => {
+    const [mostrarTodos, setMostrarTodos] = useState(false);
+    
+    const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
+    
+    return (
+        <div className="card" style={{ marginTop: '20px' }}>
+            <h2 style={{ 
+                fontSize: '1.5em', 
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+            }}>
+                🔧 Serviços da Obra
+                <span style={{ 
+                    fontSize: '0.6em', 
+                    backgroundColor: 'var(--cor-primaria)', 
+                    color: 'white',
+                    padding: '4px 10px',
+                    borderRadius: '12px'
+                }}>
+                    {servicos.length}
+                </span>
+            </h2>
+            
+            {servicos.length === 0 ? (
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px', 
+                    color: '#999',
+                    backgroundColor: '#f9f9f9',
+                    borderRadius: '8px'
+                }}>
+                    <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
+                    <p>Nenhum serviço cadastrado</p>
+                    <button 
+                        onClick={onNavigateToFinanceiro}
+                        className="submit-btn"
+                        style={{ marginTop: '15px' }}
+                    >
+                        + Adicionar Serviço
+                    </button>
+                </div>
+            ) : (
+                <>
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                        gap: '15px'
+                    }}>
+                        {servicosExibidos.map(servico => {
+                            const totalServico = parseFloat(servico.valor_mo || 0) + parseFloat(servico.valor_material || 0) + parseFloat(servico.valor_equipamento || 0);
+                            const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
+                                               servico.status === 'Em Andamento' ? '#2196F3' : 
+                                               servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
+                            
+                            return (
+                                <div 
+                                    key={servico.id}
+                                    style={{
+                                        backgroundColor: '#f8f9fa',
+                                        borderRadius: '8px',
+                                        padding: '15px',
+                                        borderLeft: `4px solid ${statusColor}`,
+                                        cursor: 'pointer',
+                                        transition: 'transform 0.2s, box-shadow 0.2s'
+                                    }}
+                                    onClick={onNavigateToFinanceiro}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <div style={{ 
+                                        fontWeight: 'bold', 
+                                        marginBottom: '8px',
+                                        fontSize: '1.05em',
+                                        color: '#333'
+                                    }}>
+                                        {servico.nome}
+                                    </div>
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}>
+                                        <span style={{
+                                            fontSize: '0.8em',
+                                            padding: '3px 8px',
+                                            borderRadius: '4px',
+                                            backgroundColor: statusColor,
+                                            color: 'white'
+                                        }}>
+                                            {servico.status || 'A Iniciar'}
+                                        </span>
+                                        <span style={{ 
+                                            fontWeight: 'bold',
+                                            color: 'var(--cor-primaria)'
+                                        }}>
+                                            {formatCurrency(totalServico)}
+                                        </span>
+                                    </div>
+                                    {servico.execucao > 0 && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between',
+                                                fontSize: '0.8em',
+                                                marginBottom: '4px'
+                                            }}>
+                                                <span>Execução</span>
+                                                <span>{servico.execucao}%</span>
+                                            </div>
+                                            <div style={{
+                                                height: '6px',
+                                                backgroundColor: '#e0e0e0',
+                                                borderRadius: '3px',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{
+                                                    width: `${servico.execucao}%`,
+                                                    height: '100%',
+                                                    backgroundColor: statusColor,
+                                                    borderRadius: '3px'
+                                                }} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    {servicos.length > 6 && (
+                        <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                            <button 
+                                onClick={() => setMostrarTodos(!mostrarTodos)}
+                                className="voltar-btn"
+                            >
+                                {mostrarTodos 
+                                    ? '↑ Mostrar menos' 
+                                    : `Ver todos os ${servicos.length} serviços →`
+                                }
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Resumo financeiro dos serviços */}
+                    <div style={{ 
+                        marginTop: '20px', 
+                        padding: '15px',
+                        backgroundColor: '#e8f5e9',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-around',
+                        flexWrap: 'wrap',
+                        gap: '15px'
+                    }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total MO</div>
+                            <div style={{ fontWeight: 'bold', color: '#1565c0' }}>
+                                {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0), 0))}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Material</div>
+                            <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_material || 0), 0))}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Equipamento</div>
+                            <div style={{ fontWeight: 'bold', color: '#f57c00' }}>
+                                {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_equipamento || 0), 0))}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>TOTAL GERAL</div>
+                            <div style={{ fontWeight: 'bold', fontSize: '1.2em', color: '#333' }}>
+                                {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0) + parseFloat(s.valor_material || 0) + parseFloat(s.valor_equipamento || 0), 0))}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+
 // --- COMPONENTES DE MODAL (Existentes) ---
 const Modal = ({ children, onClose, customWidth }) => (
     <div className="modal-overlay" onClick={onClose} style={{
@@ -4816,188 +5012,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                             />
                             
                             {/* Quadro de Serviços */}
-                            <div className="card" style={{ marginTop: '20px' }}>
-                                <h2 style={{ 
-                                    fontSize: '1.5em', 
-                                    marginBottom: '20px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px'
-                                }}>
-                                    🔧 Serviços da Obra
-                                    <span style={{ 
-                                        fontSize: '0.6em', 
-                                        backgroundColor: 'var(--cor-primaria)', 
-                                        color: 'white',
-                                        padding: '4px 10px',
-                                        borderRadius: '12px'
-                                    }}>
-                                        {servicos.length}
-                                    </span>
-                                </h2>
-                                
-                                {servicos.length === 0 ? (
-                                    <div style={{ 
-                                        textAlign: 'center', 
-                                        padding: '40px', 
-                                        color: '#999',
-                                        backgroundColor: '#f9f9f9',
-                                        borderRadius: '8px'
-                                    }}>
-                                        <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
-                                        <p>Nenhum serviço cadastrado</p>
-                                        <button 
-                                            onClick={() => setCurrentPage('financeiro')}
-                                            className="submit-btn"
-                                            style={{ marginTop: '15px' }}
-                                        >
-                                            + Adicionar Serviço
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div style={{ 
-                                            display: 'grid', 
-                                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                                            gap: '15px'
-                                        }}>
-                                            {servicos.slice(0, 6).map(servico => {
-                                                const totalServico = parseFloat(servico.valor_mo || 0) + parseFloat(servico.valor_material || 0) + parseFloat(servico.valor_equipamento || 0);
-                                                const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
-                                                                   servico.status === 'Em Andamento' ? '#2196F3' : 
-                                                                   servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
-                                                
-                                                return (
-                                                    <div 
-                                                        key={servico.id}
-                                                        style={{
-                                                            backgroundColor: '#f8f9fa',
-                                                            borderRadius: '8px',
-                                                            padding: '15px',
-                                                            borderLeft: `4px solid ${statusColor}`,
-                                                            cursor: 'pointer',
-                                                            transition: 'transform 0.2s, box-shadow 0.2s'
-                                                        }}
-                                                        onClick={() => setCurrentPage('financeiro')}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                            e.currentTarget.style.boxShadow = 'none';
-                                                        }}
-                                                    >
-                                                        <div style={{ 
-                                                            fontWeight: 'bold', 
-                                                            marginBottom: '8px',
-                                                            fontSize: '1.05em',
-                                                            color: '#333'
-                                                        }}>
-                                                            {servico.nome}
-                                                        </div>
-                                                        <div style={{ 
-                                                            display: 'flex', 
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center'
-                                                        }}>
-                                                            <span style={{
-                                                                fontSize: '0.8em',
-                                                                padding: '3px 8px',
-                                                                borderRadius: '4px',
-                                                                backgroundColor: statusColor,
-                                                                color: 'white'
-                                                            }}>
-                                                                {servico.status || 'A Iniciar'}
-                                                            </span>
-                                                            <span style={{ 
-                                                                fontWeight: 'bold',
-                                                                color: 'var(--cor-primaria)'
-                                                            }}>
-                                                                {formatCurrency(totalServico)}
-                                                            </span>
-                                                        </div>
-                                                        {servico.execucao > 0 && (
-                                                            <div style={{ marginTop: '10px' }}>
-                                                                <div style={{ 
-                                                                    display: 'flex', 
-                                                                    justifyContent: 'space-between',
-                                                                    fontSize: '0.8em',
-                                                                    marginBottom: '4px'
-                                                                }}>
-                                                                    <span>Execução</span>
-                                                                    <span>{servico.execucao}%</span>
-                                                                </div>
-                                                                <div style={{
-                                                                    height: '6px',
-                                                                    backgroundColor: '#e0e0e0',
-                                                                    borderRadius: '3px',
-                                                                    overflow: 'hidden'
-                                                                }}>
-                                                                    <div style={{
-                                                                        width: `${servico.execucao}%`,
-                                                                        height: '100%',
-                                                                        backgroundColor: statusColor,
-                                                                        borderRadius: '3px'
-                                                                    }} />
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        
-                                        {servicos.length > 6 && (
-                                            <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                                                <button 
-                                                    onClick={() => setCurrentPage('financeiro')}
-                                                    className="voltar-btn"
-                                                >
-                                                    Ver todos os {servicos.length} serviços →
-                                                </button>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Resumo financeiro dos serviços */}
-                                        <div style={{ 
-                                            marginTop: '20px', 
-                                            padding: '15px',
-                                            backgroundColor: '#e8f5e9',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'space-around',
-                                            flexWrap: 'wrap',
-                                            gap: '15px'
-                                        }}>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total MO</div>
-                                                <div style={{ fontWeight: 'bold', color: '#1565c0' }}>
-                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0), 0))}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Material</div>
-                                                <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_material || 0), 0))}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Equipamento</div>
-                                                <div style={{ fontWeight: 'bold', color: '#f57c00' }}>
-                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_equipamento || 0), 0))}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>TOTAL GERAL</div>
-                                                <div style={{ fontWeight: 'bold', fontSize: '1.2em', color: '#333' }}>
-                                                    {formatCurrency(servicos.reduce((sum, s) => sum + parseFloat(s.valor_mo || 0) + parseFloat(s.valor_material || 0) + parseFloat(s.valor_equipamento || 0), 0))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <ServicosDaObraCard 
+                                servicos={servicos}
+                                onNavigateToFinanceiro={() => setCurrentPage('financeiro')}
+                            />
                             
                             {/* Cronograma Financeiro Simplificado */}
                             <CronogramaFinanceiro 
