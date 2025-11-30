@@ -1089,13 +1089,52 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
 
 
 // --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
-const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar }) => {
+const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     const ITENS_INICIAIS = 10;
     
     const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
     const totalPago = itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
     const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
+    
+    const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
+    
+    const handleDelete = async (item) => {
+        if (!window.confirm(`Deseja excluir "${item.descricao}"?`)) return;
+        
+        try {
+            let endpoint = '';
+            
+            // Determinar qual endpoint usar baseado no tipo de registro
+            if (item.tipo_registro === 'lancamento') {
+                endpoint = `${API_URL}/lancamentos/${item.id}`;
+            } else if (item.tipo_registro === 'pagamento_servico') {
+                endpoint = `${API_URL}/pagamentos-servico/${item.id}`;
+            } else if (item.tipo_registro === 'parcela_individual') {
+                // Parcelas não podem ser deletadas diretamente
+                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
+                return;
+            } else {
+                // Tentar identificar pelo ID
+                if (String(item.id).startsWith('parcela-')) {
+                    alert('Parcelas não podem ser excluídas individualmente.');
+                    return;
+                }
+                endpoint = `${API_URL}/lancamentos/${item.id}`;
+            }
+            
+            const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
+            if (response.ok) {
+                alert('Item excluído com sucesso!');
+                if (fetchObraData) fetchObraData();
+            } else {
+                throw new Error('Erro ao excluir');
+            }
+        } catch (err) {
+            console.error('Erro ao excluir:', err);
+            alert('Erro ao excluir item');
+        }
+    };
     
     return (
         <div className="card" style={{ marginTop: '20px' }}>
@@ -1140,6 +1179,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar }) => {
                                     <th>Fornecedor</th>
                                     <th>Valor</th>
                                     <th>Status</th>
+                                    {isAdmin && <th style={{width: '50px'}}>Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -1169,6 +1209,26 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar }) => {
                                                 ✓ Pago
                                             </span>
                                         </td>
+                                        {isAdmin && (
+                                            <td style={{textAlign: 'center'}}>
+                                                {item.tipo_registro !== 'parcela_individual' && !String(item.id).startsWith('parcela-') && (
+                                                    <button 
+                                                        onClick={() => handleDelete(item)}
+                                                        style={{ 
+                                                            background: 'none', 
+                                                            border: 'none', 
+                                                            cursor: 'pointer', 
+                                                            fontSize: '1.1em', 
+                                                            padding: '3px', 
+                                                            color: '#dc3545' 
+                                                        }}
+                                                        title="Excluir"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                )}
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>
@@ -5221,6 +5281,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                             <HistoricoPagamentosCard 
                                 itemsPagos={itemsPagos}
                                 itemsAPagar={itemsAPagar}
+                                user={user}
+                                fetchObraData={fetchObraData}
                             />
                         </div>
                     )}
