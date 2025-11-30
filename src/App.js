@@ -1459,7 +1459,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
 
     return (
-        <Modal onClose={onClose}>
+        <Modal onClose={onClose} customWidth="650px">
             {!isEditing ? (
                 <div>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -1474,38 +1474,40 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
-                    <div className="tabela-scroll-container" style={{maxHeight: '200px'}}> 
-                        <table className="tabela-pagamentos" style={{width: '100%'}}>
+                    <div className="tabela-scroll-container" style={{maxHeight: '250px', overflowX: 'auto'}}> 
+                        <table className="tabela-pagamentos" style={{width: '100%', minWidth: '500px'}}>
                             <thead>
                                 <tr>
-                                    <th>Data</th>
-                                    <th>Tipo</th>
-                                    <th>Fornecedor</th>
-                                    <th>Valor Total</th>
-                                    <th>Valor Pago</th>
-                                    {(user.role === 'administrador' || user.role === 'master') && <th style={{width: '80px'}}>Ações</th>}
+                                    <th style={{minWidth: '85px'}}>Data</th>
+                                    <th style={{minWidth: '80px'}}>Tipo</th>
+                                    <th style={{minWidth: '80px'}}>Fornecedor</th>
+                                    <th style={{minWidth: '110px', textAlign: 'right'}}>Valor Total</th>
+                                    <th style={{minWidth: '110px', textAlign: 'right'}}>Valor Pago</th>
+                                    {(user.role === 'administrador' || user.role === 'master') && <th style={{width: '50px'}}>Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {servico.pagamentos && servico.pagamentos.length > 0 ? (
                                     servico.pagamentos.map((pag) => (
-                                        <tr key={pag.id}>
-                                            <td>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Inválida'}</td>
-                                            <td>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
-                                            <td>{pag.fornecedor || 'N/A'}</td>
-                                            <td>{formatCurrency(pag.valor_total)}</td>
-                                            <td>{formatCurrency(pag.valor_pago)}</td>
+                                        <tr key={pag.id || pag.parcela_id}>
+                                            <td style={{whiteSpace: 'nowrap'}}>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                                            <td style={{fontSize: '0.85em'}}>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
+                                            <td style={{fontSize: '0.85em'}}>{pag.fornecedor || '-'}</td>
+                                            <td style={{textAlign: 'right', whiteSpace: 'nowrap', fontWeight: '500'}}>{formatCurrency(pag.valor_total)}</td>
+                                            <td style={{textAlign: 'right', whiteSpace: 'nowrap', fontWeight: '500', color: '#2e7d32'}}>{formatCurrency(pag.valor_pago)}</td>
                                             
                                             {(user.role === 'administrador' || user.role === 'master') && (
                                                 <td style={{textAlign: 'center'}}>
-                                                    <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em', padding: '5px', color: '#dc3545' }} > 🗑️ </button>
+                                                    {!pag.is_parcela && (
+                                                        <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em', padding: '3px', color: '#dc3545' }} > 🗑️ </button>
+                                                    )}
                                                 </td>
                                             )}
                                         </tr>
                                     ))
                                  ) : (
                                     <tr>
-                                        <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center'}}>Nenhum pagamento rápido registrado.</td>
+                                        <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center', padding: '20px', color: '#999'}}>Nenhum pagamento registrado.</td>
                                     </tr>
                                 )}
                             </tbody>
