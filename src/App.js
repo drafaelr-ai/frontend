@@ -1478,14 +1478,28 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
     
     const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
 
-    const handleDeletarPagamento = (pagamentoId) => {
-        fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
-        .then(() => {
-             if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
-             else { window.location.reload(); }
-        })
-        .catch(error => console.error('Erro:', error));
+    const handleDeletarPagamento = async (pagamentoId) => {
+        if (!window.confirm('Deseja excluir este pagamento?')) return;
+        
+        try {
+            const response = await fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.erro || 'Erro ao deletar');
+            }
+            
+            alert('Pagamento excluído com sucesso!');
+            if (fetchObraData && obraId) { 
+                fetchObraData(obraId); 
+                onClose(); 
+            } else { 
+                window.location.reload(); 
+            }
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+            alert('Erro ao deletar: ' + error.message);
+        }
     };
 
     const handleDeletarServico = () => {
