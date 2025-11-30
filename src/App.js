@@ -851,9 +851,8 @@ const GastosPorSegmentoChart = ({ data }) => {
 
 
 // --- COMPONENTE: SERVIÇOS DA OBRA (Card para Home) ---
-const ServicosDaObraCard = ({ servicos, onNavigateToFinanceiro }) => {
+const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
-    const [servicoSelecionado, setServicoSelecionado] = useState(null);
     
     const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
     
@@ -915,10 +914,7 @@ const ServicosDaObraCard = ({ servicos, onNavigateToFinanceiro }) => {
                         gap: '15px'
                     }}>
                         {servicosExibidos.map(servico => {
-                            const valorMO = getValorMO(servico);
-                            const valorMaterial = getValorMaterial(servico);
-                            const valorEquipamento = getValorEquipamento(servico);
-                            const totalServico = valorMO + valorMaterial + valorEquipamento;
+                            const totalServico = getValorMO(servico) + getValorMaterial(servico) + getValorEquipamento(servico);
                             const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
                                                servico.status === 'Em Andamento' ? '#2196F3' : 
                                                servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
@@ -934,7 +930,7 @@ const ServicosDaObraCard = ({ servicos, onNavigateToFinanceiro }) => {
                                         cursor: 'pointer',
                                         transition: 'transform 0.2s, box-shadow 0.2s'
                                     }}
-                                    onClick={() => setServicoSelecionado(servico)}
+                                    onClick={() => onViewServico(servico)}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.transform = 'translateY(-2px)';
                                         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -1082,187 +1078,6 @@ const ServicosDaObraCard = ({ servicos, onNavigateToFinanceiro }) => {
                         </div>
                     )}
                 </>
-            )}
-            
-            {/* Modal de detalhes do serviço */}
-            {servicoSelecionado && (
-                <div 
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 10000,
-                        padding: '20px'
-                    }}
-                    onClick={() => setServicoSelecionado(null)}
-                >
-                    <div 
-                        style={{
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            padding: '30px',
-                            maxWidth: '500px',
-                            width: '100%',
-                            maxHeight: '90vh',
-                            overflowY: 'auto',
-                            position: 'relative'
-                        }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <button 
-                            onClick={() => setServicoSelecionado(null)}
-                            style={{
-                                position: 'absolute',
-                                top: '15px',
-                                right: '15px',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '1.5em',
-                                cursor: 'pointer',
-                                color: '#999'
-                            }}
-                        >
-                            ×
-                        </button>
-                        
-                        <h3 style={{ marginBottom: '20px', fontSize: '1.4em', color: '#333' }}>
-                            🔧 {servicoSelecionado.nome}
-                        </h3>
-                        
-                        {/* Status */}
-                        <div style={{ marginBottom: '15px' }}>
-                            <span style={{
-                                padding: '5px 12px',
-                                borderRadius: '20px',
-                                backgroundColor: servicoSelecionado.status === 'Concluído' ? '#4CAF50' : 
-                                               servicoSelecionado.status === 'Em Andamento' ? '#2196F3' : 
-                                               servicoSelecionado.status === 'Pausado' ? '#ff9800' : '#9e9e9e',
-                                color: 'white',
-                                fontSize: '0.9em'
-                            }}>
-                                {servicoSelecionado.status || 'A Iniciar'}
-                            </span>
-                        </div>
-                        
-                        {/* Valores */}
-                        <div style={{ 
-                            backgroundColor: '#f8f9fa', 
-                            padding: '20px', 
-                            borderRadius: '8px',
-                            marginBottom: '20px'
-                        }}>
-                            <h4 style={{ marginBottom: '15px', color: '#555' }}>💰 Valores</h4>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Mão de Obra:</span>
-                                    <strong style={{ color: '#1565c0' }}>
-                                        {formatCurrency(getValorMO(servicoSelecionado))}
-                                    </strong>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Material:</span>
-                                    <strong style={{ color: '#2e7d32' }}>
-                                        {formatCurrency(getValorMaterial(servicoSelecionado))}
-                                    </strong>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Equipamento:</span>
-                                    <strong style={{ color: '#f57c00' }}>
-                                        {formatCurrency(getValorEquipamento(servicoSelecionado))}
-                                    </strong>
-                                </div>
-                                <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '5px 0' }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <strong>TOTAL:</strong>
-                                    <strong style={{ fontSize: '1.2em', color: 'var(--cor-primaria)' }}>
-                                        {formatCurrency(
-                                            getValorMO(servicoSelecionado) + 
-                                            getValorMaterial(servicoSelecionado) + 
-                                            getValorEquipamento(servicoSelecionado)
-                                        )}
-                                    </strong>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {/* Execução */}
-                        {servicoSelecionado.execucao !== undefined && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ marginBottom: '10px', color: '#555' }}>📊 Execução</h4>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '15px' 
-                                }}>
-                                    <div style={{
-                                        flex: 1,
-                                        height: '10px',
-                                        backgroundColor: '#e0e0e0',
-                                        borderRadius: '5px',
-                                        overflow: 'hidden'
-                                    }}>
-                                        <div style={{
-                                            width: `${servicoSelecionado.execucao || 0}%`,
-                                            height: '100%',
-                                            backgroundColor: '#4CAF50',
-                                            borderRadius: '5px'
-                                        }} />
-                                    </div>
-                                    <span style={{ fontWeight: 'bold', minWidth: '50px' }}>
-                                        {servicoSelecionado.execucao || 0}%
-                                    </span>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Datas */}
-                        {(servicoSelecionado.data_inicio || servicoSelecionado.data_fim) && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ marginBottom: '10px', color: '#555' }}>📅 Datas</h4>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                    {servicoSelecionado.data_inicio && (
-                                        <div>
-                                            <div style={{ fontSize: '0.85em', color: '#999' }}>Início</div>
-                                            <div>{new Date(servicoSelecionado.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-                                        </div>
-                                    )}
-                                    {servicoSelecionado.data_fim && (
-                                        <div>
-                                            <div style={{ fontSize: '0.85em', color: '#999' }}>Previsão Fim</div>
-                                            <div>{new Date(servicoSelecionado.data_fim + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Botões */}
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button 
-                                onClick={() => setServicoSelecionado(null)}
-                                className="voltar-btn"
-                            >
-                                Fechar
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    setServicoSelecionado(null);
-                                    onNavigateToFinanceiro();
-                                }}
-                                className="submit-btn"
-                            >
-                                ✏️ Editar Serviço
-                            </button>
-                        </div>
-                    </div>
-                </div>
             )}
         </div>
     );
@@ -5237,6 +5052,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             {/* Quadro de Serviços */}
                             <ServicosDaObraCard 
                                 servicos={servicos}
+                                onViewServico={setViewingServico}
                                 onNavigateToFinanceiro={() => setCurrentPage('financeiro')}
                             />
                             
