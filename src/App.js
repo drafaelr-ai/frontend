@@ -850,8 +850,8 @@ const GastosPorSegmentoChart = ({ data }) => {
 // ---------------------------------
 
 
-// --- COMPONENTE: SERVIÇOS DA OBRA (Card para Home) ---
-const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro }) => {
+// --- COMPONENTE: ETAPAS E SERVIÇOS (Card para Home) ---
+const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     
     const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
@@ -876,7 +876,7 @@ const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                 alignItems: 'center',
                 gap: '10px'
             }}>
-                🔧 Serviços da Obra
+                🔧 Etapas e Serviços
                 <span style={{ 
                     fontSize: '0.6em', 
                     backgroundColor: 'var(--cor-primaria)', 
@@ -910,7 +910,7 @@ const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                 <>
                     <div style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
                         gap: '15px'
                     }}>
                         {servicosExibidos.map(servico => {
@@ -943,19 +943,22 @@ const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                                     <div style={{ 
                                         fontWeight: 'bold', 
                                         marginBottom: '8px',
-                                        fontSize: '1.05em',
-                                        color: '#333'
+                                        fontSize: '0.95em',
+                                        color: '#333',
+                                        lineHeight: '1.3'
                                     }}>
                                         {servico.nome}
                                     </div>
                                     <div style={{ 
                                         display: 'flex', 
                                         justifyContent: 'space-between',
-                                        alignItems: 'center'
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap',
+                                        gap: '5px'
                                     }}>
                                         <span style={{
-                                            fontSize: '0.8em',
-                                            padding: '3px 8px',
+                                            fontSize: '0.75em',
+                                            padding: '2px 6px',
                                             borderRadius: '4px',
                                             backgroundColor: statusColor,
                                             color: 'white'
@@ -964,6 +967,7 @@ const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                                         </span>
                                         <span style={{ 
                                             fontWeight: 'bold',
+                                            fontSize: '0.95em',
                                             color: totalServico > 0 ? 'var(--cor-primaria)' : '#999'
                                         }}>
                                             {formatCurrency(totalServico)}
@@ -1077,6 +1081,138 @@ const ServicosDaObraCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                             </button>
                         </div>
                     )}
+                </>
+            )}
+        </div>
+    );
+};
+
+
+// --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
+const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar }) => {
+    const [mostrarTodos, setMostrarTodos] = useState(false);
+    const ITENS_INICIAIS = 10;
+    
+    const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
+    const totalPago = itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
+    const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
+    
+    return (
+        <div className="card" style={{ marginTop: '20px' }}>
+            <h2 style={{ 
+                fontSize: '1.5em', 
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+            }}>
+                💰 Histórico de Pagamentos
+                <span style={{ 
+                    fontSize: '0.6em', 
+                    backgroundColor: '#4CAF50', 
+                    color: 'white',
+                    padding: '4px 10px',
+                    borderRadius: '12px'
+                }}>
+                    {itemsPagos.length} pagos
+                </span>
+            </h2>
+            
+            {itemsPagos.length === 0 ? (
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '30px', 
+                    color: '#999',
+                    backgroundColor: '#f9f9f9',
+                    borderRadius: '8px'
+                }}>
+                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>📋</div>
+                    <p>Nenhum pagamento registrado</p>
+                </div>
+            ) : (
+                <>
+                    <div className="tabela-scroll-container" style={{ maxHeight: mostrarTodos ? '600px' : '400px', overflowY: 'auto' }}>
+                        <table className="tabela-pagamentos" style={{ width: '100%' }}>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Fornecedor</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pagamentosExibidos.map((item, idx) => (
+                                    <tr key={item.id || idx}>
+                                        <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                        <td>
+                                            <div style={{ fontWeight: '500' }}>{item.descricao}</div>
+                                            {item.servico_nome && (
+                                                <div style={{ fontSize: '0.85em', color: '#666' }}>
+                                                    Serviço: {item.servico_nome}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>{item.fornecedor || '-'}</td>
+                                        <td style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                            {formatCurrency(item.valor_pago || item.valor_total || 0)}
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                padding: '3px 8px',
+                                                borderRadius: '4px',
+                                                backgroundColor: '#4CAF50',
+                                                color: 'white',
+                                                fontSize: '0.8em'
+                                            }}>
+                                                ✓ Pago
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {itemsPagos.length > ITENS_INICIAIS && (
+                        <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                            <button 
+                                onClick={() => setMostrarTodos(!mostrarTodos)}
+                                className="voltar-btn"
+                            >
+                                {mostrarTodos 
+                                    ? '↑ Mostrar menos' 
+                                    : `Ver todos os ${itemsPagos.length} pagamentos →`
+                                }
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Resumo de totais */}
+                    <div style={{ 
+                        marginTop: '15px', 
+                        padding: '15px',
+                        backgroundColor: '#e8f5e9',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-around',
+                        flexWrap: 'wrap',
+                        gap: '15px'
+                    }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Pago</div>
+                            <div style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.2em' }}>
+                                {formatCurrency(totalPago)}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.85em', color: '#666' }}>Pendente</div>
+                            <div style={{ fontWeight: 'bold', color: '#f57c00', fontSize: '1.2em' }}>
+                                {formatCurrency(totalPendente)}
+                            </div>
+                        </div>
+                    </div>
                 </>
             )}
         </div>
@@ -5040,6 +5176,17 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
+                            {/* Título da página */}
+                            <h1 style={{ 
+                                fontSize: '1.8em', 
+                                marginBottom: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                🏠 Início - {obraSelecionada.nome}
+                            </h1>
+                            
                             {/* Dashboard com Gráficos */}
                             <DashboardObra 
                                 obraId={obraSelecionada.id}
@@ -5049,8 +5196,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 cronograma={cronogramaObras}
                             />
                             
-                            {/* Quadro de Serviços */}
-                            <ServicosDaObraCard 
+                            {/* Quadro de Etapas e Serviços */}
+                            <EtapasServicosCard 
                                 servicos={servicos}
                                 onViewServico={setViewingServico}
                                 onNavigateToFinanceiro={() => setCurrentPage('financeiro')}
@@ -5068,122 +5215,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 simplified={true}
                             />
                             
-                            {/* Histórico de Pagamentos Recentes */}
-                            <div className="card" style={{ marginTop: '20px' }}>
-                                <h2 style={{ 
-                                    fontSize: '1.5em', 
-                                    marginBottom: '20px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px'
-                                }}>
-                                    💰 Histórico de Pagamentos
-                                    <span style={{ 
-                                        fontSize: '0.6em', 
-                                        backgroundColor: '#4CAF50', 
-                                        color: 'white',
-                                        padding: '4px 10px',
-                                        borderRadius: '12px'
-                                    }}>
-                                        {itemsPagos.length} pagos
-                                    </span>
-                                </h2>
-                                
-                                {itemsPagos.length === 0 ? (
-                                    <div style={{ 
-                                        textAlign: 'center', 
-                                        padding: '30px', 
-                                        color: '#999',
-                                        backgroundColor: '#f9f9f9',
-                                        borderRadius: '8px'
-                                    }}>
-                                        <div style={{ fontSize: '2em', marginBottom: '10px' }}>📋</div>
-                                        <p>Nenhum pagamento registrado</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="tabela-scroll-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                            <table className="tabela-pagamentos" style={{ width: '100%' }}>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Data</th>
-                                                        <th>Descrição</th>
-                                                        <th>Fornecedor</th>
-                                                        <th>Valor</th>
-                                                        <th>Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {itemsPagos.slice(0, 15).map((item, idx) => (
-                                                        <tr key={item.id || idx}>
-                                                            <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                                            <td>
-                                                                <div style={{ fontWeight: '500' }}>{item.descricao}</div>
-                                                                {item.servico_nome && (
-                                                                    <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                                                        Serviço: {item.servico_nome}
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td>{item.fornecedor || '-'}</td>
-                                                            <td style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                                                {formatCurrency(item.valor_pago || item.valor_total || 0)}
-                                                            </td>
-                                                            <td>
-                                                                <span style={{
-                                                                    padding: '3px 8px',
-                                                                    borderRadius: '4px',
-                                                                    backgroundColor: '#4CAF50',
-                                                                    color: 'white',
-                                                                    fontSize: '0.8em'
-                                                                }}>
-                                                                    ✓ Pago
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        
-                                        {itemsPagos.length > 15 && (
-                                            <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                                                <button 
-                                                    onClick={() => setCurrentPage('financeiro')}
-                                                    className="voltar-btn"
-                                                >
-                                                    Ver todos os {itemsPagos.length} pagamentos →
-                                                </button>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Resumo de totais */}
-                                        <div style={{ 
-                                            marginTop: '15px', 
-                                            padding: '15px',
-                                            backgroundColor: '#e8f5e9',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'space-around',
-                                            flexWrap: 'wrap',
-                                            gap: '15px'
-                                        }}>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Total Pago</div>
-                                                <div style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.2em' }}>
-                                                    {formatCurrency(itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0))}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>Pendente</div>
-                                                <div style={{ fontWeight: 'bold', color: '#f57c00', fontSize: '1.2em' }}>
-                                                    {formatCurrency(itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            {/* Histórico de Pagamentos */}
+                            <HistoricoPagamentosCard 
+                                itemsPagos={itemsPagos}
+                                itemsAPagar={itemsAPagar}
+                            />
                         </div>
                     )}
 
