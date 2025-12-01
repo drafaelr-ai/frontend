@@ -851,7 +851,7 @@ const GastosPorSegmentoChart = ({ data }) => {
 
 
 // --- COMPONENTE: ETAPAS E SERVIÇOS (Card para Home) ---
-const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro }) => {
+const EtapasServicosCard = ({ servicos, onViewServico, onAddServico, onNavigateToCronograma }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     
     const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
@@ -899,7 +899,7 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                     <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
                     <p>Nenhum serviço cadastrado</p>
                     <button 
-                        onClick={onNavigateToFinanceiro}
+                        onClick={onAddServico}
                         className="submit-btn"
                         style={{ marginTop: '15px' }}
                     >
@@ -1024,7 +1024,7 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                             </button>
                         )}
                         <button 
-                            onClick={onNavigateToFinanceiro}
+                            onClick={onAddServico}
                             className="submit-btn"
                             style={{ padding: '10px 20px' }}
                         >
@@ -1081,7 +1081,7 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                         }}>
                             ⚠️ Os serviços não possuem valores cadastrados. 
                             <button 
-                                onClick={onNavigateToFinanceiro}
+                                onClick={onNavigateToCronograma}
                                 style={{ 
                                     marginLeft: '10px',
                                     background: 'none',
@@ -5290,7 +5290,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                             <EtapasServicosCard 
                                 servicos={servicos}
                                 onViewServico={setViewingServico}
-                                onNavigateToFinanceiro={() => setCurrentPage('cronograma-obra')}
+                                onAddServico={() => setAddServicoModalVisible(true)}
+                                onNavigateToCronograma={() => setCurrentPage('cronograma-obra')}
                             />
                             
                             {/* Cronograma Financeiro Simplificado */}
