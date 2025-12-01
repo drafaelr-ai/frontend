@@ -5836,6 +5836,72 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     const [modalAberto, setModalAberto] = useState(false);
     const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
     const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
+    const [reanexandoId, setReanexandoId] = useState(null); // ID da movimentação sendo editada
+
+    // Função para reanexar comprovante
+    const handleReanexarComprovante = async (movId, file) => {
+        if (!file) return;
+        
+        try {
+            // Comprimir imagem
+            const compressImage = (file) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 1200;
+                            const MAX_HEIGHT = 1200;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+            
+            const base64 = await compressImage(file);
+            
+            // Atualizar movimentação com novo comprovante
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({ comprovante_url: base64 })
+                }
+            );
+            
+            if (!response.ok) throw new Error('Erro ao atualizar comprovante');
+            
+            alert('✅ Comprovante atualizado com sucesso!');
+            carregarDados(); // Recarregar dados
+        } catch (err) {
+            console.error('Erro ao reanexar comprovante:', err);
+            alert('Erro ao atualizar comprovante');
+        } finally {
+            setReanexandoId(null);
+        }
+    };
 
     useEffect(() => {
         carregarDados();
@@ -6139,6 +6205,40 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                             Obs: {mov.observacoes}
                                         </div>
                                     )}
+                                    
+                                    {/* Botão para reanexar comprovante */}
+                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <label 
+                                            style={{ 
+                                                cursor: 'pointer',
+                                                padding: '5px 10px',
+                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
+                                                color: 'white',
+                                                borderRadius: '5px',
+                                                fontSize: '0.85em',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '5px'
+                                            }}
+                                        >
+                                            {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    if (e.target.files[0]) {
+                                                        handleReanexarComprovante(mov.id, e.target.files[0]);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                        {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
+                                            <span style={{ fontSize: '0.75em', color: '#999' }}>
+                                                ⚠️ Precisa reanexar
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
