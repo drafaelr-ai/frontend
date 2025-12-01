@@ -5439,12 +5439,12 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                     {isAddServicoModalVisible && <AddServicoModal 
                         onClose={() => setAddServicoModalVisible(false)} 
-                        onSave={handleAddServico} 
+                        onSave={handleSaveServico} 
                     />}
 
                     {isAddLancamentoModalVisible && <AddLancamentoModal 
                         onClose={() => setAddLancamentoModalVisible(false)} 
-                        onSave={handleAddLancamento} 
+                        onSave={handleSaveLancamento} 
                     />}
                 </main>
             </div>
