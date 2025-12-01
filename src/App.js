@@ -5276,7 +5276,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             <EtapasServicosCard 
                                 servicos={servicos}
                                 onViewServico={setViewingServico}
-                                onNavigateToFinanceiro={() => setCurrentPage('financeiro')}
+                                onNavigateToFinanceiro={() => setCurrentPage('cronograma-obra')}
                             />
                             
                             {/* Cronograma Financeiro Simplificado */}
