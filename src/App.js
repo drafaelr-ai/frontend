@@ -1004,8 +1004,15 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                         })}
                     </div>
                     
-                    {servicos.length > 6 && (
-                        <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                    {/* Botões de ação */}
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        gap: '15px',
+                        marginTop: '15px',
+                        flexWrap: 'wrap'
+                    }}>
+                        {servicos.length > 6 && (
                             <button 
                                 onClick={() => setMostrarTodos(!mostrarTodos)}
                                 className="voltar-btn"
@@ -1015,8 +1022,15 @@ const EtapasServicosCard = ({ servicos, onViewServico, onNavigateToFinanceiro })
                                     : `Ver todos os ${servicos.length} serviços →`
                                 }
                             </button>
-                        </div>
-                    )}
+                        )}
+                        <button 
+                            onClick={onNavigateToFinanceiro}
+                            className="submit-btn"
+                            style={{ padding: '10px 20px' }}
+                        >
+                            + Adicionar Serviço
+                        </button>
+                    </div>
                     
                     {/* Resumo financeiro dos serviços */}
                     <div style={{ 
