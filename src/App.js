@@ -1,63 +1,22 @@
-import React, { useState, useEffect, useMemo, useContext, createContext } from 'react';
-import './App.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import './CronogramaObra.css';
 
-// Imports do Chart.js
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
-
-// MUDANÇA 1: Import do componente DiarioObras
-import DiarioObras from './components/DiarioObras';
-
-// MUDANÇA 2: Import do componente CronogramaObra
-import CronogramaObra from './components/CronogramaObra';
-
-// NOVO: Import do Dashboard com gráficos
-import DashboardObra from './components/DashboardObra';
-import './components/DashboardObra.css';
-
-// Import para compressão de imagens
-import { compressImages } from './utils/imageCompression';
-
-// Registrar os componentes do Chart.js
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-// --- CONFIGURAÇÃO INICIAL ---
 const API_URL = 'https://backend-production-78c9.up.railway.app';
 
-// Helper para exibir a prioridade
-const PrioridadeBadge = ({ prioridade }) => {
-    let p = parseInt(prioridade, 10) || 0;
-    if (p === 0) {
-        return <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>;
-    }
-    
-    let color = '#6c757d'; // 1-2 (Baixa)
-    if (p === 3) color = '#007bff'; // 3 (Média)
-    if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Urgente)
-
-    const style = {
-        backgroundColor: color,
-        color: 'white',
-        padding: '3px 8px',
-        borderRadius: '12px',
-        fontSize: '0.8em',
-        fontWeight: 'bold',
-        display: 'inline-block',
-        minWidth: '10px',
-        textAlign: 'center'
-    };
-    return <span style={style}>{p}</span>;
+// Helper para formatar datas
+const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR');
 };
 
-
-// Helper para formatar BRL
+// Helper para formatar moeda
 const formatCurrency = (value) => {
-    if (typeof value !== 'number') { value = 0; }
+    if (typeof value !== 'number') value = 0;
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// Helper para pegar a data de hoje (para novos lançamentos)
+// Helper para obter data de hoje
 const getTodayString = () => {
     const today = new Date();
     const offset = today.getTimezoneOffset();
@@ -65,8093 +24,1532 @@ const getTodayString = () => {
     return todayWithOffset.toISOString().split('T')[0];
 };
 
-// --- COMPONENTE SIDEBAR ---
-const Sidebar = ({ 
-    user, 
-    currentPage, 
-    setCurrentPage, 
-    obraSelecionada, 
-    setObraSelecionada,
-    onLogout,
-    isCollapsed,
-    setIsCollapsed 
-}) => {
-    // Menu items - só aparece quando obra está selecionada
-    const menuItems = [
-        { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
-        { id: 'cronograma-obra', icon: '📅', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
-        { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
-        { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
-        { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
-        { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
-        { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
-    ];
-
-    const bottomItems = [
-        { id: 'obras', icon: '🏗️', label: 'Minhas Obras', shortLabel: 'Obras' },
-        { id: 'usuarios', icon: '👥', label: 'Gerenciar Usuários', shortLabel: 'Usuários', masterOnly: true },
-    ];
-
-    const handleItemClick = (item) => {
-        if (item.id === 'obras') {
-            setObraSelecionada(null);
-        }
-        // Usar navigateTo para atualizar histórico do browser
-        if (typeof window.navigateTo === 'function') {
-            window.navigateTo(item.id, item.id !== 'obras' ? obraSelecionada?.id : null);
-        } else {
-            setCurrentPage(item.id);
-        }
-    };
-
-    return (
-        <>
-            {/* Overlay para mobile */}
-            {!isCollapsed && (
-                <div 
-                    className="sidebar-overlay"
-                    onClick={() => setIsCollapsed(true)}
-                />
-            )}
-            
-            <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-                {/* Logo/Header */}
-                <div className="sidebar-header">
-                    <div className="sidebar-logo">
-                        <span className="logo-icon">🏗️</span>
-                        {!isCollapsed && <span className="logo-text">OBRALY</span>}
-                    </div>
-                    <button 
-                        className="sidebar-toggle"
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        title={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-                    >
-                        {isCollapsed ? '→' : '←'}
-                    </button>
-                </div>
-
-                {/* Obra Selecionada */}
-                {obraSelecionada && (
-                    <div className="sidebar-obra-info">
-                        <div className="obra-badge">
-                            <span className="obra-icon">📍</span>
-                            {!isCollapsed && (
-                                <div className="obra-details">
-                                    <span className="obra-nome">{obraSelecionada.nome}</span>
-                                    <span className="obra-cliente">{obraSelecionada.cliente || 'N/A'}</span>
-                                </div>
-                            )}
-                        </div>
-                        {!isCollapsed && (
-                            <button 
-                                className="trocar-obra-btn"
-                                onClick={() => {
-                                    setObraSelecionada(null);
-                                    setCurrentPage('obras');
-                                }}
-                                title="Trocar obra"
-                            >
-                                ↻
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                {/* Menu Principal */}
-                <nav className="sidebar-nav">
-                    <ul className="sidebar-menu">
-                        {menuItems.map(item => {
-                            // Verificar permissões
-                            if (item.adminOnly && user.role !== 'administrador' && user.role !== 'master') {
-                                return null;
-                            }
-                            
-                            const isActive = currentPage === item.id;
-                            
-                            return (
-                                <li key={item.id}>
-                                    <button
-                                        className={`sidebar-item ${isActive ? 'active' : ''}`}
-                                        onClick={() => handleItemClick(item)}
-                                        title={isCollapsed ? item.label : ''}
-                                    >
-                                        <span className="item-icon">{item.icon}</span>
-                                        {!isCollapsed && <span className="item-label">{item.label}</span>}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-
-                    {/* Separador */}
-                    <div className="sidebar-divider"></div>
-
-                    {/* Menu Inferior */}
-                    <ul className="sidebar-menu bottom">
-                        {bottomItems.map(item => {
-                            if (item.masterOnly && user.role !== 'master') {
-                                return null;
-                            }
-                            
-                            // Mostrar "Minhas Obras" apenas quando há obra selecionada
-                            if (item.id === 'obras' && !obraSelecionada) {
-                                return null;
-                            }
-                            
-                            const isActive = currentPage === item.id;
-                            
-                            return (
-                                <li key={item.id}>
-                                    <button
-                                        className={`sidebar-item ${isActive ? 'active' : ''}`}
-                                        onClick={() => handleItemClick(item)}
-                                        title={isCollapsed ? item.label : ''}
-                                    >
-                                        <span className="item-icon">{item.icon}</span>
-                                        {!isCollapsed && <span className="item-label">{item.label}</span>}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
-
-                {/* Footer com usuário */}
-                <div className="sidebar-footer">
-                    <div className="user-info">
-                        <div className="user-avatar">
-                            {user.nome ? user.nome.charAt(0).toUpperCase() : '?'}
-                        </div>
-                        {!isCollapsed && (
-                            <div className="user-details">
-                                <span className="user-name">{user.nome || 'Usuário'}</span>
-                                <span className="user-role">
-                                    {user.role === 'master' ? '👑 Master' : 
-                                     user.role === 'administrador' ? '⭐ Admin' : '👤 Usuário'}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                    <button 
-                        className="logout-btn"
-                        onClick={onLogout}
-                        title="Sair"
-                    >
-                        {isCollapsed ? '🚪' : '🚪 Sair'}
-                    </button>
-                </div>
-            </aside>
-        </>
-    );
+// Helper para adicionar dias a uma data
+const addDays = (dateStr, days) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
 };
 
-// CSS da Sidebar (inline para facilitar)
-const SidebarStyles = () => (
-    <style>{`
-        /* === LAYOUT COM SIDEBAR === */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-            background: #f5f7fa;
-        }
-        
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 20px;
-            transition: margin-left 0.3s ease;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        
-        .main-content.sidebar-collapsed {
-            margin-left: 70px;
-        }
-        
-        /* === SIDEBAR === */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(180deg, #1a1f36 0%, #252b42 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            transition: width 0.3s ease;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-        }
-        
-        .sidebar.collapsed {
-            width: 70px;
-        }
-        
-        /* Header da Sidebar */
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-icon {
-            font-size: 28px;
-        }
-        
-        .logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
-        }
-        
-        .sidebar-toggle {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .sidebar-toggle:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        /* Obra Info */
-        .sidebar-obra-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: rgba(0,217,255,0.1);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .obra-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .obra-icon {
-            font-size: 18px;
-        }
-        
-        .obra-details {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        
-        .obra-nome {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #00d9ff;
-        }
-        
-        .obra-cliente {
-            font-size: 11px;
-            opacity: 0.7;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .trocar-obra-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        
-        .trocar-obra-btn:hover {
-            background: rgba(255,255,255,0.2);
-            transform: rotate(180deg);
-        }
-        
-        /* Navegação */
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px 0;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: calc(100% - 20px);
-            margin: 4px 10px;
-            padding: 12px 15px;
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-        }
-        
-        .sidebar-item:hover:not(.disabled) {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        
-        .sidebar-item.active {
-            background: linear-gradient(135deg, #00d9ff 0%, #00b8d9 100%);
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,217,255,0.3);
-        }
-        
-        .sidebar-item.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        .item-icon {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        .item-label {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .sidebar-divider {
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-            margin: 15px 20px;
-        }
-        
-        /* Footer */
-        .sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            color: #1a1f36;
-            flex-shrink: 0;
-        }
-        
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-        
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .user-role {
-            font-size: 11px;
-            opacity: 0.7;
-        }
-        
-        .logout-btn {
-            width: 100%;
-            padding: 10px;
-            background: rgba(220,53,69,0.2);
-            border: 1px solid rgba(220,53,69,0.3);
-            color: #ff6b6b;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(220,53,69,0.3);
-            border-color: rgba(220,53,69,0.5);
-        }
-        
-        /* Collapsed state */
-        .sidebar.collapsed .sidebar-header {
-            justify-content: center;
-            padding: 20px 10px;
-        }
-        
-        .sidebar.collapsed .sidebar-obra-info {
-            justify-content: center;
-            padding: 15px 10px;
-        }
-        
-        .sidebar.collapsed .sidebar-item {
-            justify-content: center;
-            padding: 12px;
-            margin: 4px 8px;
-            width: calc(100% - 16px);
-        }
-        
-        .sidebar.collapsed .user-info {
-            justify-content: center;
-        }
-        
-        .sidebar.collapsed .logout-btn {
-            padding: 10px;
-            font-size: 18px;
-        }
-        
-        /* Overlay para mobile */
-        .sidebar-overlay {
-            display: none;
-        }
-        
-        /* === MOBILE === */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            
-            .sidebar:not(.collapsed) {
-                transform: translateX(0);
-            }
-            
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar-overlay {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-            
-            .mobile-header {
-                display: flex !important;
-                position: sticky;
-                top: 0;
-                background: #1a1f36;
-                color: white;
-                padding: 15px 20px;
-                margin: -20px -20px 20px -20px;
-                align-items: center;
-                justify-content: space-between;
-                z-index: 100;
-            }
-            
-            .mobile-menu-btn {
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-                padding: 5px;
-            }
-            
-            .mobile-logo {
-                font-size: 18px;
-                font-weight: 700;
-                background: linear-gradient(135deg, #00d9ff 0%, #00ff88 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-            
-            .mobile-obra-badge {
-                font-size: 12px;
-                background: rgba(0,217,255,0.2);
-                padding: 5px 10px;
-                border-radius: 12px;
-                color: #00d9ff;
-                max-width: 120px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-        }
-        
-        @media (min-width: 769px) {
-            .mobile-header {
-                display: none !important;
-            }
-        }
-    `}</style>
-);
-
-
-// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
-const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    
-    const headers = {
-        ...options.headers,
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        
-        // Mostrar alerta antes de recarregar
-        alert('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
-        
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-        
-        throw new Error('Sessão expirada. Faça o login novamente.');
-    }
-
-    return response;
-};
-
-
-// --- CONTEXTO DE AUTENTICAÇÃO ---
-const AuthContext = createContext(null);
-const useAuth = () => useContext(AuthContext);
-
-// --- COMPONENTE DE LOGIN ---
-const LoginScreen = () => {
-    const { login } = useAuth(); 
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
+    const [cronograma, setCronograma] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleLogin = (e) => {
-        e.preventDefault();
-        setError(null);
-        setIsLoading(true);
-
-        fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        })
-        .then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido'); });
-            }
-            return res.json();
-        })
-        .then(data => {
-            login(data); 
-        })
-        .catch(err => {
-            console.error("Erro no login:", err);
-            setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
-            setIsLoading(false);
-        });
-    };
-
-    return (
-        <div className="login-screen">
-            {/* Overlay para profundidade */}
-            <div className="overlay"></div>
-            
-            {/* Elementos flutuantes decorativos */}
-            <div className="floating-shape circle-1"></div>
-            <div className="floating-shape square-1"></div>
-            <div className="floating-shape triangle-1"></div>
-            
-            {/* Card de login */}
-            <div className="login-card">
-                <h1 style={{
-                    color: '#4f46e5',
-                    textAlign: 'center',
-                    fontSize: '2.5em',
-                    marginBottom: '30px',
-                    fontWeight: '700',
-                    margin: '0 0 30px 0'
-                }}>
-                    Obraly
-                </h1>
-
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <input
-                        type="text"
-                        placeholder="Usuário"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        style={{ 
-                            padding: '12px', 
-                            fontSize: '1em', 
-                            border: '1px solid #ccc', 
-                            borderRadius: '4px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Senha"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ 
-                            padding: '12px', 
-                            fontSize: '1em', 
-                            border: '1px solid #ccc', 
-                            borderRadius: '4px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
-                        required
-                    />
-                    <button 
-                        type="submit" 
-                        style={{ 
-                            padding: '12px', 
-                            fontSize: '1em', 
-                            background: '#4f46e5', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            fontWeight: '600'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = '#4338ca'}
-                        onMouseLeave={(e) => e.target.style.background = '#4f46e5'}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? 'Entrando...' : 'Entrar'}
-                    </button>
-                    {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
-                </form>
-            </div>
-        </div>
-    );
-};
-
-// Gráfico de Pizza
-const GastosPorSegmentoChart = ({ data }) => {
-    if (!data || Object.keys(data).length === 0) {
-        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gráfico.</p>;
-    }
-
-    const chartData = {
-        labels: Object.keys(data),
-        datasets: [
-            {
-                label: 'Valor Gasto (R$)',
-                data: Object.values(data),
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)', // Vermelho (Material)
-                    'rgba(54, 162, 235, 0.7)', // Azul (Mão de Obra)
-                    'rgba(255, 206, 86, 0.7)', // Amarelo (Serviço)
-                    'rgba(75, 192, 192, 0.7)', // Verde (Equipamentos)
-                    'rgba(153, 102, 255, 0.7)', // Roxo
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                ],
-                borderWidth: 1,
-            },
-        ],
-    };
-
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
-            },
-            title: {
-                display: false,
-            },
-        },
-    };
-
-    return (
-        <div style={{ position: 'relative', height: '350px' }}>
-            <Pie data={chartData} options={options} />
-        </div>
-    );
-};
-// ---------------------------------
-
-
-// --- COMPONENTE: ETAPAS E SERVIÇOS (Card para Home) ---
-const EtapasServicosCard = ({ servicos, onViewServico, onAddServico, onNavigateToCronograma }) => {
-    const [mostrarTodos, setMostrarTodos] = useState(false);
     
-    const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
-    
-    // Helper para pegar valor de MO (suporta ambos os nomes de campo)
-    const getValorMO = (s) => parseFloat(s.valor_mo || s.valor_global_mao_de_obra || 0);
-    const getValorMaterial = (s) => parseFloat(s.valor_material || s.valor_global_material || 0);
-    const getValorEquipamento = (s) => parseFloat(s.valor_equipamento || 0);
-    
-    // Calcular totais
-    const totalMO = servicos.reduce((sum, s) => sum + getValorMO(s), 0);
-    const totalMaterial = servicos.reduce((sum, s) => sum + getValorMaterial(s), 0);
-    const totalEquipamento = servicos.reduce((sum, s) => sum + getValorEquipamento(s), 0);
-    const totalGeral = totalMO + totalMaterial + totalEquipamento;
-    
-    return (
-        <div className="card" style={{ marginTop: '20px' }}>
-            <h2 style={{ 
-                fontSize: '1.5em', 
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-            }}>
-                🔧 Etapas e Serviços
-                <span style={{ 
-                    fontSize: '0.6em', 
-                    backgroundColor: 'var(--cor-primaria)', 
-                    color: 'white',
-                    padding: '4px 10px',
-                    borderRadius: '12px'
-                }}>
-                    {servicos.length}
-                </span>
-            </h2>
-            
-            {servicos.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px', 
-                    color: '#999',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '8px'
-                }}>
-                    <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
-                    <p>Nenhum serviço cadastrado</p>
-                    <button 
-                        onClick={onAddServico}
-                        className="submit-btn"
-                        style={{ marginTop: '15px' }}
-                    >
-                        + Adicionar Serviço
-                    </button>
-                </div>
-            ) : (
-                <>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                        gap: '15px'
-                    }}>
-                        {servicosExibidos.map(servico => {
-                            const totalServico = getValorMO(servico) + getValorMaterial(servico) + getValorEquipamento(servico);
-                            const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
-                                               servico.status === 'Em Andamento' ? '#2196F3' : 
-                                               servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
-                            
-                            return (
-                                <div 
-                                    key={servico.id}
-                                    style={{
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '8px',
-                                        padding: '15px',
-                                        borderLeft: `4px solid ${statusColor}`,
-                                        cursor: 'pointer',
-                                        transition: 'transform 0.2s, box-shadow 0.2s'
-                                    }}
-                                    onClick={() => onViewServico(servico)}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <div style={{ 
-                                        fontWeight: 'bold', 
-                                        marginBottom: '8px',
-                                        fontSize: '0.95em',
-                                        color: '#333',
-                                        lineHeight: '1.3'
-                                    }}>
-                                        {servico.nome}
-                                    </div>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        flexWrap: 'wrap',
-                                        gap: '5px'
-                                    }}>
-                                        <span style={{
-                                            fontSize: '0.75em',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            backgroundColor: statusColor,
-                                            color: 'white'
-                                        }}>
-                                            {servico.status || 'A Iniciar'}
-                                        </span>
-                                        <span style={{ 
-                                            fontWeight: 'bold',
-                                            fontSize: '0.95em',
-                                            color: totalServico > 0 ? 'var(--cor-primaria)' : '#999'
-                                        }}>
-                                            {formatCurrency(totalServico)}
-                                        </span>
-                                    </div>
-                                    {servico.execucao > 0 && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between',
-                                                fontSize: '0.8em',
-                                                marginBottom: '4px'
-                                            }}>
-                                                <span>Execução</span>
-                                                <span>{servico.execucao}%</span>
-                                            </div>
-                                            <div style={{
-                                                height: '6px',
-                                                backgroundColor: '#e0e0e0',
-                                                borderRadius: '3px',
-                                                overflow: 'hidden'
-                                            }}>
-                                                <div style={{
-                                                    width: `${servico.execucao}%`,
-                                                    height: '100%',
-                                                    backgroundColor: statusColor,
-                                                    borderRadius: '3px'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Botões de ação */}
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        gap: '15px',
-                        marginTop: '15px',
-                        flexWrap: 'wrap'
-                    }}>
-                        {servicos.length > 6 && (
-                            <button 
-                                onClick={() => setMostrarTodos(!mostrarTodos)}
-                                className="voltar-btn"
-                            >
-                                {mostrarTodos 
-                                    ? '↑ Mostrar menos' 
-                                    : `Ver todos os ${servicos.length} serviços →`
-                                }
-                            </button>
-                        )}
-                        <button 
-                            onClick={onAddServico}
-                            className="submit-btn"
-                            style={{ padding: '10px 20px' }}
-                        >
-                            + Adicionar Serviço
-                        </button>
-                    </div>
-                    
-                    {/* Resumo financeiro dos serviços */}
-                    <div style={{ 
-                        marginTop: '20px', 
-                        padding: '15px',
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-around',
-                        flexWrap: 'wrap',
-                        gap: '15px'
-                    }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total MO</div>
-                            <div style={{ fontWeight: 'bold', color: '#1565c0' }}>
-                                {formatCurrency(totalMO)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Material</div>
-                            <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                {formatCurrency(totalMaterial)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Equipamento</div>
-                            <div style={{ fontWeight: 'bold', color: '#f57c00' }}>
-                                {formatCurrency(totalEquipamento)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>TOTAL GERAL</div>
-                            <div style={{ fontWeight: 'bold', fontSize: '1.2em', color: '#333' }}>
-                                {formatCurrency(totalGeral)}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {totalGeral === 0 && (
-                        <div style={{ 
-                            marginTop: '10px', 
-                            padding: '10px', 
-                            backgroundColor: '#fff3e0',
-                            borderRadius: '6px',
-                            textAlign: 'center',
-                            fontSize: '0.9em',
-                            color: '#e65100'
-                        }}>
-                            ⚠️ Os serviços não possuem valores cadastrados. 
-                            <button 
-                                onClick={onNavigateToCronograma}
-                                style={{ 
-                                    marginLeft: '10px',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--cor-primaria)',
-                                    textDecoration: 'underline',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Editar serviços
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
-    );
-};
-
-
-// --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
-const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData }) => {
-    const [mostrarTodos, setMostrarTodos] = useState(false);
-    const ITENS_INICIAIS = 10;
-    
-    const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
-    const totalPago = itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
-    const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
-    
-    const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
-    
-    const handleDelete = async (item) => {
-        if (!window.confirm(`Deseja excluir "${item.descricao}"?`)) return;
-        
-        try {
-            let endpoint = '';
-            
-            // Determinar qual endpoint usar baseado no tipo de registro
-            if (item.tipo_registro === 'lancamento') {
-                endpoint = `${API_URL}/lancamentos/${item.id}`;
-            } else if (item.tipo_registro === 'pagamento_servico') {
-                endpoint = `${API_URL}/pagamentos-servico/${item.id}`;
-            } else if (item.tipo_registro === 'parcela_individual') {
-                // Parcelas não podem ser deletadas diretamente
-                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
-                return;
-            } else {
-                // Tentar identificar pelo ID
-                if (String(item.id).startsWith('parcela-')) {
-                    alert('Parcelas não podem ser excluídas individualmente.');
-                    return;
-                }
-                endpoint = `${API_URL}/lancamentos/${item.id}`;
-            }
-            
-            const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
-            if (response.ok) {
-                alert('Item excluído com sucesso!');
-                if (fetchObraData) fetchObraData();
-            } else {
-                throw new Error('Erro ao excluir');
-            }
-        } catch (err) {
-            console.error('Erro ao excluir:', err);
-            alert('Erro ao excluir item');
-        }
-    };
-    
-    return (
-        <div className="card" style={{ marginTop: '20px' }}>
-            <h2 style={{ 
-                fontSize: '1.5em', 
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-            }}>
-                💰 Histórico de Pagamentos
-                <span style={{ 
-                    fontSize: '0.6em', 
-                    backgroundColor: '#4CAF50', 
-                    color: 'white',
-                    padding: '4px 10px',
-                    borderRadius: '12px'
-                }}>
-                    {itemsPagos.length} pagos
-                </span>
-            </h2>
-            
-            {itemsPagos.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '30px', 
-                    color: '#999',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '8px'
-                }}>
-                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>📋</div>
-                    <p>Nenhum pagamento registrado</p>
-                </div>
-            ) : (
-                <>
-                    <div className="tabela-scroll-container" style={{ maxHeight: mostrarTodos ? '600px' : '400px', overflowY: 'auto' }}>
-                        <table className="tabela-pagamentos" style={{ width: '100%' }}>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                    {isAdmin && <th style={{width: '50px'}}>Ações</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosExibidos.map((item, idx) => (
-                                    <tr key={item.id || idx}>
-                                        <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td>
-                                            <div style={{ fontWeight: '500' }}>{item.descricao}</div>
-                                            {item.servico_nome && (
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                                    Serviço: {item.servico_nome}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td>{item.fornecedor || '-'}</td>
-                                        <td style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                            {formatCurrency(item.valor_pago || item.valor_total || 0)}
-                                        </td>
-                                        <td>
-                                            <span style={{
-                                                padding: '3px 8px',
-                                                borderRadius: '4px',
-                                                backgroundColor: '#4CAF50',
-                                                color: 'white',
-                                                fontSize: '0.8em'
-                                            }}>
-                                                ✓ Pago
-                                            </span>
-                                        </td>
-                                        {isAdmin && (
-                                            <td style={{textAlign: 'center'}}>
-                                                {item.tipo_registro !== 'parcela_individual' && !String(item.id).startsWith('parcela-') && (
-                                                    <button 
-                                                        onClick={() => handleDelete(item)}
-                                                        style={{ 
-                                                            background: 'none', 
-                                                            border: 'none', 
-                                                            cursor: 'pointer', 
-                                                            fontSize: '1.1em', 
-                                                            padding: '3px', 
-                                                            color: '#dc3545' 
-                                                        }}
-                                                        title="Excluir"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                )}
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    {itemsPagos.length > ITENS_INICIAIS && (
-                        <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                            <button 
-                                onClick={() => setMostrarTodos(!mostrarTodos)}
-                                className="voltar-btn"
-                            >
-                                {mostrarTodos 
-                                    ? '↑ Mostrar menos' 
-                                    : `Ver todos os ${itemsPagos.length} pagamentos →`
-                                }
-                            </button>
-                        </div>
-                    )}
-                    
-                    {/* Resumo de totais */}
-                    <div style={{ 
-                        marginTop: '15px', 
-                        padding: '15px',
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-around',
-                        flexWrap: 'wrap',
-                        gap: '15px'
-                    }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Pago</div>
-                            <div style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.2em' }}>
-                                {formatCurrency(totalPago)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Pendente</div>
-                            <div style={{ fontWeight: 'bold', color: '#f57c00', fontSize: '1.2em' }}>
-                                {formatCurrency(totalPendente)}
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-};
-
-
-// --- COMPONENTES DE MODAL (Existentes) ---
-const Modal = ({ children, onClose, customWidth }) => (
-    <div className="modal-overlay" onClick={onClose} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        zIndex: 9999,
-        padding: '20px',
-        overflowY: 'auto'
-    }}>
-        <div 
-            className="modal-content" 
-            style={{ 
-                maxWidth: customWidth || '500px',
-                width: '100%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                margin: 'auto',
-                background: 'white',
-                borderRadius: '12px',
-                position: 'relative'
-            }}
-            onClick={e => e.stopPropagation()}
-        >
-            <button onClick={onClose} className="close-modal-btn">&times;</button>
-            {children}
-        </div>
-    </div>
-);
-
-// <--- MUDANÇA: Modal de Edição (com valor_total e valor_pago) -->
-const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
-    const [formData, setFormData] = useState({});
-    
-    useEffect(() => {
-         if (lancamento) {
-             const initialData = { ...lancamento };
-             if (initialData.data) {
-                 try {
-                     initialData.data = new Date(initialData.data + 'T00:00:00').toISOString().split('T')[0];
-                 } catch (e) {
-                     console.error("Erro ao formatar data para edição:", e);
-                     initialData.data = '';
-                 }
-             }
-             // Formatar data_vencimento
-             if (initialData.data_vencimento) {
-                 try {
-                     initialData.data_vencimento = new Date(initialData.data_vencimento + 'T00:00:00').toISOString().split('T')[0];
-                 } catch (e) {
-                     console.error("Erro ao formatar data_vencimento para edição:", e);
-                     initialData.data_vencimento = '';
-                 }
-             } else {
-                 initialData.data_vencimento = initialData.data || ''; // Fallback para data normal
-             }
-             initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
-             initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
-             initialData.fornecedor = initialData.fornecedor || ''; 
-
-             setFormData(initialData);
-         } else {
-             setFormData({});
-         }
-     }, [lancamento]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        let finalValue = value;
-        
-        if (name === 'valor_total' || name === 'valor_pago') { // <-- MUDANÇA
-            finalValue = parseFloat(value) || 0;
-        }
-        if (name === 'servico_id') {
-            finalValue = value ? parseInt(value, 10) : ''; 
-        }
-        if (name === 'prioridade') {
-            finalValue = value ? parseInt(value, 10) : 0;
-        }
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    const handleSubmit = (e) => { 
-        e.preventDefault(); 
-        const dataToSend = {
-            ...formData,
-            servico_id: formData.servico_id || null,
-            prioridade: parseInt(formData.prioridade, 10) || 0,
-            fornecedor: formData.fornecedor || null 
-        };
-        onSave(dataToSend); 
-    };
-    
-    if (!lancamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Lançamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" name="data" value={formData.data || ''} onChange={handleChange} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" name="data_vencimento" value={formData.data_vencimento || ''} onChange={handleChange} required />
-                </div>
-                
-                <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
-                
-                {/* <-- MUDANÇA: valor -> valor_total --> */}
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" name="valor_total" value={formData.valor_total || 0} onChange={handleChange} required />
-                </div>
-                {/* <-- MUDANÇA: Novo campo valor_pago --> */}
-                <div className="form-group"><label>Valor Já Pago (R$)</label>
-                    <input type="number" step="0.01" name="valor_pago" value={formData.valor_pago || 0} onChange={handleChange} required />
-                </div>
-
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select name="prioridade" value={formData.prioridade || 0} onChange={handleChange}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Mão de Obra'} onChange={handleChange} required>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Material</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                <div className="form-group"><label>Status</label><select name="status" value={formData.status || 'A Pagar'} onChange={handleChange} required><option>A Pagar</option><option>Pago</option></select></div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-// <--- MUDANÇA: Modal de Serviço (com valor_total e valor_pago) -->
-const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }) => {
-    const { user } = useAuth();
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
-    
-     useEffect(() => {
-         if (servico) {
-             setFormData({
-                 ...servico,
-                 valor_global_mao_de_obra: servico.valor_global_mao_de_obra || 0,
-                 valor_global_material: servico.valor_global_material || 0, 
-             });
-         } else {
-             setFormData({});
-         }
-     }, [servico]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        const finalValue = (name === 'valor_global_mao_de_obra' || name === 'valor_global_material') 
-            ? parseFloat(value) || 0 
-            : value; 
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    const handleSubmit = (e) => { e.preventDefault(); onSave(formData); setIsEditing(false); };
-
-    const handleDeletarPagamento = async (pagamentoId) => {
-        if (!window.confirm('Deseja excluir este pagamento?')) return;
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/servicos/${servico.id}/pagamentos/${pagamentoId}`, { method: 'DELETE' });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.erro || 'Erro ao deletar');
-            }
-            
-            alert('Pagamento excluído com sucesso!');
-            if (fetchObraData && obraId) { 
-                fetchObraData(obraId); 
-                onClose(); 
-            } else { 
-                window.location.reload(); 
-            }
-        } catch (error) {
-            console.error('Erro ao deletar:', error);
-            alert('Erro ao deletar: ' + error.message);
-        }
-    };
-
-    const handleDeletarServico = () => {
-        fetchWithAuth(`${API_URL}/servicos/${servico.id}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) throw new Error('Erro ao deletar'); return res.json(); })
-        .then(() => {
-             if (fetchObraData && obraId) { fetchObraData(obraId); onClose(); } 
-             else { window.location.reload(); }
-        })
-        .catch(error => console.error('Erro:', error));
-    };
-
-    if (!servico) return null;
-    
-    // Calcula totais pagos
-    const totalPagoMO = (servico.pagamentos || [])
-        .filter(p => p.tipo_pagamento === 'mao_de_obra')
-        .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
-        
-    const totalGastoMO = (servico.pagamentos || [])
-        .filter(p => p.tipo_pagamento === 'mao_de_obra')
-        .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
-
-    const totalPagoMat = (servico.pagamentos || [])
-        .filter(p => p.tipo_pagamento === 'material')
-        .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
-        
-    const totalGastoMat = (servico.pagamentos || [])
-        .filter(p => p.tipo_pagamento === 'material')
-        .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
-
-
-    return (
-        <Modal onClose={onClose} customWidth="650px">
-            {!isEditing ? (
-                <div>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h2>{servico.nome}</h2>
-                        {(user.role === 'administrador' || user.role === 'master') && (
-                            <button onClick={handleDeletarServico} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5em', color: '#dc3545', padding: '5px' }} title="Excluir Serviço" > 🗑️ </button>
-                        )}
-                    </div>
-                    <p><strong>Responsável:</strong> {servico.responsavel || 'N/A'}</p>
-                    <p><strong>Valor Orçado (Mão de Obra):</strong> {formatCurrency(servico.valor_global_mao_de_obra)} (Comprometido: {formatCurrency(totalGastoMO)} | Pago: {formatCurrency(totalPagoMO)})</p>
-                    <p><strong>Valor Orçado (Material):</strong> {formatCurrency(servico.valor_global_material)} (Comprometido: {formatCurrency(totalGastoMat)} | Pago: {formatCurrency(totalPagoMat)})</p>
-                    <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
-                    <hr />
-                    <h3>Histórico de Pagamentos (do Serviço)</h3>
-                    <div className="tabela-scroll-container" style={{maxHeight: '250px', overflowX: 'auto'}}> 
-                        <table className="tabela-pagamentos" style={{width: '100%', minWidth: '500px'}}>
-                            <thead>
-                                <tr>
-                                    <th style={{minWidth: '85px'}}>Data</th>
-                                    <th style={{minWidth: '80px'}}>Tipo</th>
-                                    <th style={{minWidth: '80px'}}>Fornecedor</th>
-                                    <th style={{minWidth: '110px', textAlign: 'right'}}>Valor Total</th>
-                                    <th style={{minWidth: '110px', textAlign: 'right'}}>Valor Pago</th>
-                                    {(user.role === 'administrador' || user.role === 'master') && <th style={{width: '50px'}}>Ações</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {servico.pagamentos && servico.pagamentos.length > 0 ? (
-                                    servico.pagamentos.map((pag) => (
-                                        <tr key={pag.id || pag.parcela_id}>
-                                            <td style={{whiteSpace: 'nowrap'}}>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
-                                            <td style={{fontSize: '0.85em'}}>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
-                                            <td style={{fontSize: '0.85em'}}>{pag.fornecedor || '-'}</td>
-                                            <td style={{textAlign: 'right', whiteSpace: 'nowrap', fontWeight: '500'}}>{formatCurrency(pag.valor_total)}</td>
-                                            <td style={{textAlign: 'right', whiteSpace: 'nowrap', fontWeight: '500', color: '#2e7d32'}}>{formatCurrency(pag.valor_pago)}</td>
-                                            
-                                            {(user.role === 'administrador' || user.role === 'master') && (
-                                                <td style={{textAlign: 'center'}}>
-                                                    {!pag.is_parcela && (
-                                                        <button onClick={() => handleDeletarPagamento(pag.id)} className="acao-icon-btn delete-btn" title="Excluir Pagamento" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1em', padding: '3px', color: '#dc3545' }} > 🗑️ </button>
-                                                    )}
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))
-                                 ) : (
-                                    <tr>
-                                        <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center', padding: '20px', color: '#999'}}>Nenhum pagamento registrado.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <div className="form-actions" style={{marginTop: '20px'}}>
-                            <button type="button" onClick={() => setIsEditing(true)} className="submit-btn"> Editar Serviço </button>
-                        </div>
-                    )}
-                </div>
-            ) : (
-                <form onSubmit={handleSubmit}>
-                    <h2>Editar Serviço</h2>
-                    <div className="form-group"><label>Descrição</label><input type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Responsável</label><input type="text" name="responsavel" value={formData.responsavel || ''} onChange={handleChange} /></div>
-                    <div className="form-group">
-                        <label>Valor Orçado - Mão de Obra (R$)</label>
-                        <input type="number" step="0.01" name="valor_global_mao_de_obra" value={formData.valor_global_mao_de_obra || ''} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                        <label>Valor Orçado - Material (R$)</label>
-                        <input type="number" step="0.01" name="valor_global_material" value={formData.valor_global_material || ''} onChange={handleChange} />
-                    </div>
-                    
-                    <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
-                    <div className="form-actions"><button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
-                </form>
-            )}
-        </Modal>
-    );
-};
-
-
-// --- MODAIS DE ADMINISTRAÇÃO ---
-const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
-    // ... (código inalterado)
-    const [selectedObraIds, setSelectedObraIds] = useState(new Set());
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        if (userToEdit) {
-            fetchWithAuth(`${API_URL}/admin/users/${userToEdit.id}/permissions`)
-                .then(res => res.json())
-                .then(data => {
-                    setSelectedObraIds(new Set(data.obra_ids));
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar permissões:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [userToEdit]);
-    const handleCheckboxChange = (obraId) => {
-        setSelectedObraIds(prevSet => {
-            const newSet = new Set(prevSet);
-            if (newSet.has(obraId)) {
-                newSet.delete(obraId);
-            } else {
-                newSet.add(obraId);
-            }
-            return newSet;
-        });
-    };
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const obra_ids = Array.from(selectedObraIds);
-        onSave(userToEdit.id, obra_ids);
-    };
-    if (isLoading) {
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando permissões...</div></Modal>;
-    }
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Permissões: {userToEdit.username}</h2>
-            <p>Nível: <strong>{userToEdit.role}</strong></p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione as obras que este usuário pode ver:</label>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '4px' }}>
-                        {allObras.length > 0 ? allObras.map(obra => (
-                            <div key={obra.id}>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedObraIds.has(obra.id)}
-                                        onChange={() => handleCheckboxChange(obra.id)}
-                                    />
-                                    {obra.nome}
-                                </label>
-                            </div>
-                        )) : <p>Nenhuma obra cadastrada para atribuir.</p>}
-                    </div>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Permissões</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-const AdminPanelModal = ({ allObras, onClose }) => {
-    // ... (código inalterado)
-    const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [userToEdit, setUserToEdit] = useState(null);
-    const [newUsername, setNewUsername] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [newRole, setNewRole] = useState('comum');
-    const fetchUsers = () => {
-        setIsLoading(true);
-        fetchWithAuth(`${API_URL}/admin/users`)
-            .then(res => res.json())
-            .then(data => {
-                setUsers(Array.isArray(data) ? data : []);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                console.error("Erro ao buscar usuários:", err);
-                setError("Falha ao carregar usuários.");
-                setIsLoading(false);
-            });
-    };
-    // ... (depois da função handleCreateUser)
-
-    const handleDeleteUser = (user) => {
-        if (!window.confirm(`Tem certeza que deseja excluir o usuário ${user.username}? Esta ação não pode ser desfeita.`)) {
-            return;
-        }
-        
-        setError(null);
-        
-        fetchWithAuth(`${API_URL}/admin/users/${user.id}`, {
-            method: 'DELETE'
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
-            return res.json();
-        })
-        .then(() => {
-            // Remove o usuário da lista no frontend
-            setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
-        })
-        .catch(err => {
-            console.error("Erro ao deletar usuário:", err);
-            setError(err.message);
-        });
-    };
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-    const handleCreateUser = (e) => {
-        e.preventDefault();
-        setError(null);
-        if (newRole === 'administrador') {
-            setError("Não é possível criar outro administrador por aqui.");
-            return;
-        }
-        fetchWithAuth(`${API_URL}/admin/users`, {
-            method: 'POST',
-            body: JSON.stringify({
-                username: newUsername,
-                password: newPassword,
-                role: newRole
-            })
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
-            return res.json();
-        })
-        .then(newUser => {
-            setUsers(prevUsers => [...prevUsers, newUser]);
-            setNewUsername('');
-            setNewPassword('');
-            setNewRole('comum');
-        })
-        .catch(err => {
-            console.error("Erro ao criar usuário:", err);
-            setError(err.message);
-        });
-    };
-    const handleSavePermissions = (userId, obra_ids) => {
-        fetchWithAuth(`${API_URL}/admin/users/${userId}/permissions`, {
-            method: 'PUT',
-            body: JSON.stringify({ obra_ids })
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro ao salvar') });
-            return res.json();
-        })
-        .then(() => {
-            setUserToEdit(null); 
-        })
-        .catch(err => {
-            console.error("Erro ao salvar permissões:", err);
-            setError(err.message); 
-        });
-    };
-    return (
-        <Modal onClose={onClose} customWidth="700px"> {/* <-- MUDANÇA AQUI */}
-            {userToEdit && (
-                <UserPermissionsModal
-                    userToEdit={userToEdit}
-                    allObras={allObras}
-                    onClose={() => setUserToEdit(null)}
-                    onSave={handleSavePermissions}
-                />
-            )}
-            <div style={{opacity: userToEdit ? 0.1 : 1}}>
-                <h2>Painel de Administração</h2>
-                <div className="card-full" style={{ background: '#f8f9fa' }}>
-                    <h3>Criar Novo Usuário</h3>
-                    <form onSubmit={handleCreateUser} className="form-add-obra">
-                        <input
-                            type="text"
-                            placeholder="Usuário (ou e-mail)"
-                            value={newUsername}
-                            onChange={(e) => setNewUsername(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Senha Temporária"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
-                        <select
-                            value={newRole}
-                            onChange={(e) => setNewRole(e.target.value)}
-                        >
-                            <option value="comum">Usuário Comum (Visualizar)</option>
-                            <option value="master">Usuário Master (Editar)</option>
-                        </select>
-                        <button type="submit" className="submit-btn" style={{flexGrow: 0}}>Criar</button>
-                    </form>
-                    {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
-                </div>
-                <h3 style={{marginTop: '30px'}}>Usuários Existentes</h3>
-                {isLoading ? <p>Carregando usuários...</p> : (
-                    <table className="tabela-historico">
-                        <thead>
-                            <tr>
-                                <th>Usuário</th>
-                                <th>Nível</th>
-                                <th style={{textAlign: 'center'}}>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td>{user.username}</td>
-                                    <td>{user.role}</td>
-                                   <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
-                                        <button 
-                                            className="acao-btn" 
-                                            style={{backgroundColor: '#17a2b8', color: 'white'}}
-                                            onClick={() => setUserToEdit(user)}
-                                        >
-                                            Editar Permissões
-                                        </button>
-                                        <button 
-                                            className="acao-btn" 
-                                            style={{backgroundColor: 'var(--cor-vermelho)', color: 'white'}}
-                                            onClick={() => handleDeleteUser(user)}
-                                        >
-                                            Excluir
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </Modal>
-    );
-};
-// ----------------------------------------------------
-
-// Modal "Exportar Relatório Geral"
-const ExportReportModal = ({ onClose }) => {
-    // ... (código inalterado)
-    const [selectedPriority, setSelectedPriority] = useState('todas');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleGenerate = () => {
-        setIsLoading(true);
-        setError(null);
-
-        const url = `${API_URL}/export/pdf_pendentes_todas_obras?prioridade=${selectedPriority}`;
-
-        fetchWithAuth(url)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Falha ao gerar o relatório.');
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL);
-                
-                setIsLoading(false);
-                onClose();
-            })
-            .catch(err => {
-                console.error("Erro ao gerar PDF:", err);
-                setError(err.message || "Não foi possível gerar o PDF.");
-                setIsLoading(false);
-            });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Exportar Relatório Geral de Pendências</h2>
-            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
-                <div className="form-group">
-                    <label>Filtrar por Prioridade</label>
-                    <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
-                        <option value="todas">Todas as Pendências</option>
-                        <option value="5">Prioridade 5 (Urgente)</option>
-                        <option value="4">Prioridade 4</option>
-                        <option value="3">Prioridade 3 (Média)</option>
-                        <option value="2">Prioridade 2</option>
-                        <option value="1">Prioridade 1</option>
-                        <option value="0">Prioridade 0 (Nenhuma)</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions" style={{ marginTop: '30px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isLoading}>Cancelar</button>
-                    <button type="submit" className="submit-btn pdf" disabled={isLoading}>
-                        {isLoading ? 'Gerando...' : 'Gerar PDF'}
-                    </button>
-                </div>
-                {error && <p style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}
-            </form>
-        </Modal>
-    );
-};
-// ----------------------------------------------------
-
-
-// Modal "Relatório do Cronograma Financeiro"
-const ModalRelatorioCronograma = ({ onClose, obras }) => {
-    const [obraSelecionada, setObraSelecionada] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleGerarRelatorio = async () => {
-        if (!obraSelecionada) {
-            alert('Por favor, selecione uma obra primeiro.');
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraSelecionada.id}/relatorio-cronograma-pdf`,
-                { method: 'GET' }
-            );
-
-            if (!response.ok) {
-                throw new Error('Erro ao gerar relatório do cronograma.');
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Cronograma_${obraSelecionada.nome.replace(/\\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            alert('Relatório gerado com sucesso!');
-            onClose();
-        } catch (err) {
-            console.error("Erro ao gerar relatório:", err);
-            setError(err.message || "Não foi possível gerar o relatório.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <div className="modal-content" style={{ maxWidth: '600px' }}>
-                <h2>📊 Relatório do Cronograma Financeiro</h2>
-                
-                {error && (
-                    <div style={{ 
-                        padding: '10px', 
-                        marginBottom: '15px', 
-                        backgroundColor: '#ffebee', 
-                        border: '1px solid #ef5350',
-                        borderRadius: '5px',
-                        color: '#c62828'
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                <div style={{ marginBottom: '20px' }}>
-                    <p style={{ marginBottom: '10px', color: '#666' }}>
-                        Selecione a obra para gerar o relatório do cronograma financeiro:
-                    </p>
-                    
-                    <div style={{ 
-                        display: 'grid', 
-                        gap: '10px',
-                        maxHeight: '400px',
-                        overflowY: 'scroll',
-                        padding: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px'
-                    }} 
-                    className="hide-scrollbar modal-lista-obras">
-                        {obras.map(obra => (
-                            <div
-                                key={obra.id}
-                                onClick={() => setObraSelecionada(obra)}
-                                style={{
-                                    padding: '15px',
-                                    border: obraSelecionada?.id === obra.id 
-                                        ? '2px solid var(--cor-primaria)' 
-                                        : '1px solid #ddd',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    backgroundColor: obraSelecionada?.id === obra.id 
-                                        ? '#e3f2fd' 
-                                        : 'white',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (obraSelecionada?.id !== obra.id) {
-                                        e.currentTarget.style.backgroundColor = '#f5f5f5';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (obraSelecionada?.id !== obra.id) {
-                                        e.currentTarget.style.backgroundColor = 'white';
-                                    }
-                                }}
-                            >
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 5px 0' }}>{obra.nome}</h4>
-                                        <p style={{ margin: 0, fontSize: '0.9em', color: '#666' }}>
-                                            Cliente: {obra.cliente || 'N/A'}
-                                        </p>
-                                    </div>
-                                    {obraSelecionada?.id === obra.id && (
-                                        <span style={{ 
-                                            fontSize: '1.5em',
-                                            color: 'var(--cor-primaria)'
-                                        }}>
-                                            ✓
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <button 
-                        onClick={onClose} 
-                        className="voltar-btn"
-                        disabled={isLoading}
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        onClick={handleGerarRelatorio} 
-                        className="submit-btn"
-                        disabled={isLoading || !obraSelecionada}
-                        style={{
-                            opacity: (!obraSelecionada || isLoading) ? 0.6 : 1
-                        }}
-                    >
-                        {isLoading ? '⏳ Gerando...' : '📄 Gerar Relatório PDF'}
-                    </button>
-                </div>
-
-                {obraSelecionada && (
-                    <div style={{ 
-                        marginTop: '15px', 
-                        padding: '10px', 
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '5px',
-                        fontSize: '0.9em',
-                        color: '#2e7d32'
-                    }}>
-                        ✓ Obra selecionada: <strong>{obraSelecionada.nome}</strong>
-                    </div>
-                )}
-            </div>
-        </Modal>
-    );
-};
-// ----------------------------------------------------
-
-
-// Modal para Editar Prioridade
-const EditPrioridadeModal = ({ item, onClose, onSave }) => {
-    // ... (código inalterado)
-    const [prioridade, setPrioridade] = useState(0);
-
-    useEffect(() => {
-        if (item) {
-            setPrioridade(item.prioridade || 0);
-        }
-    }, [item]);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(parseInt(prioridade, 10));
-    };
-    
-    if (!item) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Prioridade</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
-                </div>
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Prioridade</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-// ----------------------------------------------------
-
-// Modal "Adicionar Serviço"
-const AddServicoModal = ({ onClose, onSave }) => {
-    // ... (código inalterado)
-    const [nome, setNome] = useState('');
-    const [responsavel, setResponsavel] = useState('');
-    const [pix, setPix] = useState('');
-    const [valorMO, setValorMO] = useState(''); 
-    const [valorMaterial, setValorMaterial] = useState(''); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        let servicoData = {
-            nome,
-            responsavel: responsavel || null,
-            pix: pix || null,
-            valor_global_mao_de_obra: valorMO,
-            valor_global_material: valorMaterial, 
-        };
-        
-        onSave(servicoData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Cadastrar Novo Serviço</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição do Serviço</label>
-                    <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Piscina" required />
-                </div>
-                <div className="form-group">
-                    <label>Responsável</label>
-                    <input type="text" name="responsavel" value={responsavel} onChange={(e) => setResponsavel(e.target.value)} placeholder="Ex: Carlos (Piscineiro)" />
-                </div>
-                <div className="form-group">
-                    <label>Dados de Pagamento (PIX)</label>
-                    <input type="text" name="pix" value={pix} onChange={(e) => setPix(e.target.value)} placeholder="Email, Celular, etc." />
-                </div>
-                
-                <hr />
-
-                <div className="form-group">
-                    <label>Valor Orçado - Mão de Obra (R$)</label>
-                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Orçado - Material (R$)</label>
-                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Serviço</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
-const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString()); // NOVO campo
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState(''); 
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(''); // Este 'valor' será enviado como 'valor_total'
-    const [tipo, setTipo] = useState('Material');
-    // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
-    const status = 'Pago';
-    const [servicoId, setServicoId] = useState('');
-    const [prioridade, setPrioridade] = useState(0); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            data,
-            data_vencimento: dataVencimento, // NOVO campo
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0, // O handler 'handleSaveLancamento' espera 'valor'
-            tipo,
-            status: 'Pago', // MUDANÇA 2: Sempre "Pago"
-            prioridade: parseInt(prioridade, 10) || 0,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null,
-            is_gasto_avulso_historico: true // MUDANÇA 2: Flag para backend
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💵 Adicionar Gasto Avulso (Pago)</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Este gasto será automaticamente marcado como <strong>PAGO</strong> e adicionado ao histórico.
-            </p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                
-                {/* O usuário insere 'valor', mas o backend salvará em 'valor_total' */}
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                {/* MUDANÇA 2: Campo Status removido - sempre será Pago */}
-                <div style={{padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', marginBottom: '15px'}}>
-                    <strong>Status: PAGO</strong> (automático)
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal "Adicionar Orçamento"
-const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
-    // ... (código inalterado, já usa FormData)
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [valor, setValor] = useState('');
-    const [dadosPagamento, setDadosPagamento] = useState('');
-    const [tipo, setTipo] = useState('Material'); 
-    const [servicoId, setServicoId] = useState(''); 
-    const [observacoes, setObservacoes] = useState(''); 
-    const [anexos, setAnexos] = useState([]); 
-
-    const handleFileChange = (e) => {
-        setAnexos(Array.from(e.target.files));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append('descricao', descricao);
-        formData.append('fornecedor', fornecedor || '');
-        formData.append('valor', parseFloat(valor) || 0);
-        formData.append('dados_pagamento', dadosPagamento || '');
-        formData.append('tipo', tipo);
-        formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
-        formData.append('observacoes', observacoes || '');
-        
-        anexos.forEach(file => {
-            formData.append('anexos', file);
-        });
-        
-        onSave(formData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Adicionar Orçamento para Aprovação</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento e Areia" required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
-                </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
-                </div>
-                
-                <div className="form-group">
-                    <label>Anexos (PDF, Imagens)</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-                
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Orçamento</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO
-const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState('');
-    const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
-    const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
-    const [servicoId, setServicoId] = useState('');
-    
-    // 🆕 NOVOS ESTADOS PARA PARCELAMENTO
-    const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
-    const [numeroParcelas, setNumeroParcelas] = useState('');
-    const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
-    const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const dadosPagamento = {
-            data,
-            data_vencimento: dataVencimento,
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0,
-            tipo,
-            status,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null,
-            tipo_forma_pagamento: tipoFormaPagamento
-        };
-        
-        // Adicionar campos de parcelamento se aplicável
-        if (tipoFormaPagamento === 'parcelado') {
-            dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
-            dadosPagamento.periodicidade = periodicidade;
-            dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
-        }
-        
-        onSave(dadosPagamento);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💳 Inserir Pagamento</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
-            </p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                {/* 🆕 TIPO DE FORMA DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Forma de Pagamento</label>
-                    <div style={{display: 'flex', gap: '20px', marginTop: '8px'}}>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="avista" 
-                                checked={tipoFormaPagamento === 'avista'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            À vista
-                        </label>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="parcelado" 
-                                checked={tipoFormaPagamento === 'parcelado'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            Parcelado
-                        </label>
-                    </div>
-                </div>
-                
-                {/* 🆕 CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
-                {tipoFormaPagamento === 'parcelado' && (
-                    <>
-                        <div style={{
-                            background: '#f0f8ff',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #b3d9ff'
-                        }}>
-                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração do Parcelamento</h4>
-                            
-                            <div className="form-group">
-                                <label>Número de Parcelas</label>
-                                <input 
-                                    type="number" 
-                                    min="2" 
-                                    max="60" 
-                                    value={numeroParcelas} 
-                                    onChange={(e) => setNumeroParcelas(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Periodicidade</label>
-                                <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
-                                    <option value="Semanal">Semanal (7 dias)</option>
-                                    <option value="Quinzenal">Quinzenal (15 dias)</option>
-                                    <option value="Mensal">Mensal (30 dias)</option>
-                                </select>
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Data da 1ª Parcela</label>
-                                <input 
-                                    type="date" 
-                                    value={dataPrimeiraParcela} 
-                                    onChange={(e) => setDataPrimeiraParcela(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            {numeroParcelas && valor && (
-                                <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em'
-                                }}>
-                                    <strong>Valor por parcela:</strong> R$ {(parseFloat(valor) / parseInt(numeroParcelas)).toFixed(2)}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-                
-                {/* CAMPOS ORIGINAIS CONTINUAM */}
-                {tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Data de Vencimento</label>
-                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                    </div>
-                )}
-                
-                <div className="form-group">
-                    <label>Chave PIX / Forma de Pagamento (Opcional)</label>
-                    <input type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Tipo</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                        <option value="Serviço">Serviço</option>
-                        <option value="Equipamentos">Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option value="Pago">Pago</option>
-                        <option value="A Pagar">A Pagar</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">
-                        {tipoFormaPagamento === 'parcelado' ? '📦 Criar Parcelamento' : '💰 Inserir Pagamento'}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal para Editar Orçamento
-const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
-    // ... (código inalterado)
-    const [formData, setFormData] = useState({});
-    const [existingAnexos, setExistingAnexos] = useState([]);
-    const [newAnexos, setNewAnexos] = useState([]);
-    const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
-
-    useEffect(() => {
-        if (orcamento) {
-            setFormData({
-                ...orcamento,
-                servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
-                observacoes: orcamento.observacoes || ''
-            });
-            
-            setIsLoadingAnexos(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setExistingAnexos(Array.isArray(data) ? data : []);
-                    setIsLoadingAnexos(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
-                    setIsLoadingAnexos(false);
-                });
-        }
-    }, [orcamento]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        let finalValue = value;
-        if (name === 'valor') {
-            finalValue = parseFloat(value) || 0;
-        }
-        if (name === 'servico_id') {
-            finalValue = value ? parseInt(value, 10) : ''; 
-        }
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    const handleFileChange = (e) => {
-        setNewAnexos(Array.from(e.target.files));
-    };
-
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    const handleDeleteAnexo = (anexoId, e) => {
-        e.preventDefault();
-        e.stopPropagation(); 
-        
-        if (window.confirm("Tem certeza que deseja excluir este anexo?")) {
-            fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Falha ao deletar');
-                    setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
-                })
-                .catch(err => alert(`Erro ao deletar anexo: ${err.message}`));
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const data = new FormData();
-        data.append('descricao', formData.descricao || '');
-        data.append('fornecedor', formData.fornecedor || '');
-        data.append('valor', parseFloat(formData.valor) || 0);
-        data.append('dados_pagamento', formData.dados_pagamento || '');
-        data.append('tipo', formData.tipo || 'Material');
-        data.append('servico_id', formData.servico_id || '');
-        data.append('observacoes', formData.observacoes || '');
-        
-        onSave(formData.id, data, newAnexos);
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Orçamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
-                </div>
-                
-                <hr style={{margin: '20px 0'}} />
-
-                <div className="form-group">
-                    <label>Anexos Atuais</label>
-                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
-                        <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
-                            {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
-                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
-                                    <a 
-                                        href="#"
-                                        onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                        title={`Abrir ${anexo.filename}`}
-                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                    >
-                                        {anexo.filename}
-                                    </a>
-                                    <button 
-                                        type="button" 
-                                        onClick={(e) => handleDeleteAnexo(anexo.id, e)}
-                                        title="Excluir Anexo"
-                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
-                                    >
-                                        &times;
-                                    </button>
-                                </li>
-                            )) : <p>Nenhum anexo.</p>}
-                        </ul>
-                    )}
-                </div>
-
-                <div className="form-group">
-                    <label>Adicionar Novos Anexos</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Alterações</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// --- NOVO MODAL PARA VER ANEXOS ---
-const ViewAnexosModal = ({ orcamento, onClose }) => {
-    // ... (código inalterado)
-    const [anexos, setAnexos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (orcamento) {
-            setIsLoading(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setAnexos(Array.isArray(data) ? data : []);
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [orcamento]);
-
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexos de: {orcamento.descricao}</h2>
-            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
-                {isLoading ? <p>Carregando anexos...</p> : (
-                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
-                        {anexos.length > 0 ? anexos.map(anexo => (
-                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                    title={`Abrir ${anexo.filename}`}
-                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                >
-                                    📎 {anexo.filename}
-                                </a>
-                            </li>
-                        )) : <p>Nenhum anexo encontrado.</p>}
-                    </ul>
-                )}
-            </div>
-            <div className="form-actions" style={{marginTop: '20px'}}>
-                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO NOVO MODAL ---
-
-
-// <--- MUDANÇA: NOVO MODAL PARA PAGAMENTO PARCIAL ---
-const PartialPaymentModal = ({ item, onClose, onSave }) => {
-    
-    // Calcula o valor que ainda falta pagar
-    const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-    
-    // Define o valor inicial do input como o valor restante
-    const [valorAPagar, setValorAPagar] = useState(valorRestante.toFixed(2));
-    const [error, setError] = useState('');
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setError('');
-        
-        const valorFloat = parseFloat(valorAPagar);
-        
-        if (isNaN(valorFloat) || valorFloat <= 0) {
-            setError('O valor deve ser um número positivo.');
-            return;
-        }
-        
-        // +0.01 para evitar erros de arredondamento de centavos
-        if (valorFloat > (valorRestante + 0.01)) {
-            setError(`O valor não pode ser maior que o restante (${formatCurrency(valorRestante)}).`);
-            return;
-        }
-        
-        // Envia o valor para a função principal
-        onSave(valorFloat);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Registrar Pagamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Restante</label>
-                    <input 
-                        type="text" 
-                        value={formatCurrency(valorRestante)} 
-                        readOnly 
-                        disabled 
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Valor a Pagar Hoje</label>
-                    <input 
-                        type="number" 
-                        step="0.01"
-                        value={valorAPagar}
-                        onChange={(e) => setValorAPagar(e.target.value)}
-                        required
-                        autoFocus
-                    />
-                </div>
-                
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn" style={{backgroundColor: 'var(--cor-acento)'}}>
-                        Registrar Pagamento
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-// --- FIM DO NOVO MODAL ---
-
-
-// --- MODAL DE UPLOAD DE NOTA FISCAL ---
-const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
-    const [file, setFile] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
-        if (selectedFile) {
-            // Validar tipo de arquivo (PDF, imagens)
-            const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-            if (!validTypes.includes(selectedFile.type)) {
-                setError('Tipo de arquivo inválido. Apenas PDF e imagens são permitidos.');
-                return;
-            }
-            // Validar tamanho (max 10MB)
-            if (selectedFile.size > 10 * 1024 * 1024) {
-                setError('Arquivo muito grande. Tamanho máximo: 10MB');
-                return;
-            }
-            setFile(selectedFile);
-            setError(null);
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!file) {
-            setError('Por favor, selecione um arquivo');
-            return;
-        }
-
-        setIsUploading(true);
-        setError(null);
-
-        // <-- CORREÇÃO: Pegar o ID correto baseado no tipo de registro
-        const realItemId = item.tipo_registro === 'lancamento' 
-            ? item.lancamento_id 
-            : item.pagamento_id;
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('item_id', realItemId);
-        formData.append('item_type', item.tipo_registro);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro ao fazer upload'); });
-            }
-            return res.json();
-        })
-        .then(() => {
-            onSuccess();
-            onClose();
-        })
-        .catch(err => {
-            console.error("Erro ao fazer upload:", err);
-            setError(err.message);
-        })
-        .finally(() => {
-            setIsUploading(false);
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexar Nota Fiscal</h2>
-            <div style={{ marginBottom: '15px', padding: '10px', background: '#f8f9fa', borderRadius: '5px' }}>
-                <strong>Item:</strong> {item.descricao}<br />
-                <strong>Fornecedor:</strong> {item.fornecedor || 'N/A'}
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione o arquivo (PDF ou Imagem)</label>
-                    <input 
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
-                    />
-                    {file && (
-                        <p style={{ marginTop: '5px', color: 'var(--cor-acento)', fontSize: '0.9em' }}>
-                            ✓ Arquivo selecionado: {file.name}
-                        </p>
-                    )}
-                </div>
-
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isUploading}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="submit-btn" disabled={isUploading}>
-                        {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE UPLOAD DE NOTA FISCAL ---
-
-// --- MODAL PARA VISUALIZAR NOTA FISCAL ---
-const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
-    const [isDeleting, setIsDeleting] = useState(false);
-    const { user } = useAuth();
-    
-    const handleDelete = async () => {
-        if (!window.confirm('Tem certeza que deseja excluir esta nota fiscal?')) {
-            return;
-        }
-        
-        setIsDeleting(true);
-        try {
-            const response = await fetchWithAuth(`${API_URL}/notas-fiscais/${nota.id}`, {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erro ao excluir nota fiscal');
-            }
-            
-            onDelete();
-            onClose();
-        } catch (error) {
-            console.error('Erro ao excluir nota fiscal:', error);
-            alert('Erro ao excluir nota fiscal');
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-    
-    const handleDownload = () => {
-        window.open(`${API_URL}/notas-fiscais/${nota.id}`, '_blank');
-    };
-    
-    const isPDF = nota.mimetype === 'application/pdf';
-    const isImage = nota.mimetype?.startsWith('image/');
-    
-    return (
-        <Modal onClose={onClose} customWidth="800px">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>📄 Nota Fiscal</h2>
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <button 
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        style={{
-                            background: 'var(--cor-vermelho)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                        }}
-                    >
-                        {isDeleting ? 'Excluindo...' : '🗑️ Excluir'}
-                    </button>
-                )}
-            </div>
-            
-            <div style={{ 
-                padding: '15px', 
-                background: '#f8f9fa', 
-                borderRadius: '8px',
-                marginBottom: '20px'
-            }}>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Arquivo:</strong> {nota.filename}
-                </p>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Tipo:</strong> {nota.mimetype}
-                </p>
-            </div>
-            
-            <div style={{ 
-                border: '1px solid #ddd', 
-                borderRadius: '8px',
-                overflow: 'hidden',
-                marginBottom: '20px',
-                maxHeight: '500px',
-                overflowY: 'auto'
-            }}>
-                {isPDF && (
-                    <iframe 
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
-                        style={{ 
-                            width: '100%', 
-                            height: '500px', 
-                            border: 'none' 
-                        }}
-                        title="Nota Fiscal PDF"
-                    />
-                )}
-                
-                {isImage && (
-                    <img 
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
-                        alt="Nota Fiscal"
-                        style={{ 
-                            width: '100%', 
-                            height: 'auto',
-                            display: 'block'
-                        }}
-                    />
-                )}
-                
-                {!isPDF && !isImage && (
-                    <div style={{ 
-                        padding: '40px', 
-                        textAlign: 'center',
-                        color: '#666'
-                    }}>
-                        <p>Pré-visualização não disponível para este tipo de arquivo.</p>
-                        <p>Clique em "Baixar" para visualizar o arquivo.</p>
-                    </div>
-                )}
-            </div>
-            
-            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button onClick={onClose} className="cancel-btn">
-                    Fechar
-                </button>
-                <button 
-                    onClick={handleDownload}
-                    className="submit-btn"
-                    style={{ background: 'var(--cor-acento)' }}
-                >
-                    📥 Baixar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-
-// --- COMPONENTE DE ÍCONE DE NOTA FISCAL CLICÁVEL ---
-const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
-    const [nota, setNota] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [showVisualizacao, setShowVisualizacao] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const fileInputRef = React.useRef(null);
-    const { user } = useAuth();
-    
-    useEffect(() => {
-        carregarNotaFiscal();
-    }, [item.id]);
-    
-    const carregarNotaFiscal = async () => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`);
-            const data = await response.json();
-            
-            const notaDoItem = data.find(n => 
-                n.item_id === item.id && n.item_type === itemType
-            );
-            
-            setNota(notaDoItem || null);
-        } catch (error) {
-            console.error('Erro ao carregar nota fiscal:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    const handleFileSelect = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Apenas arquivos PDF, PNG ou JPG são permitidos');
-            return;
-        }
-        
-        if (file.size > 10 * 1024 * 1024) {
-            alert('Arquivo muito grande. Tamanho máximo: 10MB');
-            return;
-        }
-        
-        setIsUploading(true);
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('item_id', item.id);
-        formData.append('item_type', itemType);
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erro ao fazer upload');
-            }
-            
-            const novaNota = await response.json();
-            setNota(novaNota);
-            
-            if (onNotaAdded) {
-                onNotaAdded();
-            }
-        } catch (error) {
-            console.error('Erro ao fazer upload:', error);
-            alert('Erro ao anexar nota fiscal');
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
-    };
-    
-    const handleClick = (e) => {
-        e.stopPropagation();
-        
-        if (nota) {
-            setShowVisualizacao(true);
-        } else if (user.role === 'administrador' || user.role === 'master') {
-            fileInputRef.current?.click();
-        }
-    };
-    
-    const canUpload = user.role === 'administrador' || user.role === 'master';
-    
-    if (isLoading) {
-        return (
-            <span style={{ 
-                fontSize: '1.2em', 
-                color: '#ccc',
-                cursor: 'default'
-            }}>
-                ⏳
-            </span>
-        );
-    }
-    
-    return (
-        <>
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-                disabled={isUploading}
-            />
-            
-            <span
-                onClick={handleClick}
-                title={
-                    nota 
-                        ? 'Clique para visualizar a nota fiscal' 
-                        : canUpload 
-                            ? 'Clique para anexar nota fiscal'
-                            : 'Sem nota fiscal'
-                }
-                style={{
-                    fontSize: '1.2em',
-                    cursor: (nota || canUpload) ? 'pointer' : 'default',
-                    color: nota ? 'var(--cor-acento)' : '#ccc',
-                    transition: 'all 0.2s',
-                    display: 'inline-block',
-                    marginLeft: '8px'
-                }}
-                onMouseEnter={(e) => {
-                    if (nota || canUpload) {
-                        e.target.style.transform = 'scale(1.2)';
-                    }
-                }}
-                onMouseLeave={(e) => {
-                    e.target.style.transform = 'scale(1)';
-                }}
-            >
-                {isUploading ? '⏳' : nota ? '📄' : canUpload ? '📎' : ''}
-            </span>
-            
-            {showVisualizacao && nota && (
-                <VisualizarNotaFiscalModal
-                    nota={nota}
-                    onClose={() => setShowVisualizacao(false)}
-                    onDelete={() => {
-                        setNota(null);
-                        if (onNotaAdded) {
-                            onNotaAdded();
-                        }
-                    }}
-                />
-            )}
-        </>
-    );
-};
-// --- FIM DOS COMPONENTES DE NOTAS FISCAIS ---
-
-
-// --- MODAL DE ORÇAMENTOS ---
-const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [filtro, setFiltro] = useState('Todos');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        carregarOrcamentos();
-    }, [obraId]);
-
-    const carregarOrcamentos = () => {
-        setIsLoading(true);
-        setError(null);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao carregar orçamentos'); });
-                }
-                return res.json();
-            })
-            .then(data => {
-                setOrcamentos(data);
-            })
-            .catch(err => {
-                console.error('Erro ao carregar orçamentos:', err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    };
-
-    const handleDownloadAnexo = (anexoId, filename) => {
-        window.open(`${API_URL}/anexos/${anexoId}`, '_blank');
-    };
-
-    const orcamentosFiltrados = orcamentos.filter(orc => {
-        if (filtro === 'Todos') return true;
-        return orc.status === filtro;
+    // Estados para modal de novo serviço
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [novoServico, setNovoServico] = useState({
+        servico_nome: '',
+        tipo_medicao: 'empreitada',
+        data_inicio: getTodayString(),
+        duracao_dias: 7,
+        data_fim_prevista: addDays(getTodayString(), 6),
+        area_total: '',
+        unidade_medida: 'm²',
+        observacoes: ''
     });
-
-    const getStatusColor = (status) => {
-        switch(status) {
-            case 'Aprovado': return '#28a745';
-            case 'Rejeitado': return '#dc3545';
-            case 'Pendente': return '#ffc107';
-            default: return '#6c757d';
-        }
-    };
-
-    const getStatusIcon = (status) => {
-        switch(status) {
-            case 'Aprovado': return '✅';
-            case 'Rejeitado': return '❌';
-            case 'Pendente': return '⏳';
-            default: return '📋';
-        }
-    };
-
-    const contadores = {
-        total: orcamentos.length,
-        aprovados: orcamentos.filter(o => o.status === 'Aprovado').length,
-        rejeitados: orcamentos.filter(o => o.status === 'Rejeitado').length,
-        pendentes: orcamentos.filter(o => o.status === 'Pendente').length
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="900px">
-            <h2>💰 Orçamentos da Obra</h2>
-            <p style={{ marginBottom: '20px', color: 'var(--cor-texto-secundario)' }}>
-                {obraNome}
-            </p>
-
-            {/* Filtros */}
-            <div style={{ 
-                display: 'flex', 
-                gap: '10px', 
-                marginBottom: '25px',
-                flexWrap: 'wrap'
-            }}>
-                {['Todos', 'Aprovado', 'Rejeitado', 'Pendente'].map(statusFiltro => (
-                    <button
-                        key={statusFiltro}
-                        onClick={() => setFiltro(statusFiltro)}
-                        style={{
-                            padding: '8px 16px',
-                            border: `2px solid ${filtro === statusFiltro ? 'var(--cor-primaria)' : '#ddd'}`,
-                            borderRadius: '20px',
-                            background: filtro === statusFiltro ? 'var(--cor-primaria)' : 'white',
-                            color: filtro === statusFiltro ? 'white' : 'var(--cor-texto)',
-                            cursor: 'pointer',
-                            fontSize: '0.9em',
-                            fontWeight: filtro === statusFiltro ? 'bold' : 'normal',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {statusFiltro} 
-                        {statusFiltro === 'Todos' && ` (${contadores.total})`}
-                        {statusFiltro === 'Aprovado' && ` (${contadores.aprovados})`}
-                        {statusFiltro === 'Rejeitado' && ` (${contadores.rejeitados})`}
-                        {statusFiltro === 'Pendente' && ` (${contadores.pendentes})`}
-                    </button>
-                ))}
-            </div>
-
-            {/* Conteúdo */}
-            <div style={{ 
-                maxHeight: '500px', 
-                overflowY: 'auto',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                padding: '15px',
-                background: '#f8f9fa'
-            }}>
-                {isLoading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <p>⏳ Carregando orçamentos...</p>
-                    </div>
-                ) : error ? (
-                    <div style={{ 
-                        textAlign: 'center', 
-                        padding: '40px',
-                        color: 'var(--cor-vermelho)'
-                    }}>
-                        <p>❌ {error}</p>
-                        <button 
-                            onClick={carregarOrcamentos}
-                            style={{
-                                marginTop: '15px',
-                                padding: '8px 16px',
-                                background: 'var(--cor-primaria)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Tentar novamente
-                        </button>
-                    </div>
-                ) : orcamentosFiltrados.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                        <p>📋 Nenhum orçamento {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
-                    </div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {orcamentosFiltrados.map(orc => (
-                            <div 
-                                key={orc.id}
-                                style={{
-                                    background: 'white',
-                                    padding: '20px',
-                                    borderRadius: '8px',
-                                    border: `2px solid ${getStatusColor(orc.status)}20`,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                }}
-                            >
-                                {/* Header com status */}
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '15px'
-                                }}>
-                                    <div>
-                                        <h3 style={{ 
-                                            margin: '0 0 5px 0',
-                                            color: 'var(--cor-primaria)',
-                                            fontSize: '1.1em'
-                                        }}>
-                                            {orc.descricao}
-                                        </h3>
-                                        {orc.servico_nome && (
-                                            <p style={{ 
-                                                margin: 0,
-                                                fontSize: '0.85em',
-                                                color: '#6c757d'
-                                            }}>
-                                                🔗 Serviço: {orc.servico_nome}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <span style={{
-                                        padding: '6px 12px',
-                                        borderRadius: '20px',
-                                        background: getStatusColor(orc.status),
-                                        color: 'white',
-                                        fontSize: '0.9em',
-                                        fontWeight: 'bold',
-                                        whiteSpace: 'nowrap'
-                                    }}>
-                                        {getStatusIcon(orc.status)} {orc.status}
-                                    </span>
-                                </div>
-
-                                {/* Informações */}
-                                <div style={{ 
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                    gap: '12px',
-                                    marginBottom: '15px'
-                                }}>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Fornecedor:
-                                        </strong>
-                                        <p style={{ margin: '2px 0 0 0' }}>
-                                            {orc.fornecedor || 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Valor:
-                                        </strong>
-                                        <p style={{ 
-                                            margin: '2px 0 0 0',
-                                            color: 'var(--cor-primaria)',
-                                            fontWeight: 'bold',
-                                            fontSize: '1.1em'
-                                        }}>
-                                            {new Intl.NumberFormat('pt-BR', { 
-                                                style: 'currency', 
-                                                currency: 'BRL' 
-                                            }).format(orc.valor)}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Tipo:
-                                        </strong>
-                                        <p style={{ margin: '2px 0 0 0' }}>
-                                            {orc.tipo}
-                                        </p>
-                                    </div>
-                                    {orc.dados_pagamento && (
-                                        <div>
-                                            <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                                Pagamento:
-                                            </strong>
-                                            <p style={{ margin: '2px 0 0 0' }}>
-                                                {orc.dados_pagamento}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Observações */}
-                                {orc.observacoes && (
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        padding: '10px',
-                                        background: '#f8f9fa',
-                                        borderRadius: '5px',
-                                        borderLeft: '3px solid var(--cor-primaria)'
-                                    }}>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Observações:
-                                        </strong>
-                                        <p style={{ margin: '5px 0 0 0', fontSize: '0.9em' }}>
-                                            {orc.observacoes}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Anexos */}
-                                {orc.anexos && orc.anexos.length > 0 && (
-                                    <div>
-                                        <strong style={{ 
-                                            fontSize: '0.9em',
-                                            color: '#6c757d',
-                                            display: 'block',
-                                            marginBottom: '8px'
-                                        }}>
-                                            📎 Anexos ({orc.anexos.length}):
-                                        </strong>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: '8px'
-                                        }}>
-                                            {orc.anexos.map(anexo => (
-                                                <button
-                                                    key={anexo.id}
-                                                    onClick={() => handleDownloadAnexo(anexo.id, anexo.filename)}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        background: '#e7f3ff',
-                                                        border: '1px solid #0066cc',
-                                                        borderRadius: '5px',
-                                                        cursor: 'pointer',
-                                                        fontSize: '0.85em',
-                                                        color: '#0066cc',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '5px',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.background = '#0066cc';
-                                                        e.currentTarget.style.color = 'white';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = '#e7f3ff';
-                                                        e.currentTarget.style.color = '#0066cc';
-                                                    }}
-                                                >
-                                                    <span>📄</span>
-                                                    {anexo.filename}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Footer */}
-            <div style={{ 
-                marginTop: '20px',
-                padding: '15px',
-                background: '#f8f9fa',
-                borderRadius: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <div style={{ fontSize: '0.9em', color: '#6c757d' }}>
-                    <strong>Resumo:</strong> {contadores.total} orçamento(s) • 
-                    ✅ {contadores.aprovados} aprovado(s) • 
-                    ❌ {contadores.rejeitados} rejeitado(s) • 
-                    ⏳ {contadores.pendentes} pendente(s)
-                </div>
-                <button 
-                    onClick={onClose}
-                    className="cancel-btn"
-                >
-                    Fechar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE ORÇAMENTOS ---
-
-
-// --- MODAL DE RELATÓRIOS ---
-const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [downloadType, setDownloadType] = useState(null);
-    const [error, setError] = useState(null);
-
-    // NOVO: Função para baixar Relatório Financeiro (Cronograma)
-    const handleDownloadRelatorioFinanceiro = () => {
-        setIsDownloading(true);
-        setDownloadType('financeiro');
-        setError(null);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio-cronograma-pdf`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório financeiro'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Cronograma_Financeiro_${obraNome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => {
-                console.error("Erro ao baixar relatório financeiro:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    const handleDownloadNotasFiscais = () => {
-        setIsDownloading(true);
-        setDownloadType('notas');
-        setError(null);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais/export/zip`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao baixar notas fiscais'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `notas_fiscais_${obraNome}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => {
-                console.error("Erro ao baixar notas fiscais:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    const handleDownloadResumoObra = () => {
-        setIsDownloading(true);
-        setDownloadType('resumo');
-        setError(null);
-
-        // <-- CORREÇÃO: Usar fetchWithAuth para enviar token
-        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio/resumo-completo`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                // Criar URL temporário e abrir em nova aba
-                const url = window.URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                
-                // Limpar URL após um tempo
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(url);
-                }, 1000);
-            })
-            .catch(err => {
-                console.error("Erro ao gerar relatório:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="500px">
-            <h2>📊 Relatórios da Obra</h2>
-            <p style={{ marginBottom: '25px', color: 'var(--cor-texto-secundario)' }}>
-                Selecione o tipo de relatório que deseja gerar:
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {/* NOVO: Opção 0: Relatório Financeiro (Cronograma) */}
-                <button
-                    onClick={handleDownloadRelatorioFinanceiro}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid #e91e63',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'financeiro' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = '#fce4ec';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📊</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: '#e91e63' }}>
-                                {isDownloading && downloadType === 'financeiro' ? 'Gerando...' : 'Relatório Financeiro'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Cronograma com pagamentos futuros, parcelados e previsões
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 1: Baixar Notas Fiscais */}
-                <button
-                    onClick={handleDownloadNotasFiscais}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid var(--cor-primaria)',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'notas' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📎</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-primaria)' }}>
-                                {isDownloading && downloadType === 'notas' ? 'Preparando...' : 'Baixar Notas Fiscais'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Exporta todas as notas fiscais em um arquivo ZIP
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 2: Resumo da Obra */}
-                <button
-                    onClick={handleDownloadResumoObra}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid var(--cor-acento)',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'resumo' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📄</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-acento)' }}>
-                                {isDownloading && downloadType === 'resumo' ? 'Gerando...' : 'Resumo Completo da Obra'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                PDF com serviços, valores, pendências, orçamentos e gráficos
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 3: Orçamentos */}
-                <button
-                    onClick={() => {
-                        onClose(); // Fecha o modal de relatórios
-                        // Abre o modal de orçamentos através do callback
-                        if (window.abrirModalOrcamentos) {
-                            window.abrirModalOrcamentos();
-                        }
-                    }}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid #17a2b8',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>💰</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: '#17a2b8' }}>
-                                Orçamentos
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Visualize todos os orçamentos com status e anexos
-                            </p>
-                        </div>
-                    </div>
-                </button>
-            </div>
-
-            {error && (
-                <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '15px' }}>
-                    {error}
-                </p>
-            )}
-
-            <div style={{ marginTop: '25px', textAlign: 'center' }}>
-                <button onClick={onClose} className="cancel-btn" disabled={isDownloading}>
-                    Fechar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE RELATÓRIOS ---
-
-
-// --- MODAL DE ORÇAMENTOS ---
-const OrcamentosModal = ({ obraId, onClose, onSave }) => {
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [servicos, setServicos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAddModalVisible, setAddModalVisible] = useState(false);
-    const [editingOrcamento, setEditingOrcamento] = useState(null);
-    const [viewingAnexos, setViewingAnexos] = useState(null);
     
-    // Estado para modal de aprovação com escolha de serviço
-    const [aprovandoOrcamento, setAprovandoOrcamento] = useState(null);
-
-    useEffect(() => {
-        carregarDados();
-    }, [obraId]);
-
-    const carregarDados = async () => {
-        try {
-            setIsLoading(true);
-            const [orcRes, servRes] = await Promise.all([
-                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`)
-            ]);
-            
-            if (!orcRes.ok || !servRes.ok) throw new Error('Erro ao carregar dados');
-            
-            const orcData = await orcRes.json();
-            const servData = await servRes.json();
-            
-            setOrcamentos(Array.isArray(orcData) ? orcData : []);
-            setServicos(Array.isArray(servData) ? servData : []);
-        } catch (err) {
-            console.error('Erro:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleAprovar = (orcamento) => {
-        setAprovandoOrcamento(orcamento);
-    };
-
-    const handleConfirmarAprovacao = async (opcao, servicoId = null) => {
-        try {
-            const body = { opcao }; // 'criar_novo' ou 'atrelar'
-            if (opcao === 'atrelar' && servicoId) {
-                body.servico_id = servicoId;
-            }
-
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(body)
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao aprovar orçamento');
-
-            alert('✅ Orçamento aprovado com sucesso!');
-            setAprovandoOrcamento(null);
-            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
-            // O onSave() já vai recarregar todos os dados da obra
-            if (onSave) onSave();
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    };
-
-    const handleRejeitar = async (orcamentoId) => {
-        if (!window.confirm('Confirma a rejeição deste orçamento?')) return;
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${orcamentoId}`,
-                { method: 'DELETE' }
-            );
-
-            if (!response.ok) throw new Error('Erro ao rejeitar orçamento');
-
-            alert('✅ Orçamento rejeitado!');
-            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
-            if (onSave) onSave();
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    };
-
-    // CORREÇÃO: Função para salvar novo orçamento
-    const handleSaveOrcamento = async (formData) => {
-        try {
-            console.log("Salvando novo orçamento...");
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/orcamentos`,
-                {
-                    method: 'POST',
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.erro || 'Erro ao salvar orçamento');
-            }
-
-            alert('✅ Orçamento salvo com sucesso!');
-            setAddModalVisible(false);
-            carregarDados(); // Recarrega a lista de orçamentos
-            if (onSave) onSave(); // Notifica o Dashboard também
-        } catch (err) {
-            console.error("Erro ao salvar orçamento:", err);
-            alert(`Erro ao salvar orçamento: ${err.message}`);
-        }
-    };
-
-    // CORREÇÃO: Função para editar orçamento
-    const handleEditOrcamento = async (orcamentoId, formData, newFiles) => {
-        try {
-            console.log("Salvando edição do orçamento:", orcamentoId);
-            
-            // 1. Atualizar dados do orçamento
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${orcamentoId}`,
-                {
-                    method: 'PUT',
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.erro || 'Erro ao salvar edição');
-            }
-
-            // 2. Upload de novos anexos (se houver)
-            if (newFiles.length > 0) {
-                const fileFormData = new FormData();
-                newFiles.forEach(file => {
-                    fileFormData.append('anexos', file);
-                });
-                
-                const fileResponse = await fetchWithAuth(
-                    `${API_URL}/orcamentos/${orcamentoId}/anexos`,
-                    {
-                        method: 'POST',
-                        body: fileFormData
-                    }
-                );
-
-                if (!fileResponse.ok) {
-                    const error = await fileResponse.json();
-                    throw new Error(error.erro || 'Erro ao enviar anexos');
-                }
-            }
-
-            alert('✅ Orçamento atualizado com sucesso!');
-            setEditingOrcamento(null);
-            carregarDados(); // Recarrega a lista de orçamentos
-            if (onSave) onSave(); // Notifica o Dashboard também
-        } catch (err) {
-            console.error("Erro ao salvar edição do orçamento:", err);
-            alert(`Erro ao salvar edição: ${err.message}`);
-        }
-    };
-
-    const totalPendente = orcamentos
-        .filter(orc => orc.status !== 'Rejeitado')
-        .reduce((sum, orc) => sum + (orc.valor || 0), 0);
-
-    if (isLoading) {
-        return (
-            <Modal onClose={onClose} customWidth="96%">
-                <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                    <h2>📋 Orçamentos</h2>
-                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
-                </div>
-            </Modal>
-        );
-    }
-
-    return (
-        <Modal onClose={onClose} customWidth="96%">
-            <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                <button onClick={onClose} className="close-modal-btn">×</button>
-                <h2>📋 Orçamentos para Aprovação</h2>
-                
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px',
-                    padding: '15px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px'
-                }}>
-                    <div>
-                        <span style={{ fontSize: '1.1em', color: 'var(--cor-texto-secundario)' }}>
-                            Total Pendente: 
-                        </span>
-                        <span style={{ 
-                            fontSize: '1.5em', 
-                            fontWeight: 'bold',
-                            color: 'var(--cor-primaria)',
-                            marginLeft: '10px'
-                        }}>
-                            {formatCurrency(totalPendente)}
-                        </span>
-                    </div>
-                    <button 
-                        onClick={() => setAddModalVisible(true)}
-                        className="acao-btn add-btn"
-                        style={{ backgroundColor: 'var(--cor-info)' }}
-                    >
-                        + Novo Orçamento
-                    </button>
-                </div>
-
-                {orcamentos.filter(orc => orc.status !== 'Rejeitado').length > 0 ? (
-                    <table className="tabela-pendencias">
-                        <thead>
-                            <tr>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Segmento</th>
-                                <th>Serviço</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orcamentos.filter(orc => orc.status !== 'Rejeitado').map(orc => (
-                                <tr key={orc.id}>
-                                    <td
-                                        onClick={() => setEditingOrcamento(orc)}
-                                        style={{
-                                            cursor: 'pointer',
-                                            color: 'var(--cor-primaria)',
-                                            fontWeight: '500',
-                                            textDecoration: 'underline'
-                                        }}
-                                        title="Clique para editar"
-                                    >
-                                        {orc.descricao}
-                                    </td>
-                                    <td>{orc.fornecedor || 'N/A'}</td>
-                                    <td>{orc.tipo}</td>
-                                    <td>{orc.servico_nome || 'Geral'}</td>
-                                    <td><strong>{formatCurrency(orc.valor)}</strong></td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                            {orc.anexos_count > 0 && (
-                                                <button
-                                                    onClick={() => setViewingAnexos(orc)}
-                                                    className="acao-icon-btn"
-                                                    title={`${orc.anexos_count} anexo(s)`}
-                                                    style={{ fontSize: '1.3em', color: '#007bff' }}
-                                                >
-                                                    📎
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleRejeitar(orc.id)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Rejeitar
-                                            </button>
-                                            <button
-                                                onClick={() => handleAprovar(orc)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Aprovar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-secundario)' }}>
-                        Nenhum orçamento pendente.
-                    </p>
-                )}
-
-                {/* Modal de Aprovação com Escolha */}
-                {aprovandoOrcamento && (
-                    <Modal onClose={() => setAprovandoOrcamento(null)}>
-                        <div className="modal-content" style={{ maxWidth: '600px' }}>
-                            <h2>✅ Aprovar Orçamento</h2>
-                            <p style={{ marginBottom: '20px', color: '#666' }}>
-                                <strong>{aprovandoOrcamento.descricao}</strong><br />
-                                Valor: {formatCurrency(aprovandoOrcamento.valor)}
-                            </p>
-
-                            <div style={{ marginBottom: '20px' }}>
-                                <p style={{ fontWeight: 'bold', marginBottom: '15px' }}>
-                                    Como deseja proceder com este orçamento?
-                                </p>
-
-                                <button
-                                    onClick={() => handleConfirmarAprovacao('criar_novo')}
-                                    className="submit-btn"
-                                    style={{ 
-                                        width: '100%', 
-                                        marginBottom: '10px',
-                                        padding: '15px',
-                                        fontSize: '1em'
-                                    }}
-                                >
-                                    🆕 Criar Novo Serviço
-                                </button>
-
-                                <div style={{ margin: '15px 0', textAlign: 'center', color: '#999' }}>
-                                    ou
-                                </div>
-
-                                <select
-                                    id="servico-select"
-                                    className="form-control"
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '10px',
-                                        marginBottom: '10px'
-                                    }}
-                                    defaultValue=""
-                                >
-                                    <option value="">Selecione um serviço existente...</option>
-                                    {(servicos || []).map(serv => (
-                                        <option key={serv.id} value={serv.id}>
-                                            {serv.nome} - {formatCurrency(serv.valor_total)}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <button
-                                    onClick={() => {
-                                        const servicoId = document.getElementById('servico-select').value;
-                                        if (!servicoId) {
-                                            alert('Por favor, selecione um serviço!');
-                                            return;
-                                        }
-                                        handleConfirmarAprovacao('atrelar', parseInt(servicoId));
-                                    }}
-                                    className="submit-btn"
-                                    style={{ 
-                                        width: '100%',
-                                        padding: '15px',
-                                        fontSize: '1em',
-                                        backgroundColor: '#6c757d'
-                                    }}
-                                >
-                                    🔗 Atrelar a Serviço Existente
-                                </button>
-                            </div>
-
-                            <button
-                                onClick={() => setAprovandoOrcamento(null)}
-                                className="cancel-btn"
-                                style={{ width: '100%' }}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </Modal>
-                )}
-
-                {/* Aqui vão os outros modais (add, edit, anexos) se necessário */}
-                {isAddModalVisible && (
-                    <AddOrcamentoModal
-                        obraId={obraId}
-                        onClose={() => setAddModalVisible(false)}
-                        onSave={handleSaveOrcamento}
-                        servicos={servicos}
-                    />
-                )}
-
-                {editingOrcamento && (
-                    <EditOrcamentoModal
-                        orcamento={editingOrcamento}
-                        obraId={obraId}
-                        onClose={() => setEditingOrcamento(null)}
-                        onSave={handleEditOrcamento}
-                        servicos={servicos}
-                    />
-                )}
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE ORÇAMENTOS ---
-
-
-// --- COMPONENTE DO DASHBOARD (Atualizado) ---
-function Dashboard() {
-    const { user, logout } = useAuth();
-    const [obras, setObras] = useState([]);
-    const [obraSelecionada, setObraSelecionada] = useState(null);
-    const [lancamentos, setLancamentos] = useState([]);
-    const [servicos, setServicos] = useState([]);
-    const [sumarios, setSumarios] = useState(null);
-    const [historicoUnificado, setHistoricoUnificado] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [editingLancamento, setEditingLancamento] = useState(null);
-    const [isAddServicoModalVisible, setAddServicoModalVisible] = useState(false);
-    const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
-    const [viewingServico, setViewingServico] = useState(null);
-    const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
+    // Estados para edição de serviço
+    const [editingServico, setEditingServico] = useState(null);
     
-    const [isExportModalVisible, setExportModalVisible] = useState(false);
-    const [isRelatorioCronogramaVisible, setRelatorioCronogramaVisible] = useState(false);
-    const [isExportingPDF, setIsExportingPDF] = useState(false);
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
+    // Estados para ETAPA PAI (nova)
+    const [showAddEtapaPaiModal, setShowAddEtapaPaiModal] = useState(null); // cronograma_id
+    const [novaEtapaPai, setNovaEtapaPai] = useState({
+        nome: '',
+        etapa_anterior_id: null,
+        tipo_condicao: 'apos_termino',
+        dias_offset: 0,
+        observacoes: ''
+    });
     
-    // NOVO: Estado para cronograma de obras (Gantt)
-    const [cronogramaObras, setCronogramaObras] = useState([]);
+    // Estados para SUBETAPA (antigo "etapa")
+    const [showAddSubetapaModal, setShowAddSubetapaModal] = useState(null); // etapa_pai_id
+    const [novaSubetapa, setNovaSubetapa] = useState({
+        nome: '',
+        duracao_dias: 1,
+        data_inicio: '',
+        percentual_conclusao: 0,
+        observacoes: ''
+    });
     
-    const [editingOrcamento, setEditingOrcamento] = useState(null);
-    const [viewingAnexos, setViewingAnexos] = useState(null);
+    // Estados para edição
+    const [editingEtapaPai, setEditingEtapaPai] = useState(null);
+    const [editingSubetapa, setEditingSubetapa] = useState(null);
     
-    // <--- MUDANÇA: Novo estado para o modal de pagamento -->
-    const [payingItem, setPayingItem] = useState(null);
+    // Estados para serviços vinculados (importar)
+    const [servicosDisponiveis, setServicosDisponiveis] = useState([]);
+    const [showImportModal, setShowImportModal] = useState(false);
     
-    const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
-    const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
-    const [filtroPendencias, setFiltroPendencias] = useState('');
+    // Estados para EVM
+    const [evmData, setEvmData] = useState({});
     
-    // <--- NOVO: Estados para Notas Fiscais -->
-    const [notasFiscais, setNotasFiscais] = useState([]);
-    const [uploadingNFFor, setUploadingNFFor] = useState(null);
-    const isLoadingNotasFiscais = React.useRef(false); // Proteção contra múltiplas requisições
-    
-    // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
-    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
-    
-    // <--- NOVO: Estado para modal de relatórios -->
-    const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
-    
-    // <--- NOVO: Estado para modal de orçamentos -->
-    const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
-    
-    // <--- NOVO: Estado para modal do Cronograma Financeiro -->
-    const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
-    
-    // MUDANÇA 2: Estado para modal do Diário de Obras
-    const [isDiarioVisible, setDiarioVisible] = useState(false);
-    
-    // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
-    const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
-    
-    // NOVO: Estado para modal do Caixa de Obra
-    const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
-    
-    // === NOVO: Estados para Sidebar ===
-    const [currentPage, setCurrentPage] = useState('obras');
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    // Estados para controle de expansão das etapas
+    const [expandedEtapas, setExpandedEtapas] = useState({});
 
-    // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
-    // Função para navegar COM histórico do browser (botão voltar funciona)
-    const navigateTo = (page, obraId = null) => {
-        const state = { page, obraId };
-        const url = obraId ? `?obra=${obraId}&page=${page}` : `?page=${page}`;
-        window.history.pushState(state, '', url);
-        setCurrentPage(page);
-    };
-
-    // Expor navigateTo globalmente para uso no Sidebar
-    window.navigateTo = navigateTo;
-
-    // Escutar botão voltar do navegador
-    useEffect(() => {
-        const handlePopState = (event) => {
-            console.log('PopState event:', event.state);
-            if (event.state) {
-                setCurrentPage(event.state.page || 'obras');
-                if (event.state.obraId) {
-                    fetchObraData(event.state.obraId);
-                } else {
-                    setObraSelecionada(null);
-                }
-            } else {
-                // Se não tem estado, voltar para lista de obras
-                setCurrentPage('obras');
-                setObraSelecionada(null);
-            }
+    // Função para buscar com autenticação
+    const fetchWithAuth = useCallback(async (url, options = {}) => {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...options.headers
         };
-
-        window.addEventListener('popstate', handlePopState);
-
-        // Definir estado inicial na URL (apenas se não houver estado)
-        if (!window.history.state) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const pageFromUrl = urlParams.get('page');
-            const obraFromUrl = urlParams.get('obra');
-            
-            if (pageFromUrl) {
-                setCurrentPage(pageFromUrl);
-            }
-            if (obraFromUrl) {
-                const obraId = parseInt(obraFromUrl);
-                if (!isNaN(obraId)) {
-                    fetchObraData(obraId);
-                }
-            }
-            
-            // Definir estado inicial
-            window.history.replaceState(
-                { page: pageFromUrl || 'obras', obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
-                '',
-                window.location.href
-            );
-        }
-
-        return () => {
-            window.removeEventListener('popstate', handlePopState);
-        };
+        return fetch(url, { ...options, headers });
     }, []);
 
-const totalOrcamentosPendentes = useMemo(() => {
-        // A variável 'orcamentos' já contém
-        // apenas os orçamentos com status 'Pendente' vindos do backend.
-        return (Array.isArray(orcamentos) ? orcamentos : [])
-            .reduce((total, orc) => total + (orc.valor || 0), 0);
-    }, [orcamentos]);
-
-   const itemsAPagar = useMemo(() => {
-    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
-    return (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item =>
-        (item.valor_total || 0) > (item.valor_pago || 0)
-    )
-},
-[historicoUnificado]
-);
-    
-    const itemsAPagarFiltrados = useMemo(() => {
-        if (!filtroPendencias) {
-            return itemsAPagar;
+    // Carregar cronograma
+    const fetchCronograma = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma`);
+            if (!response.ok) throw new Error('Erro ao carregar cronograma');
+            const data = await response.json();
+            setCronograma(data);
+            
+            // Expandir todas as etapas por padrão
+            const expanded = {};
+            data.forEach(servico => {
+                if (servico.etapas) {
+                    servico.etapas.forEach(etapa => {
+                        expanded[etapa.id] = true;
+                    });
+                }
+            });
+            setExpandedEtapas(expanded);
+            
+            // Carregar dados EVM para cada serviço
+            for (const item of data) {
+                fetchEVMData(item.servico_nome);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-        const lowerCaseFiltro = filtroPendencias.toLowerCase();
-        return itemsAPagar.filter(item => 
-            (item.descricao && item.descricao.toLowerCase().includes(lowerCaseFiltro)) ||
-            (item.fornecedor && item.fornecedor.toLowerCase().includes(lowerCaseFiltro)) ||
-            (item.tipo && item.tipo.toLowerCase().includes(lowerCaseFiltro))
-        );
-    }, [itemsAPagar, filtroPendencias]);
+    }, [obraId, fetchWithAuth]);
 
- // --- NOVO BLOCO DO CRONOGRAMA (LUGAR CORRETO) ---
-    const cronogramaPagamentos = useMemo(() => {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
-
-        const data7Dias = new Date(hoje);
-        data7Dias.setDate(hoje.getDate() + 7);
-
-        const data30Dias = new Date(hoje);
-        data30Dias.setDate(hoje.getDate() + 30);
-
-        const totais = {
-            atrasados: 0,
-            hoje: 0,
-            prox7dias: 0,
-            prox30dias: 0,
-            totalAPagar: 0
-        };
-
-        // Usa a variável 'itemsAPagar' que já foi definida ANTES
-        (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
-            const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            // Usa data_vencimento se existir, senão usa data como fallback
-            const dataParaUsar = item.data_vencimento || item.data;
-            const dataVencimento = new Date(dataParaUsar + 'T00:00:00'); 
-            
-            totais.totalAPagar += valorRestante;
-
-            if (dataVencimento < hoje) {
-                totais.atrasados += valorRestante;
-            } else if (dataVencimento.getTime() === hoje.getTime()) {
-                totais.hoje += valorRestante;
-            } else if (dataVencimento <= data7Dias) {
-                totais.prox7dias += valorRestante;
-            } else if (dataVencimento <= data30Dias) {
-                totais.prox30dias += valorRestante;
+    // Buscar dados EVM
+    const fetchEVMData = async (servicoNome) => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/servico-financeiro?servico_nome=${encodeURIComponent(servicoNome)}`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                setEvmData(prev => ({ ...prev, [servicoNome]: data }));
             }
-        });
+        } catch (err) {
+            console.log('EVM não disponível para:', servicoNome);
+        }
+    };
 
-        return totais;
-    }, [itemsAPagar]); // A dependência é 'itemsAPagar'
-    // --- FIM DO NOVO BLOCO ---
+    useEffect(() => {
+        fetchCronograma();
+    }, [fetchCronograma]);
 
-
-    const itemsPagos = useMemo(() => 
-        (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item => 
-            (item.valor_total || 0) - (item.valor_pago || 0) < 0.01 // Totalmente pago
-        ),
-        [historicoUnificado]
-    );
-    
-    // <--- NOVO: Função para agrupar pagamentos por mês -->
-    const pagamentosPorMes = useMemo(() => {
-        const grupos = {};
-        
-        itemsPagos.forEach(item => {
-            const dataItem = new Date((item.data_vencimento || item.data) + 'T00:00:00');
-            const mesAno = `${dataItem.getFullYear()}-${String(dataItem.getMonth() + 1).padStart(2, '0')}`;
-            const mesAnoLabel = dataItem.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-                .replace(/^\w/, c => c.toUpperCase()); // Capitalizar primeira letra
-            
-            if (!grupos[mesAno]) {
-                grupos[mesAno] = {
-                    label: mesAnoLabel,
-                    items: [],
-                    total: 0,
-                    dataOrdem: dataItem // Para ordenação
-                };
+    // Buscar serviços disponíveis para importar
+    const fetchServicosDisponiveis = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`);
+            if (response.ok) {
+                const data = await response.json();
+                const nomesCronograma = cronograma.map(c => c.servico_nome.toLowerCase());
+                const disponiveis = data.filter(s => !nomesCronograma.includes(s.nome.toLowerCase()));
+                setServicosDisponiveis(disponiveis);
             }
-            
-            grupos[mesAno].items.push(item);
-            grupos[mesAno].total += item.valor_pago || 0;
-        });
-        
-        // Ordenar por data (mais recente primeiro)
-        return Object.entries(grupos)
-            .sort(([, a], [, b]) => b.dataOrdem - a.dataOrdem)
-            .map(([mesAno, dados]) => ({ mesAno, ...dados }));
-    }, [itemsPagos]);
-    
-    // <--- NOVO: Função para toggle de expandir/recolher mês -->
-    const toggleMes = (mesAno) => {
-        setMesesExpandidos(prev => ({
+        } catch (err) {
+            console.error('Erro ao buscar serviços:', err);
+        }
+    };
+
+    // Toggle expansão de etapa
+    const toggleEtapaExpansion = (etapaId) => {
+        setExpandedEtapas(prev => ({
             ...prev,
-            [mesAno]: !prev[mesAno]
+            [etapaId]: !prev[etapaId]
         }));
     };
 
-
-    // Efeito para buscar obras
-    useEffect(() => {
-        console.log("Buscando lista de obras...");
-        fetchWithAuth(`${API_URL}/obras`)
-            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
-            .then(data => { console.log("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
-            .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
-    }, []); 
+    // ==================== CRUD SERVIÇO ====================
     
-    // Callback para abrir modal de orçamentos
-    useEffect(() => {
-        window.abrirModalOrcamentos = () => {
-            setOrcamentosModalVisible(true);
-        };
-        return () => {
-            delete window.abrirModalOrcamentos;
-        };
-    }, []);
-
-    const fetchObraData = (obraId) => {
-        setIsLoading(true);
-        console.log(`Buscando dados da obra ID: ${obraId}`);
-        fetchWithAuth(`${API_URL}/obras/${obraId}`)
-            .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
-            .then(data => {
-                console.log("Dados da obra recebidos:", data);
-                setObraSelecionada(data.obra || null);
-                setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
-                const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
-                    ...serv,
-                    pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
-                }));
-                setServicos(servicosComPagamentosArray);
-                setSumarios(data.sumarios || null);
-                setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
-                setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
-                
-                // NOVO: Buscar cronograma de obras para o Gantt
-                fetchCronogramaObras(obraId);
-                
-                // <--- NOVO: Buscar notas fiscais (opcional) -->
-                // CORREÇÃO: Tentar buscar mas não bloquear se falhar
-                try {
-                    fetchNotasFiscais(obraId);
-                } catch (error) {
-                    // Ignorar erro silenciosamente - notas fiscais são opcionais
-                    console.log("Notas fiscais não disponíveis");
-                }
-            })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
-            .finally(() => setIsLoading(false));
-    };
-    
-    // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
-    const fetchCronogramaObras = async (obraId) => {
-        try {
-            // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
-            const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
-            if (!response.ok) {
-                console.log("Erro ao buscar cronogramas:", response.status);
-                setCronogramaObras([]);
-                return;
-            }
-            
-            const cronogramasData = await response.json();
-            console.log("Cronogramas da obra (raw):", cronogramasData);
-            
-            if (!Array.isArray(cronogramasData) || cronogramasData.length === 0) {
-                console.log("Nenhum cronograma encontrado");
-                setCronogramaObras([]);
-                return;
-            }
-            
-            // Para cada cronograma, buscar as etapas
-            const cronogramasComEtapas = await Promise.all(
-                cronogramasData.map(async (cron) => {
-                    try {
-                        const etapasResp = await fetchWithAuth(`${API_URL}/cronograma/${cron.id}/etapas`);
-                        let etapas = [];
-                        if (etapasResp.ok) {
-                            etapas = await etapasResp.json();
-                        }
-                        return {
-                            servico_id: cron.servico_id,
-                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
-                            cronograma_id: cron.id,
-                            etapas: Array.isArray(etapas) ? etapas : []
-                        };
-                    } catch (e) {
-                        console.log(`Erro ao buscar etapas do cronograma ${cron.id}:`, e);
-                        return {
-                            servico_id: cron.servico_id,
-                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
-                            cronograma_id: cron.id,
-                            etapas: []
-                        };
-                    }
-                })
-            );
-            
-            console.log("Cronogramas de obras carregados:", cronogramasComEtapas);
-            setCronogramaObras(cronogramasComEtapas);
-        } catch (error) {
-            console.log("Erro ao buscar cronograma de obras:", error);
-            setCronogramaObras([]);
-        }
-    };
-    
-    // <--- NOVO: Função para buscar notas fiscais -->
-    const fetchNotasFiscais = (obraId) => {
-        // Proteção contra múltiplas requisições simultâneas
-        if (isLoadingNotasFiscais.current) {
-            console.log("Já está carregando notas fiscais, ignorando requisição duplicada");
+    // Adicionar novo serviço
+    const handleAddServico = async () => {
+        if (!novoServico.servico_nome.trim()) {
+            alert('Informe o nome do serviço');
             return;
         }
-        
-        isLoadingNotasFiscais.current = true;
-        
-        // CORREÇÃO: Verificar se a rota existe antes de fazer a requisição
-        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
-            .then(res => {
-                if (!res.ok) {
-                    // Se for 404, significa que a rota não existe - ignorar silenciosamente
-                    if (res.status === 404) {
-                        console.log("Rota de notas fiscais não disponível (404) - ignorando");
-                        throw new Error('NOT_FOUND');
-                    }
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then(data => {
-                console.log("Notas fiscais recebidas:", data);
-                setNotasFiscais(Array.isArray(data) ? data : []);
-            })
-            .catch(error => {
-                // CORREÇÃO: Não logar erro se for NOT_FOUND ou erro de rede
-                if (error.message === 'NOT_FOUND') {
-                    // Silencioso - rota não implementada ainda
-                    setNotasFiscais([]);
-                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    // Erro de rede - não logar (evita spam no console)
-                    console.warn("Notas fiscais: rota não disponível");
-                    setNotasFiscais([]);
-                } else {
-                    // Outros erros - logar normalmente
-                    console.error("Erro ao buscar notas fiscais:", error);
-                    setNotasFiscais([]);
-                }
-            })
-            .finally(() => {
-                isLoadingNotasFiscais.current = false;
-            });
-    };
-    
-    // <--- NOVO: Helper para verificar se item tem nota fiscal -->
-    const itemHasNotaFiscal = (item) => {
-        // <-- CORREÇÃO: Usar o ID correto baseado no tipo de registro
-        const realItemId = item.tipo_registro === 'lancamento' 
-            ? item.lancamento_id 
-            : item.pagamento_id;
-            
-        return notasFiscais.some(nf => 
-            nf.item_id === realItemId && nf.item_type === item.tipo_registro
-        );
-    };
 
-    // --- FUNÇÕES DE AÇÃO (CRUD) ---
-    const handleAddObra = (e) => {
-        // ... (código inalterado)
-        e.preventDefault();
-        const nome = e.target.nome.value;
-        const cliente = e.target.cliente.value || null;
-        fetchWithAuth(`${API_URL}/obras`, { method: 'POST', body: JSON.stringify({ nome, cliente }) })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); })
-        .catch(error => console.error('Erro ao adicionar obra:', error));
-    };
-    const handleDeletarObra = (obraId, obraNome) => {
-        // ... (código inalterado)
-        fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
-        .catch(error => console.error('Erro ao deletar obra:', error));
-    };
-    
-    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
-    const handleMarcarComoPago = (itemId) => {
-        const isLancamento = String(itemId).startsWith('lanc-');
-        const isServicoPag = String(itemId).startsWith('serv-pag-');
-        const actualId = String(itemId).split('-').pop(); 
-
-        let url = '';
-        if (isLancamento) {
-            url = `${API_URL}/lancamentos/${actualId}/pago`;
-        } else if (isServicoPag) {
-            url = `${API_URL}/servicos/pagamentos/${actualId}/status`;
-        } else {
-            return; 
-        }
-
-        console.log("Alternando status para:", itemId);
-        fetchWithAuth(url, { method: 'PATCH' })
-             .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-             .then(() => fetchObraData(obraSelecionada.id))
-             .catch(error => console.error("Erro ao marcar como pago:", error));
-    };
-
-    const handleDeletarLancamento = (itemId) => {
-         // ... (código inalterado)
-         const isLancamento = String(itemId).startsWith('lanc-');
-         const actualId = String(itemId).split('-').pop();
-        if (isLancamento) {
-            console.log("Deletando lançamento geral:", actualId);
-            fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
-                .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-                .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => console.error('Erro ao deletar lançamento:', error));
-        }
-    };
-    
-    const handleEditLancamento = (item) => {
-        if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
-    };
-    
-    // <--- MUDANÇA: Atualizado para enviar valor_total e valor_pago -->
-    const handleSaveEdit = (updatedLancamento) => {
-        const dataToSend = { 
-            ...updatedLancamento, 
-            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANÇA
-            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANÇA
-            servico_id: updatedLancamento.servico_id || null 
-        };
-        // Remove 'valor' se existir por acidente
-        delete dataToSend.valor;
-        
-        fetchWithAuth(`${API_URL}/lancamentos/${updatedLancamento.lancamento_id}`, { 
-            method: 'PUT',
-            body: JSON.stringify(dataToSend)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar edição:", error));
-    };
-    
-    // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
-    const handleSaveLancamento = (lancamentoData) => {
-        console.log("Salvando novo lançamento:", lancamentoData);
-        // O formulário envia 'valor', mas o backend espera 'valor'
-        // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
-            method: 'POST',
-            body: JSON.stringify(lancamentoData)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar lançamento:", error));
-    };
-    
-    // MUDANÇA 3: NOVO handler para Inserir Pagamento
-    const handleInserirPagamento = (pagamentoData) => {
-        console.log("Inserindo novo pagamento:", pagamentoData);
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
-            method: 'POST',
-            body: JSON.stringify(pagamentoData)
-        }).then(res => { 
-            if (!res.ok) { 
-                return res.json().then(err => { throw new Error(err.erro || 'Erro ao inserir pagamento') }); 
-            } 
-            return res.json(); 
-        })
-        .then(() => { 
-            setInserirPagamentoModalVisible(false); 
-            fetchObraData(obraSelecionada.id); 
-            alert('Pagamento inserido com sucesso!');
-        })
-        .catch(error => {
-            console.error("Erro ao inserir pagamento:", error);
-            alert('Erro ao inserir pagamento: ' + error.message);
-        });
-    };
-
-    const handleSaveServico = (servicoData) => {
-        // ... (código inalterado)
-        console.log("Salvando novo serviço:", servicoData);
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/servicos`, {
-            method: 'POST',
-            body: JSON.stringify(servicoData)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setAddServicoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar serviço:", error));
-    };
-
-    const handleSaveEditServico = (updatedServico) => {
-        // ... (código inalterado)
-        const dataToSend = {
-            ...updatedServico,
-            valor_global_mao_de_obra: parseFloat(updatedServico.valor_global_mao_de_obra) || 0,
-            valor_global_material: parseFloat(updatedServico.valor_global_material) || 0, 
-            responsavel: updatedServico.responsavel || null,
-            pix: updatedServico.pix || null
-        };
-        fetchWithAuth(`${API_URL}/servicos/${updatedServico.id}`, {
-            method: 'PUT',
-            body: JSON.stringify(dataToSend)
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setViewingServico(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar edição do serviço:", error));
-    };
-
-    // --- Handlers de Orçamento (inalterados) ---
-    const handleSaveOrcamento = (formData) => {
-        // ... (código inalterado)
-        console.log("Salvando novo orçamento...");
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
-            method: 'POST',
-            body: formData
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-            setAddOrcamentoModalVisible(false);
-            fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => {
-            console.error("Erro ao salvar orçamento:", error);
-            alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
-        });
-    };
-    const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
-        // ... (código inalterado)
-        console.log("Salvando edição do orçamento:", orcamentoId);
-        
-        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
-            method: 'PUT',
-            body: formData
-        }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-            
-            if (newFiles.length > 0) {
-                const fileFormData = new FormData();
-                newFiles.forEach(file => {
-                    fileFormData.append('anexos', file);
-                });
-                
-                return fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/anexos`, {
-                    method: 'POST',
-                    body: fileFormData
-                });
-            }
-            
-            return Promise.resolve();
-            
-        }).then(fileRes => {
-            if (fileRes && !fileRes.ok) {
-                 return fileRes.json().then(err => { throw new Error(err.erro || 'Erro ao enviar anexos') });
-            }
-            
-            setEditingOrcamento(null);
-            fetchObraData(obraSelecionada.id);
-        })
-        .catch(error => {
-            console.error("Erro ao salvar edição do orçamento:", error);
-            alert(`Erro ao salvar edição: ${error.message}`);
-        });
-    };
-    const handleAprovarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
-        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao aprovar orçamento:", error));
-    };
-    const handleRejeitarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
-        fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-             fetchObraData(obraSelecionada.id); 
-        })
-        .catch(error => console.error("Erro ao rejeitar orçamento:", error));
-    };
-
-    // Handler do PDF da Obra
-    const handleExportObraPDF = () => {
-        // ... (código inalterado)
-        if (!obraSelecionada) return;
-        
-        setIsExportingPDF(true);
-        const url = `${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`;
-
-        fetchWithAuth(url)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Falha ao gerar o PDF da obra.');
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL);
-                setIsExportingPDF(false);
-            })
-            .catch(err => {
-                console.error("Erro ao gerar PDF da obra:", err);
-                alert("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
-                setIsExportingPDF(false);
-            });
-    };
-
-    // Handler de Prioridade
-    const handleSaveServicoPrioridade = (novaPrioridade) => {
-        // ... (código inalterado)
-        if (!editingServicoPrioridade) return;
-
-        const pagamentoId = editingServicoPrioridade.pagamento_id;
-        
-        fetchWithAuth(`${API_URL}/servicos/pagamentos/${pagamentoId}/prioridade`, {
-            method: 'PATCH',
-            body: JSON.stringify({ prioridade: novaPrioridade })
-        })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-            setEditingServicoPrioridade(null);
-            fetchObraData(obraSelecionada.id);
-        })
-        .catch(error => {
-            console.error("Erro ao salvar prioridade do serviço:", error);
-            alert(`Erro ao salvar prioridade: ${error.message}`);
-        });
-    };
-
-    // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
-    const handleSavePartialPayment = (valor_a_pagar) => {
-        if (!payingItem) return;
-
-        const { tipo_registro, id } = payingItem;
-        // O ID vem como "lanc-123" ou "serv-pag-456"
-        const item_type = tipo_registro === 'lancamento' ? 'lancamento' : 'pagamento_servico';
-        const item_id = id.split('-').pop();
-
-        console.log(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
-
-        fetchWithAuth(`${API_URL}/pagamentos/${item_type}/${item_id}/pagar`, {
-            method: 'PATCH',
-            body: JSON.stringify({ valor_a_pagar })
-        })
-        .then(res => {
-            if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') }); }
-            return res.json();
-        })
-        .then(() => {
-            setPayingItem(null); // Fecha o modal
-            fetchObraData(obraSelecionada.id); // Recarrega os dados
-        })
-        .catch(error => {
-            console.error("Erro ao registrar pagamento parcial:", error);
-            // Mostra o erro de validação (ex: "valor maior que o restante")
-            // Precisamos garantir que o modal esteja aberto para mostrar o erro
-            if (payingItem) {
-                alert(`Erro: ${error.message}`);
-            }
-        });
-    };
-    // <--- FIM DA NOVA FUNÇÃO ---
-
-
-    // --- RENDERIZAÇÃO ---
-    
-    // Função para selecionar obra e ir para cronograma financeiro
-    const handleSelectObra = (obraId) => {
-        fetchObraData(obraId);
-        // Usar navigateTo para atualizar histórico do browser
-        if (typeof window.navigateTo === 'function') {
-            window.navigateTo('home', obraId);
-        } else {
-            setCurrentPage('home');
-        }
-    };
-
-    // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
-    if (!obraSelecionada) {
-        return (
-            <div className="container">
-                {isAdminPanelVisible && <AdminPanelModal 
-                    allObras={obras}
-                    onClose={() => setAdminPanelVisible(false)} 
-                />}
-                
-                {isRelatorioCronogramaVisible && <ModalRelatorioCronograma 
-                    obras={obras}
-                    onClose={() => setRelatorioCronogramaVisible(false)} 
-                />}
-                
-                <header className="dashboard-header">
-                    <h1>Minhas Obras</h1>
-                    <div className="header-actions">
-                        <button 
-                            onClick={() => setRelatorioCronogramaVisible(true)} 
-                            className="export-btn pdf" 
-                            style={{marginRight: '10px'}}
-                        >
-                            📊 Relatório Financeiro
-                        </button>
-                        
-                        {user.role === 'master' && (
-                            <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
-                                Gerenciar Usuários
-                            </button>
-                        )}
-                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
-                    </div>
-                </header>
-
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <div className="card-full">
-                        <h3>Cadastrar Nova Obra</h3>
-                        <form onSubmit={handleAddObra} className="form-add-obra">
-                            <input type="text" name="nome" placeholder="Nome da Obra" required />
-                            <input type="text" name="cliente" placeholder="Nome do Cliente" />
-                            <button type="submit" className="submit-btn">Adicionar Obra</button>
-                        </form>
-                    </div>
-                )}
-                
-                <div className="lista-obras">
-                    {obras.length > 0 ? (
-                        obras.map(obra => (
-                            <div key={obra.id} className="card-obra">
-                                {(user.role === 'administrador' || user.role === 'master') && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                        className="card-obra-delete-btn"
-                                        title="Excluir Obra"
-                                    >
-                                        🗑️
-                                    </button>
-                                )}
-                                
-                                <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
-                                    <h3>{obra.nome}</h3>
-                                    <p>Cliente: {obra.cliente || 'N/A'}</p>
-                                    
-                                    <div className="obra-kpi-summary">
-                                        <div>
-                                            <span>Orçamento Total</span>
-                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
-                                                {formatCurrency(obra.orcamento_total || 0)}
-                                            </strong>
-                                        </div>
-                                        <div>
-                                            <span>Valores Pagos</span>
-                                            <strong style={{ color: 'var(--cor-primaria)' }}>
-                                                {formatCurrency(obra.total_pago || 0)}
-                                            </strong>
-                                        </div>
-                                        <div>
-                                            <span>Liberado (Fila)</span>
-                                            <strong style={{ color: 'var(--cor-acento)' }}>
-                                                {formatCurrency(obra.liberado_pagamento || 0)}
-                                            </strong>
-                                        </div>
-                                        <div>
-                                            <span>Despesas Extras</span>
-                                            <strong style={{ color: '#9333ea' }}>
-                                                {formatCurrency(obra.despesas_extras || 0)}
-                                            </strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    // === TELA DE LOADING ===
-    if (isLoading || !sumarios) {
-        return <div className="loading-screen">Carregando dados da obra...</div>;
-    }
-
-    // === LAYOUT COM SIDEBAR (OBRA SELECIONADA) ===
-    return (
-        <>
-            <SidebarStyles />
-            <div className="app-layout">
-                {/* Sidebar */}
-                <Sidebar 
-                    user={user}
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    obraSelecionada={obraSelecionada}
-                    setObraSelecionada={setObraSelecionada}
-                    onLogout={logout}
-                    isCollapsed={isSidebarCollapsed}
-                    setIsCollapsed={setIsSidebarCollapsed}
-                />
-                
-                {/* Conteúdo Principal */}
-                <main className={`main-content ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-                    
-                    {/* Header Mobile */}
-                    <div className="mobile-header">
-                        <button 
-                            className="mobile-menu-btn"
-                            onClick={() => setIsSidebarCollapsed(false)}
-                        >
-                            ☰
-                        </button>
-                        <span className="mobile-logo">OBRALY</span>
-                        <span className="mobile-obra-badge">{obraSelecionada.nome}</span>
-                    </div>
-
-                    {/* Header com botão Inserir Pagamento */}
-                    {(user.role === 'administrador' || user.role === 'master') && (
-                        <div className="page-top-header">
-                            <button 
-                                onClick={() => setCurrentPage('pagamento')}
-                                className="submit-btn"
-                                style={{ background: '#007bff' }}
-                            >
-                                💳 Inserir Pagamento
-                            </button>
-                        </div>
-                    )}
-
-                    {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
-                    {currentPage === 'home' && (
-                        <div className="home-page-container">
-                            {/* Título da página */}
-                            <h1 style={{ 
-                                fontSize: '1.8em', 
-                                marginBottom: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px'
-                            }}>
-                                🏠 Início - {obraSelecionada.nome}
-                            </h1>
-                            
-                            {/* Dashboard com Gráficos */}
-                            <DashboardObra 
-                                obraId={obraSelecionada.id}
-                                obraNome={obraSelecionada.nome}
-                                servicos={servicos}
-                                lancamentos={lancamentos}
-                                cronograma={cronogramaObras}
-                            />
-                            
-                            {/* Quadro de Etapas e Serviços */}
-                            <EtapasServicosCard 
-                                servicos={servicos}
-                                onViewServico={setViewingServico}
-                                onAddServico={() => setAddServicoModalVisible(true)}
-                                onNavigateToCronograma={() => setCurrentPage('cronograma-obra')}
-                            />
-                            
-                            {/* Cronograma Financeiro Simplificado */}
-                            <CronogramaFinanceiro 
-                                obraId={obraSelecionada.id}
-                                obraNome={obraSelecionada.nome}
-                                onClose={() => {
-                                    setObraSelecionada(null);
-                                    setCurrentPage('obras');
-                                }}
-                                embedded={true}
-                                simplified={true}
-                            />
-                            
-                            {/* Histórico de Pagamentos */}
-                            <HistoricoPagamentosCard 
-                                itemsPagos={itemsPagos}
-                                itemsAPagar={itemsAPagar}
-                                user={user}
-                                fetchObraData={fetchObraData}
-                            />
-                        </div>
-                    )}
-
-                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
-                    {currentPage === 'cronograma-obra' && (
-                        <CronogramaObra 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Completo) === */}
-                    {currentPage === 'financeiro' && (
-                        <CronogramaFinanceiro 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => {
-                                setObraSelecionada(null);
-                                setCurrentPage('obras');
-                            }}
-                            embedded={true}
-                            simplified={false}
-                        />
-                    )}
-
-                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
-                    {currentPage === 'pagamento' && (
-                        <InserirPagamentoModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
-                            onSave={(formData) => {
-                                handleInserirPagamento(formData);
-                                setCurrentPage('home');
-                            }}
-                            servicos={servicos}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: RELATÓRIOS === */}
-                    {currentPage === 'relatorios' && (
-                        <RelatoriosModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: ORÇAMENTOS === */}
-                    {currentPage === 'orcamentos' && (
-                        <OrcamentosModal
-                            obraId={obraSelecionada.id}
-                            onClose={() => setCurrentPage('home')}
-                            onSave={() => fetchObraData(obraSelecionada.id)}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: DIÁRIO DE OBRAS === */}
-                    {currentPage === 'diario' && (
-                        <DiarioObras 
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: CAIXA DE OBRA === */}
-                    {currentPage === 'caixa' && (
-                        <CaixaObraModal
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
-                    {currentPage === 'usuarios' && (
-                        <AdminPanelModal 
-                            allObras={obras}
-                            onClose={() => setCurrentPage('home')} 
-                            embedded={true}
-                        />
-                    )}
-
-                    {/* Modais que aparecem por cima */}
-                    {viewingServico && (
-                        <ServicoDetailsModal
-                            servico={viewingServico}
-                            onClose={() => setViewingServico(null)}
-                            onSave={handleSaveEditServico}
-                            fetchObraData={fetchObraData}
-                            obraId={obraSelecionada.id}
-                        />
-                    )}
-
-                    {payingItem && (
-                        <PagamentoModal
-                            item={payingItem}
-                            onClose={() => setPayingItem(null)}
-                            onSave={handleSavePartialPayment}
-                        />
-                    )}
-
-                    {editingServicoPrioridade && (
-                        <PrioridadeModal
-                            currentValue={editingServicoPrioridade.prioridade}
-                            onClose={() => setEditingServicoPrioridade(null)}
-                            onSave={handleSaveServicoPrioridade}
-                        />
-                    )}
-                    
-                    {editingLancamento && <EditLancamentoModal 
-                        lancamento={editingLancamento} 
-                        onClose={() => setEditingLancamento(null)} 
-                        onSave={handleSaveEdit}
-                    />}
-
-                    {isAddServicoModalVisible && <AddServicoModal 
-                        onClose={() => setAddServicoModalVisible(false)} 
-                        onSave={handleSaveServico} 
-                    />}
-
-                    {isAddLancamentoModalVisible && <AddLancamentoModal 
-                        onClose={() => setAddLancamentoModalVisible(false)} 
-                        onSave={handleSaveLancamento} 
-                    />}
-                </main>
-            </div>
-
-            {/* Estilos adicionais */}
-            <style>{`
-                .page-top-header {
-                    display: flex;
-                    justify-content: flex-end;
-                    margin-bottom: 20px;
-                    padding: 0 10px;
-                }
-                
-                .page-top-header .submit-btn {
-                    padding: 10px 20px;
-                    font-size: 14px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
-                }
-                
-                @media (max-width: 768px) {
-                    .page-top-header {
-                        margin-top: 10px;
-                    }
-                }
-            `}</style>
-        </>
-    );
-}
-
-// ===================================
-// COMPONENTE CRONOGRAMA FINANCEIRO
-// ===================================
-
-// Modal para Cadastrar Pagamento Futuro (Único)
-const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        valor: '',
-        data_vencimento: getTodayString(),
-        fornecedor: '',
-        pix: '',
-        observacoes: ''
-    });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onSave(formData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💰 Cadastrar Pagamento Futuro</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento">
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Valor:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor}
-                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Data de Vencimento:
-                    <input
-                        type="date"
-                        value={formData.data_vencimento}
-                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-
-                <label>
-                    Chave PIX:
-                    <input
-                        type="text"
-                        value={formData.pix}
-                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
-                        placeholder="CPF, telefone, email ou chave aleatória"
-                        maxLength="100"
-                    />
-                </label>
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="3"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn">Cadastrar</button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal para Editar Pagamento Futuro
-const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
-    const [formData, setFormData] = useState({
-        descricao: pagamento.descricao || '',
-        valor: pagamento.valor || '',
-        data_vencimento: pagamento.data_vencimento || getTodayString(),
-        fornecedor: pagamento.fornecedor || '',
-        pix: pagamento.pix || '',
-        observacoes: pagamento.observacoes || ''
-    });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onSave(formData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>✏️ Editar Pagamento Futuro</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento">
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Valor:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor}
-                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Data de Vencimento:
-                    <input
-                        type="date"
-                        value={formData.data_vencimento}
-                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-
-                <label>
-                    Chave PIX:
-                    <input
-                        type="text"
-                        value={formData.pix}
-                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
-                        placeholder="CPF, telefone, email ou chave aleatória"
-                        maxLength="100"
-                    />
-                </label>
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="3"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn">Salvar</button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-
-// Modal para Cadastrar Pagamento Parcelado
-const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        fornecedor: '',
-        servico_id: '',  // Novo campo para vincular ao serviço
-        segmento: 'Material',  // Material ou Mão de Obra
-        valor_total: '',
-        numero_parcelas: '1',
-        periodicidade: 'Mensal',
-        data_primeira_parcela: getTodayString(),
-        observacoes: ''
-    });
-    
-    const [servicos, setServicos] = useState([]);
-    const [loadingServicos, setLoadingServicos] = useState(true);
-
-    // Buscar serviços da obra
-    useEffect(() => {
-        const fetchServicos = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/obras/${obraId}/servicos-nomes`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    setServicos(data.servicos || []);
-                }
-            } catch (error) {
-                console.error('Erro ao buscar serviços:', error);
-            } finally {
-                setLoadingServicos(false);
-            }
-        };
-        
-        fetchServicos();
-    }, [obraId]);
-
-    const valor_parcela = formData.valor_total && formData.numero_parcelas 
-        ? (parseFloat(formData.valor_total) / parseInt(formData.numero_parcelas)).toFixed(2)
-        : '0.00';
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onSave(formData);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>📊 Cadastrar Pagamento Parcelado</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento">
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-                
-                <label>
-                    Vincular ao Serviço (Opcional):
-                    <select
-                        value={formData.servico_id}
-                        onChange={(e) => setFormData({...formData, servico_id: e.target.value})}
-                        disabled={loadingServicos}
-                    >
-                        <option value="">-- Nenhum serviço --</option>
-                        {(servicos || []).map(servico => (
-                            <option key={servico.id} value={servico.id}>
-                                {servico.nome}
-                            </option>
-                        ))}
-                    </select>
-                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
-                        💡 Vincule este pagamento a um serviço do cronograma para que os valores apareçam na Análise de Valor Agregado (EVM)
-                    </small>
-                </label>
-
-                <label>
-                    Segmento:
-                    <select
-                        value={formData.segmento}
-                        onChange={(e) => setFormData({...formData, segmento: e.target.value})}
-                        required
-                    >
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                    </select>
-                    <small style={{display: 'block', marginTop: '5px', color: '#666'}}>
-                        💡 Selecione se este pagamento é referente a Material ou Mão de Obra para contabilizar corretamente no serviço vinculado
-                    </small>
-                </label>
-
-                <label>
-                    Valor Total:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor_total}
-                        onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Número de Parcelas:
-                    <input
-                        type="number"
-                        min="1"
-                        value={formData.numero_parcelas}
-                        onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Periodicidade:
-                    <select
-                        value={formData.periodicidade}
-                        onChange={(e) => setFormData({...formData, periodicidade: e.target.value})}
-                        required
-                    >
-                        <option value="Semanal">Semanal (a cada 7 dias)</option>
-                        <option value="Mensal">Mensal (a cada 30 dias)</option>
-                    </select>
-                </label>
-
-                <div style={{ 
-                    padding: '10px', 
-                    background: '#f0f8ff', 
-                    borderRadius: '5px',
-                    marginBottom: '10px'
-                }}>
-                    <strong>Valor de cada parcela:</strong> {formatCurrency(parseFloat(valor_parcela))}
-                </div>
-
-                <label>
-                    Data da 1ª Parcela:
-                    <input
-                        type="date"
-                        value={formData.data_primeira_parcela}
-                        onChange={(e) => setFormData({...formData, data_primeira_parcela: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="3"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn">Cadastrar</button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-// ==========================================
-// COMPONENTE: MODAL DE EDIÇÃO DE PARCELAS
-// ==========================================
-
-// ==========================================
-// COMPONENTE: CAIXA DE OBRA
-// ==========================================
-
-const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
-    const [caixa, setCaixa] = useState(null);
-    const [movimentacoes, setMovimentacoes] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [modalAberto, setModalAberto] = useState(false);
-    const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
-    const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
-    const [reanexandoId, setReanexandoId] = useState(null); // ID da movimentação sendo editada
-
-    // Função para reanexar comprovante
-    const handleReanexarComprovante = async (movId, file) => {
-        if (!file) return;
-        
         try {
-            // Comprimir imagem
-            const compressImage = (file) => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 1200;
-                            const MAX_HEIGHT = 1200;
-                            let width = img.width;
-                            let height = img.height;
-                            
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
-                            
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.7));
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
+            const response = await fetchWithAuth(`${API_URL}/cronograma`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    obra_id: obraId,
+                    servico_nome: novoServico.servico_nome,
+                    tipo_medicao: novoServico.tipo_medicao,
+                    data_inicio: novoServico.data_inicio,
+                    data_fim_prevista: novoServico.data_fim_prevista,
+                    percentual_conclusao: 0,
+                    area_total: novoServico.tipo_medicao === 'area' ? parseFloat(novoServico.area_total) || 0 : null,
+                    unidade_medida: novoServico.tipo_medicao === 'area' ? novoServico.unidade_medida : null,
+                    observacoes: novoServico.observacoes
+                })
+            });
+
+            if (!response.ok) throw new Error('Erro ao criar serviço');
+
+            fetchCronograma();
+            setShowAddModal(false);
+            setNovoServico({
+                servico_nome: '',
+                tipo_medicao: 'empreitada',
+                data_inicio: getTodayString(),
+                duracao_dias: 7,
+                data_fim_prevista: addDays(getTodayString(), 6),
+                area_total: '',
+                unidade_medida: 'm²',
+                observacoes: ''
+            });
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Importar serviço existente
+    const handleImportServico = async (servico) => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/cronograma`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    obra_id: obraId,
+                    servico_nome: servico.nome,
+                    tipo_medicao: 'etapas',
+                    data_inicio: getTodayString(),
+                    data_fim_prevista: addDays(getTodayString(), 30),
+                    percentual_conclusao: 0
+                })
+            });
+
+            if (!response.ok) throw new Error('Erro ao importar serviço');
+
+            fetchCronograma();
+            setShowImportModal(false);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Excluir serviço
+    const handleDeleteServico = async (servicoId) => {
+        if (!window.confirm('Excluir este serviço e todas suas etapas?')) return;
+
+        try {
+            const response = await fetchWithAuth(`${API_URL}/cronograma/${servicoId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Erro ao excluir serviço');
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // ==================== CRUD ETAPA PAI ====================
+    
+    // Adicionar nova etapa pai
+    const handleAddEtapaPai = async () => {
+        if (!novaEtapaPai.nome.trim()) {
+            alert('Informe o nome da etapa');
+            return;
+        }
+
+        try {
+            const payload = {
+                nome: novaEtapaPai.nome,
+                observacoes: novaEtapaPai.observacoes
             };
             
-            const base64 = await compressImage(file);
-            
-            // Atualizar movimentação com novo comprovante
+            // Se tem etapa anterior, adicionar condições
+            if (novaEtapaPai.etapa_anterior_id) {
+                payload.etapa_anterior_id = novaEtapaPai.etapa_anterior_id;
+                payload.tipo_condicao = novaEtapaPai.tipo_condicao;
+                payload.dias_offset = parseInt(novaEtapaPai.dias_offset) || 0;
+            }
+
             const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify({ comprovante_url: base64 })
-                }
-            );
-            
-            if (!response.ok) throw new Error('Erro ao atualizar comprovante');
-            
-            alert('✅ Comprovante atualizado com sucesso!');
-            carregarDados(); // Recarregar dados
-        } catch (err) {
-            console.error('Erro ao reanexar comprovante:', err);
-            alert('Erro ao atualizar comprovante');
-        } finally {
-            setReanexandoId(null);
-        }
-    };
-
-    useEffect(() => {
-        carregarDados();
-    }, [obraId, mesAno]);
-
-    const carregarDados = async () => {
-        try {
-            setIsLoading(true);
-            
-            // Carregar informações do caixa
-            const resCaixa = await fetchWithAuth(`${API_URL}/obras/${obraId}/caixa`);
-            if (!resCaixa.ok) throw new Error('Erro ao carregar caixa');
-            const dataCaixa = await resCaixa.json();
-            setCaixa(dataCaixa);
-
-            // Carregar movimentações do mês
-            const resMovs = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes?mes=${mesAno.mes}&ano=${mesAno.ano}`
-            );
-            if (!resMovs.ok) throw new Error('Erro ao carregar movimentações');
-            const dataMovs = await resMovs.json();
-            setMovimentacoes(dataMovs);
-        } catch (err) {
-            console.error('Erro ao carregar dados do caixa:', err);
-            alert('Erro ao carregar dados do caixa');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleNovaMovimentacao = () => {
-        setModalAberto(true);
-    };
-
-    const handleGerarRelatorio = async () => {
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/relatorio-pdf`,
+                `${API_URL}/cronograma/${showAddEtapaPaiModal}/etapas`,
                 {
                     method: 'POST',
-                    body: JSON.stringify({ mes: mesAno.mes, ano: mesAno.ano })
+                    body: JSON.stringify(payload)
                 }
             );
 
             if (!response.ok) {
-                // Tentar pegar mensagem de erro do servidor
-                try {
-                    const errorData = await response.json();
-                    console.error('Erro do servidor:', errorData);
-                    throw new Error(errorData.mensagem || errorData.erro || 'Erro ao gerar relatório');
-                } catch (jsonErr) {
-                    throw new Error('Erro ao gerar relatório');
-                }
+                const err = await response.json();
+                throw new Error(err.error || 'Erro ao criar etapa');
             }
+
+            fetchCronograma();
+            setShowAddEtapaPaiModal(null);
+            setNovaEtapaPai({
+                nome: '',
+                etapa_anterior_id: null,
+                tipo_condicao: 'apos_termino',
+                dias_offset: 0,
+                observacoes: ''
+            });
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Editar etapa pai
+    const handleUpdateEtapaPai = async () => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${editingEtapaPai.cronograma_id}/etapas/${editingEtapaPai.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        nome: editingEtapaPai.nome,
+                        etapa_anterior_id: editingEtapaPai.etapa_anterior_id,
+                        tipo_condicao: editingEtapaPai.tipo_condicao,
+                        dias_offset: parseInt(editingEtapaPai.dias_offset) || 0,
+                        observacoes: editingEtapaPai.observacoes
+                    })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao atualizar etapa');
+
+            fetchCronograma();
+            setEditingEtapaPai(null);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Excluir etapa pai
+    const handleDeleteEtapaPai = async (cronogramaId, etapaId, etapaNome) => {
+        if (!window.confirm(`Excluir etapa "${etapaNome}" e todas suas subetapas?`)) return;
+
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${cronogramaId}/etapas/${etapaId}`,
+                { method: 'DELETE' }
+            );
+
+            if (!response.ok) throw new Error('Erro ao excluir etapa');
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // ==================== CRUD SUBETAPA ====================
+    
+    // Adicionar nova subetapa
+    const handleAddSubetapa = async () => {
+        if (!novaSubetapa.nome.trim()) {
+            alert('Informe o nome da subetapa');
+            return;
+        }
+
+        try {
+            const payload = {
+                nome: novaSubetapa.nome,
+                etapa_pai_id: showAddSubetapaModal.etapa_pai_id,
+                duracao_dias: parseInt(novaSubetapa.duracao_dias) || 1,
+                percentual_conclusao: parseFloat(novaSubetapa.percentual_conclusao) || 0,
+                observacoes: novaSubetapa.observacoes
+            };
+            
+            if (novaSubetapa.data_inicio) {
+                payload.data_inicio = novaSubetapa.data_inicio;
+            }
+
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${showAddSubetapaModal.cronograma_id}/etapas`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Erro ao criar subetapa');
+            }
+
+            fetchCronograma();
+            setShowAddSubetapaModal(null);
+            setNovaSubetapa({
+                nome: '',
+                duracao_dias: 1,
+                data_inicio: '',
+                percentual_conclusao: 0,
+                observacoes: ''
+            });
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Editar subetapa
+    const handleUpdateSubetapa = async () => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${editingSubetapa.cronograma_id}/etapas/${editingSubetapa.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        nome: editingSubetapa.nome,
+                        duracao_dias: parseInt(editingSubetapa.duracao_dias) || 1,
+                        percentual_conclusao: parseFloat(editingSubetapa.percentual_conclusao) || 0,
+                        observacoes: editingSubetapa.observacoes
+                    })
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao atualizar subetapa');
+
+            fetchCronograma();
+            setEditingSubetapa(null);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // Excluir subetapa
+    const handleDeleteSubetapa = async (cronogramaId, subetapaId, subetapaNome) => {
+        if (!window.confirm(`Excluir subetapa "${subetapaNome}"?`)) return;
+
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/cronograma/${cronogramaId}/etapas/${subetapaId}`,
+                { method: 'DELETE' }
+            );
+
+            if (!response.ok) throw new Error('Erro ao excluir subetapa');
+            fetchCronograma();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    // ==================== HELPERS ====================
+    
+    // Atualizar data_fim quando mudar data_inicio ou duracao
+    useEffect(() => {
+        if (novoServico.data_inicio && novoServico.duracao_dias) {
+            setNovoServico(prev => ({
+                ...prev,
+                data_fim_prevista: addDays(prev.data_inicio, prev.duracao_dias - 1)
+            }));
+        }
+    }, [novoServico.data_inicio, novoServico.duracao_dias]);
+
+    // Status do serviço
+    const getStatus = (servico) => {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
+        const percentual = servico.percentual_conclusao || 0;
+
+        if (percentual >= 100) return { label: 'Concluído', color: '#28a745', icon: '✅' };
+        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: '#dc3545', icon: '🔴' };
+        if (servico.data_inicio_real) return { label: 'Em Andamento', color: '#007bff', icon: '🔄' };
+        return { label: 'A Iniciar', color: '#6c757d', icon: '⏳' };
+    };
+
+    // Indicador EVM
+    const getEVMIndicator = (servicoNome) => {
+        const evm = evmData[servicoNome];
+        if (!evm || !evm.valor_total) return null;
+
+        const percentualPago = evm.percentual_pago || 0;
+        const percentualExecutado = evm.percentual_executado || 0;
+        const diferenca = percentualExecutado - percentualPago;
+
+        if (diferenca >= 5) return { label: 'ADIANTADO', color: '#28a745', icon: '🟢' };
+        if (diferenca >= -5) return { label: 'NO PRAZO', color: '#007bff', icon: '🔵' };
+        if (diferenca >= -15) return { label: 'ATENÇÃO', color: '#ffc107', icon: '🟡' };
+        return { label: 'CRÍTICO', color: '#dc3545', icon: '🔴' };
+    };
+
+    // Gerar PDF
+    const handleGerarPDF = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-obra/relatorio-pdf`);
+            if (!response.ok) throw new Error('Erro ao gerar PDF');
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Caixa_${obraNome}_${mesAno.mes}_${mesAno.ano}.pdf`;
+            a.download = `cronograma_${obraNome}_${getTodayString()}.pdf`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (err) {
-            console.error('Erro ao gerar relatório:', err);
-            alert('Erro ao gerar relatório PDF: ' + err.message);
+            alert(err.message);
         }
     };
 
-    const movimentacoesFiltradas = filtroTipo 
-        ? movimentacoes.filter(m => m.tipo === filtroTipo)
-        : movimentacoes;
+    // ==================== RENDER ====================
 
-    if (isLoading) {
-        return (
-            <Modal customWidth="1200px">
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                    Carregando...
-                </div>
-            </Modal>
-        );
+    if (loading) {
+        return <div className="loading-container">Carregando cronograma...</div>;
     }
 
-    return (
-        <Modal customWidth="1200px">
-            <div style={{ padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
-                {/* Cabeçalho */}
-                <h2 style={{ fontSize: '2em', marginBottom: '10px' }}>💰 Caixa de Obra</h2>
-                <p style={{ color: '#666', marginBottom: '30px', fontSize: '1.1em' }}>
-                    <strong>{obraNome}</strong>
-                </p>
+    if (error) {
+        return <div className="error-container">Erro: {error}</div>;
+    }
 
-                {/* Dashboard do Caixa */}
-                {caixa && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '30px'
-                    }}>
-                        <div style={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saldo Atual</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.saldo_atual)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#2196F3',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Entradas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_entradas_mes || 0)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saídas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_saidas_mes || 0)}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Controles */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '25px',
-                    flexWrap: 'wrap',
-                    gap: '15px'
-                }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <label style={{ fontSize: '1.1em' }}>Período:</label>
-                        <select
-                            value={mesAno.mes}
-                            onChange={e => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })}
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px' }}
-                        >
-                            <option value={1}>Janeiro</option>
-                            <option value={2}>Fevereiro</option>
-                            <option value={3}>Março</option>
-                            <option value={4}>Abril</option>
-                            <option value={5}>Maio</option>
-                            <option value={6}>Junho</option>
-                            <option value={7}>Julho</option>
-                            <option value={8}>Agosto</option>
-                            <option value={9}>Setembro</option>
-                            <option value={10}>Outubro</option>
-                            <option value={11}>Novembro</option>
-                            <option value={12}>Dezembro</option>
-                        </select>
-                        <input
-                            type="number"
-                            value={mesAno.ano}
-                            onChange={e => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })}
-                            min="2020"
-                            max="2100"
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px', width: '100px' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            onClick={handleNovaMovimentacao}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                        >
-                            + Nova Movimentação
-                        </button>
-                        <button
-                            onClick={handleGerarRelatorio}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em', backgroundColor: '#ff9800' }}
-                        >
-                            📊 Gerar Relatório PDF
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filtros */}
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={() => setFiltroTipo('')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === '' ? '2px solid #4CAF50' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === '' ? '#e8f5e9' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Todas
+    const content = (
+        <div className="cronograma-obra-container">
+            {/* Header */}
+            <div className="cronograma-header">
+                <h2>📅 Cronograma de Obras - {obraNome}</h2>
+                <div className="header-actions">
+                    <button className="btn-pdf" onClick={handleGerarPDF}>
+                        📄 Gerar PDF
                     </button>
-                    <button
-                        onClick={() => setFiltroTipo('Entrada')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Entrada' ? '2px solid #2196F3' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Entrada' ? '#e3f2fd' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        📥 Entradas
+                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+                        ➕ Novo Serviço
                     </button>
-                    <button
-                        onClick={() => setFiltroTipo('Saída')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Saída' ? '2px solid #f44336' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Saída' ? '#ffebee' : 'white',
-                            cursor: 'pointer'
+                    <button 
+                        className="btn-secondary"
+                        onClick={() => {
+                            fetchServicosDisponiveis();
+                            setShowImportModal(true);
                         }}
                     >
-                        📤 Saídas
+                        📋 Importar Serviço
                     </button>
                 </div>
+            </div>
 
-                {/* Lista de Movimentações */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ marginBottom: '15px', fontSize: '1.3em' }}>Movimentações</h3>
-                    {movimentacoesFiltradas.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                            Nenhuma movimentação registrada neste período
-                        </p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {movimentacoesFiltradas.map(mov => (
-                                <div
-                                    key={mov.id}
-                                    style={{
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        padding: '15px',
-                                        backgroundColor: mov.tipo === 'Entrada' ? '#e3f2fd' : '#ffebee'
-                                    }}
-                                >
-                                    {/* Header: Ícone, Data, Anexo e Valor */}
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        alignItems: 'center',
-                                        marginBottom: '10px',
-                                        flexWrap: 'wrap',
-                                        gap: '5px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '1.3em' }}>
-                                                {mov.tipo === 'Entrada' ? '📥' : '📤'}
-                                            </span>
-                                            <span style={{ fontSize: '0.85em', color: '#666' }}>
-                                                {new Date(mov.data).toLocaleString('pt-BR')}
-                                            </span>
-                                            {mov.comprovante_url && (
-                                                <span style={{ fontSize: '1em' }}>📎</span>
-                                            )}
-                                        </div>
-                                        <div style={{
-                                            fontSize: '1.4em',
-                                            fontWeight: 'bold',
-                                            color: mov.tipo === 'Entrada' ? '#2196F3' : '#f44336',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Descrição */}
-                                    <div style={{
-                                        fontSize: '1.05em',
-                                        fontWeight: '600',
-                                        color: '#333'
-                                    }}>
-                                        {mov.descricao}
-                                    </div>
-                                    
-                                    {/* Observações */}
-                                    {mov.observacoes && (
-                                        <div style={{ fontSize: '0.85em', color: '#666', fontStyle: 'italic', marginTop: '5px' }}>
-                                            Obs: {mov.observacoes}
-                                        </div>
-                                    )}
-                                    
-                                    {/* Botão para reanexar comprovante */}
-                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                        <label 
-                                            style={{ 
-                                                cursor: 'pointer',
-                                                padding: '5px 10px',
-                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
-                                                color: 'white',
-                                                borderRadius: '5px',
-                                                fontSize: '0.85em',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '5px'
-                                            }}
+            {/* Legenda */}
+            <div className="legenda-container">
+                <span className="legenda-item"><span className="dot gray"></span> A Iniciar</span>
+                <span className="legenda-item"><span className="dot blue"></span> Em Andamento</span>
+                <span className="legenda-item"><span className="dot green"></span> Concluído</span>
+                <span className="legenda-item"><span className="dot red"></span> Atrasado</span>
+            </div>
+
+            {/* Lista de Serviços */}
+            {cronograma.length === 0 ? (
+                <div className="empty-state">
+                    <p>Nenhuma etapa cadastrada no cronograma.</p>
+                    <p>Clique em "Novo Serviço" ou "Importar Serviço" para começar.</p>
+                </div>
+            ) : (
+                <div className="cronograma-list">
+                    {cronograma.map((servico) => {
+                        const status = getStatus(servico);
+                        const evmIndicator = getEVMIndicator(servico.servico_nome);
+                        const evm = evmData[servico.servico_nome];
+                        
+                        return (
+                            <div key={servico.id} className="servico-card">
+                                {/* Cabeçalho do Card */}
+                                <div className="card-header" style={{ borderLeftColor: status.color }}>
+                                    <div className="header-left">
+                                        <span className="servico-ordem">#{servico.ordem}</span>
+                                        <h3 className="servico-nome">{servico.servico_nome}</h3>
+                                        <span 
+                                            className="status-badge"
+                                            style={{ backgroundColor: status.color }}
                                         >
-                                            {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    if (e.target.files[0]) {
-                                                        handleReanexarComprovante(mov.id, e.target.files[0]);
-                                                    }
-                                                }}
-                                            />
-                                        </label>
-                                        {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                            <span style={{ fontSize: '0.75em', color: '#999' }}>
-                                                ⚠️ Precisa reanexar
-                                            </span>
-                                        )}
+                                            {status.icon} {status.label}
+                                        </span>
+                                    </div>
+                                    <div className="header-right">
+                                        <span className="tipo-badge">
+                                            {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
+                                             servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
+                                        </span>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
 
-                {/* Footer */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
-                        Fechar
-                    </button>
-                </div>
-            </div>
+                                {/* Barra de Progresso Principal - CLICÁVEL */}
+                                <div 
+                                    className="progress-section"
+                                    onClick={() => setEditingServico(servico)}
+                                    style={{ cursor: 'pointer' }}
+                                    title={servico.tipo_medicao === 'etapas' 
+                                        ? 'Percentual calculado pelas etapas - Clique para ver detalhes' 
+                                        : 'Clique para ajustar o andamento'}
+                                >
+                                    <div className="progress-header">
+                                        <span>Execução Física</span>
+                                        <span className="progress-value">{(servico.percentual_conclusao || 0).toFixed(1)}%</span>
+                                    </div>
+                                    <div className="progress-bar">
+                                        <div 
+                                            className="progress-fill"
+                                            style={{ 
+                                                width: `${servico.percentual_conclusao || 0}%`,
+                                                backgroundColor: status.color
+                                            }}
+                                        ></div>
+                                    </div>
+                                    <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>✏️ Clique para editar</span>
+                                </div>
 
-            {/* Modal de Nova Movimentação */}
-            {modalAberto && (
-                <ModalNovaMovimentacaoCaixa
-                    obraId={obraId}
-                    onClose={() => setModalAberto(false)}
-                    onSave={() => {
-                        setModalAberto(false);
-                        carregarDados();
-                    }}
-                />
-            )}
-        </Modal>
-    );
-};
-
-// Modal de Nova Movimentação
-const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
-    const [tipo, setTipo] = useState('Saída');
-    const [valor, setValor] = useState('');
-    const [descricao, setDescricao] = useState('');
-    const [observacoes, setObservacoes] = useState('');
-    const [comprovante, setComprovante] = useState(null);
-    const [previewComprovante, setPreviewComprovante] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isCompressing, setIsCompressing] = useState(false);
-
-    const handleComprovanteChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Se for PDF, não comprimir
-        if (file.type === 'application/pdf') {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setComprovante(reader.result);
-                setPreviewComprovante(null); // PDF não tem preview
-            };
-            reader.readAsDataURL(file);
-            return;
-        }
-        
-        // Se for imagem, comprimir
-        if (file.type.startsWith('image/')) {
-            try {
-                setIsCompressing(true);
-                console.log('🔄 Comprimindo imagem do comprovante...');
-                
-                const compressedImages = await compressImages([file]);
-                
-                if (compressedImages && compressedImages.length > 0) {
-                    const compressed = compressedImages[0];
-                    setComprovante(compressed.base64);
-                    setPreviewComprovante(compressed.base64);
-                    console.log('✅ Imagem comprimida com sucesso');
-                }
-            } catch (err) {
-                console.error('Erro ao comprimir imagem:', err);
-                // Fallback: usar imagem original
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setComprovante(reader.result);
-                    setPreviewComprovante(reader.result);
-                };
-                reader.readAsDataURL(file);
-            } finally {
-                setIsCompressing(false);
-            }
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!valor || parseFloat(valor) <= 0) {
-            alert('Por favor, informe um valor válido');
-            return;
-        }
-
-        if (!descricao.trim()) {
-            alert('Por favor, informe uma descrição');
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-
-            let comprovanteUrl = null;
-
-            // Upload do comprovante se houver
-            if (comprovante) {
-                const resUpload = await fetchWithAuth(
-                    `${API_URL}/obras/${obraId}/caixa/upload-comprovante`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({ imagem: comprovante })
-                    }
-                );
-
-                if (resUpload.ok) {
-                    const dataUpload = await resUpload.json();
-                    comprovanteUrl = dataUpload.comprovante_url;
-                }
-            }
-
-            // Criar movimentação
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        tipo,
-                        valor: parseFloat(valor),
-                        descricao: descricao.trim(),
-                        observacoes: observacoes.trim() || null,
-                        comprovante_url: comprovanteUrl
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao salvar movimentação');
-
-            alert('✅ Movimentação registrada com sucesso!');
-            onSave();
-        } catch (err) {
-            console.error('Erro ao salvar movimentação:', err);
-            alert('Erro ao salvar movimentação');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal customWidth="600px">
-            <div style={{ padding: '30px' }}>
-                <h2 style={{ fontSize: '1.8em', marginBottom: '25px' }}>💸 Nova Movimentação</h2>
-
-                {/* Tipo */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Tipo:
-                    </label>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Saída"
-                                checked={tipo === 'Saída'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📤 Saída</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Entrada"
-                                checked={tipo === 'Entrada'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📥 Entrada</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Valor */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Valor (R$):
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={valor}
-                        onChange={e => setValor(e.target.value)}
-                        placeholder="0,00"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd'
-                        }}
-                    />
-                </div>
-
-                {/* Descrição */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Descrição:
-                    </label>
-                    <textarea
-                        value={descricao}
-                        onChange={e => setDescricao(e.target.value)}
-                        placeholder="Ex: Cimento urgência laje 3º andar"
-                        rows={3}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Observações */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Observações (opcional):
-                    </label>
-                    <textarea
-                        value={observacoes}
-                        onChange={e => setObservacoes(e.target.value)}
-                        placeholder="Informações adicionais..."
-                        rows={2}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Comprovante */}
-                <div style={{ marginBottom: '25px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Comprovante (opcional):
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={handleComprovanteChange}
-                        disabled={isCompressing}
-                        style={{ marginBottom: '15px' }}
-                    />
-                    {isCompressing && (
-                        <div style={{ color: '#007bff', fontSize: '0.9em', marginBottom: '10px' }}>
-                            ⏳ Comprimindo imagem...
-                        </div>
-                    )}
-                    {previewComprovante && (
-                        <div style={{ marginTop: '15px' }}>
-                            <img
-                                src={previewComprovante}
-                                alt="Preview"
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '300px',
-                                    borderRadius: '8px',
-                                    border: '2px solid #ddd'
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Botões */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || isCompressing}
-                        className="submit-btn"
-                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                    >
-                        {isCompressing ? '⏳ Comprimindo...' : isSubmitting ? 'Salvando...' : '💾 Salvar'}
-                    </button>
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) => {
-    const [parcelas, setParcelas] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [parcelaEditando, setParcelaEditando] = useState(null);
-
-    useEffect(() => {
-        carregarParcelas();
-    }, []);
-
-    const carregarParcelas = async () => {
-        try {
-            setIsLoading(true);
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas`
-            );
-            
-            if (!response.ok) throw new Error('Erro ao carregar parcelas');
-            
-            const data = await response.json();
-            setParcelas(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleEditarParcela = async (parcela, novoValor, novaData) => {
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        valor_parcela: parseFloat(novoValor),
-                        data_vencimento: novaData
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao editar parcela');
-
-            await carregarParcelas();
-            setParcelaEditando(null);
-            
-            if (onSave) onSave();
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    };
-
-    const handleMarcarPaga = async (parcela) => {
-        if (!window.confirm(`Confirma o pagamento da parcela ${parcela.numero_parcela}?`)) return;
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        data_pagamento: getTodayString()
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
-
-            const resultado = await response.json();
-            alert(`✅ ${resultado.mensagem}`);
-            await carregarParcelas();
-            
-            if (onSave) onSave();
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    };
-
-    const handleRecriarLancamentos = async () => {
-        if (!window.confirm('Deseja recriar os lançamentos de todas as parcelas pagas? Isso é útil se os lançamentos não foram criados corretamente.')) {
-            return;
-        }
-
-        try {
-            const parcelasPagas = parcelas.filter(p => p.status === 'Pago');
-            
-            if (parcelasPagas.length === 0) {
-                alert('Não há parcelas pagas para reprocessar.');
-                return;
-            }
-
-            let sucessos = 0;
-            let erros = 0;
-
-            for (const parcela of parcelasPagas) {
-                try {
-                    // Força a recriação do lançamento
-                    const response = await fetchWithAuth(
-                        `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
-                        {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                data_pagamento: parcela.data_pagamento || getTodayString()
-                            })
-                        }
-                    );
-
-                    if (response.ok) {
-                        sucessos++;
-                    } else {
-                        erros++;
-                    }
-                } catch (error) {
-                    erros++;
-                }
-            }
-
-            alert(`Reprocessamento concluído!\n✅ ${sucessos} lançamentos criados/verificados\n${erros > 0 ? `❌ ${erros} erros` : ''}`);
-            
-            if (onSave) onSave();
-        } catch (err) {
-            alert(`Erro: ${err.message}`);
-        }
-    };
-
-    const calcularValorTotal = () => {
-        return parcelas.reduce((sum, p) => sum + p.valor_parcela, 0);
-    };
-
-    if (isLoading) return <Modal customWidth="1400px"><div className="modal-content">Carregando...</div></Modal>;
-    if (error) return <Modal customWidth="1400px"><div className="modal-content">Erro: {error}</div></Modal>;
-
-    return (
-        <Modal customWidth="1400px">
-            <div style={{ maxHeight: '90vh', overflowY: 'auto', padding: '30px' }}>
-                <h2 style={{ fontSize: '2em', marginBottom: '15px' }}>✏️ Editar Parcelas</h2>
-                <p style={{ marginBottom: '25px', color: '#666', fontSize: '1.1em' }}>
-                    <strong style={{ fontSize: '1.2em' }}>{pagamentoParcelado.descricao}</strong><br />
-                    <span style={{ fontSize: '1em' }}>Fornecedor: {pagamentoParcelado.fornecedor || '-'}</span>
-                </p>
-                <div style={{ 
-                    marginBottom: '25px', 
-                    padding: '20px', 
-                    backgroundColor: '#f8f9fa', 
-                    borderRadius: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}>
-                    <div style={{ fontSize: '1.3em' }}>
-                        <strong>Valor Total Calculado:</strong> {formatCurrency(calcularValorTotal())}
-                    </div>
-                    <div style={{ fontSize: '1.1em', color: '#666' }}>
-                        {parcelas.filter(p => p.status === 'Pago').length} de {parcelas.length} pagas
-                    </div>
-                </div>
-
-                <table className="tabela-pendencias">
-                    <thead>
-                        <tr>
-                            <th>Parcela</th>
-                            <th>Valor</th>
-                            <th>Vencimento</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {parcelas.map(parcela => (
-                            <tr key={parcela.id} style={{
-                                backgroundColor: parcela.status === 'Pago' ? '#e8f5e9' : 
-                                               new Date(parcela.data_vencimento) < new Date() ? '#ffebee' : 'white'
-                            }}>
-                                <td>
-                                    <strong style={{ fontSize: '1.3em' }}>#{parcela.numero_parcela}</strong>
-                                </td>
-                                <td>
-                                    {parcelaEditando === parcela.id ? (
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            defaultValue={parcela.valor_parcela}
-                                            id={`valor-${parcela.id}`}
-                                            style={{ width: '180px', padding: '12px', fontSize: '1.1em' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: '1.1em' }}>{formatCurrency(parcela.valor_parcela)}</span>
-                                    )}
-                                </td>
-                                <td>
-                                    {parcelaEditando === parcela.id ? (
-                                        <input
-                                            type="date"
-                                            defaultValue={parcela.data_vencimento}
-                                            id={`data-${parcela.id}`}
-                                            style={{ padding: '12px', fontSize: '1.1em' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: '1.1em' }}>{new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                                    )}
-                                </td>
-                                <td>
-                                    <span style={{
-                                        padding: '8px 15px',
-                                        borderRadius: '15px',
-                                        fontSize: '1em',
-                                        fontWeight: 'bold',
-                                        backgroundColor: parcela.status === 'Pago' ? '#28a745' : 
-                                                       new Date(parcela.data_vencimento) < new Date() ? '#dc3545' : '#17a2b8',
-                                        color: 'white'
-                                    }}>
-                                        {parcela.status === 'Pago' ? 'Paga' : 
-                                         new Date(parcela.data_vencimento) < new Date() ? 'Vencida' : 'Previsto'}
-                                    </span>
-                                </td>
-                                <td>
-                                    {parcela.status !== 'Pago' && (
-                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            {parcelaEditando === parcela.id ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => {
-                                                            const novoValor = document.getElementById(`valor-${parcela.id}`).value;
-                                                            const novaData = document.getElementById(`data-${parcela.id}`).value;
-                                                            handleEditarParcela(parcela, novoValor, novaData);
-                                                        }}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✓ Salvar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setParcelaEditando(null)}
-                                                        className="voltar-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✕ Cancelar
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        onClick={() => setParcelaEditando(parcela.id)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✏️ Editar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleMarcarPaga(parcela)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em', backgroundColor: '#28a745' }}
-                                                    >
-                                                        ✓ Pagar
-                                                    </button>
-                                                </>
-                                            )}
+                                {/* Datas */}
+                                <div className="datas-section">
+                                    <div className="data-item">
+                                        <span className="data-label">📅 Início Previsto</span>
+                                        <span className="data-value">{formatDate(servico.data_inicio)}</span>
+                                    </div>
+                                    <div className="data-item">
+                                        <span className="data-label">📅 Término Previsto</span>
+                                        <span className="data-value">{formatDate(servico.data_fim_prevista)}</span>
+                                    </div>
+                                    {servico.data_inicio_real && (
+                                        <div className="data-item real">
+                                            <span className="data-label">▶️ Início Real</span>
+                                            <span className="data-value">{formatDate(servico.data_inicio_real)}</span>
                                         </div>
                                     )}
-                                    {parcela.status === 'Pago' && parcela.data_pagamento && (
-                                        <span style={{ fontSize: '1em', color: '#666' }}>
-                                            Paga em {new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                        </span>
+                                    {servico.data_fim_real && (
+                                        <div className="data-item real">
+                                            <span className="data-label">⏹️ Término Real</span>
+                                            <span className="data-value">{formatDate(servico.data_fim_real)}</span>
+                                        </div>
                                     )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                </div>
 
-                <div className="modal-footer" style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button 
-                        onClick={handleRecriarLancamentos}
-                        className="submit-btn"
-                        style={{ backgroundColor: '#ffc107', color: '#000', padding: '12px 24px', fontSize: '1.1em' }}
-                        title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
-                    >
-                        🔄 Recriar Lançamentos
-                    </button>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>Fechar</button>
+                                {/* Medição por Área - CLICÁVEL */}
+                                {servico.tipo_medicao === 'area' && servico.area_total && (
+                                    <div 
+                                        className="area-section clickable"
+                                        onClick={() => setEditingServico(servico)}
+                                        style={{ cursor: 'pointer', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '8px', marginTop: '10px' }}
+                                        title="Clique para ajustar a área executada"
+                                    >
+                                        <span>📐 Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
+                                        <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>✏️ Clique para editar</span>
+                                    </div>
+                                )}
+
+                                {/* ========== ETAPAS HIERÁRQUICAS ========== */}
+                                {servico.tipo_medicao === 'etapas' && servico.etapas && servico.etapas.length > 0 && (
+                                    <div className="etapas-section">
+                                        <div className="etapas-header">
+                                            <h4>
+                                                📋 Etapas ({servico.etapas.length}) - {
+                                                    servico.etapas.reduce((acc, e) => acc + (e.total_dias || e.duracao_dias || 0), 0)
+                                                } dias
+                                            </h4>
+                                        </div>
+                                        
+                                        {servico.etapas.map((etapa, etapaIdx) => {
+                                            const isExpanded = expandedEtapas[etapa.id] !== false;
+                                            const hasSubetapas = etapa.subetapas && etapa.subetapas.length > 0;
+                                            const totalDias = etapa.total_dias || etapa.duracao_dias || 0;
+                                            const percentual = etapa.percentual_conclusao || 0;
+                                            
+                                            return (
+                                                <div key={etapa.id} className="etapa-pai-container">
+                                                    {/* Header da Etapa Pai */}
+                                                    <div 
+                                                        className="etapa-pai-header"
+                                                        onClick={() => toggleEtapaExpansion(etapa.id)}
+                                                    >
+                                                        <div className="etapa-pai-left">
+                                                            <span className="etapa-expand-icon">
+                                                                {hasSubetapas ? (isExpanded ? '▼' : '▶') : '○'}
+                                                            </span>
+                                                            <span className="etapa-numero">Etapa {etapaIdx + 1}</span>
+                                                            <span className="etapa-nome">{etapa.nome}</span>
+                                                            <span className="etapa-dias-badge">{totalDias} dias</span>
+                                                            {etapa.tipo_condicao && etapa.tipo_condicao !== 'manual' && etapaIdx > 0 && (
+                                                                <span className="etapa-condicao-badge" title={
+                                                                    etapa.tipo_condicao === 'apos_termino' ? 'Após término da etapa anterior' :
+                                                                    etapa.tipo_condicao === 'dias_apos' ? `${etapa.dias_offset} dias após término` :
+                                                                    etapa.tipo_condicao === 'dias_antes' ? `${etapa.dias_offset} dias antes do término` : ''
+                                                                }>
+                                                                    🔗
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="etapa-pai-right">
+                                                            <span className="etapa-datas">
+                                                                {formatDate(etapa.data_inicio)} → {formatDate(etapa.data_fim)}
+                                                            </span>
+                                                            <div className="mini-progress-container">
+                                                                <div className="mini-progress-bar">
+                                                                    <div 
+                                                                        className="mini-progress-fill"
+                                                                        style={{ 
+                                                                            width: `${percentual}%`,
+                                                                            backgroundColor: percentual >= 100 ? '#28a745' : '#007bff'
+                                                                        }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className="etapa-percent">{percentual.toFixed(0)}%</span>
+                                                            </div>
+                                                            <div className="etapa-actions" onClick={e => e.stopPropagation()}>
+                                                                <button 
+                                                                    className="btn-icon"
+                                                                    onClick={() => setEditingEtapaPai({ ...etapa, cronograma_id: servico.id })}
+                                                                    title="Editar etapa"
+                                                                >
+                                                                    ✏️
+                                                                </button>
+                                                                <button 
+                                                                    className="btn-icon danger"
+                                                                    onClick={() => handleDeleteEtapaPai(servico.id, etapa.id, etapa.nome)}
+                                                                    title="Excluir etapa"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Subetapas (colapsável) */}
+                                                    {isExpanded && (
+                                                        <div className="subetapas-container">
+                                                            {hasSubetapas && (
+                                                                <div className="subetapas-list">
+                                                                    {etapa.subetapas.map((sub, subIdx) => (
+                                                                        <div key={sub.id} className="subetapa-item">
+                                                                            <div className="subetapa-info">
+                                                                                <span className="subetapa-ordem">{etapaIdx + 1}.{subIdx + 1}</span>
+                                                                                <span className="subetapa-nome">{sub.nome}</span>
+                                                                                <span className="subetapa-dias">{sub.duracao_dias} dias</span>
+                                                                            </div>
+                                                                            <div className="subetapa-datas">
+                                                                                <span>{formatDate(sub.data_inicio)} → {formatDate(sub.data_fim)}</span>
+                                                                                {sub.inicio_ajustado_manualmente && (
+                                                                                    <span className="ajustado-badge" title="Data ajustada manualmente">✏️</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div 
+                                                                                className="subetapa-progress clickable"
+                                                                                onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                                title="Clique para ajustar o andamento"
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
+                                                                                <div className="mini-progress-bar small">
+                                                                                    <div 
+                                                                                        className="mini-progress-fill"
+                                                                                        style={{ 
+                                                                                            width: `${sub.percentual_conclusao}%`,
+                                                                                            backgroundColor: sub.percentual_conclusao >= 100 ? '#28a745' : '#007bff'
+                                                                                        }}
+                                                                                    ></div>
+                                                                                </div>
+                                                                                <span className="subetapa-percent">{sub.percentual_conclusao}%</span>
+                                                                            </div>
+                                                                            <div className="subetapa-actions">
+                                                                                <button 
+                                                                                    className="btn-icon small"
+                                                                                    onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                                    title="Editar"
+                                                                                >
+                                                                                    ✏️
+                                                                                </button>
+                                                                                <button 
+                                                                                    className="btn-icon small danger"
+                                                                                    onClick={() => handleDeleteSubetapa(servico.id, sub.id, sub.nome)}
+                                                                                    title="Excluir"
+                                                                                >
+                                                                                    🗑️
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* Botão Adicionar Subetapa */}
+                                                            <button 
+                                                                className="btn-add-subetapa"
+                                                                onClick={() => setShowAddSubetapaModal({ 
+                                                                    etapa_pai_id: etapa.id, 
+                                                                    cronograma_id: servico.id,
+                                                                    etapa_nome: etapa.nome
+                                                                })}
+                                                            >
+                                                                ➕ Adicionar Subetapa
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {/* Análise EVM */}
+                                {evm && evm.valor_total > 0 && (
+                                    <div className="evm-section" style={{ borderColor: evmIndicator?.color }}>
+                                        <div className="evm-header">
+                                            <span>💰 Análise de Valor Agregado (EVM)</span>
+                                            {evmIndicator && (
+                                                <span 
+                                                    className="evm-badge"
+                                                    style={{ backgroundColor: evmIndicator.color }}
+                                                >
+                                                    {evmIndicator.icon} {evmIndicator.label}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="evm-content">
+                                            <div className="evm-row">
+                                                <span>💵 Total Orçado:</span>
+                                                <span>{formatCurrency(evm.valor_total)}</span>
+                                            </div>
+                                            <div className="evm-row">
+                                                <span>✅ Já Pago:</span>
+                                                <span>{formatCurrency(evm.valor_pago)} ({(evm.percentual_pago || 0).toFixed(1)}%)</span>
+                                            </div>
+                                            <div className="evm-bars">
+                                                <div className="evm-bar-row">
+                                                    <span>💰 Pago</span>
+                                                    <div className="evm-bar">
+                                                        <div 
+                                                            className="evm-bar-fill paid"
+                                                            style={{ width: `${Math.min(evm.percentual_pago || 0, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span>{(evm.percentual_pago || 0).toFixed(0)}%</span>
+                                                </div>
+                                                <div className="evm-bar-row">
+                                                    <span>🏗️ Exec</span>
+                                                    <div className="evm-bar">
+                                                        <div 
+                                                            className="evm-bar-fill executed"
+                                                            style={{ width: `${Math.min(evm.percentual_executado || 0, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span>{(evm.percentual_executado || 0).toFixed(0)}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Ações do Card */}
+                                <div className="card-actions">
+                                    <button 
+                                        className="btn-action primary"
+                                        onClick={() => {
+                                            // Preparar modal com etapas existentes para condição
+                                            const etapasExistentes = servico.etapas || [];
+                                            const ultimaEtapa = etapasExistentes.length > 0 
+                                                ? etapasExistentes[etapasExistentes.length - 1] 
+                                                : null;
+                                            setNovaEtapaPai({
+                                                nome: '',
+                                                etapa_anterior_id: ultimaEtapa?.id || null,
+                                                tipo_condicao: 'apos_termino',
+                                                dias_offset: 0,
+                                                observacoes: ''
+                                            });
+                                            setShowAddEtapaPaiModal(servico.id);
+                                        }}
+                                    >
+                                        ➕ Adicionar Etapa
+                                    </button>
+                                    <button 
+                                        className="btn-action"
+                                        onClick={() => setEditingServico(servico)}
+                                    >
+                                        ✏️ Editar
+                                    </button>
+                                    <button 
+                                        className="btn-action danger"
+                                        onClick={() => handleDeleteServico(servico.id)}
+                                    >
+                                        🗑️ Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
-        </Modal>
-    );
-};
+            )}
 
-
-// ==========================================
-// COMPONENTE: QUADRO DE ALERTAS DE VENCIMENTO
-// ==========================================
-
-const QuadroAlertasVencimento = ({ obraId }) => {
-    const [alertas, setAlertas] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [categoriaExpandida, setCategoriaExpandida] = useState(null);
-
-    useEffect(() => {
-        carregarAlertas();
-    }, [obraId]);
-
-    const carregarAlertas = async () => {
-        try {
-            setIsLoading(true);
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/alertas-vencimento`
-            );
+            {/* ========== MODAIS ========== */}
             
-            if (!response.ok) throw new Error('Erro ao carregar alertas');
-            
-            const data = await response.json();
-            setAlertas(data);
-        } catch (err) {
-            console.error('Erro ao carregar alertas:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const toggleCategoria = (categoria) => {
-        setCategoriaExpandida(categoriaExpandida === categoria ? null : categoria);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="card-full">
-                <h3>📊 Status de Pagamentos</h3>
-                <p>Carregando...</p>
-            </div>
-        );
-    }
-
-    if (!alertas) return null;
-
-    const categorias = [
-        {
-            key: 'vencidos',
-            titulo: '🔴 Vencidos (Atrasados)',
-            cor: '#dc3545',
-            dados: alertas.vencidos
-        },
-        {
-            key: 'vence_hoje',
-            titulo: '⚠️ Vence Hoje',
-            cor: '#ffc107',
-            dados: alertas.vence_hoje
-        },
-        {
-            key: 'vence_amanha',
-            titulo: '📅 Vence Amanhã',
-            cor: '#fd7e14',
-            dados: alertas.vence_amanha
-        },
-        {
-            key: 'vence_7_dias',
-            titulo: '📆 Vence em até 7 dias',
-            cor: '#17a2b8',
-            dados: alertas.vence_7_dias
-        },
-        {
-            key: 'futuros',
-            titulo: '✅ Futuros (mais de 7 dias)',
-            cor: '#28a745',
-            dados: alertas.futuros
-        }
-    ];
-
-    return (
-        <div className="card-full">
-            <h3>📊 Quadro Informativo - Cronograma Financeiro</h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '20px' }}>
-                {categorias.map(categoria => (
-                    <div
-                        key={categoria.key}
-                        style={{
-                            padding: '15px',
-                            backgroundColor: 'white',
-                            border: `3px solid ${categoria.cor}`,
-                            borderRadius: '8px',
-                            cursor: categoria.dados.itens?.length > 0 ? 'pointer' : 'default',
-                            transition: 'transform 0.2s',
-                            position: 'relative'
-                        }}
-                        onClick={() => categoria.dados.itens?.length > 0 && toggleCategoria(categoria.key)}
-                        onMouseEnter={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1.02)')}
-                        onMouseLeave={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
-                    >
-                        <div style={{ fontSize: '1.1em', fontWeight: 'bold', marginBottom: '10px', color: categoria.cor }}>
-                            {categoria.titulo}
-                        </div>
-                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', marginBottom: '5px' }}>
-                            {categoria.dados.quantidade} {categoria.dados.quantidade === 1 ? 'item' : 'itens'}
-                        </div>
-                        <div style={{ fontSize: '1.2em', color: '#666' }}>
-                            {formatCurrency(categoria.dados.valor_total)}
+            {/* Modal Adicionar Serviço */}
+            {showAddModal && (
+                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>➕ Novo Serviço</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome do Serviço *</label>
+                            <input
+                                type="text"
+                                value={novoServico.servico_nome}
+                                onChange={(e) => setNovoServico({...novoServico, servico_nome: e.target.value})}
+                                placeholder="Ex: Construção da Piscina"
+                            />
                         </div>
                         
-                        {categoria.dados.itens?.length > 0 && (
-                            <div style={{ 
-                                position: 'absolute', 
-                                bottom: '10px', 
-                                right: '10px', 
-                                fontSize: '0.8em', 
-                                color: '#999' 
-                            }}>
-                                {categoriaExpandida === categoria.key ? '▲ Fechar' : '▼ Ver detalhes'}
+                        <div className="form-group">
+                            <label>Tipo de Medição</label>
+                            <select
+                                value={novoServico.tipo_medicao}
+                                onChange={(e) => setNovoServico({...novoServico, tipo_medicao: e.target.value})}
+                            >
+                                <option value="etapas">📋 Por Etapas (recomendado)</option>
+                                <option value="empreitada">🔧 Empreitada (global)</option>
+                                <option value="area">📐 Por Área (m², m³, etc)</option>
+                            </select>
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Data Início</label>
+                                <input
+                                    type="date"
+                                    value={novoServico.data_inicio}
+                                    onChange={(e) => setNovoServico({...novoServico, data_inicio: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Duração (dias)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={novoServico.duracao_dias}
+                                    onChange={(e) => setNovoServico({...novoServico, duracao_dias: parseInt(e.target.value) || 1})}
+                                />
+                            </div>
+                        </div>
+                        
+                        {novoServico.tipo_medicao === 'area' && (
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Área Total</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={novoServico.area_total}
+                                        onChange={(e) => setNovoServico({...novoServico, area_total: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Unidade</label>
+                                    <select
+                                        value={novoServico.unidade_medida}
+                                        onChange={(e) => setNovoServico({...novoServico, unidade_medida: e.target.value})}
+                                    >
+                                        <option value="m²">m²</option>
+                                        <option value="m³">m³</option>
+                                        <option value="m">m</option>
+                                        <option value="un">un</option>
+                                    </select>
+                                </div>
                             </div>
                         )}
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowAddModal(false)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleAddServico}>
+                                Salvar
+                            </button>
+                        </div>
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
 
-            {/* Lista Expandida de Itens */}
-            {categoriaExpandida && (
-                <div style={{ 
-                    marginTop: '20px', 
-                    padding: '15px', 
-                    backgroundColor: '#f8f9fa', 
-                    borderRadius: '8px',
-                    border: `2px solid ${categorias.find(c => c.key === categoriaExpandida)?.cor}`
-                }}>
-                    <h4>{categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes</h4>
-                    
-                    <table className="tabela-pendencias" style={{ marginTop: '10px' }}>
-                        <thead>
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Valor</th>
-                                <th>Vencimento</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {alertas[categoriaExpandida]?.itens?.map((item, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        <span style={{
-                                            padding: '3px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '0.8em',
-                                            backgroundColor: item.tipo === 'Parcela' ? '#6c757d' : '#007bff',
-                                            color: 'white'
-                                        }}>
-                                            {item.tipo}
+            {/* Modal Adicionar Etapa Pai */}
+            {showAddEtapaPaiModal && (
+                <div className="modal-overlay" onClick={() => setShowAddEtapaPaiModal(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>➕ Nova Etapa</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome da Etapa *</label>
+                            <input
+                                type="text"
+                                value={novaEtapaPai.nome}
+                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, nome: e.target.value})}
+                                placeholder="Ex: Infraestrutura, Revestimento, Acabamento"
+                            />
+                        </div>
+                        
+                        {/* Condições de início - só se já existem etapas */}
+                        {(() => {
+                            const servico = cronograma.find(s => s.id === showAddEtapaPaiModal);
+                            const etapasExistentes = servico?.etapas || [];
+                            
+                            if (etapasExistentes.length > 0) {
+                                return (
+                                    <>
+                                        <div className="form-group">
+                                            <label>Condição de Início</label>
+                                            <select
+                                                value={novaEtapaPai.tipo_condicao}
+                                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, tipo_condicao: e.target.value})}
+                                            >
+                                                <option value="apos_termino">Após término da etapa anterior (D+1)</option>
+                                                <option value="dias_apos">X dias após término da etapa anterior</option>
+                                                <option value="dias_antes">X dias antes do término da etapa anterior</option>
+                                                <option value="manual">Data específica (manual)</option>
+                                            </select>
+                                        </div>
+                                        
+                                        {(novaEtapaPai.tipo_condicao === 'dias_apos' || novaEtapaPai.tipo_condicao === 'dias_antes') && (
+                                            <div className="form-group">
+                                                <label>
+                                                    {novaEtapaPai.tipo_condicao === 'dias_apos' 
+                                                        ? 'Quantos dias após o término?' 
+                                                        : 'Quantos dias antes do término?'}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={novaEtapaPai.dias_offset}
+                                                    onChange={(e) => setNovaEtapaPai({...novaEtapaPai, dias_offset: e.target.value})}
+                                                />
+                                                <small className="form-hint">
+                                                    {novaEtapaPai.tipo_condicao === 'dias_antes' 
+                                                        ? 'Permite iniciar antes da etapa anterior terminar (sobreposição)'
+                                                        : 'Adiciona folga entre as etapas'}
+                                                </small>
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            }
+                            return null;
+                        })()}
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={novaEtapaPai.observacoes}
+                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowAddEtapaPaiModal(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleAddEtapaPai}>
+                                Criar Etapa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Adicionar Subetapa */}
+            {showAddSubetapaModal && (
+                <div className="modal-overlay" onClick={() => setShowAddSubetapaModal(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>➕ Nova Subetapa - {showAddSubetapaModal.etapa_nome}</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome da Subetapa *</label>
+                            <input
+                                type="text"
+                                value={novaSubetapa.nome}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, nome: e.target.value})}
+                                placeholder="Ex: Escavação, Tubulação, Concretagem"
+                            />
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Duração (dias)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={novaSubetapa.duracao_dias}
+                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, duracao_dias: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Data Início (opcional)</label>
+                                <input
+                                    type="date"
+                                    value={novaSubetapa.data_inicio}
+                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, data_inicio: e.target.value})}
+                                />
+                                <small className="form-hint">Deixe em branco para calcular automaticamente</small>
+                            </div>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Percentual Concluído</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={novaSubetapa.percentual_conclusao}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, percentual_conclusao: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={novaSubetapa.observacoes}
+                                onChange={(e) => setNovaSubetapa({...novaSubetapa, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowAddSubetapaModal(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleAddSubetapa}>
+                                Criar Subetapa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar Etapa Pai */}
+            {editingEtapaPai && (
+                <div className="modal-overlay" onClick={() => setEditingEtapaPai(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>✏️ Editar Etapa</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome da Etapa *</label>
+                            <input
+                                type="text"
+                                value={editingEtapaPai.nome}
+                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, nome: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Condição de Início</label>
+                            <select
+                                value={editingEtapaPai.tipo_condicao || 'apos_termino'}
+                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, tipo_condicao: e.target.value})}
+                            >
+                                <option value="apos_termino">Após término da etapa anterior (D+1)</option>
+                                <option value="dias_apos">X dias após término</option>
+                                <option value="dias_antes">X dias antes do término</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                        </div>
+                        
+                        {(editingEtapaPai.tipo_condicao === 'dias_apos' || editingEtapaPai.tipo_condicao === 'dias_antes') && (
+                            <div className="form-group">
+                                <label>Dias de offset</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={editingEtapaPai.dias_offset || 0}
+                                    onChange={(e) => setEditingEtapaPai({...editingEtapaPai, dias_offset: e.target.value})}
+                                />
+                            </div>
+                        )}
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={editingEtapaPai.observacoes || ''}
+                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setEditingEtapaPai(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleUpdateEtapaPai}>
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar Subetapa */}
+            {editingSubetapa && (
+                <div className="modal-overlay" onClick={() => setEditingSubetapa(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>✏️ Editar Subetapa</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome da Subetapa *</label>
+                            <input
+                                type="text"
+                                value={editingSubetapa.nome}
+                                onChange={(e) => setEditingSubetapa({...editingSubetapa, nome: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Duração (dias)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={editingSubetapa.duracao_dias}
+                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, duracao_dias: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Campo de Andamento com Slider Visual */}
+                        <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
+                            <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>📊 Andamento da Subetapa</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    value={editingSubetapa.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value)})}
+                                    style={{ flex: 1, height: '8px' }}
+                                />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    value={editingSubetapa.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value) || 0})}
+                                    style={{ width: '60px', textAlign: 'center', fontWeight: 'bold' }}
+                                />
+                                <span style={{ fontWeight: 'bold' }}>%</span>
+                            </div>
+                            <div style={{ marginTop: '10px', height: '25px', backgroundColor: '#e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+                                <div style={{ 
+                                    width: `${editingSubetapa.percentual_conclusao || 0}%`, 
+                                    height: '100%', 
+                                    backgroundColor: (editingSubetapa.percentual_conclusao || 0) >= 100 ? '#4caf50' : 
+                                                    (editingSubetapa.percentual_conclusao || 0) >= 50 ? '#8bc34a' : '#ff9800',
+                                    transition: 'width 0.3s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.85em'
+                                }}>
+                                    {(editingSubetapa.percentual_conclusao || 0) >= 20 && `${editingSubetapa.percentual_conclusao || 0}%`}
+                                </div>
+                            </div>
+                            {/* Botões rápidos de andamento */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                {[0, 25, 50, 75, 100].map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        onClick={() => setEditingSubetapa({...editingSubetapa, percentual_conclusao: val})}
+                                        style={{
+                                            padding: '5px 12px',
+                                            border: (editingSubetapa.percentual_conclusao || 0) === val ? '2px solid #2e7d32' : '1px solid #ccc',
+                                            borderRadius: '15px',
+                                            backgroundColor: (editingSubetapa.percentual_conclusao || 0) === val ? '#c8e6c9' : '#fff',
+                                            cursor: 'pointer',
+                                            fontWeight: (editingSubetapa.percentual_conclusao || 0) === val ? 'bold' : 'normal'
+                                        }}
+                                    >
+                                        {val}%
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={editingSubetapa.observacoes || ''}
+                                onChange={(e) => setEditingSubetapa({...editingSubetapa, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setEditingSubetapa(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={handleUpdateSubetapa}>
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Importar Serviço */}
+            {showImportModal && (
+                <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>📋 Importar Serviço</h3>
+                        <p>Selecione um serviço da planilha de custos:</p>
+                        
+                        {servicosDisponiveis.length === 0 ? (
+                            <div className="empty-message">
+                                Todos os serviços já foram importados.
+                            </div>
+                        ) : (
+                            <div className="import-list">
+                                {servicosDisponiveis.map(servico => (
+                                    <div 
+                                        key={servico.id} 
+                                        className="import-item"
+                                        onClick={() => handleImportServico(servico)}
+                                    >
+                                        <span className="import-nome">{servico.nome}</span>
+                                        <span className="import-valor">
+                                            {formatCurrency((servico.valor_global_mao_de_obra || 0) + (servico.valor_global_material || 0))}
                                         </span>
-                                    </td>
-                                    <td>{item.descricao}</td>
-                                    <td>{item.fornecedor || '-'}</td>
-                                    <td><strong>{formatCurrency(item.valor)}</strong></td>
-                                    <td>{new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowImportModal(false)}>
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar Serviço */}
+            {editingServico && (
+                <div className="modal-overlay" onClick={() => setEditingServico(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>✏️ Editar Serviço</h3>
+                        
+                        <div className="form-group">
+                            <label>Nome do Serviço</label>
+                            <input
+                                type="text"
+                                value={editingServico.servico_nome}
+                                onChange={(e) => setEditingServico({...editingServico, servico_nome: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Data Início</label>
+                                <input
+                                    type="date"
+                                    value={editingServico.data_inicio || ''}
+                                    onChange={(e) => setEditingServico({...editingServico, data_inicio: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Data Término</label>
+                                <input
+                                    type="date"
+                                    value={editingServico.data_fim_prevista || ''}
+                                    onChange={(e) => setEditingServico({...editingServico, data_fim_prevista: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Início Real</label>
+                                <input
+                                    type="date"
+                                    value={editingServico.data_inicio_real || ''}
+                                    onChange={(e) => setEditingServico({...editingServico, data_inicio_real: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Término Real</label>
+                                <input
+                                    type="date"
+                                    value={editingServico.data_fim_real || ''}
+                                    onChange={(e) => setEditingServico({...editingServico, data_fim_real: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* ========== CAMPOS DE EXECUÇÃO POR TIPO DE MEDIÇÃO ========== */}
+                        
+                        {/* TIPO: ÁREA - Editar área executada */}
+                        {editingServico.tipo_medicao === 'area' && (
+                            <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Medição por Área</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label>Área Executada ({editingServico.unidade_medida || 'm²'})</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={editingServico.area_total || 999999}
+                                            step="0.01"
+                                            value={editingServico.area_executada || 0}
+                                            onChange={(e) => {
+                                                const areaExec = parseFloat(e.target.value) || 0;
+                                                const areaTotal = editingServico.area_total || 1;
+                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
+                                                setEditingServico({
+                                                    ...editingServico, 
+                                                    area_executada: areaExec,
+                                                    percentual_conclusao: percentual
+                                                });
+                                            }}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <span style={{ fontSize: '1.2em' }}>/</span>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label>Área Total ({editingServico.unidade_medida || 'm²'})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={editingServico.area_total || 0}
+                                            onChange={(e) => {
+                                                const areaTotal = parseFloat(e.target.value) || 1;
+                                                const areaExec = editingServico.area_executada || 0;
+                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
+                                                setEditingServico({
+                                                    ...editingServico, 
+                                                    area_total: areaTotal,
+                                                    percentual_conclusao: percentual
+                                                });
+                                            }}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#bbdefb', borderRadius: '5px', textAlign: 'center' }}>
+                                    <strong>Execução Física: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
+                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            width: `${editingServico.percentual_conclusao || 0}%`, 
+                                            height: '100%', 
+                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#2196f3',
+                                            transition: 'width 0.3s'
+                                        }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* TIPO: ETAPAS - Percentual calculado automaticamente */}
+                        {editingServico.tipo_medicao === 'etapas' && (
+                            <div className="form-group" style={{ backgroundColor: '#fff3e0', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#e65100', fontWeight: 'bold' }}>📋 Medição por Etapas</label>
+                                <p style={{ margin: '10px 0', color: '#666' }}>
+                                    O percentual de execução é calculado <strong>automaticamente</strong> com base no andamento das etapas e subetapas.
+                                </p>
+                                <div style={{ padding: '10px', backgroundColor: '#ffe0b2', borderRadius: '5px', textAlign: 'center' }}>
+                                    <strong>Execução Física Atual: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
+                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            width: `${editingServico.percentual_conclusao || 0}%`, 
+                                            height: '100%', 
+                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#ff9800',
+                                            transition: 'width 0.3s'
+                                        }}></div>
+                                    </div>
+                                </div>
+                                <p style={{ margin: '10px 0 0', fontSize: '0.85em', color: '#888' }}>
+                                    💡 Para alterar o percentual, edite o andamento de cada etapa/subetapa individualmente.
+                                </p>
+                            </div>
+                        )}
+                        
+                        {/* TIPO: EMPREITADA/MANUAL - Editar percentual diretamente */}
+                        {(editingServico.tipo_medicao === 'empreitada' || editingServico.tipo_medicao === 'manual' || !editingServico.tipo_medicao) && (
+                            <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>🔧 Execução Física (%)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={editingServico.percentual_conclusao || 0}
+                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        value={editingServico.percentual_conclusao || 0}
+                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value) || 0})}
+                                        style={{ width: '70px', textAlign: 'center' }}
+                                    />
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="form-group">
+                            <label>Observações</label>
+                            <textarea
+                                value={editingServico.observacoes || ''}
+                                onChange={(e) => setEditingServico({...editingServico, observacoes: e.target.value})}
+                                rows="2"
+                            />
+                        </div>
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setEditingServico(null)}>
+                                Cancelar
+                            </button>
+                            <button className="btn-save" onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(
+                                        `${API_URL}/cronograma/${editingServico.id}`,
+                                        {
+                                            method: 'PUT',
+                                            body: JSON.stringify(editingServico)
+                                        }
+                                    );
+                                    if (!response.ok) throw new Error('Erro ao atualizar');
+                                    fetchCronograma();
+                                    setEditingServico(null);
+                                } catch (err) {
+                                    alert(err.message);
+                                }
+                            }}>
+                                Salvar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
     );
-};
-// Modal Principal do Cronograma Financeiro
-const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, simplified = false }) => {
-    const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
-    const [pagamentosParcelados, setPagamentosParcelados] = useState([]);
-    const [pagamentosServicoPendentes, setPagamentosServicoPendentes] = useState([]); // NOVO
-    const [isEditarParcelasVisible, setEditarParcelasVisible] = useState(false);
-    const [pagamentoParceladoSelecionado, setPagamentoParceladoSelecionado] = useState(null);
-    const [previsoes, setPrevisoes] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    
-    // NOVO: Estados para Expandir/Recolher seções
-    const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
-    const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
-    
-    // MUDANÇA 5: Estados para seleção múltipla
-    const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
-    const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
-    
-    const handleAbrirEditarParcelas = (pagamento) => {
-        setPagamentoParceladoSelecionado(pagamento);
-        setEditarParcelasVisible(true);
-    };
-    const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
-    const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
-    const [isEditarFuturoVisible, setEditarFuturoVisible] = useState(false);
-    const [pagamentoFuturoSelecionado, setPagamentoFuturoSelecionado] = useState(null);
-    
-    // MUDANÇA 5: Funções de seleção
-    const toggleSelecao = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-71" e converter
-        let tipoFinal = tipo;
-        let idFinal = id;
-        
-        // Se o ID é uma string tipo "servico-X", extrair o ID numérico
-        if (typeof id === 'string' && id.startsWith('servico-')) {
-            const idNumerico = parseInt(id.split('-')[1], 10);
-            tipoFinal = 'servico';
-            idFinal = idNumerico;
-            console.log(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
-        }
-        
-        setItensSelecionados(prev => {
-            const exists = prev.find(item => item.tipo === tipoFinal && item.id === idFinal);
-            if (exists) {
-                return prev.filter(item => !(item.tipo === tipoFinal && item.id === idFinal));
-            } else {
-                return [...prev, { tipo: tipoFinal, id: idFinal }];
-            }
-        });
-    };
-    
-    const isItemSelecionado = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Verificar com conversão também
-        let tipoCheck = tipo;
-        let idCheck = id;
-        
-        if (typeof id === 'string' && id.startsWith('servico-')) {
-            const idNumerico = parseInt(id.split('-')[1], 10);
-            tipoCheck = 'servico';
-            idCheck = idNumerico;
-        }
-        
-        return itensSelecionados.some(item => item.tipo === tipoCheck && item.id === idCheck);
-    };
-    
-    const selecionarTodos = () => {
-        const todos = [];
-        
-        // Pagamentos Futuros
-        pagamentosFuturos.forEach(pag => {
-            if (pag.status === 'Previsto') {
-                // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-X"
-                if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
-                    const idNumerico = parseInt(pag.id.split('-')[1], 10);
-                    todos.push({ tipo: 'servico', id: idNumerico });
-                    console.log(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
-                } else {
-                    todos.push({ tipo: 'futuro', id: pag.id });
-                }
-            }
-        });
-        
-        // Pagamentos de Serviço Pendentes
-        pagamentosServicoPendentes.forEach(pag => {
-            todos.push({ tipo: 'servico', id: pag.id });
-        });
-        
-        // Parcelas
-        pagamentosParcelados.forEach(pagParcelado => {
-            pagParcelado.parcelas?.forEach(parcela => {
-                if (parcela.status === 'Previsto') {
-                    todos.push({ tipo: 'parcela', id: parcela.id });
-                }
-            });
-        });
-        
-        setItensSelecionados(todos);
-    };
-    
-    const desselecionarTodos = () => {
-        setItensSelecionados([]);
-    };
-    
-    // MUDANÇA 5: Handler para marcar múltiplos como pagos
-    const handleMarcarMultiplosComoPago = async () => {
-        if (itensSelecionados.length === 0) {
-            alert('Selecione pelo menos um item para marcar como pago.');
-            return;
-        }
-        
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        itens: itensSelecionados,
-                        data_pagamento: new Date().toISOString().split('T')[0]
-                    })
-                }
-            );
-            
-            if (res.ok) {
-                const data = await res.json();
-                const sucessos = data.resultados.filter(r => r.status === 'success').length;
-                const erros = data.resultados.filter(r => r.status === 'error').length;
-                
-                alert(`${sucessos} item(ns) marcado(s) como pago. ${erros > 0 ? erros + ' erro(s).' : ''}`);
-                setItensSelecionados([]);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao marcar itens como pagos:', error);
-            alert('Erro ao processar pagamentos');
-        }
-    };
 
-    // Carregar dados
-    const fetchData = async () => {
-        setIsLoading(true);
-        try {
-            // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
-            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes] = await Promise.all([
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
-                fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`).catch(e => ({ ok: false, error: e })),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`).catch(e => ({ ok: false, error: e }))
-            ]);
-
-            // Processar respostas principais
-            if (futuroRes.ok) {
-                try {
-                    const data = await futuroRes.json();
-                    setPagamentosFuturos(data);
-                } catch (e) {
-                    console.error('Erro ao processar pagamentos futuros:', e);
-                }
-            }
-
-            if (previsoesRes.ok) {
-                try {
-                    const data = await previsoesRes.json();
-                    setPrevisoes(data);
-                } catch (e) {
-                    console.error('Erro ao processar previsões:', e);
-                }
-            }
-            
-            if (servicoPendentesRes.ok) {
-                try {
-                    const data = await servicoPendentesRes.json();
-                    setPagamentosServicoPendentes(data);
-                } catch (e) {
-                    console.error('Erro ao processar pagamentos pendentes:', e);
-                }
-            }
-
-            // <--- MUDANÇA: Processar parcelados SEM bloquear a tela -->
-            if (parceladoRes.ok) {
-                try {
-                    const data = await parceladoRes.json();
-                    
-                    // Mostrar dados básicos imediatamente (sem parcelas)
-                    setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
-                    setIsLoading(false); // <-- Libera a tela AQUI
-                    
-                    // Buscar parcelas em background (não bloqueia mais!)
-                    const parceladosComParcelas = await Promise.all(
-                        data.map(async (pagParcelado) => {
-                            try {
-                                const parcelasRes = await fetchWithAuth(
-                                    `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParcelado.id}/parcelas`
-                                );
-                                if (parcelasRes.ok) {
-                                    const parcelas = await parcelasRes.json();
-                                    return { ...pagParcelado, parcelas };
-                                }
-                            } catch (err) {
-                                console.error('Erro ao buscar parcelas:', err);
-                            }
-                            return { ...pagParcelado, parcelas: [] };
-                        })
-                    );
-                    
-                    // Atualiza com parcelas quando disponíveis
-                    setPagamentosParcelados(parceladosComParcelas);
-                } catch (e) {
-                    console.error('Erro ao processar parcelados:', e);
-                    setIsLoading(false);
-                }
-            } else {
-                setIsLoading(false);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar cronograma financeiro:', error);
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [obraId]);
-
-    // Salvar Pagamento Futuro
-    const handleSavePagamentoFuturo = async (formData) => {
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                }
-            );
-
-            if (res.ok) {
-                alert('Pagamento futuro cadastrado com sucesso!');
-                setCadastrarFuturoVisible(false);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao salvar pagamento futuro:', error);
-            alert('Erro ao salvar pagamento futuro');
-        }
-    };
-
-    // Editar Pagamento Futuro
-    const handleEditarPagamentoFuturo = async (formData) => {
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${pagamentoFuturoSelecionado.id}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify(formData)
-                }
-            );
-
-            if (res.ok) {
-                alert('Pagamento futuro atualizado com sucesso!');
-                setEditarFuturoVisible(false);
-                setPagamentoFuturoSelecionado(null);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                alert('Erro ao atualizar: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao editar pagamento futuro:', error);
-            alert('Erro ao editar pagamento futuro');
-        }
-    };
-
-    // Salvar Pagamento Parcelado
-    const handleSavePagamentoParcelado = async (formData) => {
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                }
-            );
-
-            if (res.ok) {
-                alert('Pagamento parcelado cadastrado com sucesso!');
-                setCadastrarParceladoVisible(false);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao salvar pagamento parcelado:', error);
-            alert('Erro ao salvar pagamento parcelado');
-        }
-    };
-
-    // Deletar Pagamento Futuro
-    const handleDeletePagamentoFuturo = async (id) => {
-        if (!window.confirm('Deseja realmente excluir este pagamento futuro?')) return;
-
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}`,
-                { method: 'DELETE' }
-            );
-
-            if (res.ok) {
-                alert('Pagamento futuro excluído com sucesso!');
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                alert('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao deletar pagamento futuro:', error);
-            alert('Erro ao deletar pagamento futuro: ' + error.message);
-        }
-    };
-
-    // Marcar Pagamento Futuro Individual como Pago
-    const handleMarcarPagamentoFuturoPago = async (id) => {
-        if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
-
-        try {
-            let res;
-            const idStr = String(id);
-            
-            if (idStr.startsWith('servico-')) {
-                // É um pagamento de serviço pendente "injetado" na lista
-                const servPagId = parseInt(idStr.split('-').pop(), 10);
-                console.log("Marcando pagamento de serviço futuro como pago:", servPagId);
-                res = await fetchWithAuth(
-                    `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            itens: [{ tipo: 'servico', id: servPagId }],
-                            data_pagamento: new Date().toISOString().split('T')[0]
-                        })
-                    }
-                );
-            } else {
-                // É um pagamento futuro "normal"
-                console.log("Marcando pagamento futuro normal como pago:", id);
-                res = await fetchWithAuth(
-                    `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
-                    { method: 'POST' }
-                );
-            }
-
-            if (res.ok) {
-                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
-                if (idStr.startsWith('servico-')) {
-                    // Remove da lista de serviços pendentes
-                    const servPagId = parseInt(idStr.split('-').pop(), 10);
-                    setPagamentosServicoPendentes(prev => 
-                        prev.filter(p => p.id !== servPagId)
-                    );
-                } else {
-                    // Remove da lista de pagamentos futuros
-                    setPagamentosFuturos(prev => 
-                        prev.filter(pag => pag.id !== id)
-                    );
-                }
-                
-                // Feedback visual rápido
-                const toast = document.createElement('div');
-                toast.textContent = '✅ Pagamento marcado como pago!';
-                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-                
-                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
-                setTimeout(() => fetchData(), 500);
-            } else {
-                const errorData = await res.json();
-                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            console.error('Erro ao marcar pagamento como pago:', error);
-            alert('Erro ao processar: ' + error.message);
-        }
-    };
-
-    // Deletar Pagamento Parcelado
-    const handleDeletePagamentoParcelado = async (id) => {
-        if (!window.confirm('Deseja realmente excluir este pagamento parcelado?')) return;
-
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${id}`,
-                { method: 'DELETE' }
-            );
-
-            if (res.ok) {
-                alert('Pagamento parcelado excluído com sucesso!');
-                fetchData();
-            } else {
-                alert('Erro ao excluir pagamento parcelado');
-            }
-        } catch (error) {
-            console.error('Erro ao deletar pagamento parcelado:', error);
-            alert('Erro ao deletar pagamento parcelado');
-        }
-    };
-
-    // Marcar parcela como paga
-    const handleMarcarParcelaPaga = async (pagamento) => {
-        if (!window.confirm(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`)) {
-            return;
-        }
-
-        try {
-            // 1. Buscar as parcelas individuais
-            const resListaParcelas = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas`
-            );
-
-            if (!resListaParcelas.ok) {
-                alert('Erro ao buscar parcelas');
-                return;
-            }
-
-            const parcelas = await resListaParcelas.json();
-            
-            // 2. Encontrar a próxima parcela não paga
-            const proximaParcela = parcelas.find(p => p.status !== 'Pago');
-
-            if (!proximaParcela) {
-                alert('Todas as parcelas já foram pagas!');
-                return;
-            }
-
-            // 3. Marcar a parcela como paga (isso criará o lançamento no backend)
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas/${proximaParcela.id}/pagar`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ data_pagamento: getTodayString() })
-                }
-            );
-
-            if (res.ok) {
-                const resultado = await res.json();
-                
-                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
-                setPagamentosParcelados(prev => {
-                    return prev.map(pag => {
-                        if (pag.id === pagamento.id) {
-                            // Atualizar as parcelas
-                            const parcelasAtualizadas = pag.parcelas ? pag.parcelas.map(p => 
-                                p.id === proximaParcela.id 
-                                    ? { ...p, status: 'Pago', data_pagamento: getTodayString() }
-                                    : p
-                            ) : [];
-                            
-                            // Recalcular próxima parcela
-                            const proxima = parcelasAtualizadas.find(p => p.status !== 'Pago');
-                            const numeroProxima = proxima ? proxima.numero_parcela : null;
-                            const vencimentoProximo = proxima ? proxima.data_vencimento : null;
-                            
-                            // Se todas pagas, marcar como Concluído
-                            const todasPagas = parcelasAtualizadas.every(p => p.status === 'Pago');
-                            
-                            return {
-                                ...pag,
-                                parcelas: parcelasAtualizadas,
-                                proxima_parcela_numero: numeroProxima,
-                                proxima_parcela_vencimento: vencimentoProximo,
-                                status: todasPagas ? 'Concluído' : 'Ativo'
-                            };
-                        }
-                        return pag;
-                    });
-                });
-                
-                // Feedback visual rápido
-                const toast = document.createElement('div');
-                toast.textContent = `✅ ${resultado.mensagem}`;
-                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-                
-                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
-                setTimeout(() => fetchData(), 500);
-            } else {
-                const erro = await res.json();
-                alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
-            }
-        } catch (error) {
-            console.error('Erro ao marcar parcela:', error);
-            alert('Erro ao marcar parcela como paga');
-        }
-    };
-
-    if (isLoading) {
-        if (embedded) {
-            return <div className="loading-screen">Carregando cronograma...</div>;
-        }
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando cronograma...</div></Modal>;
-    }
-
-    const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
-
-    // Conteúdo do cronograma (usado tanto em embedded quanto em modal)
-    const cronogramaContent = (
-        <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>{simplified ? '🏠' : '💰'} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
-            <QuadroAlertasVencimento obraId={obraId} /> 
-            {/* Botões de Exportação */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
-                <button 
-                    onClick={() => setCadastrarFuturoVisible(true)} 
-                    className="submit-btn"
-                >
-                    ➕ Cadastrar Pagamento Futuro (Único)
-                </button>
-                <button 
-                    onClick={() => setCadastrarParceladoVisible(true)} 
-                    className="submit-btn"
-                    style={{ backgroundColor: 'var(--cor-acento)' }}
-                >
-                    ➕ Cadastrar Pagamento Parcelado
-                </button>
-                */}
-                
-                {/* NOVO: Botão Gerar PDF - apenas no modo completo */}
-                {!simplified && (
-                <button 
-                    onClick={async () => {
-                            try {
-                                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`);
-                                if (response.ok) {
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = `cronograma_financeiro_obra_${obraId}.pdf`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    window.URL.revokeObjectURL(url);
-                                    document.body.removeChild(a);
-                                } else {
-                                    alert('Erro ao gerar PDF');
-                                }
-                            } catch (error) {
-                                console.error('Erro ao exportar PDF:', error);
-                                alert('Erro ao gerar PDF do cronograma financeiro');
-                            }
-                        }} 
-                        className="export-btn pdf"
-                        title="Gerar relatório PDF do cronograma financeiro"
-                    >
-                        📄 Gerar PDF
-                    </button>
-                )}
-                    
-                    {!simplified && itensSelecionados.length > 0 && (
-                        <button 
-                            onClick={handleMarcarMultiplosComoPago} 
-                            className="inserir-btn"
-                            style={{ backgroundColor: '#28a745' }}
-                        >
-                            ✓ Marcar {itensSelecionados.length} Selecionado(s) como Pago
-                        </button>
-                    )}
-                </div>
-
-                {/* Tabela de Previsões */}
-                <div className="card-full" style={{ marginBottom: '20px' }}>
-                    <h3>📊 Tabela de Previsões Mensais</h3>
-                    <p style={{ color: '#666', fontSize: '0.9em', marginBottom: '10px' }}>
-                        Soma automática de pagamentos futuros e parcelados cadastrados no cronograma
-                    </p>
-                    
-                    {previsoes.length > 0 ? (
-                        <>
-                            {/* DESKTOP: Tabela */}
-                            <div className="desktop-only">
-                                <table className="tabela-pendencias">
-                                    <thead>
-                                        <tr>
-                                            <th>Mês</th>
-                                            <th>Valor Previsto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previsoes.map((prev, index) => (
-                                            <tr key={index}>
-                                                <td><strong>{prev.mes_nome}</strong></td>
-                                                <td>{formatCurrency(prev.valor)}</td>
-                                            </tr>
-                                        ))}
-                                        <tr style={{ background: 'var(--cor-primaria)', color: 'white', fontWeight: 'bold' }}>
-                                            <td>TOTAL PREVISTO</td>
-                                            <td>{formatCurrency(totalPrevisoes)}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* MOBILE: Cards */}
-                            <div className="mobile-only">
-                                {previsoes.map((prev, index) => (
-                                    <div key={index} className="card-previsao">
-                                        <div className="card-previsao-header">
-                                            <span className="card-previsao-mes">{prev.mes_nome}</span>
-                                        </div>
-                                        <div className="card-previsao-valor">
-                                            {formatCurrency(prev.valor)}
-                                        </div>
-                                    </div>
-                                ))}
-                                
-                                {/* Card do Total */}
-                                <div className="card-previsao card-previsao-total">
-                                    <div className="card-previsao-header">
-                                        <span className="card-previsao-mes">TOTAL PREVISTO</span>
-                                    </div>
-                                    <div className="card-previsao-valor">
-                                        {formatCurrency(totalPrevisoes)}
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <p>Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.</p>
-                    )}
-                </div>
-
-                {/* NOVO: Listagem de Pagamentos de Serviço Pendentes */}
-                {pagamentosServicoPendentes.length > 0 && (
-                    <div className="card-full" style={{ marginBottom: '20px', backgroundColor: '#fff3cd', border: '2px solid #ffc107' }}>
-                        <h3>⚠️ Pagamentos de Serviço Pendentes</h3>
-                        <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
-                            Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
-                        </p>
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th style={{width: '40px'}}>✓</th>
-                                    <th>Serviço</th>
-                                    <th>Descrição</th>
-                                    <th>Tipo</th>
-                                    <th>Valor Total</th>
-                                    <th>Pago</th>
-                                    <th>Restante</th>
-                                    <th>Prior.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosServicoPendentes.map(pag => (
-                                    <tr key={pag.id}>
-                                        <td>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={isItemSelecionado('servico', pag.id)}
-                                                onChange={() => toggleSelecao('servico', pag.id)}
-                                                style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                            />
-                                        </td>
-                                        <td><strong>{pag.servico_nome}</strong></td>
-                                        <td>{pag.descricao}</td>
-                                        <td>
-                                            <span style={{
-                                                padding: '3px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.85em',
-                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
-                                                color: 'white'
-                                            }}>
-                                                {pag.tipo_pagamento}
-                                            </span>
-                                        </td>
-                                        <td>{formatCurrency(pag.valor_total)}</td>
-                                        <td>{formatCurrency(pag.valor_pago)}</td>
-                                        <td><strong>{formatCurrency(pag.valor_restante)}</strong></td>
-                                        <td>
-                                            <PrioridadeBadge prioridade={pag.prioridade} />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Listagem de Pagamentos Futuros - APENAS no modo completo */}
-                {!simplified && (
-                <div className="card-full" style={{ marginBottom: '20px' }}>
-                    <div className="card-header">
-                        <h3>💵 Pagamentos Futuros (Únicos)</h3>
-                        <button 
-                            className="acao-btn" 
-                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
-                            onClick={() => setIsPagamentosFuturosCollapsed(prev => !prev)}
-                        >
-                            {isPagamentosFuturosCollapsed ? 'Expandir' : 'Recolher'}
-                        </button>
-                    </div>
-                    
-                    {!isPagamentosFuturosCollapsed && (
-                        <>
-                    <p style={{ 
-                        fontSize: '0.9em', 
-                        color: 'var(--cor-texto-secundario)', 
-                        marginBottom: '15px',
-                        padding: '10px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '6px',
-                        borderLeft: '3px solid var(--cor-primaria)'
-                    }}>
-                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para marcar como pago
-                    </p>
-                    {pagamentosFuturos.filter(pag => pag.status === 'Previsto').length > 0 ? (
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th style={{width: '40px'}}>✓</th>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Vencimento</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                    <th style={{width: '60px'}}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosFuturos.filter(pag => pag.status === 'Previsto').map(pag => (
-                                    <tr key={pag.id}>
-                                        <td>
-                                            {pag.status === 'Previsto' && (
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={isItemSelecionado('futuro', pag.id)}
-                                                    onChange={() => toggleSelecao('futuro', pag.id)}
-                                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                                />
-                                            )}
-                                        </td>
-                                        <td 
-                                            data-label="Descrição"
-                                            onClick={() => {
-                                                if (pag.status === 'Previsto') {
-                                                    setPagamentoFuturoSelecionado(pag);
-                                                    setEditarFuturoVisible(true);
-                                                }
-                                            }}
-                                            style={{ 
-                                                cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
-                                                color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'inherit',
-                                                fontWeight: pag.status === 'Previsto' ? '500' : 'normal',
-                                                textDecoration: pag.status === 'Previsto' ? 'underline' : 'none'
-                                            }}
-                                            title={pag.status === 'Previsto' ? 'Clique para editar' : ''}
-                                        >
-                                            {pag.descricao}
-                                        </td>
-                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
-                                        <td data-label="Vencimento">{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td data-label="Valor">{formatCurrency(pag.valor)}</td>
-                                        <td data-label="Status">
-                                            <span 
-                                                onClick={() => {
-                                                    if (pag.status === 'Previsto') {
-                                                        handleMarcarPagamentoFuturoPago(pag.id);
-                                                    }
-                                                }}
-                                                style={{
-                                                    padding: '5px 12px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.85em',
-                                                    fontWeight: '600',
-                                                    backgroundColor: pag.status === 'Previsto' ? '#ff9800' : 
-                                                                   pag.status === 'Pago' ? '#28a745' : '#6c757d',
-                                                    color: 'white',
-                                                    cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
-                                                    transition: 'all 0.2s ease',
-                                                    display: 'inline-block'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (pag.status === 'Previsto') {
-                                                        e.target.style.transform = 'scale(1.05)';
-                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.transform = 'scale(1)';
-                                                    e.target.style.boxShadow = 'none';
-                                                }}
-                                                title={pag.status === 'Previsto' ? 'Clique para marcar como pago' : ''}
-                                            >
-                                                {pag.status === 'Previsto' ? 'Pendente' : pag.status}
-                                            </span>
-                                        </td>
-                                        <td data-label="Ações" style={{textAlign: 'center'}}>
-                                            {pag.status === 'Previsto' && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeletePagamentoFuturo(pag.id);
-                                                    }}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.3em',
-                                                        color: '#dc3545',
-                                                        padding: '5px',
-                                                        transition: 'transform 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
-                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                                    title="Excluir pagamento"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p>Nenhum pagamento futuro cadastrado.</p>
-                    )}
-                    </>
-                    )}
-                </div>
-                )}
-
-                {/* Listagem de Pagamentos Parcelados - APENAS no modo completo */}
-                {!simplified && (
-                <div className="card-full">
-                    <div className="card-header">
-                        <h3>📋 Pagamentos Parcelados</h3>
-                        <button 
-                            className="acao-btn" 
-                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
-                            onClick={() => setIsPagamentosParceladosCollapsed(prev => !prev)}
-                        >
-                            {isPagamentosParceladosCollapsed ? 'Expandir' : 'Recolher'}
-                        </button>
-                    </div>
-                    
-                    {!isPagamentosParceladosCollapsed && (
-                        <>
-                    <p style={{ 
-                        fontSize: '0.9em', 
-                        color: 'var(--cor-texto-secundario)', 
-                        marginBottom: '15px',
-                        padding: '10px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '6px',
-                        borderLeft: '3px solid var(--cor-primaria)'
-                    }}>
-                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar parcelas ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para pagar próxima parcela
-                    </p>
-                    {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Valor Total</th>
-                                    <th>Parcelas</th>
-                                    <th>Periodicidade</th>
-                                    <th>Valor/Parcela</th>
-                                    <th>Próx. Vencimento</th>
-                                    <th>Status</th>
-                                    <th style={{width: '60px'}}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => (
-                                    <tr key={pag.id}>
-                                        <td 
-                                            data-label="Descrição"
-                                            onClick={() => handleAbrirEditarParcelas(pag)}
-                                            style={{ 
-                                                cursor: 'pointer',
-                                                color: 'var(--cor-primaria)',
-                                                fontWeight: '500',
-                                                textDecoration: 'underline'
-                                            }}
-                                            title="Clique para editar parcelas"
-                                        >
-                                            {pag.descricao}
-                                        </td>
-                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
-                                        <td data-label="Valor Total">{formatCurrency(pag.valor_total)}</td>
-                                        <td data-label="Parcelas">
-                                            <strong>
-                                                {pag.proxima_parcela_numero ? 
-                                                    `${pag.proxima_parcela_numero}/${pag.numero_parcelas}` : 
-                                                    `${pag.numero_parcelas}/${pag.numero_parcelas}`
-                                                }
-                                            </strong>
-                                        </td>
-                                        <td data-label="Periodicidade">
-                                            <span style={{
-                                                padding: '4px 10px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.85em',
-                                                fontWeight: '600',
-                                                backgroundColor: pag.periodicidade === 'Semanal' ? '#ffc107' : 
-                                                               pag.periodicidade === 'Quinzenal' ? '#ff9800' :
-                                                               pag.periodicidade === 'Mensal' ? '#6c757d' : '#17a2b8',
-                                                color: 'white'
-                                            }}>
-                                                {pag.periodicidade || 'Mensal'}
-                                            </span>
-                                        </td>
-                                        <td data-label="Valor/Parcela">{formatCurrency(pag.valor_proxima_parcela || pag.valor_parcela)}</td>
-                                        <td data-label="Próx. Vencimento">
-                                            {pag.proxima_parcela_vencimento ? 
-                                                new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
-                                                '-'
-                                            }
-                                        </td>
-                                        <td data-label="Status">
-                                            <span 
-                                                onClick={() => {
-                                                    if (pag.status === 'Ativo') {
-                                                        handleMarcarParcelaPaga(pag);
-                                                    }
-                                                }}
-                                                style={{
-                                                    padding: '5px 12px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.85em',
-                                                    fontWeight: '600',
-                                                    backgroundColor: pag.status === 'Ativo' ? '#ff9800' : 
-                                                                   pag.status === 'Concluído' ? '#28a745' : '#6c757d',
-                                                    color: 'white',
-                                                    cursor: pag.status === 'Ativo' ? 'pointer' : 'default',
-                                                    transition: 'all 0.2s ease',
-                                                    display: 'inline-block'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (pag.status === 'Ativo') {
-                                                        e.target.style.transform = 'scale(1.05)';
-                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.transform = 'scale(1)';
-                                                    e.target.style.boxShadow = 'none';
-                                                }}
-                                                title={pag.status === 'Ativo' ? 'Clique para pagar próxima parcela' : ''}
-                                            >
-                                                {pag.status === 'Ativo' ? 'Pendente' : pag.status}
-                                            </span>
-                                        </td>
-                                        <td data-label="Ações" style={{textAlign: 'center'}}>
-                                            {pag.status === 'Ativo' && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeletePagamentoParcelado(pag.id);
-                                                    }}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.3em',
-                                                        color: '#dc3545',
-                                                        padding: '5px',
-                                                        transition: 'transform 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
-                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                                    title="Excluir pagamento parcelado"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p>Nenhum pagamento parcelado cadastrado.</p>
-                    )}
-                    </>
-                    )}
-                </div>
-                )}
-
-                <div className="modal-footer" style={{ marginTop: '20px' }}>
-                    <button onClick={onClose} className="voltar-btn">
-                        {embedded ? '← Voltar às Obras' : 'Fechar'}
-                    </button>
-                </div>
-            </div>
-    );
-
-    // Retornar com ou sem Modal dependendo do modo
     if (embedded) {
-        return (
-            <>
-                {cronogramaContent}
-                
-                {/* Modais de Cadastro */}
-                {isCadastrarFuturoVisible && (
-                    <CadastrarPagamentoFuturoModal
-                        onClose={() => setCadastrarFuturoVisible(false)}
-                        onSave={handleSavePagamentoFuturo}
-                        obraId={obraId}
-                    />
-                )}
-
-                {isCadastrarParceladoVisible && (
-                    <CadastrarPagamentoParceladoModal
-                        onClose={() => setCadastrarParceladoVisible(false)}
-                        onSave={handleSavePagamentoParcelado}
-                        obraId={obraId}
-                    />
-                )}
-                
-                {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
-                    <EditarPagamentoFuturoModal
-                        onClose={() => {
-                            setEditarFuturoVisible(false);
-                            setPagamentoFuturoSelecionado(null);
-                        }}
-                        onSave={handleEditarPagamentoFuturo}
-                        pagamento={pagamentoFuturoSelecionado}
-                    />
-                )}
-                
-                {isEditarParcelasVisible && pagamentoParceladoSelecionado && (
-                    <EditarParcelasModal
-                        obraId={obraId}
-                        pagamentoParcelado={pagamentoParceladoSelecionado}
-                        onClose={() => {
-                            setEditarParcelasVisible(false);
-                            setPagamentoParceladoSelecionado(null);
-                        }}
-                    />
-                )}
-            </>
-        );
+        return content;
     }
 
     return (
-        <Modal onClose={onClose} customWidth="96%">
-            {cronogramaContent}
-
-            {/* Modais de Cadastro */}
-            {isCadastrarFuturoVisible && (
-                <CadastrarPagamentoFuturoModal
-                    onClose={() => setCadastrarFuturoVisible(false)}
-                    onSave={handleSavePagamentoFuturo}
-                    obraId={obraId}
-                />
-            )}
-
-            {isCadastrarParceladoVisible && (
-                <CadastrarPagamentoParceladoModal
-                    onClose={() => setCadastrarParceladoVisible(false)}
-                    onSave={handleSavePagamentoParcelado}
-                    obraId={obraId}
-                />
-            )}
-            
-            {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
-                <EditarPagamentoFuturoModal
-                    onClose={() => {
-                        setEditarFuturoVisible(false);
-                        setPagamentoFuturoSelecionado(null);
-                    }}
-                    onSave={handleEditarPagamentoFuturo}
-                    pagamento={pagamentoFuturoSelecionado}
-                />
-            )}
-            
-            {isEditarParcelasVisible && pagamentoParceladoSelecionado && (
-                <EditarParcelasModal
-                    obraId={obraId}
-                    pagamentoParcelado={pagamentoParceladoSelecionado}
-                    onClose={() => {
-                        setEditarParcelasVisible(false);
-                        setPagamentoParceladoSelecionado(null);
-                    }}
-                />
-            )}
-        </Modal>
+        <div className="cronograma-obra-fullscreen">
+            <div className="fullscreen-header">
+                <button className="btn-back" onClick={onClose}>
+                    ← Voltar
+                </button>
+            </div>
+            {content}
+        </div>
     );
 };
 
-
-// --- COMPONENTE PRINCIPAL (ROTEADOR) ---
-function App() {
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); 
-
-    useEffect(() => {
-        try {
-            const savedToken = localStorage.getItem('token');
-            const savedUser = localStorage.getItem('user');
-
-            if (savedToken && savedUser) {
-                setToken(savedToken);
-                setUser(JSON.parse(savedUser));
-            }
-        } catch (error) {
-            console.error("Falha ao carregar dados de autenticação:", error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-        }
-        setIsLoading(false); 
-    }, []);
-
-    const login = (data) => {
-        setToken(data.access_token);
-        setUser(data.user);
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-    };
-
-    const logout = () => {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    };
-
-    if (isLoading) {
-        return <div className="loading-screen">Carregando...</div>;
-    }
-
-    return (
-        <AuthContext.Provider value={{ user, token, login, logout }}>
-            {user ? <Dashboard /> : <LoginScreen />}
-        </AuthContext.Provider>
-    );
-}
-
-export default App;
+export default CronogramaObra;
