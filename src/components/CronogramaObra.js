@@ -574,8 +574,15 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     </div>
                                 </div>
 
-                                {/* Barra de Progresso Principal */}
-                                <div className="progress-section">
+                                {/* Barra de Progresso Principal - CLICÁVEL */}
+                                <div 
+                                    className="progress-section"
+                                    onClick={() => setEditingServico(servico)}
+                                    style={{ cursor: 'pointer' }}
+                                    title={servico.tipo_medicao === 'etapas' 
+                                        ? 'Percentual calculado pelas etapas - Clique para ver detalhes' 
+                                        : 'Clique para ajustar o andamento'}
+                                >
                                     <div className="progress-header">
                                         <span>Execução Física</span>
                                         <span className="progress-value">{(servico.percentual_conclusao || 0).toFixed(1)}%</span>
@@ -589,6 +596,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                             }}
                                         ></div>
                                     </div>
+                                    <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>✏️ Clique para editar</span>
                                 </div>
 
                                 {/* Datas */}
@@ -615,10 +623,16 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     )}
                                 </div>
 
-                                {/* Medição por Área */}
+                                {/* Medição por Área - CLICÁVEL */}
                                 {servico.tipo_medicao === 'area' && servico.area_total && (
-                                    <div className="area-section">
-                                        <span>📐 Área: {servico.area_executada || 0} / {servico.area_total} {servico.unidade_medida}</span>
+                                    <div 
+                                        className="area-section clickable"
+                                        onClick={() => setEditingServico(servico)}
+                                        style={{ cursor: 'pointer', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '8px', marginTop: '10px' }}
+                                        title="Clique para ajustar a área executada"
+                                    >
+                                        <span>📐 Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
+                                        <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>✏️ Clique para editar</span>
                                     </div>
                                 )}
 
@@ -716,7 +730,12 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                                     <span className="ajustado-badge" title="Data ajustada manualmente">✏️</span>
                                                                                 )}
                                                                             </div>
-                                                                            <div className="subetapa-progress">
+                                                                            <div 
+                                                                                className="subetapa-progress clickable"
+                                                                                onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                                title="Clique para ajustar o andamento"
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
                                                                                 <div className="mini-progress-bar small">
                                                                                     <div 
                                                                                         className="mini-progress-fill"
@@ -1185,15 +1204,68 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     onChange={(e) => setEditingSubetapa({...editingSubetapa, duracao_dias: e.target.value})}
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>Percentual Concluído</label>
+                        </div>
+                        
+                        {/* Campo de Andamento com Slider Visual */}
+                        <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
+                            <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>📊 Andamento da Subetapa</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    value={editingSubetapa.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value)})}
+                                    style={{ flex: 1, height: '8px' }}
+                                />
                                 <input
                                     type="number"
                                     min="0"
                                     max="100"
-                                    value={editingSubetapa.percentual_conclusao}
-                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: e.target.value})}
+                                    step="1"
+                                    value={editingSubetapa.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value) || 0})}
+                                    style={{ width: '60px', textAlign: 'center', fontWeight: 'bold' }}
                                 />
+                                <span style={{ fontWeight: 'bold' }}>%</span>
+                            </div>
+                            <div style={{ marginTop: '10px', height: '25px', backgroundColor: '#e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+                                <div style={{ 
+                                    width: `${editingSubetapa.percentual_conclusao || 0}%`, 
+                                    height: '100%', 
+                                    backgroundColor: (editingSubetapa.percentual_conclusao || 0) >= 100 ? '#4caf50' : 
+                                                    (editingSubetapa.percentual_conclusao || 0) >= 50 ? '#8bc34a' : '#ff9800',
+                                    transition: 'width 0.3s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.85em'
+                                }}>
+                                    {(editingSubetapa.percentual_conclusao || 0) >= 20 && `${editingSubetapa.percentual_conclusao || 0}%`}
+                                </div>
+                            </div>
+                            {/* Botões rápidos de andamento */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                {[0, 25, 50, 75, 100].map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        onClick={() => setEditingSubetapa({...editingSubetapa, percentual_conclusao: val})}
+                                        style={{
+                                            padding: '5px 12px',
+                                            border: (editingSubetapa.percentual_conclusao || 0) === val ? '2px solid #2e7d32' : '1px solid #ccc',
+                                            borderRadius: '15px',
+                                            backgroundColor: (editingSubetapa.percentual_conclusao || 0) === val ? '#c8e6c9' : '#fff',
+                                            cursor: 'pointer',
+                                            fontWeight: (editingSubetapa.percentual_conclusao || 0) === val ? 'bold' : 'normal'
+                                        }}
+                                    >
+                                        {val}%
+                                    </button>
+                                ))}
                             </div>
                         </div>
                         
@@ -1308,30 +1380,123 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             </div>
                         </div>
                         
-                        <div className="form-group">
-                            <label>Execução Física (%)</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    step="1"
-                                    value={editingServico.percentual_conclusao || 0}
-                                    onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})}
-                                    style={{ flex: 1 }}
-                                />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.1"
-                                    value={editingServico.percentual_conclusao || 0}
-                                    onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value) || 0})}
-                                    style={{ width: '70px', textAlign: 'center' }}
-                                />
-                                <span>%</span>
+                        {/* ========== CAMPOS DE EXECUÇÃO POR TIPO DE MEDIÇÃO ========== */}
+                        
+                        {/* TIPO: ÁREA - Editar área executada */}
+                        {editingServico.tipo_medicao === 'area' && (
+                            <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Medição por Área</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label>Área Executada ({editingServico.unidade_medida || 'm²'})</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={editingServico.area_total || 999999}
+                                            step="0.01"
+                                            value={editingServico.area_executada || 0}
+                                            onChange={(e) => {
+                                                const areaExec = parseFloat(e.target.value) || 0;
+                                                const areaTotal = editingServico.area_total || 1;
+                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
+                                                setEditingServico({
+                                                    ...editingServico, 
+                                                    area_executada: areaExec,
+                                                    percentual_conclusao: percentual
+                                                });
+                                            }}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <span style={{ fontSize: '1.2em' }}>/</span>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label>Área Total ({editingServico.unidade_medida || 'm²'})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={editingServico.area_total || 0}
+                                            onChange={(e) => {
+                                                const areaTotal = parseFloat(e.target.value) || 1;
+                                                const areaExec = editingServico.area_executada || 0;
+                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
+                                                setEditingServico({
+                                                    ...editingServico, 
+                                                    area_total: areaTotal,
+                                                    percentual_conclusao: percentual
+                                                });
+                                            }}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#bbdefb', borderRadius: '5px', textAlign: 'center' }}>
+                                    <strong>Execução Física: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
+                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            width: `${editingServico.percentual_conclusao || 0}%`, 
+                                            height: '100%', 
+                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#2196f3',
+                                            transition: 'width 0.3s'
+                                        }}></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        )}
+                        
+                        {/* TIPO: ETAPAS - Percentual calculado automaticamente */}
+                        {editingServico.tipo_medicao === 'etapas' && (
+                            <div className="form-group" style={{ backgroundColor: '#fff3e0', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#e65100', fontWeight: 'bold' }}>📋 Medição por Etapas</label>
+                                <p style={{ margin: '10px 0', color: '#666' }}>
+                                    O percentual de execução é calculado <strong>automaticamente</strong> com base no andamento das etapas e subetapas.
+                                </p>
+                                <div style={{ padding: '10px', backgroundColor: '#ffe0b2', borderRadius: '5px', textAlign: 'center' }}>
+                                    <strong>Execução Física Atual: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
+                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
+                                        <div style={{ 
+                                            width: `${editingServico.percentual_conclusao || 0}%`, 
+                                            height: '100%', 
+                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#ff9800',
+                                            transition: 'width 0.3s'
+                                        }}></div>
+                                    </div>
+                                </div>
+                                <p style={{ margin: '10px 0 0', fontSize: '0.85em', color: '#888' }}>
+                                    💡 Para alterar o percentual, edite o andamento de cada etapa/subetapa individualmente.
+                                </p>
+                            </div>
+                        )}
+                        
+                        {/* TIPO: EMPREITADA/MANUAL - Editar percentual diretamente */}
+                        {(editingServico.tipo_medicao === 'empreitada' || editingServico.tipo_medicao === 'manual' || !editingServico.tipo_medicao) && (
+                            <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>🔧 Execução Física (%)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="1"
+                                        value={editingServico.percentual_conclusao || 0}
+                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        value={editingServico.percentual_conclusao || 0}
+                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value) || 0})}
+                                        style={{ width: '70px', textAlign: 'center' }}
+                                    />
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        )}
                         
                         <div className="form-group">
                             <label>Observações</label>
