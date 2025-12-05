@@ -1309,6 +1309,31 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         </div>
                         
                         <div className="form-group">
+                            <label>Execução Física (%)</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    value={editingServico.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})}
+                                    style={{ flex: 1 }}
+                                />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.1"
+                                    value={editingServico.percentual_conclusao || 0}
+                                    onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value) || 0})}
+                                    style={{ width: '70px', textAlign: 'center' }}
+                                />
+                                <span>%</span>
+                            </div>
+                        </div>
+                        
+                        <div className="form-group">
                             <label>Observações</label>
                             <textarea
                                 value={editingServico.observacoes || ''}
