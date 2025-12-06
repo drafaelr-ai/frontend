@@ -587,12 +587,28 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                         <span>Execução Física</span>
                                         <span className="progress-value">{(servico.percentual_conclusao || 0).toFixed(1)}%</span>
                                     </div>
-                                    <div className="progress-bar">
+                                    <div 
+                                        className="cronograma-progress-bar"
+                                        style={{
+                                            display: 'block',
+                                            width: '100%',
+                                            height: '12px',
+                                            background: '#e2e8f0',
+                                            borderRadius: '6px',
+                                            overflow: 'hidden',
+                                            position: 'relative'
+                                        }}
+                                    >
                                         <div 
-                                            className="progress-fill"
                                             style={{ 
+                                                position: 'absolute',
+                                                left: 0,
+                                                top: 0,
                                                 width: `${servico.percentual_conclusao || 0}%`,
-                                                backgroundColor: status.color
+                                                height: '100%',
+                                                backgroundColor: status.color,
+                                                borderRadius: '6px',
+                                                transition: 'width 0.3s ease'
                                             }}
                                         ></div>
                                     </div>
@@ -812,24 +828,34 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                             </div>
                                             <div className="evm-bars">
                                                 <div className="evm-bar-row">
-                                                    <span>💰 Pago</span>
-                                                    <div className="evm-bar">
+                                                    <span>💰</span>
+                                                    <span style={{ minWidth: '40px' }}>Pago</span>
+                                                    <div className="evm-bar" style={{ background: '#e0e0e0' }}>
                                                         <div 
                                                             className="evm-bar-fill paid"
-                                                            style={{ width: `${Math.min(evm.percentual_pago || 0, 100)}%` }}
+                                                            style={{ 
+                                                                width: `${Math.min(evm.percentual_pago || 0, 100)}%`,
+                                                                background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                                                                minWidth: (evm.percentual_pago || 0) > 0 ? '3px' : '0'
+                                                            }}
                                                         ></div>
                                                     </div>
-                                                    <span>{(evm.percentual_pago || 0).toFixed(0)}%</span>
+                                                    <span style={{ minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{(evm.percentual_pago || 0).toFixed(0)}%</span>
                                                 </div>
                                                 <div className="evm-bar-row">
-                                                    <span>🏗️ Exec</span>
-                                                    <div className="evm-bar">
+                                                    <span>🏗️</span>
+                                                    <span style={{ minWidth: '40px' }}>Exec</span>
+                                                    <div className="evm-bar" style={{ background: '#e0e0e0' }}>
                                                         <div 
                                                             className="evm-bar-fill executed"
-                                                            style={{ width: `${Math.min(evm.percentual_executado || 0, 100)}%` }}
+                                                            style={{ 
+                                                                width: `${Math.min(evm.percentual_executado || 0, 100)}%`,
+                                                                background: 'linear-gradient(90deg, #10b981, #34d399)',
+                                                                minWidth: (evm.percentual_executado || 0) > 0 ? '3px' : '0'
+                                                            }}
                                                         ></div>
                                                     </div>
-                                                    <span>{(evm.percentual_executado || 0).toFixed(0)}%</span>
+                                                    <span style={{ minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{(evm.percentual_executado || 0).toFixed(0)}%</span>
                                                 </div>
                                             </div>
                                         </div>
