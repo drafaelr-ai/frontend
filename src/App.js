@@ -1112,6 +1112,36 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
     
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
+    const isMaster = user && user.role === 'master';
+    
+    // Função para reverter parcela paga (voltar para pendente)
+    const handleRevertParcela = async (item) => {
+        if (!window.confirm(`Deseja reverter o pagamento "${item.descricao}"?\n\nA parcela voltará ao status "Pendente".`)) return;
+        
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${item.pagamento_parcelado_id}/parcelas/${item.parcela_id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        status: 'Pendente',
+                        data_pagamento: null
+                    })
+                }
+            );
+            
+            if (response.ok) {
+                alert('Pagamento revertido com sucesso!');
+                if (fetchObraData && obraId) fetchObraData(obraId);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.erro || 'Erro ao reverter pagamento');
+            }
+        } catch (err) {
+            console.error('Erro ao reverter parcela:', err);
+            alert(`Erro ao reverter: ${err.message}`);
+        }
+    };
     
     const handleDelete = async (item) => {
         if (!window.confirm(`Deseja excluir "${item.descricao}"?`)) return;
@@ -1131,7 +1161,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             const numericId = extractNumericId(item.id);
             
             if (!numericId) {
-                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
+                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             }
             
@@ -1141,7 +1171,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             } else if (item.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
-                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
+                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             } else {
                 // Tentar identificar pelo prefixo do ID
@@ -1166,6 +1196,33 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             console.error('Erro ao excluir:', err);
             alert(`Erro ao excluir: ${err.message}`);
         }
+    };
+    
+    // Helper para verificar se é parcela
+    const isParcela = (item) => {
+        return item.tipo_registro === 'parcela_individual' || String(item.id).startsWith('parcela-');
+    };
+    
+    // Helper para extrair dados para NotaFiscal
+    const getNotaFiscalData = (item) => {
+        const strId = String(item.id);
+        let numericId = strId;
+        let itemType = 'lancamento';
+        
+        if (strId.startsWith('lanc-')) {
+            numericId = strId.replace('lanc-', '');
+            itemType = 'lancamento';
+        } else if (strId.startsWith('serv-pag-')) {
+            numericId = strId.replace('serv-pag-', '');
+            itemType = 'pagamento_servico';
+        } else if (strId.startsWith('parcela-') || item.tipo_registro === 'parcela_individual') {
+            numericId = item.parcela_id || strId.replace('parcela-', '');
+            itemType = 'parcela_individual';
+        } else if (item.tipo_registro === 'pagamento_servico') {
+            itemType = 'pagamento_servico';
+        }
+        
+        return { numericId: parseInt(numericId), itemType };
     };
     
     return (
@@ -1243,19 +1300,13 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             </span>
                                         </td>
                                         <td style={{textAlign: 'center'}}>
-                                            {/* Nota Fiscal - só para lancamentos e pagamentos de serviço */}
-                                            {item.tipo_registro !== 'parcela_individual' && !String(item.id).startsWith('parcela-') && obraId && (() => {
-                                                // Extrair ID numérico
-                                                const strId = String(item.id);
-                                                let numericId = strId;
-                                                if (strId.startsWith('lanc-')) numericId = strId.replace('lanc-', '');
-                                                else if (strId.startsWith('serv-pag-')) numericId = strId.replace('serv-pag-', '');
-                                                
-                                                const itemType = item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'lancamento';
+                                            {/* Nota Fiscal - para todos os tipos incluindo parcelas */}
+                                            {obraId && (() => {
+                                                const { numericId, itemType } = getNotaFiscalData(item);
                                                 
                                                 return (
                                                     <NotaFiscalIcon 
-                                                        item={{ ...item, id: parseInt(numericId) }}
+                                                        item={{ ...item, id: numericId }}
                                                         itemType={itemType}
                                                         obraId={obraId}
                                                         onNotaAdded={() => fetchObraData && obraId && fetchObraData(obraId)}
@@ -1265,7 +1316,26 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         </td>
                                         {isAdmin && (
                                             <td style={{textAlign: 'center'}}>
-                                                {item.tipo_registro !== 'parcela_individual' && !String(item.id).startsWith('parcela-') && (
+                                                {isParcela(item) ? (
+                                                    /* Para parcelas: botão de reverter pagamento (apenas master) */
+                                                    isMaster && (
+                                                        <button 
+                                                            onClick={() => handleRevertParcela(item)}
+                                                            style={{ 
+                                                                background: 'none', 
+                                                                border: 'none', 
+                                                                cursor: 'pointer', 
+                                                                fontSize: '1.1em', 
+                                                                padding: '3px', 
+                                                                color: '#ff9800' 
+                                                            }}
+                                                            title="Reverter pagamento (voltar para Pendente)"
+                                                        >
+                                                            ↩️
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    /* Para outros itens: botão de excluir */
                                                     <button 
                                                         onClick={() => handleDelete(item)}
                                                         style={{ 
