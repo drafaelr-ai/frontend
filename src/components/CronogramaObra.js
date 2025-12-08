@@ -1518,15 +1518,110 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             </div>
                         </div>
                         
+                        {/* ========== TIPO DE MEDIÇÃO ========== */}
+                        <div className="form-group">
+                            <label style={{ fontWeight: 'bold' }}>📊 Tipo de Medição</label>
+                            <select
+                                value={editingServico.tipo_medicao || 'empreitada'}
+                                onChange={(e) => {
+                                    const novoTipo = e.target.value;
+                                    const updates = { tipo_medicao: novoTipo };
+                                    
+                                    // Resetar campos específicos ao mudar tipo
+                                    if (novoTipo === 'area') {
+                                        updates.area_total = editingServico.area_total || 100;
+                                        updates.area_executada = editingServico.area_executada || 0;
+                                        updates.unidade_medida = editingServico.unidade_medida || 'm²';
+                                    }
+                                    
+                                    setEditingServico({...editingServico, ...updates});
+                                }}
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '10px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #d1d5db',
+                                    fontSize: '1rem',
+                                    backgroundColor: 'white'
+                                }}
+                            >
+                                <option value="empreitada">🔧 Empreitada/Manual (editar % diretamente)</option>
+                                <option value="etapas">📋 Por Etapas (% calculado pelas etapas)</option>
+                                <option value="area">📐 Por Área (área executada / total)</option>
+                            </select>
+                            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                                {editingServico.tipo_medicao === 'etapas' && '⚠️ Se mudar de "Por Etapas", as etapas existentes não serão excluídas.'}
+                                {editingServico.tipo_medicao === 'area' && '📐 Defina a área total e a área já executada.'}
+                                {(editingServico.tipo_medicao === 'empreitada' || !editingServico.tipo_medicao) && '🔧 Ajuste o percentual de execução manualmente.'}
+                            </small>
+                        </div>
+                        
+                        {/* ========== CAMPOS ADICIONAIS PARA ÁREA ========== */}
+                        {editingServico.tipo_medicao === 'area' && (
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Área Total</label>
+                                    <input
+                                        type="number"
+                                        min="0.01"
+                                        step="0.01"
+                                        value={editingServico.area_total || ''}
+                                        onChange={(e) => {
+                                            const areaTotal = parseFloat(e.target.value) || 0;
+                                            const areaExec = editingServico.area_executada || 0;
+                                            const percentual = areaTotal > 0 ? Math.min(100, (areaExec / areaTotal) * 100) : 0;
+                                            setEditingServico({
+                                                ...editingServico, 
+                                                area_total: areaTotal,
+                                                percentual_conclusao: percentual
+                                            });
+                                        }}
+                                        placeholder="Ex: 150"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Unidade de Medida</label>
+                                    <select
+                                        value={editingServico.unidade_medida || 'm²'}
+                                        onChange={(e) => setEditingServico({...editingServico, unidade_medida: e.target.value})}
+                                    >
+                                        <option value="m²">m² (metros quadrados)</option>
+                                        <option value="m³">m³ (metros cúbicos)</option>
+                                        <option value="m">m (metros lineares)</option>
+                                        <option value="un">un (unidades)</option>
+                                        <option value="kg">kg (quilogramas)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                        
                         {/* ========== CAMPOS DE EXECUÇÃO POR TIPO DE MEDIÇÃO ========== */}
                         
                         {/* TIPO: ÁREA - Editar área executada */}
                         {editingServico.tipo_medicao === 'area' && (
                             <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Medição por Área</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label>Área Executada ({editingServico.unidade_medida || 'm²'})</label>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Progresso por Área</label>
+                                <div style={{ marginTop: '10px' }}>
+                                    <label>Área Executada ({editingServico.unidade_medida || 'm²'})</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max={editingServico.area_total || 100}
+                                            step="0.1"
+                                            value={editingServico.area_executada || 0}
+                                            onChange={(e) => {
+                                                const areaExec = parseFloat(e.target.value) || 0;
+                                                const areaTotal = editingServico.area_total || 1;
+                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
+                                                setEditingServico({
+                                                    ...editingServico, 
+                                                    area_executada: areaExec,
+                                                    percentual_conclusao: percentual
+                                                });
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
                                         <input
                                             type="number"
                                             min="0"
@@ -1543,31 +1638,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                     percentual_conclusao: percentual
                                                 });
                                             }}
-                                            style={{ width: '100%' }}
+                                            style={{ width: '80px', textAlign: 'center' }}
                                         />
-                                    </div>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <span style={{ fontSize: '1.2em' }}>/</span>
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <label>Área Total ({editingServico.unidade_medida || 'm²'})</label>
-                                        <input
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            value={editingServico.area_total || 0}
-                                            onChange={(e) => {
-                                                const areaTotal = parseFloat(e.target.value) || 1;
-                                                const areaExec = editingServico.area_executada || 0;
-                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
-                                                setEditingServico({
-                                                    ...editingServico, 
-                                                    area_total: areaTotal,
-                                                    percentual_conclusao: percentual
-                                                });
-                                            }}
-                                            style={{ width: '100%' }}
-                                        />
+                                        <span>/ {editingServico.area_total || 0} {editingServico.unidade_medida || 'm²'}</span>
                                     </div>
                                 </div>
                                 <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#bbdefb', borderRadius: '5px', textAlign: 'center' }}>
