@@ -4170,9 +4170,9 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         }
     };
 
-    const totalPendente = orcamentos
-        .filter(orc => orc.status !== 'Rejeitado')
-        .reduce((sum, orc) => sum + (orc.valor || 0), 0);
+    // Filtrar apenas orçamentos PENDENTES
+    const orcamentosPendentes = orcamentos.filter(orc => orc.status === 'Pendente');
+    const totalPendente = orcamentosPendentes.reduce((sum, orc) => sum + (orc.valor || 0), 0);
 
     if (isLoading) {
         return (
@@ -4222,7 +4222,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                     </button>
                 </div>
 
-                {orcamentos.filter(orc => orc.status !== 'Rejeitado').length > 0 ? (
+                {orcamentosPendentes.length > 0 ? (
                     <table className="tabela-pendencias">
                         <thead>
                             <tr>
@@ -4235,7 +4235,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {orcamentos.filter(orc => orc.status !== 'Rejeitado').map(orc => (
+                            {orcamentosPendentes.map(orc => (
                                 <tr key={orc.id}>
                                     <td
                                         onClick={() => setEditingOrcamento(orc)}
