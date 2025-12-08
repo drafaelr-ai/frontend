@@ -1103,7 +1103,7 @@ const EtapasServicosCard = ({ servicos, onViewServico, onAddServico, onNavigateT
 
 
 // --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
-const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData }) => {
+const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     const ITENS_INICIAIS = 10;
     
@@ -1157,7 +1157,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             
             if (response.ok) {
                 alert('Item excluído com sucesso!');
-                if (fetchObraData) fetchObraData();
+                if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.erro || 'Erro ao excluir');
@@ -1211,6 +1211,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     <th>Fornecedor</th>
                                     <th>Valor</th>
                                     <th>Status</th>
+                                    <th style={{width: '50px', textAlign: 'center'}}>NF</th>
                                     {isAdmin && <th style={{width: '50px'}}>Ações</th>}
                                 </tr>
                             </thead>
@@ -1240,6 +1241,27 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             }}>
                                                 ✓ Pago
                                             </span>
+                                        </td>
+                                        <td style={{textAlign: 'center'}}>
+                                            {/* Nota Fiscal - só para lancamentos e pagamentos de serviço */}
+                                            {item.tipo_registro !== 'parcela_individual' && !String(item.id).startsWith('parcela-') && obraId && (() => {
+                                                // Extrair ID numérico
+                                                const strId = String(item.id);
+                                                let numericId = strId;
+                                                if (strId.startsWith('lanc-')) numericId = strId.replace('lanc-', '');
+                                                else if (strId.startsWith('serv-pag-')) numericId = strId.replace('serv-pag-', '');
+                                                
+                                                const itemType = item.tipo_registro === 'pagamento_servico' ? 'pagamento_servico' : 'lancamento';
+                                                
+                                                return (
+                                                    <NotaFiscalIcon 
+                                                        item={{ ...item, id: parseInt(numericId) }}
+                                                        itemType={itemType}
+                                                        obraId={obraId}
+                                                        onNotaAdded={() => fetchObraData && obraId && fetchObraData(obraId)}
+                                                    />
+                                                );
+                                            })()}
                                         </td>
                                         {isAdmin && (
                                             <td style={{textAlign: 'center'}}>
@@ -5341,6 +5363,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 itemsAPagar={itemsAPagar}
                                 user={user}
                                 fetchObraData={fetchObraData}
+                                obraId={obraSelecionada.id}
                             />
                         </div>
                     )}

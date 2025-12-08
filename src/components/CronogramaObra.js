@@ -79,6 +79,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     // Estados para serviços vinculados (importar)
     const [servicosDisponiveis, setServicosDisponiveis] = useState([]);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [servicosSelecionados, setServicosSelecionados] = useState([]);
     
     // Estados para EVM
     const [evmData, setEvmData] = useState({});
@@ -214,27 +215,56 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Importar serviço existente
-    const handleImportServico = async (servico) => {
+    // Importar serviço existente (múltiplos)
+    const handleImportServicos = async () => {
+        if (servicosSelecionados.length === 0) {
+            alert('Selecione pelo menos um serviço para importar');
+            return;
+        }
+        
         try {
-            const response = await fetchWithAuth(`${API_URL}/cronograma`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    obra_id: obraId,
-                    servico_nome: servico.nome,
-                    tipo_medicao: 'etapas',
-                    data_inicio: getTodayString(),
-                    data_fim_prevista: addDays(getTodayString(), 30),
-                    percentual_conclusao: 0
-                })
-            });
+            for (const servico of servicosSelecionados) {
+                const response = await fetchWithAuth(`${API_URL}/cronograma`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        obra_id: obraId,
+                        servico_nome: servico.nome,
+                        tipo_medicao: 'etapas',
+                        data_inicio: getTodayString(),
+                        data_fim_prevista: addDays(getTodayString(), 30),
+                        percentual_conclusao: 0
+                    })
+                });
 
-            if (!response.ok) throw new Error('Erro ao importar serviço');
+                if (!response.ok) throw new Error(`Erro ao importar serviço: ${servico.nome}`);
+            }
 
             fetchCronograma();
             setShowImportModal(false);
+            setServicosSelecionados([]);
         } catch (err) {
             alert(err.message);
+        }
+    };
+    
+    // Toggle seleção de serviço para importar
+    const toggleServicoSelecionado = (servico) => {
+        setServicosSelecionados(prev => {
+            const isSelected = prev.some(s => s.id === servico.id);
+            if (isSelected) {
+                return prev.filter(s => s.id !== servico.id);
+            } else {
+                return [...prev, servico];
+            }
+        });
+    };
+    
+    // Selecionar/desmarcar todos
+    const toggleSelectAll = () => {
+        if (servicosSelecionados.length === servicosDisponiveis.length) {
+            setServicosSelecionados([]);
+        } else {
+            setServicosSelecionados([...servicosDisponiveis]);
         }
     };
 
@@ -1318,36 +1348,118 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
             {/* Modal Importar Serviço */}
             {showImportModal && (
-                <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>📋 Importar Serviço</h3>
-                        <p>Selecione um serviço da planilha de custos:</p>
+                <div className="modal-overlay" onClick={() => { setShowImportModal(false); setServicosSelecionados([]); }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <h3>📋 Importar Serviços</h3>
+                        <p>Selecione os serviços da planilha de custos para importar:</p>
                         
                         {servicosDisponiveis.length === 0 ? (
                             <div className="empty-message">
-                                Todos os serviços já foram importados.
+                                Todos os serviços já foram importados ou não há serviços disponíveis.
                             </div>
                         ) : (
-                            <div className="import-list">
-                                {servicosDisponiveis.map(servico => (
-                                    <div 
-                                        key={servico.id} 
-                                        className="import-item"
-                                        onClick={() => handleImportServico(servico)}
-                                    >
-                                        <span className="import-nome">{servico.nome}</span>
-                                        <span className="import-valor">
-                                            {formatCurrency((servico.valor_global_mao_de_obra || 0) + (servico.valor_global_material || 0))}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
+                            <>
+                                {/* Botão Selecionar Todos */}
+                                <div style={{ 
+                                    marginBottom: '15px', 
+                                    paddingBottom: '10px', 
+                                    borderBottom: '1px solid #e2e8f0',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={servicosSelecionados.length === servicosDisponiveis.length}
+                                            onChange={toggleSelectAll}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ fontWeight: '600' }}>Selecionar Todos</span>
+                                    </label>
+                                    <span style={{ 
+                                        fontSize: '0.9em', 
+                                        color: '#666',
+                                        backgroundColor: '#e2e8f0',
+                                        padding: '4px 10px',
+                                        borderRadius: '12px'
+                                    }}>
+                                        {servicosSelecionados.length} selecionado(s)
+                                    </span>
+                                </div>
+                                
+                                {/* Lista de serviços com checkboxes */}
+                                <div style={{ 
+                                    maxHeight: '350px', 
+                                    overflowY: 'auto',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px'
+                                }}>
+                                    {servicosDisponiveis.map(servico => {
+                                        const isSelected = servicosSelecionados.some(s => s.id === servico.id);
+                                        const valorTotal = (servico.valor_global_mao_de_obra || 0) + (servico.valor_global_material || 0);
+                                        
+                                        return (
+                                            <label 
+                                                key={servico.id}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    padding: '12px 15px',
+                                                    borderBottom: '1px solid #f1f5f9',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.2s',
+                                                    backgroundColor: isSelected ? '#e0f2fe' : 'transparent'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = isSelected ? '#e0f2fe' : '#f8fafc'}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = isSelected ? '#e0f2fe' : 'transparent'}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleServicoSelecionado(servico)}
+                                                    style={{ 
+                                                        width: '18px', 
+                                                        height: '18px', 
+                                                        marginRight: '12px',
+                                                        cursor: 'pointer',
+                                                        accentColor: '#4f46e5'
+                                                    }}
+                                                />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: '500', color: '#2d3748' }}>
+                                                        {servico.nome}
+                                                    </div>
+                                                    {valorTotal > 0 && (
+                                                        <div style={{ fontSize: '0.85em', color: '#666', marginTop: '2px' }}>
+                                                            {formatCurrency(valorTotal)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </>
                         )}
                         
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowImportModal(false)}>
-                                Fechar
+                            <button className="btn-cancel" onClick={() => { setShowImportModal(false); setServicosSelecionados([]); }}>
+                                Cancelar
                             </button>
+                            {servicosDisponiveis.length > 0 && (
+                                <button 
+                                    className="btn-save" 
+                                    onClick={handleImportServicos}
+                                    disabled={servicosSelecionados.length === 0}
+                                    style={{
+                                        opacity: servicosSelecionados.length === 0 ? 0.5 : 1,
+                                        cursor: servicosSelecionados.length === 0 ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    ✓ Importar {servicosSelecionados.length > 0 ? `(${servicosSelecionados.length})` : ''}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
