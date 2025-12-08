@@ -1305,22 +1305,22 @@ const Modal = ({ children, onClose, customWidth }) => (
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         zIndex: 9999,
-        padding: '20px',
+        padding: '10px',
         overflowY: 'auto'
     }}>
         <div 
             className="modal-content" 
             style={{ 
                 maxWidth: customWidth || '500px',
-                width: '100%',
+                width: '95%',
                 maxHeight: '90vh',
                 overflowY: 'auto',
-                margin: 'auto',
                 background: 'white',
                 borderRadius: '12px',
-                position: 'relative'
+                position: 'relative',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
             }}
             onClick={e => e.stopPropagation()}
         >
@@ -4286,9 +4286,11 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
                 {/* Modal de Aprovação com Escolha */}
                 {aprovandoOrcamento && (
-                    <Modal onClose={() => setAprovandoOrcamento(null)}>
-                        <div className="modal-content" style={{ maxWidth: '600px' }}>
-                            <h2>✅ Aprovar Orçamento</h2>
+                    <Modal onClose={() => setAprovandoOrcamento(null)} customWidth="500px">
+                        <div style={{ padding: '20px' }}>
+                            <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                ✅ Aprovar Orçamento
+                            </h2>
                             <p style={{ marginBottom: '20px', color: '#666' }}>
                                 <strong>{aprovandoOrcamento.descricao}</strong><br />
                                 Valor: {formatCurrency(aprovandoOrcamento.valor)}
@@ -4322,14 +4324,16 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                     style={{ 
                                         width: '100%', 
                                         padding: '10px',
-                                        marginBottom: '10px'
+                                        marginBottom: '10px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #ccc'
                                     }}
                                     defaultValue=""
                                 >
                                     <option value="">Selecione um serviço existente...</option>
                                     {(servicos || []).map(serv => (
                                         <option key={serv.id} value={serv.id}>
-                                            {serv.nome} - {formatCurrency(serv.valor_total)}
+                                            {serv.nome} - {formatCurrency((serv.valor_global_mao_de_obra || 0) + (serv.valor_global_material || 0))}
                                         </option>
                                     ))}
                                 </select>
@@ -4358,7 +4362,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                             <button
                                 onClick={() => setAprovandoOrcamento(null)}
                                 className="cancel-btn"
-                                style={{ width: '100%' }}
+                                style={{ width: '100%', padding: '12px' }}
                             >
                                 Cancelar
                             </button>
