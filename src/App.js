@@ -4046,6 +4046,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             if (opcao === 'atrelar' && servicoId) {
                 body.servico_id = servicoId;
             }
+            
+            console.log('Enviando aprovação:', body);
 
             const response = await fetchWithAuth(
                 `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
@@ -4055,7 +4057,11 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 }
             );
 
-            if (!response.ok) throw new Error('Erro ao aprovar orçamento');
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.erro || data.error || 'Erro ao aprovar orçamento');
+            }
 
             alert('✅ Orçamento aprovado com sucesso!');
             setAprovandoOrcamento(null);
@@ -4063,7 +4069,8 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             // O onSave() já vai recarregar todos os dados da obra
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            console.error('Erro ao aprovar:', err);
+            alert(`Erro ao aprovar orçamento: ${err.message}`);
         }
     };
 
