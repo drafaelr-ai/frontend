@@ -254,16 +254,17 @@ const NotificacoesDropdown = ({ user }) => {
                         onClick={() => setIsOpen(false)}
                     />
                     
-                    {/* Dropdown */}
+                    {/* Dropdown - aparece ACIMA do sino */}
                     <div style={{
                         position: 'absolute',
-                        top: '100%',
-                        right: 0,
-                        width: '350px',
-                        maxHeight: '450px',
+                        bottom: '100%',
+                        left: 0,
+                        marginBottom: '10px',
+                        width: '320px',
+                        maxHeight: '400px',
                         backgroundColor: 'white',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                        boxShadow: '0 -5px 40px rgba(0,0,0,0.25)',
                         zIndex: 1000,
                         overflow: 'hidden',
                         display: 'flex',
@@ -317,7 +318,7 @@ const NotificacoesDropdown = ({ user }) => {
                         <div style={{ 
                             overflowY: 'auto', 
                             flex: 1,
-                            maxHeight: '380px'
+                            maxHeight: '320px'
                         }}>
                             {loading ? (
                                 <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
