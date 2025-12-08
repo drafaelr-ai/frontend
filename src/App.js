@@ -1119,34 +1119,52 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         try {
             let endpoint = '';
             
+            // Extrair ID numérico (remover prefixos como "lanc-", "serv-pag-")
+            const extractNumericId = (id) => {
+                const strId = String(id);
+                if (strId.startsWith('lanc-')) return strId.replace('lanc-', '');
+                if (strId.startsWith('serv-pag-')) return strId.replace('serv-pag-', '');
+                if (strId.startsWith('parcela-')) return null; // Parcelas não podem ser deletadas
+                return strId;
+            };
+            
+            const numericId = extractNumericId(item.id);
+            
+            if (!numericId) {
+                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
+                return;
+            }
+            
             // Determinar qual endpoint usar baseado no tipo de registro
             if (item.tipo_registro === 'lancamento') {
-                endpoint = `${API_URL}/lancamentos/${item.id}`;
+                endpoint = `${API_URL}/lancamentos/${numericId}`;
             } else if (item.tipo_registro === 'pagamento_servico') {
-                endpoint = `${API_URL}/pagamentos-servico/${item.id}`;
+                endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
-                // Parcelas não podem ser deletadas diretamente
                 alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.');
                 return;
             } else {
-                // Tentar identificar pelo ID
-                if (String(item.id).startsWith('parcela-')) {
-                    alert('Parcelas não podem ser excluídas individualmente.');
-                    return;
+                // Tentar identificar pelo prefixo do ID
+                if (String(item.id).startsWith('serv-pag-')) {
+                    endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+                } else {
+                    endpoint = `${API_URL}/lancamentos/${numericId}`;
                 }
-                endpoint = `${API_URL}/lancamentos/${item.id}`;
             }
             
+            console.log('Deletando:', endpoint);
             const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
+            
             if (response.ok) {
                 alert('Item excluído com sucesso!');
                 if (fetchObraData) fetchObraData();
             } else {
-                throw new Error('Erro ao excluir');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.erro || 'Erro ao excluir');
             }
         } catch (err) {
             console.error('Erro ao excluir:', err);
-            alert('Erro ao excluir item');
+            alert(`Erro ao excluir: ${err.message}`);
         }
     };
     
