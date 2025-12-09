@@ -2946,13 +2946,14 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO
+// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO E BOLETO
 const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
     const [pix, setPix] = useState('');
+    const [codigoBarras, setCodigoBarras] = useState('');
     const [valor, setValor] = useState('');
     const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
     const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
@@ -2960,9 +2961,57 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     
     // 🆕 NOVOS ESTADOS PARA PARCELAMENTO
     const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
+    const [meioPagamento, setMeioPagamento] = useState('PIX'); // PIX, Boleto, Transferência
     const [numeroParcelas, setNumeroParcelas] = useState('');
     const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
     const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
+    
+    // Estados para boletos parcelados (valores diferentes)
+    const [valoresIguais, setValoresIguais] = useState(true);
+    const [boletosConfig, setBoletosConfig] = useState([]);
+    
+    // Gerar configuração de boletos quando mudar número de parcelas
+    useEffect(() => {
+        if (tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas) {
+            const numParcelas = parseInt(numeroParcelas) || 1;
+            const valorTotal = parseFloat(valor) || 0;
+            const valorParcela = valorTotal / numParcelas;
+            const dataInicial = dataPrimeiraParcela ? new Date(dataPrimeiraParcela + 'T12:00:00') : new Date();
+            
+            const novosBoletos = [];
+            for (let i = 0; i < numParcelas; i++) {
+                const dataVenc = new Date(dataInicial);
+                if (periodicidade === 'Semanal') {
+                    dataVenc.setDate(dataVenc.getDate() + (i * 7));
+                } else if (periodicidade === 'Quinzenal') {
+                    dataVenc.setDate(dataVenc.getDate() + (i * 15));
+                } else {
+                    dataVenc.setMonth(dataVenc.getMonth() + i);
+                }
+                
+                novosBoletos.push({
+                    numero: i + 1,
+                    valor: valoresIguais ? valorParcela.toFixed(2) : (boletosConfig[i]?.valor || valorParcela.toFixed(2)),
+                    data_vencimento: dataVenc.toISOString().split('T')[0],
+                    codigo_barras: boletosConfig[i]?.codigo_barras || ''
+                });
+            }
+            setBoletosConfig(novosBoletos);
+        }
+    }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais]);
+
+    // Atualizar boleto específico
+    const handleBoletoChange = (index, field, value) => {
+        const novosBoletos = [...boletosConfig];
+        novosBoletos[index] = { ...novosBoletos[index], [field]: value };
+        setBoletosConfig(novosBoletos);
+    };
+
+    // Copiar código de barras
+    const copiarCodigo = (codigo) => {
+        navigator.clipboard.writeText(codigo);
+        alert('Código copiado!');
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -2972,12 +3021,14 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             data_vencimento: dataVencimento,
             descricao,
             fornecedor: fornecedor || null,
-            pix: pix || null,
+            pix: meioPagamento === 'PIX' ? pix : null,
+            codigo_barras: meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' ? codigoBarras : null,
             valor: parseFloat(valor) || 0,
             tipo,
             status,
             servico_id: servicoId ? parseInt(servicoId, 10) : null,
-            tipo_forma_pagamento: tipoFormaPagamento
+            tipo_forma_pagamento: tipoFormaPagamento,
+            meio_pagamento: meioPagamento
         };
         
         // Adicionar campos de parcelamento se aplicável
@@ -2985,6 +3036,11 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
             dadosPagamento.periodicidade = periodicidade;
             dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
+            
+            // Se for boleto parcelado, incluir configuração dos boletos
+            if (meioPagamento === 'Boleto') {
+                dadosPagamento.parcelas_customizadas = boletosConfig;
+            }
         }
         
         onSave(dadosPagamento);
@@ -2996,7 +3052,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
                 Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
             </p>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 <div className="form-group">
                     <label>Data do Registro</label>
                     <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
@@ -3042,6 +3098,17 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                             Parcelado
                         </label>
                     </div>
+                </div>
+
+                {/* 🆕 MEIO DE PAGAMENTO */}
+                <div className="form-group">
+                    <label>Meio de Pagamento</label>
+                    <select value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
+                        <option value="PIX">PIX</option>
+                        <option value="Boleto">Boleto</option>
+                        <option value="Transferência">Transferência</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                    </select>
                 </div>
                 
                 {/* 🆕 CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
@@ -3101,6 +3168,99 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                         </div>
                     </>
                 )}
+
+                {/* 🆕 CONFIGURAÇÃO DE BOLETOS PARCELADOS */}
+                {tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas && (
+                    <div style={{
+                        background: '#fff8e1',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        marginBottom: '15px',
+                        border: '1px solid #ffcc80',
+                        maxHeight: '300px',
+                        overflowY: 'auto'
+                    }}>
+                        <h4 style={{margin: '0 0 12px 0', color: '#f57c00'}}>🎫 Códigos de Barras dos Boletos</h4>
+                        
+                        <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={valoresIguais}
+                                    onChange={(e) => setValoresIguais(e.target.checked)}
+                                />
+                                Valores iguais
+                            </label>
+                        </div>
+                        
+                        {boletosConfig.map((boleto, index) => (
+                            <div key={index} style={{
+                                background: '#fff',
+                                border: '1px solid #e0e0e0',
+                                borderRadius: '5px',
+                                padding: '10px',
+                                marginBottom: '8px'
+                            }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    marginBottom: '8px',
+                                    fontWeight: 'bold',
+                                    color: '#555'
+                                }}>
+                                    <span>Boleto {boleto.numero}/{numeroParcelas}</span>
+                                    <span style={{ fontSize: '12px', color: '#888' }}>
+                                        Venc: {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                                    </span>
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {!valoresIguais && (
+                                        <div style={{ flex: '1', minWidth: '100px' }}>
+                                            <label style={{ fontSize: '11px', color: '#666' }}>Valor:</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={boleto.valor}
+                                                onChange={(e) => handleBoletoChange(index, 'valor', e.target.value)}
+                                                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}
+                                            />
+                                        </div>
+                                    )}
+                                    <div style={{ flex: '3', minWidth: '200px' }}>
+                                        <label style={{ fontSize: '11px', color: '#666' }}>Código de Barras:</label>
+                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                            <input
+                                                type="text"
+                                                value={boleto.codigo_barras}
+                                                onChange={(e) => handleBoletoChange(index, 'codigo_barras', e.target.value)}
+                                                placeholder="Cole a linha digitável"
+                                                style={{ flex: '1', padding: '5px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
+                                            />
+                                            {boleto.codigo_barras && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => copiarCodigo(boleto.codigo_barras)}
+                                                    style={{
+                                                        padding: '5px 10px',
+                                                        background: '#4CAF50',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    title="Copiar código"
+                                                >
+                                                    📋
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
                 
                 {/* CAMPOS ORIGINAIS CONTINUAM */}
                 {tipoFormaPagamento === 'avista' && (
@@ -3110,10 +3270,51 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                     </div>
                 )}
                 
-                <div className="form-group">
-                    <label>Chave PIX / Forma de Pagamento (Opcional)</label>
-                    <input type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
-                </div>
+                {/* Campo de PIX - só aparece se meio for PIX */}
+                {meioPagamento === 'PIX' && (
+                    <div className="form-group">
+                        <label>Chave PIX (Opcional)</label>
+                        <input 
+                            type="text" 
+                            value={pix} 
+                            onChange={(e) => setPix(e.target.value)} 
+                            placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
+                        />
+                    </div>
+                )}
+
+                {/* Campo de Código de Barras - só aparece se meio for Boleto e À vista */}
+                {meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' && (
+                    <div className="form-group">
+                        <label>Código de Barras do Boleto</label>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <input 
+                                type="text" 
+                                value={codigoBarras} 
+                                onChange={(e) => setCodigoBarras(e.target.value)} 
+                                placeholder="Cole a linha digitável do boleto"
+                                style={{ flex: 1 }}
+                            />
+                            {codigoBarras && (
+                                <button
+                                    type="button"
+                                    onClick={() => copiarCodigo(codigoBarras)}
+                                    style={{
+                                        padding: '8px 15px',
+                                        background: '#4CAF50',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                    title="Copiar código"
+                                >
+                                    📋 Copiar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
                 
                 <div className="form-group">
                     <label>Tipo</label>
