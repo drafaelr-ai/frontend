@@ -6972,6 +6972,8 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const [arquivoBase64, setArquivoBase64] = useState(null);
     const [extraindo, setExtraindo] = useState(false);
     const [salvando, setSalvando] = useState(false);
+    const [multiplosboletos, setMultiplosBoletos] = useState(null); // Lista de boletos encontrados
+    const [salvandoTodos, setSalvandoTodos] = useState(false);
     
     // Converter arquivo para Base64
     const handleFileChange = async (e) => {
@@ -6984,6 +6986,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         }
         
         setArquivo(file);
+        setMultiplosBoletos(null); // Reset
         
         // Converter para Base64
         const reader = new FileReader();
@@ -7017,27 +7020,33 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 console.log('Dados extraídos:', dados);
                 
                 if (dados.sucesso) {
-                    // Atualizar formulário com dados extraídos
-                    const dadosExtraidos = [];
-                    
-                    if (dados.codigo_barras) {
-                        setFormData(prev => ({ ...prev, codigo_barras: dados.codigo_barras }));
-                        dadosExtraidos.push('Código de barras');
+                    // Verificar se há múltiplos boletos
+                    if (dados.multiplos && dados.quantidade > 1) {
+                        setMultiplosBoletos(dados.boletos);
+                        alert(`📄 Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
+                    } else {
+                        // Boleto único - preencher formulário
+                        const dadosExtraidos = [];
+                        
+                        if (dados.codigo_barras) {
+                            setFormData(prev => ({ ...prev, codigo_barras: dados.codigo_barras }));
+                            dadosExtraidos.push('Código de barras');
+                        }
+                        if (dados.valor) {
+                            setFormData(prev => ({ ...prev, valor: dados.valor.toString() }));
+                            dadosExtraidos.push('Valor');
+                        }
+                        if (dados.data_vencimento) {
+                            setFormData(prev => ({ ...prev, data_vencimento: dados.data_vencimento }));
+                            dadosExtraidos.push('Data de vencimento');
+                        }
+                        if (dados.beneficiario) {
+                            setFormData(prev => ({ ...prev, beneficiario: dados.beneficiario }));
+                            dadosExtraidos.push('Beneficiário');
+                        }
+                        
+                        alert(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
                     }
-                    if (dados.valor) {
-                        setFormData(prev => ({ ...prev, valor: dados.valor.toString() }));
-                        dadosExtraidos.push('Valor');
-                    }
-                    if (dados.data_vencimento) {
-                        setFormData(prev => ({ ...prev, data_vencimento: dados.data_vencimento }));
-                        dadosExtraidos.push('Data de vencimento');
-                    }
-                    if (dados.beneficiario) {
-                        setFormData(prev => ({ ...prev, beneficiario: dados.beneficiario }));
-                        dadosExtraidos.push('Beneficiário');
-                    }
-                    
-                    alert(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
                 } else {
                     alert('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
                 }
@@ -7052,6 +7061,76 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         } finally {
             setExtraindo(false);
         }
+    };
+    
+    // Cadastrar TODOS os boletos de uma vez
+    const cadastrarTodosBoletos = async () => {
+        if (!multiplosboletos || multiplosboletos.length === 0) return;
+        
+        const descricaoBase = prompt('Digite uma descrição base para os boletos:', 'Boleto');
+        if (!descricaoBase) return;
+        
+        try {
+            setSalvandoTodos(true);
+            const token = localStorage.getItem('token');
+            let sucessos = 0;
+            let erros = 0;
+            
+            for (let i = 0; i < multiplosboletos.length; i++) {
+                const boleto = multiplosboletos[i];
+                
+                const payload = {
+                    descricao: `${descricaoBase} - Parcela ${i + 1}/${multiplosboletos.length}`,
+                    beneficiario: boleto.beneficiario || '',
+                    codigo_barras: boleto.codigo_barras || '',
+                    valor: boleto.valor || 0,
+                    data_vencimento: boleto.data_vencimento,
+                    arquivo_nome: arquivo?.name,
+                    arquivo_base64: arquivoBase64
+                };
+                
+                try {
+                    const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        sucessos++;
+                    } else {
+                        erros++;
+                    }
+                } catch {
+                    erros++;
+                }
+            }
+            
+            alert(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
+            onSuccess();
+            onClose();
+            
+        } catch (error) {
+            console.error('Erro ao cadastrar boletos:', error);
+            alert('Erro ao cadastrar boletos');
+        } finally {
+            setSalvandoTodos(false);
+        }
+    };
+    
+    // Selecionar um boleto específico da lista
+    const selecionarBoleto = (boleto) => {
+        setFormData({
+            descricao: '',
+            beneficiario: boleto.beneficiario || '',
+            valor: boleto.valor ? boleto.valor.toString() : '',
+            data_vencimento: boleto.data_vencimento || '',
+            codigo_barras: boleto.codigo_barras || ''
+        });
+        setMultiplosBoletos(null); // Sair do modo múltiplos
     };
     
     // Salvar boleto
@@ -7140,7 +7219,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 </div>
                 
                 {/* Confirmação de PDF carregado - sem preview para evitar impressão */}
-                {arquivoBase64 && (
+                {arquivoBase64 && !multiplosboletos && (
                     <div style={{ 
                         marginBottom: '20px', 
                         padding: '15px',
@@ -7160,6 +7239,108 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     </div>
                 )}
                 
+                {/* MÚLTIPLOS BOLETOS ENCONTRADOS */}
+                {multiplosboletos && multiplosboletos.length > 1 && (
+                    <div style={{
+                        marginBottom: '20px',
+                        padding: '15px',
+                        background: '#fff3e0',
+                        borderRadius: '8px',
+                        border: '1px solid #ffb74d'
+                    }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            marginBottom: '15px'
+                        }}>
+                            <h3 style={{ margin: 0, color: '#e65100' }}>
+                                📄 {multiplosboletos.length} Boletos Encontrados
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={cadastrarTodosBoletos}
+                                disabled={salvandoTodos}
+                                style={{
+                                    padding: '8px 16px',
+                                    background: salvandoTodos ? '#ccc' : '#4caf50',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: salvandoTodos ? 'default' : 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar Todos (${multiplosboletos.length})`}
+                            </button>
+                        </div>
+                        
+                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>
+                            Clique em um boleto para cadastrá-lo individualmente, ou use o botão acima para cadastrar todos:
+                        </p>
+                        
+                        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                            {multiplosboletos.map((boleto, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => selecionarBoleto(boleto)}
+                                    style={{
+                                        padding: '10px',
+                                        marginBottom: '8px',
+                                        background: 'white',
+                                        borderRadius: '5px',
+                                        border: '1px solid #ddd',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.background = '#e3f2fd'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                >
+                                    <div>
+                                        <strong style={{ color: '#1976d2' }}>
+                                            Parcela {index + 1}
+                                        </strong>
+                                        <br />
+                                        <span style={{ fontSize: '12px', color: '#666' }}>
+                                            Venc: {boleto.data_vencimento ? new Date(boleto.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
+                                        </span>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <strong style={{ color: '#2e7d32', fontSize: '16px' }}>
+                                            R$ {boleto.valor ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
+                                        </strong>
+                                        <br />
+                                        <span style={{ fontSize: '11px', color: '#999' }}>
+                                            Clique para selecionar
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div style={{ 
+                            marginTop: '10px', 
+                            padding: '10px', 
+                            background: '#e8f5e9', 
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            color: '#2e7d32'
+                        }}>
+                            💡 <strong>Total:</strong> R$ {multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {multiplosboletos[0]?.beneficiario && (
+                                <span> | <strong>Beneficiário:</strong> {multiplosboletos[0].beneficiario}</span>
+                            )}
+                        </div>
+                    </div>
+                )}
+                
+                {/* Formulário normal (quando não há múltiplos boletos) */}
+                {!multiplosboletos && (
+                    <>
                 <div className="form-group">
                     <label>Descrição *</label>
                     <input
@@ -7241,6 +7422,8 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         {salvando ? '⏳ Salvando...' : '💾 Salvar Boleto'}
                     </button>
                 </div>
+                    </>
+                )}
             </form>
         </Modal>
     );
