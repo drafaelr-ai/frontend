@@ -6583,6 +6583,18 @@ const GestaoBoletos = ({ obraId, obraNome }) => {
                                 Beneficiário: {boleto.beneficiario}
                             </span>
                         )}
+                        {boleto.servico_nome && (
+                            <div style={{ 
+                                fontSize: '0.8em', 
+                                color: '#1976d2', 
+                                marginTop: '3px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}>
+                                🔗 Vinculado: <strong>{boleto.servico_nome}</strong>
+                            </div>
+                        )}
                     </div>
                     <span style={{
                         background: cor.badge,
@@ -6966,7 +6978,8 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         beneficiario: '',
         valor: '',
         data_vencimento: getTodayString(),
-        codigo_barras: ''
+        codigo_barras: '',
+        vinculado_servico_id: ''  // Serviço vinculado
     });
     const [arquivo, setArquivo] = useState(null);
     const [arquivoBase64, setArquivoBase64] = useState(null);
@@ -6974,6 +6987,26 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const [salvando, setSalvando] = useState(false);
     const [multiplosboletos, setMultiplosBoletos] = useState(null); // Lista de boletos encontrados
     const [salvandoTodos, setSalvandoTodos] = useState(false);
+    const [servicos, setServicos] = useState([]);  // Lista de serviços da obra
+    
+    // Carregar serviços da obra
+    useEffect(() => {
+        const fetchServicos = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/obras/${obraId}/servicos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setServicos(data || []);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+            }
+        };
+        fetchServicos();
+    }, [obraId]);
     
     // Converter arquivo para Base64
     const handleFileChange = async (e) => {
@@ -7085,6 +7118,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     codigo_barras: boleto.codigo_barras || '',
                     valor: boleto.valor || 0,
                     data_vencimento: boleto.data_vencimento,
+                    vinculado_servico_id: formData.vinculado_servico_id ? parseInt(formData.vinculado_servico_id) : null,  // Usar serviço selecionado
                     arquivo_nome: arquivo?.name,
                     arquivo_base64: arquivoBase64
                 };
@@ -7155,6 +7189,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 body: JSON.stringify({
                     ...formData,
                     valor: parseFloat(formData.valor),
+                    vinculado_servico_id: formData.vinculado_servico_id ? parseInt(formData.vinculado_servico_id) : null,
                     arquivo_nome: arquivo?.name || null,
                     arquivo_base64: arquivoBase64
                 })
@@ -7257,27 +7292,56 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             <h3 style={{ margin: 0, color: '#e65100' }}>
                                 📄 {multiplosboletos.length} Boletos Encontrados
                             </h3>
+                        </div>
+                        
+                        {/* Dropdown de Serviço para múltiplos boletos */}
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ fontWeight: 'bold', fontSize: '13px', color: '#333' }}>
+                                Vincular todos a um Serviço:
+                            </label>
+                            <select
+                                value={formData.vinculado_servico_id}
+                                onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '8px', 
+                                    marginTop: '5px',
+                                    borderRadius: '5px', 
+                                    border: '1px solid #ddd' 
+                                }}
+                            >
+                                <option value="">-- Nenhum (Despesa Extra) --</option>
+                                {servicos.map(servico => (
+                                    <option key={servico.id} value={servico.id}>
+                                        {servico.nome}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div style={{ marginBottom: '10px' }}>
                             <button
                                 type="button"
                                 onClick={cadastrarTodosBoletos}
                                 disabled={salvandoTodos}
                                 style={{
-                                    padding: '8px 16px',
+                                    padding: '10px 20px',
                                     background: salvandoTodos ? '#ccc' : '#4caf50',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '5px',
                                     cursor: salvandoTodos ? 'default' : 'pointer',
                                     fontSize: '14px',
-                                    fontWeight: 'bold'
+                                    fontWeight: 'bold',
+                                    width: '100%'
                                 }}
                             >
-                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar Todos (${multiplosboletos.length})`}
+                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar Todos os ${multiplosboletos.length} Boletos`}
                             </button>
                         </div>
                         
                         <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>
-                            Clique em um boleto para cadastrá-lo individualmente, ou use o botão acima para cadastrar todos:
+                            Ou clique em um boleto específico para cadastrá-lo individualmente:
                         </p>
                         
                         <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
@@ -7412,6 +7476,26 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             </button>
                         )}
                     </div>
+                </div>
+                
+                {/* Vincular a Serviço */}
+                <div className="form-group">
+                    <label>Vincular a Serviço (Opcional)</label>
+                    <select
+                        value={formData.vinculado_servico_id}
+                        onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
+                        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
+                    >
+                        <option value="">-- Nenhum (Despesa Extra) --</option>
+                        {servicos.map(servico => (
+                            <option key={servico.id} value={servico.id}>
+                                {servico.nome}
+                            </option>
+                        ))}
+                    </select>
+                    <small style={{ color: '#666', fontSize: '11px' }}>
+                        💡 Boletos vinculados a serviços são somados ao orçamento. Boletos sem serviço vão para "Despesas Extras".
+                    </small>
                 </div>
                 
                 <div className="form-actions" style={{ marginTop: '20px' }}>
