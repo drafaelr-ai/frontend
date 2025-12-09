@@ -198,6 +198,7 @@ const NotificacoesDropdown = ({ user }) => {
             case 'pagamento_inserido': return '💰';
             case 'orcamento_aprovado': return '✅';
             case 'orcamento_pendente': return '📋';
+            case 'orcamento_rejeitado': return '❌';
             default: return '🔔';
         }
     };
@@ -6206,7 +6207,8 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         numero_parcelas: '1',
         periodicidade: 'Mensal',
         data_primeira_parcela: getTodayString(),
-        observacoes: ''
+        observacoes: '',
+        pix: ''
     });
     
     const [servicos, setServicos] = useState([]);
@@ -6362,6 +6364,16 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                         value={formData.observacoes}
                         onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
                         rows="3"
+                    />
+                </label>
+
+                <label>
+                    Chave PIX:
+                    <input
+                        type="text"
+                        value={formData.pix}
+                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
+                        placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
                     />
                 </label>
 
