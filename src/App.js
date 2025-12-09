@@ -6890,14 +6890,55 @@ const GestaoBoletos = ({ obraId, obraNome }) => {
             {modalPreview && (
                 <Modal onClose={() => setModalPreview(null)}>
                     <h2>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
-                    <div style={{ height: '70vh', marginTop: '15px' }}>
-                        <iframe
-                            src={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
-                            style={{ width: '100%', height: '100%', border: 'none' }}
-                            title="Preview do Boleto"
-                        />
+                    <div style={{ height: '70vh', marginTop: '15px', position: 'relative' }}>
+                        {/* Usar object em vez de iframe para evitar disparo de impressão */}
+                        <object
+                            data={`data:application/pdf;base64,${modalPreview.arquivo_base64}#toolbar=1&navpanes=0&scrollbar=1`}
+                            type="application/pdf"
+                            style={{ width: '100%', height: '100%', border: '1px solid #ddd', borderRadius: '5px' }}
+                        >
+                            <div style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                height: '100%',
+                                background: '#f5f5f5',
+                                borderRadius: '5px'
+                            }}>
+                                <p>Seu navegador não suporta visualização de PDF.</p>
+                                <a 
+                                    href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                                    download={modalPreview.arquivo_nome || 'boleto.pdf'}
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: '#1976d2',
+                                        color: 'white',
+                                        textDecoration: 'none',
+                                        borderRadius: '5px',
+                                        marginTop: '10px'
+                                    }}
+                                >
+                                    📥 Baixar PDF
+                                </a>
+                            </div>
+                        </object>
                     </div>
-                    <div style={{ marginTop: '15px', textAlign: 'right' }}>
+                    <div style={{ marginTop: '15px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <a 
+                            href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                            download={modalPreview.arquivo_nome || 'boleto.pdf'}
+                            style={{
+                                padding: '10px 20px',
+                                background: '#4caf50',
+                                color: 'white',
+                                textDecoration: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            📥 Baixar PDF
+                        </a>
                         <button
                             onClick={() => setModalPreview(null)}
                             style={{
@@ -6973,23 +7014,41 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             
             if (response.ok) {
                 const dados = await response.json();
+                console.log('Dados extraídos:', dados);
                 
                 if (dados.sucesso) {
-                    setFormData(prev => ({
-                        ...prev,
-                        codigo_barras: dados.codigo_barras || prev.codigo_barras,
-                        valor: dados.valor ? dados.valor.toString() : prev.valor,
-                        data_vencimento: dados.data_vencimento || prev.data_vencimento,
-                        beneficiario: dados.beneficiario || prev.beneficiario
-                    }));
+                    // Atualizar formulário com dados extraídos
+                    const dadosExtraidos = [];
                     
-                    alert('✅ Dados extraídos do PDF! Confira e complete as informações.');
+                    if (dados.codigo_barras) {
+                        setFormData(prev => ({ ...prev, codigo_barras: dados.codigo_barras }));
+                        dadosExtraidos.push('Código de barras');
+                    }
+                    if (dados.valor) {
+                        setFormData(prev => ({ ...prev, valor: dados.valor.toString() }));
+                        dadosExtraidos.push('Valor');
+                    }
+                    if (dados.data_vencimento) {
+                        setFormData(prev => ({ ...prev, data_vencimento: dados.data_vencimento }));
+                        dadosExtraidos.push('Data de vencimento');
+                    }
+                    if (dados.beneficiario) {
+                        setFormData(prev => ({ ...prev, beneficiario: dados.beneficiario }));
+                        dadosExtraidos.push('Beneficiário');
+                    }
+                    
+                    alert(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
                 } else {
-                    alert('⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.');
+                    alert('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
                 }
+            } else {
+                const erro = await response.json();
+                console.error('Erro na API:', erro);
+                alert('⚠️ Erro ao processar PDF. Preencha manualmente.');
             }
         } catch (error) {
             console.error('Erro ao extrair dados:', error);
+            alert('⚠️ Erro de conexão. Preencha manualmente.');
         } finally {
             setExtraindo(false);
         }
@@ -7080,14 +7139,24 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     </label>
                 </div>
                 
-                {/* Preview do PDF */}
+                {/* Confirmação de PDF carregado - sem preview para evitar impressão */}
                 {arquivoBase64 && (
-                    <div style={{ marginBottom: '20px', height: '200px' }}>
-                        <iframe
-                            src={`data:application/pdf;base64,${arquivoBase64}`}
-                            style={{ width: '100%', height: '100%', border: '1px solid #ddd', borderRadius: '5px' }}
-                            title="Preview"
-                        />
+                    <div style={{ 
+                        marginBottom: '20px', 
+                        padding: '15px',
+                        background: '#e3f2fd',
+                        borderRadius: '8px',
+                        border: '1px solid #90caf9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                    }}>
+                        <span style={{ fontSize: '24px' }}>✅</span>
+                        <div>
+                            <strong style={{ color: '#1976d2' }}>PDF carregado com sucesso!</strong>
+                            <br />
+                            <span style={{ fontSize: '12px', color: '#666' }}>{arquivo?.name}</span>
+                        </div>
                     </div>
                 )}
                 
