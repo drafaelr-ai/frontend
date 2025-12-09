@@ -6140,6 +6140,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <GestaoBoletos
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
+                            onUpdate={() => fetchObraData(obraSelecionada.id)}
                         />
                     )}
 
@@ -6407,7 +6408,7 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
 
 
 // ===== COMPONENTE: GESTÃO DE BOLETOS =====
-const GestaoBoletos = ({ obraId, obraNome }) => {
+const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     const [boletos, setBoletos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroStatus, setFiltroStatus] = useState('todos'); // todos, Pendente, Pago, Vencido
@@ -6493,7 +6494,8 @@ const GestaoBoletos = ({ obraId, obraNome }) => {
             if (response.ok) {
                 fetchBoletos();
                 fetchResumo();
-                alert('Boleto marcado como pago!');
+                if (onUpdate) onUpdate(); // Atualizar tela principal
+                alert('✅ Boleto marcado como pago!');
             }
         } catch (error) {
             console.error('Erro ao marcar como pago:', error);
@@ -6894,6 +6896,7 @@ const GestaoBoletos = ({ obraId, obraNome }) => {
                         setModalCadastro(false);
                         fetchBoletos();
                         fetchResumo();
+                        if (onUpdate) onUpdate(); // Atualizar tela principal
                     }}
                 />
             )}
@@ -7098,13 +7101,16 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     
     // Cadastrar TODOS os boletos de uma vez
     const cadastrarTodosBoletos = async () => {
+        // Proteção contra duplo clique
+        if (salvandoTodos) return;
         if (!multiplosboletos || multiplosboletos.length === 0) return;
         
         const descricaoBase = prompt('Digite uma descrição base para os boletos:', 'Boleto');
         if (!descricaoBase) return;
         
+        setSalvandoTodos(true); // Mover para antes do try para garantir
+        
         try {
-            setSalvandoTodos(true);
             const token = localStorage.getItem('token');
             let sucessos = 0;
             let erros = 0;
@@ -7135,6 +7141,9 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     
                     if (response.ok) {
                         sucessos++;
+                    } else if (response.status === 409) {
+                        // Boleto duplicado - ignorar silenciosamente
+                        console.log(`Boleto ${i + 1} já existe, ignorando...`);
                     } else {
                         erros++;
                     }
@@ -7144,6 +7153,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             }
             
             alert(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
+            setMultiplosBoletos(null); // Limpar lista para evitar duplicação
             onSave();
             onClose();
             
@@ -9389,6 +9399,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Deletar Pagamento Futuro
     const handleDeletePagamentoFuturo = async (id) => {
+        const idStr = String(id);
+        
+        // Se for um pagamento de serviço (id começa com "servico-"), não pode deletar daqui
+        if (idStr.startsWith('servico-')) {
+            alert('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
+            return;
+        }
+        
         if (!window.confirm('Deseja realmente excluir este pagamento futuro?')) return;
 
         try {
@@ -9888,7 +9906,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             </span>
                                         </td>
                                         <td data-label="Ações" style={{textAlign: 'center'}}>
-                                            {pag.status === 'Previsto' && (
+                                            {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -9909,6 +9927,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 >
                                                     🗑️
                                                 </button>
+                                            )}
+                                            {String(pag.id).startsWith('servico-') && (
+                                                <span style={{ color: '#999', fontSize: '0.8em' }} title="Gerado automaticamente do serviço">
+                                                    🔗
+                                                </span>
                                             )}
                                         </td>
                                     </tr>
