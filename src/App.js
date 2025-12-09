@@ -419,6 +419,7 @@ const Sidebar = ({
         { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
         { id: 'cronograma-obra', icon: '📅', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
         { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
+        { id: 'boletos', icon: '📄', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
         { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
         { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
@@ -6134,6 +6135,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
+                    {/* === PÁGINA: GESTÃO DE BOLETOS === */}
+                    {currentPage === 'boletos' && (
+                        <GestaoBoletos
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                        />
+                    )}
+
                     {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
                     {currentPage === 'usuarios' && (
                         <AdminPanelModal 
@@ -6390,6 +6399,778 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
                 <div className="modal-footer">
                     <button type="submit" className="submit-btn">Salvar</button>
                     <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
+                </div>
+            </form>
+        </Modal>
+    );
+};
+
+
+// ===== COMPONENTE: GESTÃO DE BOLETOS =====
+const GestaoBoletos = ({ obraId, obraNome }) => {
+    const [boletos, setBoletos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filtroStatus, setFiltroStatus] = useState('todos'); // todos, Pendente, Pago, Vencido
+    const [modalCadastro, setModalCadastro] = useState(false);
+    const [modalPreview, setModalPreview] = useState(null);
+    const [resumo, setResumo] = useState(null);
+    
+    // Buscar boletos
+    const fetchBoletos = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const url = filtroStatus === 'todos' 
+                ? `${API_URL}/obras/${obraId}/boletos`
+                : `${API_URL}/obras/${obraId}/boletos?status=${filtroStatus}`;
+            
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setBoletos(data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar boletos:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Buscar resumo
+    const fetchResumo = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/resumo`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setResumo(data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar resumo:', error);
+        }
+    };
+    
+    // Verificar alertas
+    const verificarAlertas = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${API_URL}/boletos/verificar-alertas`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error('Erro ao verificar alertas:', error);
+        }
+    };
+    
+    useEffect(() => {
+        fetchBoletos();
+        fetchResumo();
+        verificarAlertas();
+    }, [obraId, filtroStatus]);
+    
+    // Marcar como pago
+    const marcarPago = async (boletoId) => {
+        if (!window.confirm('Confirma que este boleto foi pago?')) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}/pagar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
+            });
+            
+            if (response.ok) {
+                fetchBoletos();
+                fetchResumo();
+                alert('Boleto marcado como pago!');
+            }
+        } catch (error) {
+            console.error('Erro ao marcar como pago:', error);
+            alert('Erro ao marcar como pago');
+        }
+    };
+    
+    // Deletar boleto
+    const deletarBoleto = async (boletoId) => {
+        if (!window.confirm('Tem certeza que deseja excluir este boleto?')) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                fetchBoletos();
+                fetchResumo();
+            }
+        } catch (error) {
+            console.error('Erro ao deletar:', error);
+            alert('Erro ao excluir boleto');
+        }
+    };
+    
+    // Copiar código de barras
+    const copiarCodigo = (codigo) => {
+        navigator.clipboard.writeText(codigo);
+        alert('Código de barras copiado!');
+    };
+    
+    // Ver preview do PDF
+    const verPreview = async (boletoId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}/arquivo`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setModalPreview(data);
+            } else {
+                alert('Boleto não possui arquivo anexado');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar arquivo:', error);
+        }
+    };
+    
+    // Agrupar boletos por urgência
+    const boletosVencidos = boletos.filter(b => b.status === 'Vencido' || (b.status === 'Pendente' && b.dias_para_vencer < 0));
+    const boletosUrgentes = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer >= 0 && b.dias_para_vencer <= 3);
+    const boletosProximos = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer > 3 && b.dias_para_vencer <= 7);
+    const boletosNormais = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer > 7);
+    const boletosPagos = boletos.filter(b => b.status === 'Pago');
+    
+    // Renderizar card de boleto
+    const renderBoletoCard = (boleto, urgencia = 'normal') => {
+        const cores = {
+            vencido: { bg: '#ffebee', border: '#ef5350', badge: '#d32f2f' },
+            urgente: { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
+            proximo: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
+            normal: { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
+            pago: { bg: '#e8f5e9', border: '#4caf50', badge: '#388e3c' }
+        };
+        const cor = cores[urgencia];
+        
+        return (
+            <div key={boleto.id} style={{
+                background: cor.bg,
+                border: `2px solid ${cor.border}`,
+                borderRadius: '10px',
+                padding: '15px',
+                marginBottom: '10px'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                    <div>
+                        <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
+                            🏢 {boleto.descricao}
+                        </h4>
+                        {boleto.beneficiario && (
+                            <span style={{ fontSize: '0.85em', color: '#666' }}>
+                                Beneficiário: {boleto.beneficiario}
+                            </span>
+                        )}
+                    </div>
+                    <span style={{
+                        background: cor.badge,
+                        color: 'white',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '0.8em',
+                        fontWeight: 'bold'
+                    }}>
+                        {boleto.status === 'Pago' ? '✅ Pago' : 
+                         boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
+                         boleto.dias_para_vencer === 0 ? '🚨 Vence HOJE' :
+                         `${boleto.dias_para_vencer}d para vencer`}
+                    </span>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <div>
+                        <span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span>
+                        <div style={{ fontWeight: 'bold' }}>
+                            {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        </div>
+                    </div>
+                    <div>
+                        <span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span>
+                        <div style={{ fontWeight: 'bold', color: '#1976d2', fontSize: '1.1em' }}>
+                            {formatCurrency(boleto.valor)}
+                        </div>
+                    </div>
+                    {boleto.data_pagamento && (
+                        <div>
+                            <span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span>
+                            <div style={{ fontWeight: 'bold', color: '#388e3c' }}>
+                                {new Date(boleto.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                
+                {boleto.codigo_barras && (
+                    <div style={{
+                        background: 'white',
+                        padding: '10px',
+                        borderRadius: '5px',
+                        marginBottom: '10px',
+                        fontFamily: 'monospace',
+                        fontSize: '0.9em',
+                        wordBreak: 'break-all'
+                    }}>
+                        <span style={{ fontSize: '0.8em', color: '#666', display: 'block', marginBottom: '5px' }}>
+                            Código de Barras:
+                        </span>
+                        {boleto.codigo_barras}
+                    </div>
+                )}
+                
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {boleto.codigo_barras && (
+                        <button
+                            onClick={() => copiarCodigo(boleto.codigo_barras)}
+                            style={{
+                                padding: '8px 15px',
+                                background: '#4caf50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontSize: '0.85em'
+                            }}
+                        >
+                            📋 Copiar Código
+                        </button>
+                    )}
+                    
+                    {boleto.tem_pdf && (
+                        <button
+                            onClick={() => verPreview(boleto.id)}
+                            style={{
+                                padding: '8px 15px',
+                                background: '#2196f3',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontSize: '0.85em'
+                            }}
+                        >
+                            👁️ Ver PDF
+                        </button>
+                    )}
+                    
+                    {boleto.status !== 'Pago' && (
+                        <button
+                            onClick={() => marcarPago(boleto.id)}
+                            style={{
+                                padding: '8px 15px',
+                                background: '#ff9800',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontSize: '0.85em'
+                            }}
+                        >
+                            ✅ Marcar Pago
+                        </button>
+                    )}
+                    
+                    <button
+                        onClick={() => deletarBoleto(boleto.id)}
+                        style={{
+                            padding: '8px 15px',
+                            background: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontSize: '0.85em'
+                        }}
+                    >
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        );
+    };
+    
+    return (
+        <div className="gestao-boletos">
+            {/* Header */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                flexWrap: 'wrap',
+                gap: '10px'
+            }}>
+                <h2 style={{ margin: 0 }}>📄 Gestão de Boletos</h2>
+                <button
+                    onClick={() => setModalCadastro(true)}
+                    style={{
+                        padding: '10px 20px',
+                        background: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    + Novo Boleto
+                </button>
+            </div>
+            
+            {/* Resumo */}
+            {resumo && (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '15px',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ background: '#ffebee', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.85em', color: '#c62828' }}>Vencidos</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#d32f2f' }}>
+                            {formatCurrency(resumo.total_vencido)}
+                        </div>
+                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_vencido} boletos</div>
+                    </div>
+                    
+                    <div style={{ background: '#fff3e0', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.85em', color: '#e65100' }}>Pendentes</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#f57c00' }}>
+                            {formatCurrency(resumo.total_pendente)}
+                        </div>
+                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_pendente} boletos</div>
+                    </div>
+                    
+                    <div style={{ background: '#e8f5e9', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.85em', color: '#2e7d32' }}>Pagos</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#388e3c' }}>
+                            {formatCurrency(resumo.total_pago)}
+                        </div>
+                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_pago} boletos</div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Filtros */}
+            <div style={{ marginBottom: '20px' }}>
+                <select
+                    value={filtroStatus}
+                    onChange={(e) => setFiltroStatus(e.target.value)}
+                    style={{
+                        padding: '10px 15px',
+                        borderRadius: '8px',
+                        border: '1px solid #ccc',
+                        fontSize: '1em'
+                    }}
+                >
+                    <option value="todos">Todos os boletos</option>
+                    <option value="Pendente">Pendentes</option>
+                    <option value="Vencido">Vencidos</option>
+                    <option value="Pago">Pagos</option>
+                </select>
+            </div>
+            
+            {/* Lista de Boletos */}
+            {loading ? (
+                <p>Carregando boletos...</p>
+            ) : boletos.length === 0 ? (
+                <div style={{
+                    textAlign: 'center',
+                    padding: '40px',
+                    background: '#f5f5f5',
+                    borderRadius: '10px'
+                }}>
+                    <p style={{ fontSize: '1.1em', color: '#666' }}>
+                        Nenhum boleto cadastrado
+                    </p>
+                    <button
+                        onClick={() => setModalCadastro(true)}
+                        style={{
+                            padding: '10px 20px',
+                            background: '#1976d2',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            marginTop: '10px'
+                        }}
+                    >
+                        + Cadastrar primeiro boleto
+                    </button>
+                </div>
+            ) : (
+                <>
+                    {/* Vencidos */}
+                    {boletosVencidos.length > 0 && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ color: '#d32f2f', marginBottom: '10px' }}>
+                                ❌ VENCIDOS ({boletosVencidos.length})
+                            </h3>
+                            {boletosVencidos.map(b => renderBoletoCard(b, 'vencido'))}
+                        </div>
+                    )}
+                    
+                    {/* Urgentes (≤3 dias) */}
+                    {boletosUrgentes.length > 0 && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ color: '#f57c00', marginBottom: '10px' }}>
+                                🚨 URGENTE - Vence em até 3 dias ({boletosUrgentes.length})
+                            </h3>
+                            {boletosUrgentes.map(b => renderBoletoCard(b, 'urgente'))}
+                        </div>
+                    )}
+                    
+                    {/* Próximos (4-7 dias) */}
+                    {boletosProximos.length > 0 && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ color: '#ffa000', marginBottom: '10px' }}>
+                                ⚠️ Vence em até 7 dias ({boletosProximos.length})
+                            </h3>
+                            {boletosProximos.map(b => renderBoletoCard(b, 'proximo'))}
+                        </div>
+                    )}
+                    
+                    {/* Normais (>7 dias) */}
+                    {boletosNormais.length > 0 && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ color: '#666', marginBottom: '10px' }}>
+                                📄 Próximos vencimentos ({boletosNormais.length})
+                            </h3>
+                            {boletosNormais.map(b => renderBoletoCard(b, 'normal'))}
+                        </div>
+                    )}
+                    
+                    {/* Pagos */}
+                    {boletosPagos.length > 0 && filtroStatus === 'todos' && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ color: '#388e3c', marginBottom: '10px' }}>
+                                ✅ Pagos ({boletosPagos.length})
+                            </h3>
+                            {boletosPagos.map(b => renderBoletoCard(b, 'pago'))}
+                        </div>
+                    )}
+                </>
+            )}
+            
+            {/* Modal de Cadastro */}
+            {modalCadastro && (
+                <CadastrarBoletoModal
+                    obraId={obraId}
+                    onClose={() => setModalCadastro(false)}
+                    onSave={() => {
+                        setModalCadastro(false);
+                        fetchBoletos();
+                        fetchResumo();
+                    }}
+                />
+            )}
+            
+            {/* Modal de Preview do PDF */}
+            {modalPreview && (
+                <Modal onClose={() => setModalPreview(null)}>
+                    <h2>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
+                    <div style={{ height: '70vh', marginTop: '15px' }}>
+                        <iframe
+                            src={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                            style={{ width: '100%', height: '100%', border: 'none' }}
+                            title="Preview do Boleto"
+                        />
+                    </div>
+                    <div style={{ marginTop: '15px', textAlign: 'right' }}>
+                        <button
+                            onClick={() => setModalPreview(null)}
+                            style={{
+                                padding: '10px 20px',
+                                background: '#666',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </Modal>
+            )}
+        </div>
+    );
+};
+
+// Modal para Cadastrar Boleto com Upload de PDF
+const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        descricao: '',
+        beneficiario: '',
+        valor: '',
+        data_vencimento: getTodayString(),
+        codigo_barras: ''
+    });
+    const [arquivo, setArquivo] = useState(null);
+    const [arquivoBase64, setArquivoBase64] = useState(null);
+    const [extraindo, setExtraindo] = useState(false);
+    const [salvando, setSalvando] = useState(false);
+    
+    // Converter arquivo para Base64
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.type !== 'application/pdf') {
+            alert('Por favor, selecione um arquivo PDF');
+            return;
+        }
+        
+        setArquivo(file);
+        
+        // Converter para Base64
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const base64 = event.target.result.split(',')[1];
+            setArquivoBase64(base64);
+            
+            // Tentar extrair dados do PDF
+            await extrairDadosPDF(base64);
+        };
+        reader.readAsDataURL(file);
+    };
+    
+    // Extrair dados do PDF
+    const extrairDadosPDF = async (base64) => {
+        try {
+            setExtraindo(true);
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/extrair-pdf`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ arquivo_base64: base64 })
+            });
+            
+            if (response.ok) {
+                const dados = await response.json();
+                
+                if (dados.sucesso) {
+                    setFormData(prev => ({
+                        ...prev,
+                        codigo_barras: dados.codigo_barras || prev.codigo_barras,
+                        valor: dados.valor ? dados.valor.toString() : prev.valor,
+                        data_vencimento: dados.data_vencimento || prev.data_vencimento,
+                        beneficiario: dados.beneficiario || prev.beneficiario
+                    }));
+                    
+                    alert('✅ Dados extraídos do PDF! Confira e complete as informações.');
+                } else {
+                    alert('⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.');
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao extrair dados:', error);
+        } finally {
+            setExtraindo(false);
+        }
+    };
+    
+    // Salvar boleto
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!formData.descricao || !formData.valor || !formData.data_vencimento) {
+            alert('Preencha os campos obrigatórios');
+            return;
+        }
+        
+        try {
+            setSalvando(true);
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    valor: parseFloat(formData.valor),
+                    arquivo_nome: arquivo?.name || null,
+                    arquivo_base64: arquivoBase64
+                })
+            });
+            
+            if (response.ok) {
+                alert('✅ Boleto cadastrado com sucesso!');
+                onSave();
+            } else {
+                const error = await response.json();
+                alert(`Erro: ${error.erro}`);
+            }
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            alert('Erro ao salvar boleto');
+        } finally {
+            setSalvando(false);
+        }
+    };
+    
+    // Copiar código
+    const copiarCodigo = () => {
+        if (formData.codigo_barras) {
+            navigator.clipboard.writeText(formData.codigo_barras);
+            alert('Código copiado!');
+        }
+    };
+    
+    return (
+        <Modal onClose={onClose}>
+            <h2>📄 Cadastrar Novo Boleto</h2>
+            <p style={{ color: '#666', marginBottom: '15px' }}>
+                Faça upload do PDF do boleto para extração automática dos dados.
+            </p>
+            
+            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                {/* Upload de PDF */}
+                <div style={{
+                    border: '2px dashed #1976d2',
+                    borderRadius: '10px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    marginBottom: '20px',
+                    background: arquivo ? '#e3f2fd' : '#f5f5f5'
+                }}>
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        id="pdf-upload"
+                    />
+                    <label htmlFor="pdf-upload" style={{ cursor: 'pointer' }}>
+                        {extraindo ? (
+                            <span>⏳ Extraindo dados do PDF...</span>
+                        ) : arquivo ? (
+                            <span>✅ {arquivo.name}</span>
+                        ) : (
+                            <span>📁 Clique para selecionar o PDF do boleto</span>
+                        )}
+                    </label>
+                </div>
+                
+                {/* Preview do PDF */}
+                {arquivoBase64 && (
+                    <div style={{ marginBottom: '20px', height: '200px' }}>
+                        <iframe
+                            src={`data:application/pdf;base64,${arquivoBase64}`}
+                            style={{ width: '100%', height: '100%', border: '1px solid #ddd', borderRadius: '5px' }}
+                            title="Preview"
+                        />
+                    </div>
+                )}
+                
+                <div className="form-group">
+                    <label>Descrição *</label>
+                    <input
+                        type="text"
+                        value={formData.descricao}
+                        onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                        placeholder="Ex: Conta de Energia - CEMIG"
+                        required
+                    />
+                </div>
+                
+                <div className="form-group">
+                    <label>Beneficiário</label>
+                    <input
+                        type="text"
+                        value={formData.beneficiario}
+                        onChange={(e) => setFormData({ ...formData, beneficiario: e.target.value })}
+                        placeholder="Nome do beneficiário"
+                    />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="form-group">
+                        <label>Valor (R$) *</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={formData.valor}
+                            onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                            required
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Data de Vencimento *</label>
+                        <input
+                            type="date"
+                            value={formData.data_vencimento}
+                            onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
+                            required
+                        />
+                    </div>
+                </div>
+                
+                <div className="form-group">
+                    <label>Código de Barras (Linha Digitável)</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                            type="text"
+                            value={formData.codigo_barras}
+                            onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })}
+                            placeholder="Cole a linha digitável do boleto"
+                            style={{ flex: 1 }}
+                        />
+                        {formData.codigo_barras && (
+                            <button
+                                type="button"
+                                onClick={copiarCodigo}
+                                style={{
+                                    padding: '8px 15px',
+                                    background: '#4caf50',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                📋
+                            </button>
+                        )}
+                    </div>
+                </div>
+                
+                <div className="form-actions" style={{ marginTop: '20px' }}>
+                    <button type="button" onClick={onClose} className="cancel-btn">
+                        Cancelar
+                    </button>
+                    <button type="submit" className="submit-btn" disabled={salvando}>
+                        {salvando ? '⏳ Salvando...' : '💾 Salvar Boleto'}
+                    </button>
                 </div>
             </form>
         </Modal>
