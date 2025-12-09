@@ -199,6 +199,10 @@ const NotificacoesDropdown = ({ user }) => {
             case 'orcamento_aprovado': return '✅';
             case 'orcamento_pendente': return '📋';
             case 'orcamento_rejeitado': return '❌';
+            case 'boleto_vencido': return '🚨';
+            case 'boleto_hoje': return '⚠️';
+            case 'boleto_3dias': return '📄';
+            case 'boleto_7dias': return '📄';
             default: return '🔔';
         }
     };
@@ -352,7 +356,8 @@ const NotificacoesDropdown = ({ user }) => {
                                                 fontWeight: notif.lida ? '400' : '600',
                                                 color: '#1e293b',
                                                 fontSize: '0.9em',
-                                                marginBottom: '3px'
+                                                marginBottom: '2px',
+                                                lineHeight: '1.3'
                                             }}>
                                                 {notif.titulo}
                                             </div>
@@ -360,9 +365,8 @@ const NotificacoesDropdown = ({ user }) => {
                                                 <div style={{ 
                                                     color: '#64748b',
                                                     fontSize: '0.8em',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
+                                                    lineHeight: '1.4',
+                                                    wordBreak: 'break-word'
                                                 }}>
                                                     {notif.mensagem}
                                                 </div>
@@ -370,10 +374,24 @@ const NotificacoesDropdown = ({ user }) => {
                                             <div style={{ 
                                                 color: '#94a3b8',
                                                 fontSize: '0.75em',
-                                                marginTop: '4px'
+                                                marginTop: '4px',
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '4px',
+                                                alignItems: 'center'
                                             }}>
-                                                {formatRelativeTime(notif.created_at)}
-                                                {notif.obra_nome && ` • ${notif.obra_nome}`}
+                                                <span>{formatRelativeTime(notif.created_at)}</span>
+                                                {notif.obra_nome && (
+                                                    <span style={{ 
+                                                        backgroundColor: '#e0f2fe',
+                                                        color: '#0369a1',
+                                                        padding: '1px 6px',
+                                                        borderRadius: '4px',
+                                                        fontWeight: '500'
+                                                    }}>
+                                                        {notif.obra_nome}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <button
