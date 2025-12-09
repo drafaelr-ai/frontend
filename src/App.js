@@ -7144,7 +7144,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             }
             
             alert(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
-            onSuccess();
+            onSave();
             onClose();
             
         } catch (error) {
