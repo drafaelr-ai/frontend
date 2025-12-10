@@ -1465,6 +1465,9 @@ const EtapasServicosCard = ({ servicos, onViewServico, onAddServico, onNavigateT
 // --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
+    const [editandoItem, setEditandoItem] = useState(null);
+    const [servicos, setServicos] = useState([]);
+    const [loadingServicos, setLoadingServicos] = useState(false);
     const ITENS_INICIAIS = 10;
     
     const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
@@ -1473,6 +1476,136 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
     const isMaster = user && user.role === 'master';
+    
+    // Buscar serviços quando abrir modal de edição
+    const fetchServicos = async () => {
+        if (!obraId) return;
+        setLoadingServicos(true);
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`);
+            if (response.ok) {
+                const data = await response.json();
+                setServicos(data);
+            }
+        } catch (err) {
+            console.error('Erro ao buscar serviços:', err);
+        } finally {
+            setLoadingServicos(false);
+        }
+    };
+    
+    // Abrir modal de edição
+    const handleEditarItem = (item) => {
+        setEditandoItem({
+            ...item,
+            servico_id: item.servico_id || ''
+        });
+        fetchServicos();
+    };
+    
+    // Salvar edição (vincular serviço)
+    const handleSalvarEdicao = async () => {
+        if (!editandoItem) return;
+        
+        try {
+            const strId = String(editandoItem.id);
+            let endpoint = '';
+            let numericId = strId;
+            let method = 'PATCH';
+            
+            // Extrair ID numérico
+            if (strId.startsWith('lanc-')) {
+                numericId = strId.replace('lanc-', '');
+                endpoint = `${API_URL}/lancamentos/${numericId}`;
+            } else if (strId.startsWith('serv-pag-')) {
+                numericId = strId.replace('serv-pag-', '');
+                endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+            } else if (editandoItem.tipo_registro === 'lancamento') {
+                endpoint = `${API_URL}/lancamentos/${numericId}`;
+            } else if (editandoItem.tipo_registro === 'pagamento_servico') {
+                endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+            } else if (editandoItem.tipo_registro === 'boleto') {
+                const boletoId = editandoItem.boleto_id || strId.replace('boleto-', '');
+                endpoint = `${API_URL}/obras/${obraId}/boletos/${boletoId}`;
+                method = 'PUT';
+            } else {
+                endpoint = `${API_URL}/lancamentos/${numericId}`;
+            }
+            
+            const body = {
+                servico_id: editandoItem.servico_id || null
+            };
+            
+            // Para boletos, usar vinculado_servico_id
+            if (editandoItem.tipo_registro === 'boleto') {
+                body.vinculado_servico_id = editandoItem.servico_id || null;
+                delete body.servico_id;
+            }
+            
+            const response = await fetchWithAuth(endpoint, {
+                method: method,
+                body: JSON.stringify(body)
+            });
+            
+            if (response.ok) {
+                alert('Pagamento atualizado com sucesso!');
+                setEditandoItem(null);
+                if (fetchObraData && obraId) fetchObraData(obraId);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.erro || 'Erro ao atualizar');
+            }
+        } catch (err) {
+            console.error('Erro ao salvar edição:', err);
+            alert(`Erro ao salvar: ${err.message}`);
+        }
+    };
+    
+    // Função para exportar CSV
+    const exportarCSV = () => {
+        if (itemsPagos.length === 0) {
+            alert('Nenhum pagamento para exportar');
+            return;
+        }
+        
+        // Cabeçalho CSV
+        const headers = ['Data', 'Descrição', 'Fornecedor', 'Serviço', 'Valor', 'Status'];
+        
+        // Linhas de dados
+        const rows = itemsPagos.map(item => {
+            const data = item.data_vencimento || item.data || '';
+            const dataFormatada = data ? new Date(data + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+            const valor = (item.valor_pago || item.valor_total || 0).toFixed(2).replace('.', ',');
+            
+            return [
+                dataFormatada,
+                `"${(item.descricao || '').replace(/"/g, '""')}"`,
+                `"${(item.fornecedor || '-').replace(/"/g, '""')}"`,
+                `"${(item.servico_nome || '-').replace(/"/g, '""')}"`,
+                `"R$ ${valor}"`,
+                'Pago'
+            ].join(';');
+        });
+        
+        // Adicionar linha de total
+        const totalFormatado = totalPago.toFixed(2).replace('.', ',');
+        rows.push('');
+        rows.push(`;;;"TOTAL";"R$ ${totalFormatado}";`);
+        
+        // Montar CSV
+        const csvContent = '\uFEFF' + headers.join(';') + '\n' + rows.join('\n');
+        
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `historico_pagamentos_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
     
     // Função para reverter parcela paga (voltar para pendente)
     const handleRevertParcela = async (item) => {
@@ -1592,7 +1725,8 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 marginBottom: '20px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px'
+                gap: '10px',
+                flexWrap: 'wrap'
             }}>
                 💰 Histórico de Pagamentos
                 <span style={{ 
@@ -1604,6 +1738,28 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 }}>
                     {itemsPagos.length} pagos
                 </span>
+                {itemsPagos.length > 0 && (
+                    <button
+                        onClick={exportarCSV}
+                        style={{
+                            marginLeft: 'auto',
+                            padding: '6px 12px',
+                            fontSize: '0.55em',
+                            backgroundColor: '#1976d2',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontWeight: '500'
+                        }}
+                        title="Exportar histórico para CSV"
+                    >
+                        📥 Exportar CSV
+                    </button>
+                )}
             </h2>
             
             {itemsPagos.length === 0 ? (
@@ -1675,7 +1831,22 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             })()}
                                         </td>
                                         {isAdmin && (
-                                            <td style={{textAlign: 'center'}}>
+                                            <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                                {/* Botão de editar (vincular serviço) */}
+                                                <button 
+                                                    onClick={() => handleEditarItem(item)}
+                                                    style={{ 
+                                                        background: 'none', 
+                                                        border: 'none', 
+                                                        cursor: 'pointer', 
+                                                        fontSize: '1.1em', 
+                                                        padding: '3px', 
+                                                        color: '#1976d2' 
+                                                    }}
+                                                    title="Editar / Vincular a serviço"
+                                                >
+                                                    ✏️
+                                                </button>
                                                 {isParcela(item) ? (
                                                     /* Para parcelas: botão de reverter pagamento (admin e master) */
                                                     <button 
@@ -1756,6 +1927,107 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         </div>
                     </div>
                 </>
+            )}
+            
+            {/* Modal de Edição - Vincular Serviço */}
+            {editandoItem && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999
+                }} onClick={() => setEditandoItem(null)}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '25px',
+                        width: '90%',
+                        maxWidth: '450px',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+                    }} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            ✏️ Editar Pagamento
+                        </h3>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descrição:</label>
+                            <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px' }}>
+                                {editandoItem.descricao}
+                            </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Valor:</label>
+                            <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px', color: '#2e7d32' }}>
+                                {formatCurrency(editandoItem.valor_pago || editandoItem.valor_total || 0)}
+                            </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
+                                🔗 Vincular a Serviço:
+                            </label>
+                            {loadingServicos ? (
+                                <div style={{ color: '#666' }}>Carregando serviços...</div>
+                            ) : (
+                                <select
+                                    value={editandoItem.servico_id || ''}
+                                    onChange={(e) => setEditandoItem({...editandoItem, servico_id: e.target.value})}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #ddd',
+                                        fontSize: '1em'
+                                    }}
+                                >
+                                    <option value="">-- Nenhum serviço (Geral) --</option>
+                                    {servicos.map(s => (
+                                        <option key={s.id} value={s.id}>{s.nome}</option>
+                                    ))}
+                                </select>
+                            )}
+                            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                                💡 Vincular a um serviço faz o valor contar no orçamento do serviço
+                            </small>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setEditandoItem(null)}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSalvarEdicao}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: '#1976d2',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                💾 Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
