@@ -2989,12 +2989,16 @@ const AddServicoModal = ({ onClose, onSave }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
+        // Converter valores vazios para 0
+        const moValue = valorMO === '' ? 0 : parseFloat(valorMO) || 0;
+        const matValue = valorMaterial === '' ? 0 : parseFloat(valorMaterial) || 0;
+        
         let servicoData = {
             nome,
             responsavel: responsavel || null,
             pix: pix || null,
-            valor_global_mao_de_obra: valorMO,
-            valor_global_material: valorMaterial, 
+            valor_global_mao_de_obra: moValue,
+            valor_global_material: matValue, 
         };
         
         onSave(servicoData);
@@ -3021,12 +3025,12 @@ const AddServicoModal = ({ onClose, onSave }) => {
 
                 <div className="form-group">
                     <label>Valor Orçado - Mão de Obra (R$)</label>
-                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(parseFloat(e.target.value) || 0)} />
+                    <input type="number" step="0.01" value={valorMO} onChange={(e) => setValorMO(e.target.value)} placeholder="0,00" />
                 </div>
                 
                 <div className="form-group">
                     <label>Valor Orçado - Material (R$)</label>
-                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(parseFloat(e.target.value) || 0)} />
+                    <input type="number" step="0.01" value={valorMaterial} onChange={(e) => setValorMaterial(e.target.value)} placeholder="0,00" />
                 </div>
                 
                 <div className="form-actions">
