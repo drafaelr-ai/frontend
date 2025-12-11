@@ -439,7 +439,7 @@ const Sidebar = ({
         { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
         { id: 'boletos', icon: '📄', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
-        { id: 'orcamentos', icon: '📋', label: 'Orçamentos', shortLabel: 'Orçamentos', adminOnly: true },
+        { id: 'orcamentos', icon: '📋', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
         { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
@@ -3143,7 +3143,6 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
 
 // Modal "Adicionar Orçamento"
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
-    // ... (código inalterado, já usa FormData)
     const [descricao, setDescricao] = useState('');
     const [fornecedor, setFornecedor] = useState('');
     const [valor, setValor] = useState('');
@@ -3151,11 +3150,22 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     const [tipo, setTipo] = useState('Material'); 
     const [servicoId, setServicoId] = useState(''); 
     const [observacoes, setObservacoes] = useState(''); 
-    const [anexos, setAnexos] = useState([]); 
+    const [anexos, setAnexos] = useState([]);
+    
+    // NOVOS CAMPOS - Condições de Pagamento
+    const [dataVencimento, setDataVencimento] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        return d.toISOString().split('T')[0];
+    });
+    const [numeroParcelas, setNumeroParcelas] = useState(1);
+    const [periodicidade, setPeriodicidade] = useState('Mensal');
 
     const handleFileChange = (e) => {
         setAnexos(Array.from(e.target.files));
     };
+
+    const valorParcela = numeroParcelas > 0 && valor ? (parseFloat(valor) / numeroParcelas) : 0;
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -3169,6 +3179,11 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
         formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
         formData.append('observacoes', observacoes || '');
         
+        // NOVOS CAMPOS
+        formData.append('data_vencimento', dataVencimento);
+        formData.append('numero_parcelas', numeroParcelas);
+        formData.append('periodicidade', periodicidade);
+        
         anexos.forEach(file => {
             formData.append('anexos', file);
         });
@@ -3177,33 +3192,99 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Adicionar Orçamento para Aprovação</h2>
+        <Modal onClose={onClose} customWidth="600px">
+            <h2>📋 Nova Solicitação de Compra</h2>
             <form onSubmit={handleSubmit}>
+                {/* Descrição e Fornecedor */}
                 <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento e Areia" required />
+                    <label>Descrição do Item/Serviço *</label>
+                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento CP-II 50kg (100 sacos)" required />
                 </div>
                 <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
+                    <label>Fornecedor</label>
                     <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
                 </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                
+                {/* Tipo e Serviço */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="form-group">
+                        <label>Tipo *</label>
+                        <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                            <option>Material</option>
+                            <option>Mão de Obra</option>
+                            <option>Serviço</option>
+                            <option>Equipamentos</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Vincular ao Serviço</label>
+                        <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                            <option value="">Nenhum (Geral)</option>
+                            {(servicos || []).map(s => (
+                                <option key={s.id} value={s.id}>{s.nome}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX, Conta, etc." />
+                
+                <hr style={{margin: '20px 0'}} />
+                <h4 style={{ marginBottom: '15px', color: '#666' }}>💰 Condições de Pagamento</h4>
+                
+                {/* Valor e Data */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="form-group">
+                        <label>Valor Total (R$) *</label>
+                        <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" required />
+                    </div>
+                    <div className="form-group">
+                        <label>Data 1º Vencimento *</label>
+                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                    </div>
+                </div>
+                
+                {/* Parcelas */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="form-group">
+                        <label>Nº de Parcelas</label>
+                        <input type="number" min="1" max="60" value={numeroParcelas} onChange={(e) => setNumeroParcelas(parseInt(e.target.value) || 1)} />
+                    </div>
+                    {numeroParcelas > 1 && (
+                        <div className="form-group">
+                            <label>Periodicidade</label>
+                            <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)}>
+                                <option value="Semanal">Semanal</option>
+                                <option value="Quinzenal">Quinzenal</option>
+                                <option value="Mensal">Mensal</option>
+                            </select>
+                        </div>
+                    )}
+                </div>
+                
+                {numeroParcelas > 1 && valor && (
+                    <div style={{ 
+                        backgroundColor: '#e8f5e9', 
+                        padding: '10px 15px', 
+                        borderRadius: '6px',
+                        marginBottom: '15px',
+                        fontSize: '0.95em'
+                    }}>
+                        💡 <strong>{numeroParcelas}x</strong> de <strong>{formatCurrency(valorParcela)}</strong> ({periodicidade.toLowerCase()})
+                    </div>
+                )}
+                
+                {/* Dados de Pagamento */}
+                <div className="form-group">
+                    <label>Dados de Pagamento (PIX, Conta, etc.)</label>
+                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX: (71) 99999-9999" />
                 </div>
                 
                 <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="3"></textarea>
+                    <label>Observações</label>
+                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="2" placeholder="Ex: Entrega em 5 dias úteis"></textarea>
                 </div>
                 
                 <div className="form-group">
-                    <label>Anexos (PDF, Imagens)</label>
+                    <label>Anexos (Orçamentos, PDF)</label>
                     <input 
                         type="file" 
                         multiple 
@@ -3212,29 +3293,9 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                     />
                 </div>
                 
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
                 <div className="form-actions">
                     <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Orçamento</button>
+                    <button type="submit" className="submit-btn">📤 Enviar para Aprovação</button>
                 </div>
             </form>
         </Modal>
@@ -3650,7 +3711,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     );
 };
 
-// Modal para Editar Orçamento
+// Modal para Editar Solicitação
 const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
     // ... (código inalterado)
     const [formData, setFormData] = useState({});
@@ -3742,7 +3803,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
 
     return (
         <Modal onClose={onClose}>
-            <h2>Editar Orçamento</h2>
+            <h2>Editar Solicitação</h2>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label>Descrição</label>
@@ -4400,7 +4461,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
         fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`)
             .then(res => {
                 if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao carregar orçamentos'); });
+                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao carregar solicitações'); });
                 }
                 return res.json();
             })
@@ -4408,7 +4469,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 setOrcamentos(data);
             })
             .catch(err => {
-                console.error('Erro ao carregar orçamentos:', err);
+                console.error('Erro ao carregar solicitações:', err);
                 setError(err.message);
             })
             .finally(() => {
@@ -4452,7 +4513,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
 
     return (
         <Modal onClose={onClose} customWidth="900px">
-            <h2>💰 Orçamentos da Obra</h2>
+            <h2>💰 Solicitações de Compra</h2>
             <p style={{ marginBottom: '20px', color: 'var(--cor-texto-secundario)' }}>
                 {obraNome}
             </p>
@@ -4526,7 +4587,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                     </div>
                 ) : orcamentosFiltrados.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                        <p>📋 Nenhum orçamento {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
+                        <p>📋 Nenhuma solicitação {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -4714,7 +4775,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 alignItems: 'center'
             }}>
                 <div style={{ fontSize: '0.9em', color: '#6c757d' }}>
-                    <strong>Resumo:</strong> {contadores.total} orçamento(s) • 
+                    <strong>Resumo:</strong> {contadores.total} solicitação(ões) • 
                     ✅ {contadores.aprovados} aprovado(s) • 
                     ❌ {contadores.rejeitados} rejeitado(s) • 
                     ⏳ {contadores.pendentes} pendente(s)
@@ -5020,6 +5081,88 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
 // --- FIM DO MODAL DE RELATÓRIOS ---
 
 
+// --- MODAL DE APROVAÇÃO DE SOLICITAÇÃO (SIMPLIFICADO) ---
+const ModalAprovarOrcamento = ({ orcamento, onClose, onConfirmar }) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleAprovar = async () => {
+        setIsSubmitting(true);
+        try {
+            await onConfirmar();
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Modal onClose={onClose} customWidth="450px">
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+                <h2 style={{ marginBottom: '20px', color: '#28a745' }}>
+                    ✅ Aprovar Solicitação
+                </h2>
+                
+                {/* Info da Solicitação */}
+                <div style={{ 
+                    backgroundColor: '#f8f9fa', 
+                    padding: '20px', 
+                    borderRadius: '8px', 
+                    marginBottom: '25px',
+                    border: '1px solid #e9ecef',
+                    textAlign: 'left'
+                }}>
+                    <strong style={{ fontSize: '1.1em', display: 'block', marginBottom: '10px' }}>
+                        {orcamento.descricao}
+                    </strong>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#666' }}>
+                        <span>💰 Valor: <strong style={{ color: '#28a745' }}>{formatCurrency(orcamento.valor)}</strong></span>
+                        {orcamento.fornecedor && <span>🏢 Fornecedor: {orcamento.fornecedor}</span>}
+                        {orcamento.tipo && <span>📦 Tipo: {orcamento.tipo}</span>}
+                        {orcamento.servico_nome && <span>🔧 Serviço: {orcamento.servico_nome}</span>}
+                        {orcamento.numero_parcelas > 1 && (
+                            <span>📅 Parcelamento: {orcamento.numero_parcelas}x de {formatCurrency(orcamento.valor / orcamento.numero_parcelas)}</span>
+                        )}
+                        {orcamento.data_vencimento && (
+                            <span>📆 Vencimento: {new Date(orcamento.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                        )}
+                    </div>
+                </div>
+
+                <p style={{ marginBottom: '20px', color: '#666' }}>
+                    Ao aprovar, será criado automaticamente um <strong>pagamento futuro</strong> no cronograma financeiro.
+                    {orcamento.servico_nome && (
+                        <><br/><br/>O valor será somado ao orçamento do serviço <strong>"{orcamento.servico_nome}"</strong>.</>
+                    )}
+                </p>
+
+                {/* Botões */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                        onClick={onClose}
+                        className="cancel-btn"
+                        style={{ flex: 1, padding: '14px' }}
+                        disabled={isSubmitting}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleAprovar}
+                        className="submit-btn"
+                        style={{ 
+                            flex: 2, 
+                            padding: '14px',
+                            backgroundColor: '#28a745',
+                            fontSize: '1.05em'
+                        }}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? '⏳ Aprovando...' : '✅ Aprovar Compra'}
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 // --- MODAL DE ORÇAMENTOS ---
 const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     const [orcamentos, setOrcamentos] = useState([]);
@@ -5062,37 +5205,30 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         setAprovandoOrcamento(orcamento);
     };
 
-    const handleConfirmarAprovacao = async (opcao, servicoId = null) => {
+    const handleConfirmarAprovacao = async () => {
         try {
-            const body = { opcao }; // 'criar_novo' ou 'atrelar'
-            if (opcao === 'atrelar' && servicoId) {
-                body.servico_id = servicoId;
-            }
-            
-            console.log('Enviando aprovação:', body);
+            console.log('Enviando aprovação para:', aprovandoOrcamento.id);
 
             const response = await fetchWithAuth(
                 `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
                 {
                     method: 'POST',
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({})
                 }
             );
 
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.erro || data.error || 'Erro ao aprovar orçamento');
+                throw new Error(data.erro || data.error || 'Erro ao aprovar solicitação');
             }
 
-            alert('✅ Orçamento aprovado com sucesso!');
+            alert(data.sucesso || '✅ Solicitação aprovada com sucesso!');
             setAprovandoOrcamento(null);
-            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
-            // O onSave() já vai recarregar todos os dados da obra
             if (onSave) onSave();
         } catch (err) {
             console.error('Erro ao aprovar:', err);
-            alert(`Erro ao aprovar orçamento: ${err.message}`);
+            alert(`Erro ao aprovar solicitação: ${err.message}`);
         }
     };
 
@@ -5105,9 +5241,9 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 { method: 'DELETE' }
             );
 
-            if (!response.ok) throw new Error('Erro ao rejeitar orçamento');
+            if (!response.ok) throw new Error('Erro ao rejeitar solicitação');
 
-            alert('✅ Orçamento rejeitado!');
+            alert('✅ Solicitação rejeitada!');
             // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
             if (onSave) onSave();
         } catch (err) {
@@ -5132,7 +5268,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 throw new Error(error.erro || 'Erro ao salvar orçamento');
             }
 
-            alert('✅ Orçamento salvo com sucesso!');
+            alert('✅ Solicitação enviada com sucesso!');
             setAddModalVisible(false);
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
@@ -5182,7 +5318,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 }
             }
 
-            alert('✅ Orçamento atualizado com sucesso!');
+            alert('✅ Solicitação atualizada com sucesso!');
             setEditingOrcamento(null);
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
@@ -5200,7 +5336,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         return (
             <Modal onClose={onClose} customWidth="96%">
                 <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                    <h2>📋 Orçamentos</h2>
+                    <h2>📋 Solicitações</h2>
                     <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
                 </div>
             </Modal>
@@ -5211,7 +5347,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         <Modal onClose={onClose} customWidth="96%">
             <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
                 <button onClick={onClose} className="close-modal-btn">×</button>
-                <h2>📋 Orçamentos para Aprovação</h2>
+                <h2>📋 Solicitações Pendentes</h2>
                 
                 <div style={{
                     display: 'flex',
@@ -5240,7 +5376,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                         className="acao-btn add-btn"
                         style={{ backgroundColor: 'var(--cor-info)' }}
                     >
-                        + Novo Orçamento
+                        + Nova Solicitação
                     </button>
                 </div>
 
@@ -5309,94 +5445,17 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                     </table>
                 ) : (
                     <p style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-secundario)' }}>
-                        Nenhum orçamento pendente.
+                        Nenhuma solicitação pendente.
                     </p>
                 )}
 
-                {/* Modal de Aprovação com Escolha */}
+                {/* Modal de Aprovação */}
                 {aprovandoOrcamento && (
-                    <Modal onClose={() => setAprovandoOrcamento(null)} customWidth="500px">
-                        <div style={{ padding: '20px' }}>
-                            <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                ✅ Aprovar Orçamento
-                            </h2>
-                            <p style={{ marginBottom: '20px', color: '#666' }}>
-                                <strong>{aprovandoOrcamento.descricao}</strong><br />
-                                Valor: {formatCurrency(aprovandoOrcamento.valor)}
-                            </p>
-
-                            <div style={{ marginBottom: '20px' }}>
-                                <p style={{ fontWeight: 'bold', marginBottom: '15px' }}>
-                                    Como deseja proceder com este orçamento?
-                                </p>
-
-                                <button
-                                    onClick={() => handleConfirmarAprovacao('criar_novo')}
-                                    className="submit-btn"
-                                    style={{ 
-                                        width: '100%', 
-                                        marginBottom: '10px',
-                                        padding: '15px',
-                                        fontSize: '1em'
-                                    }}
-                                >
-                                    🆕 Criar Novo Serviço
-                                </button>
-
-                                <div style={{ margin: '15px 0', textAlign: 'center', color: '#999' }}>
-                                    ou
-                                </div>
-
-                                <select
-                                    id="servico-select"
-                                    className="form-control"
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '10px',
-                                        marginBottom: '10px',
-                                        borderRadius: '6px',
-                                        border: '1px solid #ccc'
-                                    }}
-                                    defaultValue=""
-                                >
-                                    <option value="">Selecione um serviço existente...</option>
-                                    {(servicos || []).map(serv => (
-                                        <option key={serv.id} value={serv.id}>
-                                            {serv.nome} - {formatCurrency((serv.valor_global_mao_de_obra || 0) + (serv.valor_global_material || 0))}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <button
-                                    onClick={() => {
-                                        const servicoId = document.getElementById('servico-select').value;
-                                        if (!servicoId) {
-                                            alert('Por favor, selecione um serviço!');
-                                            return;
-                                        }
-                                        handleConfirmarAprovacao('atrelar', parseInt(servicoId));
-                                    }}
-                                    className="submit-btn"
-                                    style={{ 
-                                        width: '100%',
-                                        padding: '15px',
-                                        fontSize: '1em',
-                                        backgroundColor: '#6c757d'
-                                    }}
-                                >
-                                    🔗 Atrelar a Serviço Existente
-                                </button>
-                            </div>
-
-                            <button
-                                onClick={() => setAprovandoOrcamento(null)}
-                                className="cancel-btn"
-                                style={{ width: '100%', padding: '12px' }}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </Modal>
+                    <ModalAprovarOrcamento
+                        orcamento={aprovandoOrcamento}
+                        onClose={() => setAprovandoOrcamento(null)}
+                        onConfirmar={handleConfirmarAprovacao}
+                    />
                 )}
 
                 {/* Aqui vão os outros modais (add, edit, anexos) se necessário */}
@@ -6046,7 +6105,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao rejeitar orçamento:", error));
+        .catch(error => console.error("Erro ao rejeitar solicitação:", error));
     };
 
     // Handler do PDF da Obra
