@@ -3331,6 +3331,11 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [valoresIguais, setValoresIguais] = useState(true);
     const [boletosConfig, setBoletosConfig] = useState([]);
     
+    // 🆕 ESTADOS PARA "SALVAR E NOVO"
+    const [contadorInseridos, setContadorInseridos] = useState(0);
+    const [toastMsg, setToastMsg] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
     // 🆕 Cálculos de entrada e parcelas
     const valorTotal = parseFloat(valor) || 0;
     const valorEntrada = temEntrada ? (valorTotal * percentualEntrada / 100) : 0;
@@ -3364,6 +3369,24 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             setBoletosConfig(novosBoletos);
         }
     }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
+    
+    // 🆕 Função para limpar campos (mantém alguns que repetem)
+    const limparCamposParaNovo = () => {
+        setDescricao('');
+        setValor('');
+        setCodigoBarras('');
+        setDataVencimento(getTodayString());
+        setNumeroParcelas('');
+        setTemEntrada(false);
+        setBoletosConfig([]);
+        // Mantém: fornecedor, pix, tipo, servicoId, meioPagamento, tipoFormaPagamento, periodicidade
+    };
+    
+    // 🆕 Mostrar toast temporário
+    const mostrarToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(''), 3000);
+    };
 
     // Atualizar boleto específico
     const handleBoletoChange = (index, field, value) => {
@@ -3378,8 +3401,9 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
         alert('Código copiado!');
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e, salvarENovo = false) => {
         e.preventDefault();
+        setIsSubmitting(true);
         
         const dadosPagamento = {
             data,
@@ -3417,7 +3441,21 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             }
         }
         
-        onSave(dadosPagamento);
+        try {
+            await onSave(dadosPagamento, salvarENovo); // Passa flag para callback
+            
+            if (salvarENovo) {
+                // Incrementa contador e limpa campos para próximo
+                setContadorInseridos(prev => prev + 1);
+                mostrarToast(`✅ Pagamento "${descricao}" inserido com sucesso!`);
+                limparCamposParaNovo();
+            }
+            // Se não for salvarENovo, o onSave vai fechar o modal
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -3854,12 +3892,48 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                     </select>
                 </div>
                 
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">
-                        {tipoFormaPagamento === 'parcelado' ? '📦 Criar Parcelamento' : '💰 Inserir Pagamento'}
+                <div className="form-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isSubmitting}>
+                        {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={(e) => handleSubmit(e, true)} 
+                        className="submit-btn"
+                        style={{ backgroundColor: '#17a2b8', flex: 1 }}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? '⏳...' : '➕ Salvar e Novo'}
+                    </button>
+                    <button 
+                        type="submit" 
+                        className="submit-btn"
+                        style={{ flex: 1 }}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? '⏳...' : (tipoFormaPagamento === 'parcelado' ? '📦 Salvar e Fechar' : '💾 Salvar e Fechar')}
                     </button>
                 </div>
+                
+                {/* 🆕 Toast de sucesso */}
+                {toastMsg && (
+                    <div style={{
+                        position: 'fixed',
+                        bottom: '20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        zIndex: 10000,
+                        animation: 'fadeIn 0.3s ease',
+                        fontWeight: 'bold'
+                    }}>
+                        {toastMsg}
+                    </div>
+                )}
             </form>
         </Modal>
     );
@@ -6139,26 +6213,23 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
     
     // MUDANÇA 3: NOVO handler para Inserir Pagamento
-    const handleInserirPagamento = (pagamentoData) => {
+    const handleInserirPagamento = async (pagamentoData) => {
         console.log("Inserindo novo pagamento:", pagamentoData);
-        fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
+        
+        const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
             method: 'POST',
             body: JSON.stringify(pagamentoData)
-        }).then(res => { 
-            if (!res.ok) { 
-                return res.json().then(err => { throw new Error(err.erro || 'Erro ao inserir pagamento') }); 
-            } 
-            return res.json(); 
-        })
-        .then(() => { 
-            setInserirPagamentoModalVisible(false); 
-            fetchObraData(obraSelecionada.id); 
-            alert('Pagamento inserido com sucesso!');
-        })
-        .catch(error => {
-            console.error("Erro ao inserir pagamento:", error);
-            alert('Erro ao inserir pagamento: ' + error.message);
         });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.erro || 'Erro ao inserir pagamento');
+        }
+        
+        await response.json();
+        fetchObraData(obraSelecionada.id); // Atualiza dados em background
+        // Não mostra alert - o modal cuida do toast
+        // Não fecha modal - isso é controlado pelo callback onSave
     };
 
     const handleSaveServico = (servicoData) => {
@@ -6593,9 +6664,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onClose={() => setCurrentPage('home')}
-                            onSave={(formData) => {
-                                handleInserirPagamento(formData);
-                                setCurrentPage('home');
+                            onSave={async (formData, salvarENovo = false) => {
+                                await handleInserirPagamento(formData);
+                                if (!salvarENovo) {
+                                    setCurrentPage('home');
+                                }
                             }}
                             servicos={servicos}
                             embedded={true}
