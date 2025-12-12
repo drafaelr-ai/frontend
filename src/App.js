@@ -3466,11 +3466,6 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             </p>
             <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                 <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
                     <label>Descrição</label>
                     <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
                 </div>
