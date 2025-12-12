@@ -3322,16 +3322,25 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
     const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
     
+    // 🆕 NOVOS ESTADOS PARA ENTRADA
+    const [temEntrada, setTemEntrada] = useState(false);
+    const [percentualEntrada, setPercentualEntrada] = useState(30);
+    const [dataEntrada, setDataEntrada] = useState(getTodayString());
+    
     // Estados para boletos parcelados (valores diferentes)
     const [valoresIguais, setValoresIguais] = useState(true);
     const [boletosConfig, setBoletosConfig] = useState([]);
     
+    // 🆕 Cálculos de entrada e parcelas
+    const valorTotal = parseFloat(valor) || 0;
+    const valorEntrada = temEntrada ? (valorTotal * percentualEntrada / 100) : 0;
+    const valorRestante = valorTotal - valorEntrada;
+    const numParcelas = parseInt(numeroParcelas) || 1;
+    const valorParcela = numParcelas > 0 ? valorRestante / numParcelas : 0;
+    
     // Gerar configuração de boletos quando mudar número de parcelas
     useEffect(() => {
         if (tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas) {
-            const numParcelas = parseInt(numeroParcelas) || 1;
-            const valorTotal = parseFloat(valor) || 0;
-            const valorParcela = valorTotal / numParcelas;
             const dataInicial = dataPrimeiraParcela ? new Date(dataPrimeiraParcela + 'T12:00:00') : new Date();
             
             const novosBoletos = [];
@@ -3354,7 +3363,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             }
             setBoletosConfig(novosBoletos);
         }
-    }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais]);
+    }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
 
     // Atualizar boleto específico
     const handleBoletoChange = (index, field, value) => {
@@ -3392,6 +3401,15 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
             dadosPagamento.periodicidade = periodicidade;
             dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
+            
+            // 🆕 Adicionar dados de entrada
+            if (temEntrada) {
+                dadosPagamento.tem_entrada = true;
+                dadosPagamento.percentual_entrada = percentualEntrada;
+                dadosPagamento.valor_entrada = valorEntrada;
+                dadosPagamento.data_entrada = dataEntrada;
+                dadosPagamento.valor_parcela = valorParcela; // Valor de cada parcela após entrada
+            }
             
             // Se for boleto parcelado, incluir configuração dos boletos
             if (meioPagamento === 'Boleto') {
@@ -3470,6 +3488,71 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                 {/* 🆕 CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
                 {tipoFormaPagamento === 'parcelado' && (
                     <>
+                        {/* 🆕 SEÇÃO DE ENTRADA */}
+                        <div style={{
+                            background: '#e8f5e9',
+                            padding: '15px',
+                            borderRadius: '8px',
+                            marginBottom: '15px',
+                            border: '1px solid #a5d6a7'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#2e7d32' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={temEntrada}
+                                        onChange={(e) => setTemEntrada(e.target.checked)}
+                                        style={{ width: '18px', height: '18px' }}
+                                    />
+                                    💰 Tem entrada?
+                                </label>
+                            </div>
+                            
+                            {temEntrada && (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                    <div className="form-group" style={{ margin: 0 }}>
+                                        <label style={{ fontSize: '0.9em' }}>Percentual de Entrada (%)</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="99"
+                                                value={percentualEntrada}
+                                                onChange={(e) => setPercentualEntrada(parseFloat(e.target.value) || 0)}
+                                                style={{ width: '80px' }}
+                                            />
+                                            <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                                = {formatCurrency(valorEntrada)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="form-group" style={{ margin: 0 }}>
+                                        <label style={{ fontSize: '0.9em' }}>Data da Entrada</label>
+                                        <input
+                                            type="date"
+                                            value={dataEntrada}
+                                            onChange={(e) => setDataEntrada(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {temEntrada && valor && (
+                                <div style={{
+                                    marginTop: '12px',
+                                    padding: '10px',
+                                    background: '#fff',
+                                    borderRadius: '6px',
+                                    fontSize: '0.9em',
+                                    color: '#666'
+                                }}>
+                                    Valor restante para parcelar: <strong style={{ color: '#1976d2' }}>{formatCurrency(valorRestante)}</strong>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* CONFIGURAÇÃO DAS PARCELAS */}
                         <div style={{
                             background: '#f0f8ff',
                             padding: '15px',
@@ -3477,13 +3560,13 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                             marginBottom: '15px',
                             border: '1px solid #b3d9ff'
                         }}>
-                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração do Parcelamento</h4>
+                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração das Parcelas</h4>
                             
                             <div className="form-group">
-                                <label>Número de Parcelas</label>
+                                <label>Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
                                 <input 
                                     type="number" 
-                                    min="2" 
+                                    min="1" 
                                     max="60" 
                                     value={numeroParcelas} 
                                     onChange={(e) => setNumeroParcelas(e.target.value)} 
@@ -3518,10 +3601,81 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                                     borderRadius: '6px',
                                     fontSize: '0.9em'
                                 }}>
-                                    <strong>Valor por parcela:</strong> R$ {(parseFloat(valor) / parseInt(numeroParcelas)).toFixed(2)}
+                                    <strong>Valor por parcela:</strong> {formatCurrency(valorParcela)}
                                 </div>
                             )}
                         </div>
+
+                        {/* 🆕 RESUMO DO PARCELAMENTO */}
+                        {numeroParcelas && valor && (
+                            <div style={{
+                                background: '#fff3e0',
+                                padding: '15px',
+                                borderRadius: '8px',
+                                marginBottom: '15px',
+                                border: '1px solid #ffcc80'
+                            }}>
+                                <h4 style={{margin: '0 0 12px 0', color: '#e65100'}}>📋 Resumo do Parcelamento</h4>
+                                
+                                <div style={{ fontSize: '0.95em' }}>
+                                    {temEntrada && (
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            padding: '8px 0',
+                                            borderBottom: '2px solid #ffcc80',
+                                            marginBottom: '8px',
+                                            color: '#2e7d32',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            <span>🟢 ENTRADA ({percentualEntrada}%)</span>
+                                            <span>{formatCurrency(valorEntrada)} - {new Date(dataEntrada + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                                        </div>
+                                    )}
+                                    
+                                    {Array.from({ length: Math.min(numParcelas, 5) }, (_, i) => {
+                                        const dataBase = new Date(dataPrimeiraParcela + 'T12:00:00');
+                                        if (periodicidade === 'Semanal') {
+                                            dataBase.setDate(dataBase.getDate() + (i * 7));
+                                        } else if (periodicidade === 'Quinzenal') {
+                                            dataBase.setDate(dataBase.getDate() + (i * 15));
+                                        } else {
+                                            dataBase.setMonth(dataBase.getMonth() + i);
+                                        }
+                                        return (
+                                            <div key={i} style={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between', 
+                                                padding: '6px 0',
+                                                borderBottom: '1px solid #ffe0b2'
+                                            }}>
+                                                <span>Parcela {i + 1}/{numParcelas}</span>
+                                                <span>{formatCurrency(valorParcela)} - {dataBase.toLocaleDateString('pt-BR')}</span>
+                                            </div>
+                                        );
+                                    })}
+                                    
+                                    {numParcelas > 5 && (
+                                        <div style={{ padding: '6px 0', color: '#999', fontStyle: 'italic' }}>
+                                            ... e mais {numParcelas - 5} parcela(s)
+                                        </div>
+                                    )}
+                                    
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        padding: '10px 0 0 0',
+                                        marginTop: '8px',
+                                        borderTop: '2px solid #e65100',
+                                        fontWeight: 'bold',
+                                        color: '#e65100'
+                                    }}>
+                                        <span>TOTAL ({temEntrada ? numParcelas + 1 : numParcelas} pagamentos)</span>
+                                        <span>{formatCurrency(valorTotal)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
 
