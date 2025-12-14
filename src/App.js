@@ -1211,255 +1211,693 @@ const GastosPorSegmentoChart = ({ data }) => {
 
 
 // --- COMPONENTE: ETAPAS E SERVIÇOS (Card para Home) ---
-const EtapasServicosCard = ({ servicos, onViewServico, onAddServico, onNavigateToCronograma }) => {
-    const [mostrarTodos, setMostrarTodos] = useState(false);
+// ============================================
+// COMPONENTE: SERVIÇOS - KANBAN/LISTA RESPONSIVO
+// Desktop: 3 colunas Kanban | Mobile: Tabs com lista
+// ============================================
+const ServicosKanbanView = ({ servicos, onViewServico, onAddServico, onNavigateToCronograma }) => {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [activeTab, setActiveTab] = useState('Em Andamento');
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     
-    const servicosExibidos = mostrarTodos ? servicos : servicos.slice(0, 6);
+    // Detectar mudança de tamanho de tela
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     
-    // Helper para pegar valor de MO (suporta ambos os nomes de campo)
+    // Helper para pegar valores orçados
     const getValorMO = (s) => parseFloat(s.valor_mo || s.valor_global_mao_de_obra || 0);
     const getValorMaterial = (s) => parseFloat(s.valor_material || s.valor_global_material || 0);
-    const getValorEquipamento = (s) => parseFloat(s.valor_equipamento || 0);
+    const getValorTotal = (s) => getValorMO(s) + getValorMaterial(s);
     
-    // Calcular totais
+    // Valores comprometidos do Cronograma Financeiro (lançamentos vinculados)
+    const getValorComprometidoMO = (s) => parseFloat(s.total_gastos_vinculados_mo || 0);
+    const getValorComprometidoMat = (s) => parseFloat(s.total_gastos_vinculados_mat || 0);
+    const getValorComprometido = (s) => getValorComprometidoMO(s) + getValorComprometidoMat(s);
+    
+    // Calcular valor pago de um serviço (inclui parcelas pagas do CF)
+    const getValorPago = (s) => {
+        const pagamentos = s.pagamentos || [];
+        return pagamentos.reduce((sum, p) => sum + (p.valor_pago || 0), 0);
+    };
+    
+    // Calcular progresso (% pago vs orçado)
+    const getProgresso = (s) => {
+        const total = getValorTotal(s);
+        const pago = getValorPago(s);
+        return total > 0 ? Math.round((pago / total) * 100) : 0;
+    };
+    
+    // Calcular % comprometido (inclui pendentes)
+    const getProgressoComprometido = (s) => {
+        const total = getValorTotal(s);
+        const comprometido = getValorComprometido(s);
+        return total > 0 ? Math.min(100, Math.round((comprometido / total) * 100)) : 0;
+    };
+    
+    // Verificar se tem pagamentos do CF vinculados
+    const temPagamentosCF = (s) => {
+        const pagamentos = s.pagamentos || [];
+        return pagamentos.some(p => p.is_parcela) || getValorComprometido(s) > 0;
+    };
+    
+    // Determinar status baseado no progresso
+    const getStatus = (s) => {
+        if (s.status) return s.status;
+        const progresso = getProgresso(s);
+        if (progresso >= 100) return 'Concluído';
+        if (progresso > 0) return 'Em Andamento';
+        return 'A Iniciar';
+    };
+    
+    // Categorizar serviços
+    const servicosPorStatus = {
+        'A Iniciar': servicos.filter(s => getStatus(s) === 'A Iniciar'),
+        'Em Andamento': servicos.filter(s => getStatus(s) === 'Em Andamento'),
+        'Concluído': servicos.filter(s => getStatus(s) === 'Concluído')
+    };
+    
+    // Totais
     const totalMO = servicos.reduce((sum, s) => sum + getValorMO(s), 0);
     const totalMaterial = servicos.reduce((sum, s) => sum + getValorMaterial(s), 0);
-    const totalEquipamento = servicos.reduce((sum, s) => sum + getValorEquipamento(s), 0);
-    const totalGeral = totalMO + totalMaterial + totalEquipamento;
+    const totalGeral = totalMO + totalMaterial;
+    const totalPago = servicos.reduce((sum, s) => sum + getValorPago(s), 0);
+    const totalComprometido = servicos.reduce((sum, s) => sum + getValorComprometido(s), 0);
+    
+    // Config de status
+    const statusConfig = {
+        'A Iniciar': { icon: '📋', cor: '#94a3b8', corLight: '#f1f5f9', label: 'A Iniciar' },
+        'Em Andamento': { icon: '🔨', cor: '#f59e0b', corLight: '#fffbeb', label: 'Em Andamento' },
+        'Concluído': { icon: '✅', cor: '#10b981', corLight: '#f0fdf4', label: 'Concluído' }
+    };
+    
+    // Card de Serviço
+    const ServicoCard = ({ servico, compact = false }) => {
+        const status = getStatus(servico);
+        const config = statusConfig[status];
+        const valorTotal = getValorTotal(servico);
+        const valorPago = getValorPago(servico);
+        const valorComprometido = getValorComprometido(servico);
+        const progresso = getProgresso(servico);
+        const hasCF = temPagamentosCF(servico);
+        const restante = Math.max(0, valorTotal - valorPago);
+        
+        return (
+            <div 
+                onClick={() => onViewServico(servico)}
+                style={{
+                    background: 'white',
+                    borderRadius: '12px',
+                    padding: compact ? '12px' : '14px',
+                    marginBottom: '10px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    border: '1px solid var(--cor-borda)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: compact ? 'flex' : 'block',
+                    alignItems: compact ? 'center' : 'stretch',
+                    gap: compact ? '12px' : '0'
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                }}
+            >
+                {/* Barra lateral de status */}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '4px',
+                    height: '100%',
+                    background: config.cor,
+                    borderRadius: '12px 0 0 12px'
+                }} />
+                
+                {compact ? (
+                    // Layout Mobile Compacto
+                    <>
+                        <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '10px',
+                            background: config.corLight,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                            flexShrink: 0,
+                            marginLeft: '8px',
+                            position: 'relative'
+                        }}>
+                            {config.icon}
+                            {hasCF && (
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    width: '14px',
+                                    height: '14px',
+                                    borderRadius: '50%',
+                                    background: 'var(--cor-primaria)',
+                                    color: 'white',
+                                    fontSize: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: '700'
+                                }} title="Pagamentos do Cronograma Financeiro vinculados">
+                                    📅
+                                </span>
+                            )}
+                        </div>
+                        
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                                fontSize: '14px', 
+                                fontWeight: '600', 
+                                color: 'var(--cor-texto)',
+                                marginBottom: '4px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }}>
+                                {servico.nome}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{
+                                    flex: 1,
+                                    height: '4px',
+                                    background: 'var(--cor-borda)',
+                                    borderRadius: '2px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        width: `${progresso}%`,
+                                        height: '100%',
+                                        background: config.cor,
+                                        borderRadius: '2px'
+                                    }} />
+                                </div>
+                                <span style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', minWidth: '32px' }}>
+                                    {progresso}%
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--cor-texto)' }}>
+                                {formatCurrency(valorTotal).replace('R$', '').trim()}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--cor-acento)' }}>
+                                {formatCurrency(valorPago).replace('R$', '').trim()} pago
+                            </div>
+                        </div>
+                        
+                        <div style={{ color: 'var(--cor-borda)', fontSize: '18px' }}>›</div>
+                    </>
+                ) : (
+                    // Layout Desktop Completo
+                    <div style={{ paddingLeft: '10px' }}>
+                        {/* Tags */}
+                        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                            <span style={{
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                background: config.corLight,
+                                color: config.cor,
+                                border: `1px solid ${config.cor}`
+                            }}>
+                                {config.icon} {config.label}
+                            </span>
+                            {getValorMO(servico) > 0 && (
+                                <span style={{
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '10px',
+                                    fontWeight: '600',
+                                    background: 'var(--cor-info-bg)',
+                                    color: 'var(--cor-info)'
+                                }}>
+                                    👷 MO
+                                </span>
+                            )}
+                            {getValorMaterial(servico) > 0 && (
+                                <span style={{
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '10px',
+                                    fontWeight: '600',
+                                    background: 'var(--cor-acento-bg)',
+                                    color: 'var(--cor-acento)'
+                                }}>
+                                    📦 MAT
+                                </span>
+                            )}
+                            {hasCF && (
+                                <span style={{
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    fontSize: '10px',
+                                    fontWeight: '600',
+                                    background: 'var(--cor-primaria-bg)',
+                                    color: 'var(--cor-primaria)'
+                                }} title="Pagamentos do Cronograma Financeiro vinculados">
+                                    📅 CF
+                                </span>
+                            )}
+                        </div>
+                        
+                        {/* Título */}
+                        <h4 style={{ 
+                            margin: '0 0 4px', 
+                            fontSize: '14px', 
+                            fontWeight: '600',
+                            color: 'var(--cor-texto)'
+                        }}>
+                            {servico.nome}
+                        </h4>
+                        
+                        {/* Responsável */}
+                        {servico.responsavel && (
+                            <p style={{ 
+                                margin: '0 0 10px', 
+                                fontSize: '12px', 
+                                color: 'var(--cor-texto-secundario)'
+                            }}>
+                                👤 {servico.responsavel}
+                            </p>
+                        )}
+                        
+                        {/* Valores */}
+                        <div style={{
+                            background: 'var(--cor-fundo-secundario)',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            marginBottom: '10px'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)' }}>Orçado</span>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--cor-texto)' }}>
+                                    {formatCurrency(valorTotal)}
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)' }}>Pago</span>
+                                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--cor-acento)' }}>
+                                    {formatCurrency(valorPago)}
+                                </span>
+                            </div>
+                            {restante > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)' }}>Restante</span>
+                                    <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--cor-warning)' }}>
+                                        {formatCurrency(restante)}
+                                    </span>
+                                </div>
+                            )}
+                            
+                            {/* Barra de Progresso */}
+                            <div style={{
+                                height: '6px',
+                                background: 'var(--cor-borda)',
+                                borderRadius: '3px',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{
+                                    width: `${progresso}%`,
+                                    height: '100%',
+                                    background: config.cor,
+                                    borderRadius: '3px',
+                                    transition: 'width 0.3s ease'
+                                }} />
+                            </div>
+                            <div style={{ 
+                                textAlign: 'right', 
+                                fontSize: '10px', 
+                                color: 'var(--cor-texto-muted)',
+                                marginTop: '4px'
+                            }}>
+                                {progresso}% pago
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+    
+    // Coluna Kanban (Desktop)
+    const ColunaKanban = ({ status, servicos: listaServicos }) => {
+        const config = statusConfig[status];
+        return (
+            <div style={{
+                background: 'var(--cor-fundo-secundario)',
+                borderRadius: '14px',
+                padding: '14px',
+                flex: 1,
+                minWidth: '280px',
+                maxHeight: '500px',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                {/* Header da Coluna */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '14px',
+                    padding: '0 4px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '18px' }}>{config.icon}</span>
+                        <h3 style={{ 
+                            margin: 0, 
+                            fontSize: '13px', 
+                            fontWeight: '700',
+                            color: 'var(--cor-texto)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                            {config.label}
+                        </h3>
+                        <span style={{
+                            background: config.cor,
+                            color: 'white',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            fontWeight: '600'
+                        }}>
+                            {listaServicos.length}
+                        </span>
+                    </div>
+                </div>
+                
+                {/* Lista de Cards */}
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    paddingRight: '4px'
+                }}>
+                    {listaServicos.length > 0 ? (
+                        listaServicos.map(servico => (
+                            <ServicoCard key={servico.id} servico={servico} />
+                        ))
+                    ) : (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '30px 10px',
+                            color: 'var(--cor-texto-muted)',
+                            fontSize: '13px'
+                        }}>
+                            Nenhum serviço
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
     
     return (
         <div className="card" style={{ marginTop: '20px' }}>
-            <h2 style={{ 
-                fontSize: '1.5em', 
-                marginBottom: '20px',
-                display: 'flex',
+            {/* Header */}
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
                 alignItems: 'center',
+                marginBottom: isCollapsed ? 0 : '20px',
+                flexWrap: 'wrap',
                 gap: '10px'
             }}>
-                🔧 Etapas e Serviços
-                <span style={{ 
-                    fontSize: '0.6em', 
-                    backgroundColor: 'var(--cor-primaria)', 
-                    color: 'white',
-                    padding: '4px 10px',
-                    borderRadius: '12px'
+                <h2 style={{ 
+                    fontSize: '1.4em', 
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
                 }}>
-                    {servicos.length}
-                </span>
-            </h2>
-            
-            {servicos.length === 0 ? (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px', 
-                    color: '#999',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '8px'
-                }}>
-                    <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
-                    <p>Nenhum serviço cadastrado</p>
+                    🔧 Etapas e Serviços
+                    <span style={{ 
+                        fontSize: '0.55em', 
+                        backgroundColor: 'var(--cor-primaria)', 
+                        color: 'white',
+                        padding: '4px 10px',
+                        borderRadius: '12px'
+                    }}>
+                        {servicos.length}
+                    </span>
+                </h2>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                         onClick={onAddServico}
-                        className="submit-btn"
-                        style={{ marginTop: '15px' }}
+                        className="cf-btn cf-btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '13px' }}
                     >
-                        + Adicionar Serviço
+                        + Adicionar
+                    </button>
+                    <button 
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="cf-btn cf-btn-outline"
+                        style={{ padding: '8px 16px', fontSize: '13px' }}
+                    >
+                        {isCollapsed ? '▼ Expandir' : '▲ Recolher'}
                     </button>
                 </div>
-            ) : (
+            </div>
+            
+            {!isCollapsed && (
                 <>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-                        gap: '15px'
-                    }}>
-                        {servicosExibidos.map(servico => {
-                            const totalServico = getValorMO(servico) + getValorMaterial(servico) + getValorEquipamento(servico);
-                            const statusColor = servico.status === 'Concluído' ? '#4CAF50' : 
-                                               servico.status === 'Em Andamento' ? '#2196F3' : 
-                                               servico.status === 'Pausado' ? '#ff9800' : '#9e9e9e';
-                            
-                            return (
-                                <div 
-                                    key={servico.id}
-                                    style={{
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '8px',
-                                        padding: '15px',
-                                        borderLeft: `4px solid ${statusColor}`,
-                                        cursor: 'pointer',
-                                        transition: 'transform 0.2s, box-shadow 0.2s'
-                                    }}
-                                    onClick={() => onViewServico(servico)}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <div style={{ 
-                                        fontWeight: 'bold', 
-                                        marginBottom: '8px',
-                                        fontSize: '0.95em',
-                                        color: '#333',
-                                        lineHeight: '1.3'
-                                    }}>
-                                        {servico.nome}
-                                    </div>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        flexWrap: 'wrap',
-                                        gap: '5px'
-                                    }}>
-                                        <span style={{
-                                            fontSize: '0.75em',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px',
-                                            backgroundColor: statusColor,
-                                            color: 'white'
-                                        }}>
-                                            {servico.status || 'A Iniciar'}
-                                        </span>
-                                        <span style={{ 
-                                            fontWeight: 'bold',
-                                            fontSize: '0.95em',
-                                            color: totalServico > 0 ? 'var(--cor-primaria)' : '#999'
-                                        }}>
-                                            {formatCurrency(totalServico)}
-                                        </span>
-                                    </div>
-                                    {servico.execucao > 0 && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between',
-                                                fontSize: '0.8em',
-                                                marginBottom: '4px'
-                                            }}>
-                                                <span>Execução</span>
-                                                <span>{servico.execucao}%</span>
-                                            </div>
-                                            <div style={{
-                                                height: '6px',
-                                                backgroundColor: '#e0e0e0',
-                                                borderRadius: '3px',
-                                                overflow: 'hidden'
-                                            }}>
-                                                <div style={{
-                                                    width: `${servico.execucao}%`,
-                                                    height: '100%',
-                                                    backgroundColor: statusColor,
-                                                    borderRadius: '3px'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                    
-                    {/* Botões de ação */}
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        gap: '15px',
-                        marginTop: '15px',
-                        flexWrap: 'wrap'
-                    }}>
-                        {servicos.length > 6 && (
-                            <button 
-                                onClick={() => setMostrarTodos(!mostrarTodos)}
-                                className="voltar-btn"
-                            >
-                                {mostrarTodos 
-                                    ? '↑ Mostrar menos' 
-                                    : `Ver todos os ${servicos.length} serviços →`
-                                }
-                            </button>
-                        )}
-                        <button 
-                            onClick={onAddServico}
-                            className="submit-btn"
-                            style={{ padding: '10px 20px' }}
-                        >
-                            + Adicionar Serviço
-                        </button>
-                    </div>
-                    
-                    {/* Resumo financeiro dos serviços */}
-                    <div style={{ 
-                        marginTop: '20px', 
-                        padding: '15px',
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-around',
-                        flexWrap: 'wrap',
-                        gap: '15px'
-                    }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total MO</div>
-                            <div style={{ fontWeight: 'bold', color: '#1565c0' }}>
-                                {formatCurrency(totalMO)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Material</div>
-                            <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                {formatCurrency(totalMaterial)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Equipamento</div>
-                            <div style={{ fontWeight: 'bold', color: '#f57c00' }}>
-                                {formatCurrency(totalEquipamento)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>TOTAL GERAL</div>
-                            <div style={{ fontWeight: 'bold', fontSize: '1.2em', color: '#333' }}>
-                                {formatCurrency(totalGeral)}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {totalGeral === 0 && (
+                    {servicos.length === 0 ? (
                         <div style={{ 
-                            marginTop: '10px', 
-                            padding: '10px', 
-                            backgroundColor: '#fff3e0',
-                            borderRadius: '6px',
-                            textAlign: 'center',
-                            fontSize: '0.9em',
-                            color: '#e65100'
+                            textAlign: 'center', 
+                            padding: '40px', 
+                            color: 'var(--cor-texto-muted)',
+                            backgroundColor: 'var(--cor-fundo-secundario)',
+                            borderRadius: '12px'
                         }}>
-                            ⚠️ Os serviços não possuem valores cadastrados. 
+                            <div style={{ fontSize: '3em', marginBottom: '10px' }}>📋</div>
+                            <p>Nenhum serviço cadastrado</p>
                             <button 
-                                onClick={onNavigateToCronograma}
-                                style={{ 
-                                    marginLeft: '10px',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--cor-primaria)',
-                                    textDecoration: 'underline',
-                                    cursor: 'pointer'
-                                }}
+                                onClick={onAddServico}
+                                className="cf-btn cf-btn-primary"
+                                style={{ marginTop: '15px' }}
                             >
-                                Editar serviços
+                                + Adicionar Serviço
                             </button>
                         </div>
+                    ) : (
+                        <>
+                            {/* MOBILE: Tabs + Lista */}
+                            {isMobile ? (
+                                <>
+                                    {/* Tabs */}
+                                    <div style={{
+                                        display: 'flex',
+                                        background: 'var(--cor-fundo-secundario)',
+                                        borderRadius: '12px',
+                                        padding: '4px',
+                                        marginBottom: '16px'
+                                    }}>
+                                        {['A Iniciar', 'Em Andamento', 'Concluído'].map(status => {
+                                            const config = statusConfig[status];
+                                            const count = servicosPorStatus[status].length;
+                                            const isActive = activeTab === status;
+                                            
+                                            return (
+                                                <button
+                                                    key={status}
+                                                    onClick={() => setActiveTab(status)}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '10px 8px',
+                                                        border: 'none',
+                                                        borderRadius: '10px',
+                                                        cursor: 'pointer',
+                                                        background: isActive ? 'white' : 'transparent',
+                                                        color: isActive ? config.cor : 'var(--cor-texto-muted)',
+                                                        fontWeight: '600',
+                                                        fontSize: '12px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        transition: 'all 0.2s',
+                                                        boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+                                                    }}
+                                                >
+                                                    <span>{config.icon}</span>
+                                                    <span>{status.split(' ')[0]}</span>
+                                                    <span style={{
+                                                        background: isActive ? config.cor : 'var(--cor-borda)',
+                                                        color: isActive ? 'white' : 'var(--cor-texto-secundario)',
+                                                        padding: '1px 6px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '10px'
+                                                    }}>
+                                                        {count}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    {/* Lista de Cards */}
+                                    <div>
+                                        {servicosPorStatus[activeTab].length > 0 ? (
+                                            servicosPorStatus[activeTab].map(servico => (
+                                                <ServicoCard key={servico.id} servico={servico} compact={true} />
+                                            ))
+                                        ) : (
+                                            <div style={{
+                                                textAlign: 'center',
+                                                padding: '40px 20px',
+                                                color: 'var(--cor-texto-muted)'
+                                            }}>
+                                                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📭</div>
+                                                <div>Nenhum serviço nesta categoria</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                /* DESKTOP: Kanban 3 Colunas */
+                                <div style={{ 
+                                    display: 'flex', 
+                                    gap: '16px',
+                                    marginBottom: '20px'
+                                }}>
+                                    <ColunaKanban status="A Iniciar" servicos={servicosPorStatus['A Iniciar']} />
+                                    <ColunaKanban status="Em Andamento" servicos={servicosPorStatus['Em Andamento']} />
+                                    <ColunaKanban status="Concluído" servicos={servicosPorStatus['Concluído']} />
+                                </div>
+                            )}
+                            
+                            {/* Resumo Financeiro */}
+                            <div style={{ 
+                                marginTop: '20px', 
+                                padding: '16px',
+                                backgroundColor: 'var(--cor-fundo-secundario)',
+                                borderRadius: '12px',
+                                border: '1px solid var(--cor-borda)'
+                            }}>
+                                <div style={{ 
+                                    display: 'flex',
+                                    justifyContent: 'space-around',
+                                    flexWrap: 'wrap',
+                                    gap: '15px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)', textTransform: 'uppercase', fontWeight: '600' }}>Total MO</div>
+                                        <div style={{ fontWeight: '700', color: 'var(--cor-info)', fontSize: '15px' }}>
+                                            {formatCurrency(totalMO)}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)', textTransform: 'uppercase', fontWeight: '600' }}>Total Material</div>
+                                        <div style={{ fontWeight: '700', color: 'var(--cor-acento)', fontSize: '15px' }}>
+                                            {formatCurrency(totalMaterial)}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)', textTransform: 'uppercase', fontWeight: '600' }}>Total Pago</div>
+                                        <div style={{ fontWeight: '700', color: 'var(--cor-purple)', fontSize: '15px' }}>
+                                            {formatCurrency(totalPago)}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)', textTransform: 'uppercase', fontWeight: '600' }}>Restante</div>
+                                        <div style={{ fontWeight: '700', color: 'var(--cor-warning)', fontSize: '15px' }}>
+                                            {formatCurrency(totalGeral - totalPago)}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-secundario)', textTransform: 'uppercase', fontWeight: '600' }}>Total Geral</div>
+                                        <div style={{ fontWeight: '700', fontSize: '17px', color: 'var(--cor-texto)' }}>
+                                            {formatCurrency(totalGeral)}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Barra de Progresso Geral */}
+                                {totalGeral > 0 && (
+                                    <div style={{ marginTop: '8px' }}>
+                                        <div style={{
+                                            height: '8px',
+                                            background: 'var(--cor-borda)',
+                                            borderRadius: '4px',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <div style={{
+                                                width: `${Math.min(100, Math.round((totalPago / totalGeral) * 100))}%`,
+                                                height: '100%',
+                                                background: 'linear-gradient(90deg, var(--cor-acento), var(--cor-acento-light))',
+                                                borderRadius: '4px',
+                                                transition: 'width 0.3s ease'
+                                            }} />
+                                        </div>
+                                        <div style={{ 
+                                            textAlign: 'center', 
+                                            fontSize: '11px', 
+                                            color: 'var(--cor-texto-secundario)',
+                                            marginTop: '4px'
+                                        }}>
+                                            {Math.round((totalPago / totalGeral) * 100)}% pago
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {totalGeral === 0 && (
+                                <div style={{ 
+                                    marginTop: '10px', 
+                                    padding: '12px', 
+                                    backgroundColor: 'var(--cor-warning-bg)',
+                                    borderRadius: '8px',
+                                    textAlign: 'center',
+                                    fontSize: '13px',
+                                    color: 'var(--cor-warning)',
+                                    border: '1px solid var(--cor-warning-light)'
+                                }}>
+                                    ⚠️ Os serviços não possuem valores cadastrados. 
+                                    <button 
+                                        onClick={onNavigateToCronograma}
+                                        style={{ 
+                                            marginLeft: '10px',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--cor-primaria)',
+                                            textDecoration: 'underline',
+                                            cursor: 'pointer',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Editar serviços
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             )}
         </div>
     );
 };
+
+// Manter EtapasServicosCard como alias para compatibilidade
+const EtapasServicosCard = ServicosKanbanView;
 
 
 // --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
