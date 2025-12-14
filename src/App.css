@@ -1,23 +1,62 @@
 :root {
-    /* NOVA PALETA "OBRALY" */
-    --cor-fundo: #f4f7f6; /* Um cinza muito claro e limpo */
+    /* ============================================
+       PALETA OBRALY - CORES SUAVES/PASTÉIS
+       ============================================ */
+    
+    /* Backgrounds */
+    --cor-fundo: #f8fafc;           /* Slate 50 - Cinza muito claro */
+    --cor-fundo-secundario: #f1f5f9; /* Slate 100 */
     --cor-card: #ffffff;
-    --cor-texto: #1a202c; /* Texto principal mais escuro (quase preto) */
-    --cor-texto-secundario: #4a5568; /* Cinza para texto secundÃ¡rio */
+    --cor-borda: #e2e8f0;           /* Slate 200 */
     
-    /* "Imponente" (Cor PrimÃ¡ria) */
-    --cor-primaria: #4f46e5; /* Ãndigo */
+    /* Texto */
+    --cor-texto: #334155;           /* Slate 700 - Principal */
+    --cor-texto-secundario: #64748b; /* Slate 500 */
+    --cor-texto-muted: #94a3b8;     /* Slate 400 */
     
-    /* "Empolgante" (Cor de Acento/Sucesso) */
-    --cor-acento: #10b981; /* Esmeralda/Verde */
+    /* Primária (Indigo Suave) */
+    --cor-primaria: #6366f1;        /* Indigo 500 */
+    --cor-primaria-light: #818cf8;  /* Indigo 400 */
+    --cor-primaria-dark: #4f46e5;   /* Indigo 600 */
+    --cor-primaria-bg: #e0e7ff;     /* Indigo 100 */
     
-    /* Cores de Status */
-    --cor-vermelho: #ef4444; /* Vermelho mais moderno */
-    --cor-info: #3b82f6; /* Azul para informaÃ§Ã£o */
-    /* --cor-aviso: #f59e0b; (REMOVIDO) */
-
-    /* Sombra moderna */
-    --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    /* Acento/Sucesso (Verde Suave) */
+    --cor-acento: #10b981;          /* Emerald 500 */
+    --cor-acento-light: #86efac;    /* Green 300 - Pastel */
+    --cor-acento-bg: #d1fae5;       /* Emerald 100 */
+    
+    /* Status - Cores Suaves/Pastéis */
+    --cor-vermelho: #f43f5e;        /* Rose 500 */
+    --cor-vermelho-light: #fca5a5;  /* Red 300 - Pastel */
+    --cor-vermelho-bg: #fef2f2;     /* Red 50 */
+    
+    --cor-warning: #f59e0b;         /* Amber 500 */
+    --cor-warning-light: #fcd34d;   /* Yellow 400 - Pastel */
+    --cor-warning-bg: #fffbeb;      /* Amber 50 */
+    
+    --cor-info: #0ea5e9;            /* Sky 500 */
+    --cor-info-light: #7dd3fc;      /* Sky 300 - Pastel */
+    --cor-info-bg: #f0f9ff;         /* Sky 50 */
+    
+    --cor-purple: #a855f7;          /* Purple 500 */
+    --cor-purple-light: #c4b5fd;    /* Violet 300 - Pastel */
+    --cor-purple-bg: #faf5ff;       /* Purple 50 */
+    
+    /* Sombras Modernas */
+    --sombra-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+    --sombra-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+    --sombra-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    /* Transições */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s ease;
 }
 
 body { 
@@ -1740,3 +1779,844 @@ body {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
 }
+}
+
+/* ============================================
+   CRONOGRAMA FINANCEIRO - DESIGN MODERNO
+   Paleta de Cores Suaves/Pastéis
+   ============================================ */
+
+/* Container Principal */
+.cronograma-financeiro-moderno {
+    padding: 24px;
+    background: var(--cor-fundo);
+    min-height: 100%;
+}
+
+.cronograma-financeiro-moderno h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--cor-texto);
+    margin-bottom: 8px;
+}
+
+/* Cards de Status (Vencidos, Hoje, Amanhã, etc) */
+.status-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+    .status-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .status-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .status-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.status-card {
+    background: var(--cor-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid var(--cor-borda);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-card-hover);
+}
+
+.status-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.status-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--cor-texto-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.status-card-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+.status-card-count {
+    font-size: 12px;
+    color: var(--cor-texto-secundario);
+    margin-top: 2px;
+}
+
+/* Seção Card */
+.cf-section {
+    background: var(--cor-card);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--cor-borda);
+}
+
+.cf-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.cf-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cor-texto);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cf-section-subtitle {
+    font-size: 13px;
+    color: var(--cor-texto-secundario);
+    margin-top: 4px;
+}
+
+/* Badge de contagem */
+.cf-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.cf-badge-info {
+    background: var(--cor-info-bg);
+    color: var(--cor-info);
+}
+
+.cf-badge-purple {
+    background: var(--cor-purple-bg);
+    color: var(--cor-purple);
+}
+
+.cf-badge-success {
+    background: var(--cor-acento-bg);
+    color: var(--cor-acento);
+}
+
+.cf-badge-warning {
+    background: var(--cor-warning-bg);
+    color: #92400e;
+}
+
+/* Dica/Tip Box */
+.cf-tip-box {
+    background: var(--cor-warning-bg);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #fde68a;
+}
+
+/* ============================================
+   CARDS DE PAGAMENTO PARCELADO - ESTILO POPUP
+   ============================================ */
+
+.parcelas-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.parcela-popup-card {
+    background: var(--cor-card);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--cor-borda);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.parcela-popup-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-card-hover);
+}
+
+/* Header do Card Popup */
+.parcela-popup-header {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid currentColor;
+}
+
+.parcela-popup-title {
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--cor-texto);
+}
+
+/* Bolinhas de Parcelas */
+.parcelas-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.parcela-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    transition: all var(--transition-fast);
+}
+
+.parcela-dot.paga {
+    background: currentColor;
+}
+
+.parcela-dot.pendente {
+    background: transparent;
+}
+
+/* Conteúdo do Card Popup */
+.parcela-popup-content {
+    padding: 16px;
+}
+
+.parcela-popup-valor {
+    text-align: center;
+    margin-bottom: 14px;
+}
+
+.parcela-popup-valor-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+.parcela-popup-periodo {
+    font-size: 11px;
+    color: var(--cor-texto-secundario);
+    background: var(--cor-fundo-secundario);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-top: 4px;
+}
+
+/* Grid de Info */
+.parcela-popup-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.parcela-popup-info-item {
+    background: var(--cor-fundo-secundario);
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.parcela-popup-info-label {
+    font-size: 10px;
+    color: var(--cor-texto-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.parcela-popup-info-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+/* Box de Vencimento */
+.parcela-popup-vencimento {
+    background: var(--cor-warning-bg);
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    border: 1px solid #fde68a;
+}
+
+.parcela-popup-vencimento-label {
+    font-size: 12px;
+    color: #92400e;
+}
+
+.parcela-popup-vencimento-value {
+    font-size: 13px;
+    color: #92400e;
+    font-weight: 600;
+}
+
+/* Barra de Progresso */
+.parcela-popup-progress {
+    margin-bottom: 0;
+}
+
+.parcela-popup-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.parcela-popup-progress-label {
+    color: var(--cor-texto-muted);
+}
+
+.parcela-popup-progress-percent {
+    font-weight: 600;
+    color: var(--cor-primaria);
+}
+
+.parcela-popup-progress-bar {
+    height: 6px;
+    background: var(--cor-fundo-secundario);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.parcela-popup-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width var(--transition-slow);
+}
+
+/* Footer do Card Popup */
+.parcela-popup-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-secundario);
+}
+
+.parcela-popup-btn {
+    width: 100%;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+}
+
+.parcela-popup-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+/* ============================================
+   MODAL DE EDIÇÃO DE PARCELAS - OPÇÃO B COMPLETA
+   ============================================ */
+
+.editar-parcelas-modal {
+    max-width: 900px;
+}
+
+.editar-parcelas-header {
+    padding: 20px 24px;
+    border-bottom: 3px solid var(--cor-primaria);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.editar-parcelas-titulo {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+.editar-parcelas-subtitulo {
+    font-size: 14px;
+    color: var(--cor-texto-secundario);
+    margin-top: 4px;
+}
+
+.editar-parcelas-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--cor-texto-secundario);
+    padding: 0;
+    line-height: 1;
+}
+
+.editar-parcelas-close:hover {
+    color: var(--cor-texto);
+}
+
+/* Resumo do Parcelamento */
+.editar-parcelas-resumo {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px 24px;
+    background: var(--cor-fundo-secundario);
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+@media (max-width: 600px) {
+    .editar-parcelas-resumo {
+        grid-template-columns: 1fr;
+    }
+}
+
+.resumo-item {
+    background: var(--cor-card);
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    border: 1px solid var(--cor-borda);
+}
+
+.resumo-item-label {
+    font-size: 11px;
+    color: var(--cor-texto-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.resumo-item-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+/* Lista de Parcelas */
+.editar-parcelas-lista {
+    padding: 20px 24px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.parcela-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--cor-fundo-secundario);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    border: 1px solid var(--cor-borda);
+    transition: all var(--transition-fast);
+}
+
+.parcela-item:hover {
+    border-color: var(--cor-primaria-light);
+}
+
+.parcela-item.paga {
+    background: var(--cor-acento-bg);
+    border-color: var(--cor-acento-light);
+}
+
+.parcela-item.vencida {
+    background: var(--cor-vermelho-bg);
+    border-color: var(--cor-vermelho-light);
+}
+
+.parcela-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.parcela-item-numero {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.parcela-item-numero.paga {
+    background: var(--cor-acento);
+    color: white;
+}
+
+.parcela-item-numero.pendente {
+    background: var(--cor-card);
+    color: var(--cor-texto-muted);
+    border: 2px solid var(--cor-borda);
+}
+
+.parcela-item-dados {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.parcela-item-valor {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--cor-texto);
+}
+
+.parcela-item-vencimento {
+    font-size: 12px;
+    color: var(--cor-texto-secundario);
+}
+
+.parcela-item-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.parcela-status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 16px;
+}
+
+.parcela-status-badge.paga {
+    background: var(--cor-acento-light);
+    color: #166534;
+}
+
+.parcela-status-badge.pendente {
+    background: var(--cor-warning-light);
+    color: #92400e;
+}
+
+.parcela-status-badge.vencida {
+    background: var(--cor-vermelho-light);
+    color: #991b1b;
+}
+
+/* Botões de ação da parcela */
+.parcela-action-btn {
+    background: var(--cor-card);
+    border: 1px solid var(--cor-borda);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all var(--transition-fast);
+}
+
+.parcela-action-btn:hover {
+    background: var(--cor-fundo-secundario);
+    border-color: var(--cor-primaria-light);
+}
+
+.parcela-action-btn.primary {
+    background: var(--cor-primaria);
+    color: white;
+    border-color: var(--cor-primaria);
+}
+
+.parcela-action-btn.primary:hover {
+    background: var(--cor-primaria-dark);
+}
+
+.parcela-action-btn.success {
+    background: var(--cor-acento);
+    color: white;
+    border-color: var(--cor-acento);
+}
+
+/* Formulário de edição inline */
+.parcela-edit-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.parcela-edit-input {
+    padding: 6px 10px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    font-size: 13px;
+    width: 120px;
+}
+
+.parcela-edit-input:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 2px var(--cor-primaria-bg);
+}
+
+/* Footer do Modal */
+.editar-parcelas-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--cor-fundo-secundario);
+}
+
+/* ============================================
+   GRÁFICO DE PREVISÕES
+   ============================================ */
+
+.cf-chart-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    height: 180px;
+    padding: 16px 20px 0;
+    position: relative;
+}
+
+.cf-chart-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.cf-chart-bar-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cor-primaria);
+}
+
+.cf-chart-bar-fill {
+    width: 100%;
+    max-width: 60px;
+    border-radius: 8px 8px 2px 2px;
+    background: linear-gradient(180deg, var(--cor-primaria-light) 0%, var(--cor-primaria) 100%);
+    transition: all var(--transition-normal);
+}
+
+.cf-chart-bar-fill:hover {
+    filter: brightness(1.1);
+}
+
+.cf-chart-bar-label {
+    font-size: 12px;
+    color: var(--cor-texto-secundario);
+}
+
+.cf-chart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--cor-primaria);
+    border-radius: var(--radius-md);
+    color: white;
+    margin-top: 16px;
+}
+
+.cf-chart-total-label {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.cf-chart-total-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* ============================================
+   PAGAMENTOS FUTUROS - LISTA
+   ============================================ */
+
+.cf-pagamento-futuro-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--cor-fundo-secundario);
+    border-radius: var(--radius-sm);
+    gap: 16px;
+    border: 1px solid var(--cor-borda);
+    margin-bottom: 10px;
+    transition: all var(--transition-fast);
+}
+
+.cf-pagamento-futuro-item:hover {
+    border-color: var(--cor-primaria-light);
+}
+
+.cf-pagamento-futuro-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--cor-info-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.cf-pagamento-futuro-info {
+    flex: 1;
+}
+
+.cf-pagamento-futuro-desc {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cor-texto);
+    margin-bottom: 2px;
+}
+
+.cf-pagamento-futuro-meta {
+    font-size: 12px;
+    color: var(--cor-texto-secundario);
+}
+
+.cf-pagamento-futuro-valor {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cor-primaria);
+}
+
+.cf-pagamento-futuro-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ============================================
+   TOAST NOTIFICATION
+   ============================================ */
+
+.cf-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--cor-acento);
+    color: white;
+    padding: 14px 24px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    z-index: 10001;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ============================================
+   BOTÕES MODERNOS
+   ============================================ */
+
+.cf-btn {
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+    border: none;
+}
+
+.cf-btn-primary {
+    background: var(--cor-primaria);
+    color: white;
+}
+
+.cf-btn-primary:hover {
+    background: var(--cor-primaria-dark);
+    transform: translateY(-1px);
+}
+
+.cf-btn-success {
+    background: var(--cor-acento);
+    color: white;
+}
+
+.cf-btn-success:hover {
+    filter: brightness(1.1);
+}
+
+.cf-btn-outline {
+    background: var(--cor-card);
+    color: var(--cor-texto-secundario);
+    border: 1px solid var(--cor-borda);
+}
+
+.cf-btn-outline:hover {
+    background: var(--cor-fundo-secundario);
+    border-color: var(--cor-primaria-light);
+}
+
+.cf-btn-ghost {
+    background: transparent;
+    color: var(--cor-texto-secundario);
+    border: none;
+}
+
+.cf-btn-ghost:hover {
+    background: var(--cor-fundo-secundario);
+}
+
+.cf-btn-danger {
+    background: var(--cor-vermelho-bg);
+    color: var(--cor-vermelho);
+    border: 1px solid var(--cor-vermelho-light);
+}
+
+.cf-btn-danger:hover {
+    background: var(--cor-vermelho-light);
+}
+
+/* Cores específicas por periodicidade */
+.periodo-semanal { background: var(--cor-warning-light); color: #92400e; }
+.periodo-quinzenal { background: var(--cor-warning); color: white; }
+.periodo-mensal { background: var(--cor-info-light); color: #0369a1; }

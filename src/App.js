@@ -9215,6 +9215,12 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [parcelaEditando, setParcelaEditando] = useState(null);
+    const [observacaoEditando, setObservacaoEditando] = useState(null);
+    const [editandoDadosGerais, setEditandoDadosGerais] = useState(false);
+    const [dadosGerais, setDadosGerais] = useState({
+        descricao: pagamentoParcelado.descricao,
+        fornecedor: pagamentoParcelado.fornecedor || ''
+    });
 
     useEffect(() => {
         carregarParcelas();
@@ -9238,7 +9244,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         }
     };
 
-    const handleEditarParcela = async (parcela, novoValor, novaData) => {
+    const handleEditarParcela = async (parcela, novoValor, novaData, novaObs) => {
         try {
             const response = await fetchWithAuth(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}`,
@@ -9246,7 +9252,8 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                     method: 'PUT',
                     body: JSON.stringify({
                         valor_parcela: parseFloat(novoValor),
-                        data_vencimento: novaData
+                        data_vencimento: novaData,
+                        observacao: novaObs || parcela.observacao
                     })
                 }
             );
@@ -9255,6 +9262,10 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
 
             await carregarParcelas();
             setParcelaEditando(null);
+            setObservacaoEditando(null);
+            
+            // Toast de sucesso
+            showToast('✅ Parcela atualizada com sucesso!');
             
             if (onSave) onSave();
         } catch (err) {
@@ -9279,7 +9290,31 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
             if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
 
             const resultado = await response.json();
-            alert(`✅ ${resultado.mensagem}`);
+            showToast(`✅ ${resultado.mensagem}`);
+            await carregarParcelas();
+            
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    // NOVO: Desfazer pagamento
+    const handleDesfazerPagamento = async (parcela) => {
+        if (!window.confirm(`Deseja desfazer o pagamento da parcela ${parcela.numero_parcela}? O lançamento associado será removido.`)) return;
+
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/desfazer`,
+                { method: 'POST' }
+            );
+
+            if (!response.ok) {
+                const erro = await response.json();
+                throw new Error(erro.erro || 'Erro ao desfazer pagamento');
+            }
+
+            showToast('↩️ Pagamento desfeito com sucesso!');
             await carregarParcelas();
             
             if (onSave) onSave();
@@ -9306,7 +9341,6 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
 
             for (const parcela of parcelasPagas) {
                 try {
-                    // Força a recriação do lançamento
                     const response = await fetchWithAuth(
                         `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
                         {
@@ -9327,7 +9361,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                 }
             }
 
-            alert(`Reprocessamento concluído!\n✅ ${sucessos} lançamentos criados/verificados\n${erros > 0 ? `❌ ${erros} erros` : ''}`);
+            showToast(`🔄 ${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
             
             if (onSave) onSave();
         } catch (err) {
@@ -9335,161 +9369,369 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         }
     };
 
+    // NOVO: Salvar dados gerais
+    const handleSalvarDadosGerais = async () => {
+        try {
+            const response = await fetchWithAuth(
+                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify(dadosGerais)
+                }
+            );
+
+            if (!response.ok) throw new Error('Erro ao salvar dados gerais');
+
+            showToast('✅ Dados atualizados com sucesso!');
+            setEditandoDadosGerais(false);
+            
+            if (onSave) onSave();
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
+    // Toast helper
+    const showToast = (message) => {
+        const toast = document.createElement('div');
+        toast.className = 'cf-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    };
+
     const calcularValorTotal = () => {
         return parcelas.reduce((sum, p) => sum + p.valor_parcela, 0);
     };
 
-    if (isLoading) return <Modal customWidth="1400px"><div className="modal-content">Carregando...</div></Modal>;
-    if (error) return <Modal customWidth="1400px"><div className="modal-content">Erro: {error}</div></Modal>;
+    const calcularValorPago = () => {
+        return parcelas.filter(p => p.status === 'Pago').reduce((sum, p) => sum + p.valor_parcela, 0);
+    };
+
+    const calcularValorRestante = () => {
+        return parcelas.filter(p => p.status !== 'Pago').reduce((sum, p) => sum + p.valor_parcela, 0);
+    };
+
+    const getStatusParcela = (parcela) => {
+        if (parcela.status === 'Pago') return 'paga';
+        if (new Date(parcela.data_vencimento) < new Date()) return 'vencida';
+        return 'pendente';
+    };
+
+    if (isLoading) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
+    if (error) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
+
+    const parcelasPagas = parcelas.filter(p => p.status === 'Pago').length;
+    const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
 
     return (
-        <Modal customWidth="1400px">
-            <div style={{ maxHeight: '90vh', overflowY: 'auto', padding: '30px' }}>
-                <h2 style={{ fontSize: '2em', marginBottom: '15px' }}>✏️ Editar Parcelas</h2>
-                <p style={{ marginBottom: '25px', color: '#666', fontSize: '1.1em' }}>
-                    <strong style={{ fontSize: '1.2em' }}>{pagamentoParcelado.descricao}</strong><br />
-                    <span style={{ fontSize: '1em' }}>Fornecedor: {pagamentoParcelado.fornecedor || '-'}</span>
-                </p>
-                <div style={{ 
-                    marginBottom: '25px', 
-                    padding: '20px', 
-                    backgroundColor: '#f8f9fa', 
-                    borderRadius: '8px',
+        <Modal customWidth="900px">
+            <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+                {/* Header */}
+                <div style={{
+                    padding: '20px 24px',
+                    background: 'var(--cor-purple-bg)',
+                    borderBottom: '3px solid var(--cor-purple-light)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'flex-start'
                 }}>
-                    <div style={{ fontSize: '1.3em' }}>
-                        <strong>Valor Total Calculado:</strong> {formatCurrency(calcularValorTotal())}
+                    <div style={{ flex: 1 }}>
+                        {editandoDadosGerais ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <input
+                                    type="text"
+                                    value={dadosGerais.descricao}
+                                    onChange={(e) => setDadosGerais({...dadosGerais, descricao: e.target.value})}
+                                    style={{ 
+                                        fontSize: '18px', 
+                                        fontWeight: '700', 
+                                        padding: '8px 12px', 
+                                        borderRadius: '8px',
+                                        border: '2px solid var(--cor-purple-light)',
+                                        background: 'white'
+                                    }}
+                                    placeholder="Descrição"
+                                />
+                                <input
+                                    type="text"
+                                    value={dadosGerais.fornecedor}
+                                    onChange={(e) => setDadosGerais({...dadosGerais, fornecedor: e.target.value})}
+                                    style={{ 
+                                        fontSize: '14px', 
+                                        padding: '6px 12px', 
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--cor-borda)',
+                                        background: 'white'
+                                    }}
+                                    placeholder="Fornecedor"
+                                />
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                        ✓ Salvar
+                                    </button>
+                                    <button onClick={() => setEditandoDadosGerais(false)} className="cf-btn cf-btn-outline" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                        ✕ Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 style={{ 
+                                    margin: 0, 
+                                    fontSize: '20px', 
+                                    fontWeight: '700', 
+                                    color: 'var(--cor-texto)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}>
+                                    📦 {pagamentoParcelado.descricao}
+                                    <button 
+                                        onClick={() => setEditandoDadosGerais(true)}
+                                        style={{ 
+                                            background: 'none', 
+                                            border: 'none', 
+                                            cursor: 'pointer', 
+                                            fontSize: '14px',
+                                            color: 'var(--cor-purple)'
+                                        }}
+                                        title="Editar dados gerais"
+                                    >
+                                        ✏️
+                                    </button>
+                                </h2>
+                                <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
+                                    Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
+                                </p>
+                            </>
+                        )}
                     </div>
-                    <div style={{ fontSize: '1.1em', color: '#666' }}>
-                        {parcelas.filter(p => p.status === 'Pago').length} de {parcelas.length} pagas
+                    <button 
+                        onClick={onClose} 
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '24px',
+                            cursor: 'pointer',
+                            color: 'var(--cor-texto-secundario)',
+                            padding: 0,
+                            lineHeight: 1
+                        }}
+                    >×</button>
+                </div>
+
+                {/* Resumo */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '12px',
+                    padding: '20px 24px',
+                    background: 'var(--cor-fundo-secundario)',
+                    borderBottom: '1px solid var(--cor-borda)'
+                }}>
+                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Total</div>
+                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{formatCurrency(calcularValorTotal())}</div>
+                    </div>
+                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Pago</div>
+                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-acento)' }}>{formatCurrency(calcularValorPago())}</div>
+                    </div>
+                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Restante</div>
+                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-warning)' }}>{formatCurrency(calcularValorRestante())}</div>
+                    </div>
+                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Parcelas</div>
+                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{parcelasPagas} / {parcelas.length}</div>
                     </div>
                 </div>
 
-                <table className="tabela-pendencias">
-                    <thead>
-                        <tr>
-                            <th>Parcela</th>
-                            <th>Valor</th>
-                            <th>Vencimento</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {parcelas.map(parcela => (
-                            <tr key={parcela.id} style={{
-                                backgroundColor: parcela.status === 'Pago' ? '#e8f5e9' : 
-                                               new Date(parcela.data_vencimento) < new Date() ? '#ffebee' : 'white'
-                            }}>
-                                <td>
-                                    <strong style={{ fontSize: '1.3em' }}>#{parcela.numero_parcela}</strong>
-                                </td>
-                                <td>
-                                    {parcelaEditando === parcela.id ? (
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            defaultValue={parcela.valor_parcela}
-                                            id={`valor-${parcela.id}`}
-                                            style={{ width: '180px', padding: '12px', fontSize: '1.1em' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: '1.1em' }}>{formatCurrency(parcela.valor_parcela)}</span>
-                                    )}
-                                </td>
-                                <td>
-                                    {parcelaEditando === parcela.id ? (
-                                        <input
-                                            type="date"
-                                            defaultValue={parcela.data_vencimento}
-                                            id={`data-${parcela.id}`}
-                                            style={{ padding: '12px', fontSize: '1.1em' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: '1.1em' }}>{new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                                    )}
-                                </td>
-                                <td>
-                                    <span style={{
-                                        padding: '8px 15px',
-                                        borderRadius: '15px',
-                                        fontSize: '1em',
-                                        fontWeight: 'bold',
-                                        backgroundColor: parcela.status === 'Pago' ? '#28a745' : 
-                                                       new Date(parcela.data_vencimento) < new Date() ? '#dc3545' : '#17a2b8',
-                                        color: 'white'
-                                    }}>
-                                        {parcela.status === 'Pago' ? 'Paga' : 
-                                         new Date(parcela.data_vencimento) < new Date() ? 'Vencida' : 'Previsto'}
-                                    </span>
-                                </td>
-                                <td>
-                                    {parcela.status !== 'Pago' && (
-                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            {parcelaEditando === parcela.id ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => {
-                                                            const novoValor = document.getElementById(`valor-${parcela.id}`).value;
-                                                            const novaData = document.getElementById(`data-${parcela.id}`).value;
-                                                            handleEditarParcela(parcela, novoValor, novaData);
-                                                        }}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✓ Salvar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setParcelaEditando(null)}
-                                                        className="voltar-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✕ Cancelar
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        onClick={() => setParcelaEditando(parcela.id)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em' }}
-                                                    >
-                                                        ✏️ Editar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleMarcarPaga(parcela)}
-                                                        className="submit-btn"
-                                                        style={{ padding: '10px 18px', fontSize: '1em', backgroundColor: '#28a745' }}
-                                                    >
-                                                        ✓ Pagar
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                    {parcela.status === 'Pago' && parcela.data_pagamento && (
-                                        <span style={{ fontSize: '1em', color: '#666' }}>
-                                            Paga em {new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                        </span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                {/* Barra de Progresso */}
+                <div style={{ padding: '16px 24px', background: 'var(--cor-fundo-secundario)', borderBottom: '1px solid var(--cor-borda)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto-secundario)' }}>Progresso do pagamento</span>
+                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--cor-purple)' }}>{progresso}%</span>
+                    </div>
+                    <div style={{ height: '8px', background: 'var(--cor-borda)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ 
+                            width: `${progresso}%`, 
+                            height: '100%', 
+                            background: 'linear-gradient(90deg, var(--cor-purple-light) 0%, var(--cor-purple) 100%)',
+                            borderRadius: '4px',
+                            transition: 'width 0.4s ease'
+                        }} />
+                    </div>
+                </div>
 
-                <div className="modal-footer" style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Lista de Parcelas */}
+                <div style={{ padding: '20px 24px', maxHeight: '350px', overflowY: 'auto' }}>
+                    <h4 style={{ margin: '0 0 16px', fontSize: '14px', color: 'var(--cor-texto-secundario)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        Parcelas
+                        <span style={{ fontSize: '11px', background: 'var(--cor-fundo-secundario)', padding: '2px 8px', borderRadius: '10px' }}>
+                            Clique para editar
+                        </span>
+                    </h4>
+                    
+                    {parcelas.map(parcela => {
+                        const status = getStatusParcela(parcela);
+                        const isEditando = parcelaEditando === parcela.id;
+                        
+                        return (
+                            <div 
+                                key={parcela.id} 
+                                className={`parcela-item ${status}`}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '14px 16px',
+                                    background: status === 'paga' ? 'var(--cor-acento-bg)' : 
+                                               status === 'vencida' ? 'var(--cor-vermelho-bg)' : 'var(--cor-fundo-secundario)',
+                                    borderRadius: '10px',
+                                    marginBottom: '10px',
+                                    border: `1px solid ${status === 'paga' ? 'var(--cor-acento-light)' : 
+                                                        status === 'vencida' ? 'var(--cor-vermelho-light)' : 'var(--cor-borda)'}`,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {/* Número da Parcela */}
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: '700',
+                                        fontSize: '14px',
+                                        background: status === 'paga' ? 'var(--cor-acento)' : 'var(--cor-card)',
+                                        color: status === 'paga' ? 'white' : 'var(--cor-texto-muted)',
+                                        border: status !== 'paga' ? '2px solid var(--cor-borda)' : 'none'
+                                    }}>
+                                        {status === 'paga' ? '✓' : parcela.numero_parcela}
+                                    </div>
+                                    
+                                    {/* Dados */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        {isEditando ? (
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    defaultValue={parcela.valor_parcela}
+                                                    id={`valor-${parcela.id}`}
+                                                    className="parcela-edit-input"
+                                                    style={{ width: '110px' }}
+                                                    placeholder="Valor"
+                                                />
+                                                <input
+                                                    type="date"
+                                                    defaultValue={parcela.data_vencimento}
+                                                    id={`data-${parcela.id}`}
+                                                    className="parcela-edit-input"
+                                                    style={{ width: '140px' }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--cor-texto)' }}>
+                                                    {formatCurrency(parcela.valor_parcela)}
+                                                </span>
+                                                <span style={{ fontSize: '12px', color: 'var(--cor-texto-secundario)' }}>
+                                                    {status === 'paga' && parcela.data_pagamento 
+                                                        ? `Paga em ${new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}`
+                                                        : `Vence ${new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}`
+                                                    }
+                                                    {parcela.observacao && ` • ${parcela.observacao}`}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Ações */}
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    {/* Badge de Status */}
+                                    <span className={`parcela-status-badge ${status}`}>
+                                        {status === 'paga' ? 'Paga' : status === 'vencida' ? 'Vencida' : 'Pendente'}
+                                    </span>
+                                    
+                                    {isEditando ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    const novoValor = document.getElementById(`valor-${parcela.id}`).value;
+                                                    const novaData = document.getElementById(`data-${parcela.id}`).value;
+                                                    handleEditarParcela(parcela, novoValor, novaData);
+                                                }}
+                                                className="parcela-action-btn primary"
+                                            >
+                                                ✓ Salvar
+                                            </button>
+                                            <button
+                                                onClick={() => setParcelaEditando(null)}
+                                                className="parcela-action-btn"
+                                            >
+                                                ✕
+                                            </button>
+                                        </>
+                                    ) : status === 'paga' ? (
+                                        <button
+                                            onClick={() => handleDesfazerPagamento(parcela)}
+                                            className="parcela-action-btn"
+                                            title="Desfazer pagamento"
+                                            style={{ color: 'var(--cor-vermelho)' }}
+                                        >
+                                            ↩️ Desfazer
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => setParcelaEditando(parcela.id)}
+                                                className="parcela-action-btn"
+                                                title="Editar valor e data"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => handleMarcarPaga(parcela)}
+                                                className="parcela-action-btn success"
+                                                title="Marcar como paga"
+                                            >
+                                                💰 Pagar
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Footer */}
+                <div style={{ 
+                    padding: '16px 24px', 
+                    borderTop: '1px solid var(--cor-borda)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'var(--cor-fundo-secundario)'
+                }}>
                     <button 
                         onClick={handleRecriarLancamentos}
-                        className="submit-btn"
-                        style={{ backgroundColor: '#ffc107', color: '#000', padding: '12px 24px', fontSize: '1.1em' }}
+                        className="cf-btn cf-btn-outline"
                         title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
                     >
                         🔄 Recriar Lançamentos
                     </button>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>Fechar</button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={onClose} className="cf-btn cf-btn-outline">
+                            Fechar
+                        </button>
+                    </div>
                 </div>
             </div>
         </Modal>
@@ -9546,78 +9788,94 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     const categorias = [
         {
             key: 'vencidos',
-            titulo: '🔴 Vencidos (Atrasados)',
-            cor: '#dc3545',
+            titulo: 'Vencidos',
+            icon: '⚠️',
+            cor: 'var(--cor-vermelho)',
+            corLight: 'var(--cor-vermelho-light)',
+            corBg: 'var(--cor-vermelho-bg)',
             dados: alertas.vencidos
         },
         {
             key: 'vence_hoje',
-            titulo: '⚠️ Vence Hoje',
-            cor: '#ffc107',
+            titulo: 'Vence Hoje',
+            icon: '📅',
+            cor: 'var(--cor-warning)',
+            corLight: 'var(--cor-warning-light)',
+            corBg: 'var(--cor-warning-bg)',
             dados: alertas.vence_hoje
         },
         {
             key: 'vence_amanha',
-            titulo: '📅 Vence Amanhã',
-            cor: '#fd7e14',
+            titulo: 'Vence Amanhã',
+            icon: '📆',
+            cor: 'var(--cor-info)',
+            corLight: 'var(--cor-info-light)',
+            corBg: 'var(--cor-info-bg)',
             dados: alertas.vence_amanha
         },
         {
             key: 'vence_7_dias',
-            titulo: '📆 Vence em até 7 dias',
-            cor: '#17a2b8',
+            titulo: 'Próximos 7 dias',
+            icon: '📊',
+            cor: 'var(--cor-purple)',
+            corLight: 'var(--cor-purple-light)',
+            corBg: 'var(--cor-purple-bg)',
             dados: alertas.vence_7_dias
         },
         {
             key: 'futuros',
-            titulo: '✅ Futuros (mais de 7 dias)',
-            cor: '#28a745',
+            titulo: 'Futuros (+7d)',
+            icon: '🗓️',
+            cor: 'var(--cor-acento)',
+            corLight: 'var(--cor-acento-light)',
+            corBg: 'var(--cor-acento-bg)',
             dados: alertas.futuros
         }
     ];
 
     return (
-        <div className="card-full">
-            <h3>📊 Quadro Informativo - Cronograma Financeiro</h3>
+        <div className="cf-section" style={{ marginBottom: '24px' }}>
+            <div className="cf-section-header">
+                <div className="cf-section-title">📊 Quadro Informativo - Cronograma Financeiro</div>
+            </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '20px' }}>
+            {/* Cards de Status - Design Moderno */}
+            <div className="status-cards-grid">
                 {categorias.map(categoria => (
                     <div
                         key={categoria.key}
+                        className="status-card"
                         style={{
-                            padding: '15px',
-                            backgroundColor: 'white',
-                            border: `3px solid ${categoria.cor}`,
-                            borderRadius: '8px',
                             cursor: categoria.dados.itens?.length > 0 ? 'pointer' : 'default',
-                            transition: 'transform 0.2s',
-                            position: 'relative'
+                            borderTop: `3px solid ${categoria.cor}`
                         }}
                         onClick={() => categoria.dados.itens?.length > 0 && toggleCategoria(categoria.key)}
-                        onMouseEnter={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1.02)')}
-                        onMouseLeave={(e) => categoria.dados.itens?.length > 0 && (e.currentTarget.style.transform = 'scale(1)')}
                     >
-                        <div style={{ fontSize: '1.1em', fontWeight: 'bold', marginBottom: '10px', color: categoria.cor }}>
-                            {categoria.titulo}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <div 
+                                className="status-card-icon"
+                                style={{ background: categoria.corBg }}
+                            >
+                                {categoria.icon}
+                            </div>
+                            {categoria.dados.itens?.length > 0 && (
+                                <span style={{ 
+                                    fontSize: '10px', 
+                                    color: categoria.cor, 
+                                    fontWeight: '600',
+                                    background: categoria.corBg,
+                                    padding: '3px 8px',
+                                    borderRadius: '12px'
+                                }}>
+                                    Ver →
+                                </span>
+                            )}
                         </div>
-                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', marginBottom: '5px' }}>
+                        <div className="status-card-label">{categoria.titulo}</div>
+                        <div className="status-card-value">{formatCurrency(categoria.dados.valor_total)}</div>
+                        <div className="status-card-count">
                             {categoria.dados.quantidade} {categoria.dados.quantidade === 1 ? 'item' : 'itens'}
                         </div>
-                        <div style={{ fontSize: '1.2em', color: '#666' }}>
-                            {formatCurrency(categoria.dados.valor_total)}
-                        </div>
-                        
-                        {categoria.dados.itens?.length > 0 && (
-                            <div style={{ 
-                                position: 'absolute', 
-                                bottom: '10px', 
-                                right: '10px', 
-                                fontSize: '0.8em', 
-                                color: '#999' 
-                            }}>
-                                {categoriaExpandida === categoria.key ? '▲ Fechar' : '▼ Ver detalhes'}
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>
@@ -9626,45 +9884,42 @@ const QuadroAlertasVencimento = ({ obraId }) => {
             {categoriaExpandida && (
                 <div style={{ 
                     marginTop: '20px', 
-                    padding: '15px', 
-                    backgroundColor: '#f8f9fa', 
-                    borderRadius: '8px',
-                    border: `2px solid ${categorias.find(c => c.key === categoriaExpandida)?.cor}`
+                    padding: '20px', 
+                    backgroundColor: 'var(--cor-fundo-secundario)', 
+                    borderRadius: 'var(--radius-md)',
+                    border: `2px solid ${categorias.find(c => c.key === categoriaExpandida)?.corLight}`
                 }}>
-                    <h4>{categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes</h4>
+                    <h4 style={{ margin: '0 0 16px 0', color: 'var(--cor-texto)', fontSize: '16px' }}>
+                        {categorias.find(c => c.key === categoriaExpandida)?.icon} {categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes
+                    </h4>
                     
-                    <table className="tabela-pendencias" style={{ marginTop: '10px' }}>
-                        <thead>
-                            <tr>
-                                <th>Tipo</th>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Valor</th>
-                                <th>Vencimento</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {alertas[categoriaExpandida]?.itens?.map((item, index) => (
-                                <tr key={index}>
-                                    <td>
-                                        <span style={{
-                                            padding: '3px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '0.8em',
-                                            backgroundColor: item.tipo === 'Parcela' ? '#6c757d' : '#007bff',
-                                            color: 'white'
-                                        }}>
-                                            {item.tipo}
-                                        </span>
-                                    </td>
-                                    <td>{item.descricao}</td>
-                                    <td>{item.fornecedor || '-'}</td>
-                                    <td><strong>{formatCurrency(item.valor)}</strong></td>
-                                    <td>{new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {alertas[categoriaExpandida]?.itens?.map((item, index) => (
+                            <div key={index} className="cf-pagamento-futuro-item">
+                                <div className="cf-pagamento-futuro-icon">
+                                    {item.tipo === 'Parcela' ? '📦' : '📄'}
+                                </div>
+                                <div className="cf-pagamento-futuro-info">
+                                    <div className="cf-pagamento-futuro-desc">{item.descricao}</div>
+                                    <div className="cf-pagamento-futuro-meta">
+                                        {item.fornecedor || 'Sem fornecedor'} • {new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                    </div>
+                                </div>
+                                <div className="cf-pagamento-futuro-valor">{formatCurrency(item.valor)}</div>
+                                <span className={`cf-badge ${item.tipo === 'Parcela' ? 'cf-badge-purple' : 'cf-badge-info'}`}>
+                                    {item.tipo}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <button 
+                        onClick={() => setCategoriaExpandida(null)}
+                        className="cf-btn cf-btn-outline"
+                        style={{ marginTop: '16px' }}
+                    >
+                        ✕ Fechar detalhes
+                    </button>
                 </div>
             )}
         </div>
@@ -10245,79 +10500,84 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {!simplified && itensSelecionados.length > 0 && (
                         <button 
                             onClick={handleMarcarMultiplosComoPago} 
-                            className="inserir-btn"
-                            style={{ backgroundColor: '#28a745' }}
+                            className="cf-btn cf-btn-success"
                         >
                             ✓ Marcar {itensSelecionados.length} Selecionado(s) como Pago
                         </button>
                     )}
                 </div>
 
-                {/* Tabela de Previsões */}
-                <div className="card-full" style={{ marginBottom: '20px' }}>
-                    <h3>📊 Tabela de Previsões Mensais</h3>
-                    <p style={{ color: '#666', fontSize: '0.9em', marginBottom: '10px' }}>
-                        Soma automática de pagamentos futuros e parcelados cadastrados no cronograma
-                    </p>
+                {/* Previsão de Fluxo de Caixa - NOVO DESIGN */}
+                <div className="cf-section" style={{ marginBottom: '20px' }}>
+                    <div className="cf-section-header">
+                        <div>
+                            <div className="cf-section-title">📊 Previsão de Fluxo de Caixa</div>
+                            <div className="cf-section-subtitle">Soma automática de pagamentos futuros e parcelados</div>
+                        </div>
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-financeiro/pdf`);
+                                    if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `cronograma_financeiro_obra_${obraId}.pdf`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    }
+                                } catch (error) {
+                                    console.error('Erro ao exportar PDF:', error);
+                                }
+                            }} 
+                            className="cf-btn cf-btn-outline"
+                        >
+                            📄 Gerar PDF
+                        </button>
+                    </div>
                     
                     {previsoes.length > 0 ? (
                         <>
-                            {/* DESKTOP: Tabela */}
-                            <div className="desktop-only">
-                                <table className="tabela-pendencias">
-                                    <thead>
-                                        <tr>
-                                            <th>Mês</th>
-                                            <th>Valor Previsto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previsoes.map((prev, index) => (
-                                            <tr key={index}>
-                                                <td><strong>{prev.mes_nome}</strong></td>
-                                                <td>{formatCurrency(prev.valor)}</td>
-                                            </tr>
-                                        ))}
-                                        <tr style={{ background: 'var(--cor-primaria)', color: 'white', fontWeight: 'bold' }}>
-                                            <td>TOTAL PREVISTO</td>
-                                            <td>{formatCurrency(totalPrevisoes)}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            {/* Gráfico de Barras */}
+                            <div className="cf-chart-container">
+                                {previsoes.slice(0, 6).map((prev, index) => {
+                                    const maxValor = Math.max(...previsoes.map(p => p.valor));
+                                    const altura = maxValor > 0 ? (prev.valor / maxValor) * 130 : 0;
+                                    
+                                    return (
+                                        <div key={index} className="cf-chart-bar">
+                                            <div className="cf-chart-bar-value">
+                                                {formatCurrency(prev.valor).replace('R$', '')}
+                                            </div>
+                                            <div 
+                                                className="cf-chart-bar-fill"
+                                                style={{ height: `${Math.max(altura, 20)}px` }}
+                                            />
+                                            <span className="cf-chart-bar-label">{prev.mes_nome}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
 
-                            {/* MOBILE: Cards */}
-                            <div className="mobile-only">
-                                {previsoes.map((prev, index) => (
-                                    <div key={index} className="card-previsao">
-                                        <div className="card-previsao-header">
-                                            <span className="card-previsao-mes">{prev.mes_nome}</span>
-                                        </div>
-                                        <div className="card-previsao-valor">
-                                            {formatCurrency(prev.valor)}
-                                        </div>
-                                    </div>
-                                ))}
-                                
-                                {/* Card do Total */}
-                                <div className="card-previsao card-previsao-total">
-                                    <div className="card-previsao-header">
-                                        <span className="card-previsao-mes">TOTAL PREVISTO</span>
-                                    </div>
-                                    <div className="card-previsao-valor">
-                                        {formatCurrency(totalPrevisoes)}
-                                    </div>
-                                </div>
+                            {/* Total */}
+                            <div className="cf-chart-total">
+                                <span className="cf-chart-total-label">TOTAL PREVISTO</span>
+                                <span className="cf-chart-total-value">{formatCurrency(totalPrevisoes)}</span>
                             </div>
                         </>
                     ) : (
-                        <p>Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.</p>
+                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                            Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.
+                        </p>
                     )}
                 </div>
 
                 {/* NOVO: Listagem de Pagamentos de Serviço Pendentes */}
                 {pagamentosServicoPendentes.length > 0 && (
-                    <div className="card-full" style={{ marginBottom: '20px', backgroundColor: '#fff3cd', border: '2px solid #ffc107' }}>
+                    <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--cor-warning-bg)', border: '2px solid var(--cor-warning-light)' }}>
                         <h3>⚠️ Pagamentos de Serviço Pendentes</h3>
                         <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
                             Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
@@ -10372,308 +10632,299 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     </div>
                 )}
 
-                {/* Listagem de Pagamentos Futuros - APENAS no modo completo */}
+                {/* Pagamentos Futuros (Únicos) - NOVO DESIGN */}
                 {!simplified && (
-                <div className="card-full" style={{ marginBottom: '20px' }}>
-                    <div className="card-header">
-                        <h3>💵 Pagamentos Futuros (Únicos)</h3>
+                <div className="cf-section" style={{ marginBottom: '20px' }}>
+                    <div className="cf-section-header">
+                        <div>
+                            <div className="cf-section-title">
+                                📋 Pagamentos Futuros
+                                <span className="cf-badge cf-badge-info">Únicos</span>
+                            </div>
+                            <div className="cf-section-subtitle">
+                                Clique na descrição para editar ou no badge para marcar como pago
+                            </div>
+                        </div>
                         <button 
-                            className="acao-btn" 
-                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosFuturosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosFuturosCollapsed ? 'Expandir' : 'Recolher'}
+                            {isPagamentosFuturosCollapsed ? '▼ Expandir' : '▲ Recolher'}
                         </button>
                     </div>
                     
                     {!isPagamentosFuturosCollapsed && (
                         <>
-                    <p style={{ 
-                        fontSize: '0.9em', 
-                        color: 'var(--cor-texto-secundario)', 
-                        marginBottom: '15px',
-                        padding: '10px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '6px',
-                        borderLeft: '3px solid var(--cor-primaria)'
-                    }}>
-                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para marcar como pago
-                    </p>
                     {pagamentosFuturos.filter(pag => pag.status === 'Previsto').length > 0 ? (
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th style={{width: '40px'}}>✓</th>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Vencimento</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                    <th style={{width: '60px'}}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosFuturos.filter(pag => pag.status === 'Previsto').map(pag => (
-                                    <tr key={pag.id}>
-                                        <td>
-                                            {pag.status === 'Previsto' && (
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={isItemSelecionado('futuro', pag.id)}
-                                                    onChange={() => toggleSelecao('futuro', pag.id)}
-                                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                                />
-                                            )}
-                                        </td>
-                                        <td 
-                                            data-label="Descrição"
-                                            onClick={() => {
-                                                if (pag.status === 'Previsto') {
-                                                    setPagamentoFuturoSelecionado(pag);
-                                                    setEditarFuturoVisible(true);
-                                                }
-                                            }}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {pagamentosFuturos.filter(pag => pag.status === 'Previsto').map(pag => (
+                                <div 
+                                    key={pag.id} 
+                                    className="cf-pagamento-futuro-item"
+                                    style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap'
+                                    }}
+                                >
+                                    {/* Checkbox */}
+                                    {pag.status === 'Previsto' && (
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isItemSelecionado('futuro', pag.id)}
+                                            onChange={() => toggleSelecao('futuro', pag.id)}
                                             style={{ 
-                                                cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
-                                                color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'inherit',
-                                                fontWeight: pag.status === 'Previsto' ? '500' : 'normal',
-                                                textDecoration: pag.status === 'Previsto' ? 'underline' : 'none'
+                                                cursor: 'pointer', 
+                                                width: '18px', 
+                                                height: '18px',
+                                                marginRight: '12px',
+                                                accentColor: 'var(--cor-primaria)'
                                             }}
-                                            title={pag.status === 'Previsto' ? 'Clique para editar' : ''}
-                                        >
+                                        />
+                                    )}
+                                    
+                                    {/* Ícone */}
+                                    <div className="cf-pagamento-futuro-icon">
+                                        {String(pag.id).startsWith('servico-') ? '🔗' : '📄'}
+                                    </div>
+                                    
+                                    {/* Info */}
+                                    <div 
+                                        className="cf-pagamento-futuro-info"
+                                        onClick={() => {
+                                            if (pag.status === 'Previsto' && !String(pag.id).startsWith('servico-')) {
+                                                setPagamentoFuturoSelecionado(pag);
+                                                setEditarFuturoVisible(true);
+                                            }
+                                        }}
+                                        style={{ 
+                                            cursor: pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') ? 'pointer' : 'default' 
+                                        }}
+                                    >
+                                        <div className="cf-pagamento-futuro-desc" style={{ 
+                                            color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'var(--cor-texto)'
+                                        }}>
                                             {pag.descricao}
-                                        </td>
-                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
-                                        <td data-label="Vencimento">{new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td data-label="Valor">{formatCurrency(pag.valor)}</td>
-                                        <td data-label="Status">
-                                            <span 
-                                                onClick={() => {
-                                                    if (pag.status === 'Previsto') {
-                                                        handleMarcarPagamentoFuturoPago(pag.id);
-                                                    }
+                                        </div>
+                                        <div className="cf-pagamento-futuro-meta">
+                                            {pag.fornecedor || 'Sem fornecedor'} • {new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Valor */}
+                                    <div className="cf-pagamento-futuro-valor">
+                                        {formatCurrency(pag.valor)}
+                                    </div>
+                                    
+                                    {/* Badge Status */}
+                                    <span 
+                                        onClick={() => {
+                                            if (pag.status === 'Previsto') {
+                                                handleMarcarPagamentoFuturoPago(pag.id);
+                                            }
+                                        }}
+                                        className="cf-badge cf-badge-warning"
+                                        style={{
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        title="Clique para marcar como pago"
+                                    >
+                                        Pendente
+                                    </span>
+                                    
+                                    {/* Ações */}
+                                    <div className="cf-pagamento-futuro-actions">
+                                        {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeletePagamentoFuturo(pag.id);
                                                 }}
-                                                style={{
-                                                    padding: '5px 12px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.85em',
-                                                    fontWeight: '600',
-                                                    backgroundColor: pag.status === 'Previsto' ? '#ff9800' : 
-                                                                   pag.status === 'Pago' ? '#28a745' : '#6c757d',
-                                                    color: 'white',
-                                                    cursor: pag.status === 'Previsto' ? 'pointer' : 'default',
-                                                    transition: 'all 0.2s ease',
-                                                    display: 'inline-block'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (pag.status === 'Previsto') {
-                                                        e.target.style.transform = 'scale(1.05)';
-                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.transform = 'scale(1)';
-                                                    e.target.style.boxShadow = 'none';
-                                                }}
-                                                title={pag.status === 'Previsto' ? 'Clique para marcar como pago' : ''}
+                                                className="cf-btn cf-btn-danger"
+                                                style={{ padding: '6px 10px', fontSize: '12px' }}
+                                                title="Excluir pagamento"
                                             >
-                                                {pag.status === 'Previsto' ? 'Pendente' : pag.status}
-                                            </span>
-                                        </td>
-                                        <td data-label="Ações" style={{textAlign: 'center'}}>
-                                            {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeletePagamentoFuturo(pag.id);
-                                                    }}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.3em',
-                                                        color: '#dc3545',
-                                                        padding: '5px',
-                                                        transition: 'transform 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
-                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                                    title="Excluir pagamento"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                            {String(pag.id).startsWith('servico-') && (
-                                                <span style={{ color: '#999', fontSize: '0.8em' }} title="Gerado automaticamente do serviço">
-                                                    🔗
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                                🗑️
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     ) : (
-                        <p>Nenhum pagamento futuro cadastrado.</p>
+                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                            Nenhum pagamento futuro cadastrado.
+                        </p>
                     )}
                     </>
                     )}
                 </div>
                 )}
 
-                {/* Listagem de Pagamentos Parcelados - APENAS no modo completo */}
+                {/* Listagem de Pagamentos Parcelados - CARDS ESTILO POPUP */}
                 {!simplified && (
-                <div className="card-full">
-                    <div className="card-header">
-                        <h3>📋 Pagamentos Parcelados</h3>
+                <div className="cf-section">
+                    <div className="cf-section-header">
+                        <div>
+                            <div className="cf-section-title">
+                                📦 Pagamentos Parcelados
+                                <span className="cf-badge cf-badge-purple">
+                                    {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length} ativos
+                                </span>
+                            </div>
+                            <div className="cf-section-subtitle">
+                                Clique no card para editar • Bolinhas = parcelas (● paga ○ pendente)
+                            </div>
+                        </div>
                         <button 
-                            className="acao-btn" 
-                            style={{backgroundColor: '#6c757d', color: 'white', minWidth: '100px'}}
+                            className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosParceladosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosParceladosCollapsed ? 'Expandir' : 'Recolher'}
+                            {isPagamentosParceladosCollapsed ? '▼ Expandir' : '▲ Recolher'}
                         </button>
                     </div>
                     
                     {!isPagamentosParceladosCollapsed && (
                         <>
-                    <p style={{ 
-                        fontSize: '0.9em', 
-                        color: 'var(--cor-texto-secundario)', 
-                        marginBottom: '15px',
-                        padding: '10px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '6px',
-                        borderLeft: '3px solid var(--cor-primaria)'
-                    }}>
-                        💡 <strong>Dica:</strong> Clique na <span style={{color: 'var(--cor-primaria)', fontWeight: '600'}}>descrição</span> para editar parcelas ou no badge <span style={{backgroundColor: '#ff9800', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85em'}}>Pendente</span> para pagar próxima parcela
-                    </p>
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
-                        <table className="tabela-pendencias">
-                            <thead>
-                                <tr>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Valor Total</th>
-                                    <th>Parcelas</th>
-                                    <th>Periodicidade</th>
-                                    <th>Valor/Parcela</th>
-                                    <th>Próx. Vencimento</th>
-                                    <th>Status</th>
-                                    <th style={{width: '60px'}}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => (
-                                    <tr key={pag.id}>
-                                        <td 
-                                            data-label="Descrição"
-                                            onClick={() => handleAbrirEditarParcelas(pag)}
+                        <div className="parcelas-cards-grid">
+                            {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
+                                const parcelasPagas = pag.proxima_parcela_numero ? pag.proxima_parcela_numero - 1 : pag.numero_parcelas;
+                                const progresso = Math.round((parcelasPagas / pag.numero_parcelas) * 100);
+                                
+                                // Cores por periodicidade
+                                const cores = {
+                                    'Semanal': { cor: 'var(--cor-warning-light)', corText: '#92400e', corBg: 'var(--cor-warning-bg)' },
+                                    'Quinzenal': { cor: 'var(--cor-purple-light)', corText: '#6b21a8', corBg: 'var(--cor-purple-bg)' },
+                                    'Mensal': { cor: 'var(--cor-info-light)', corText: '#0369a1', corBg: 'var(--cor-info-bg)' }
+                                };
+                                const corConfig = cores[pag.periodicidade] || cores['Mensal'];
+                                
+                                return (
+                                    <div 
+                                        key={pag.id}
+                                        className="parcela-popup-card"
+                                        onClick={() => handleAbrirEditarParcelas(pag)}
+                                        style={{ borderColor: 'var(--cor-borda)' }}
+                                    >
+                                        {/* Header com bolinhas */}
+                                        <div 
+                                            className="parcela-popup-header"
                                             style={{ 
-                                                cursor: 'pointer',
-                                                color: 'var(--cor-primaria)',
-                                                fontWeight: '500',
-                                                textDecoration: 'underline'
+                                                background: corConfig.corBg,
+                                                borderBottomColor: corConfig.cor,
+                                                color: corConfig.corText
                                             }}
-                                            title="Clique para editar parcelas"
                                         >
-                                            {pag.descricao}
-                                        </td>
-                                        <td data-label="Fornecedor">{pag.fornecedor || '-'}</td>
-                                        <td data-label="Valor Total">{formatCurrency(pag.valor_total)}</td>
-                                        <td data-label="Parcelas">
-                                            <strong>
-                                                {pag.proxima_parcela_numero ? 
-                                                    `${pag.proxima_parcela_numero}/${pag.numero_parcelas}` : 
-                                                    `${pag.numero_parcelas}/${pag.numero_parcelas}`
-                                                }
-                                            </strong>
-                                        </td>
-                                        <td data-label="Periodicidade">
-                                            <span style={{
-                                                padding: '4px 10px',
-                                                borderRadius: '12px',
-                                                fontSize: '0.85em',
-                                                fontWeight: '600',
-                                                backgroundColor: pag.periodicidade === 'Semanal' ? '#ffc107' : 
-                                                               pag.periodicidade === 'Quinzenal' ? '#ff9800' :
-                                                               pag.periodicidade === 'Mensal' ? '#6c757d' : '#17a2b8',
-                                                color: 'white'
-                                            }}>
-                                                {pag.periodicidade || 'Mensal'}
+                                            <span className="parcela-popup-title">
+                                                📦 {pag.descricao}
                                             </span>
-                                        </td>
-                                        <td data-label="Valor/Parcela">{formatCurrency(pag.valor_proxima_parcela || pag.valor_parcela)}</td>
-                                        <td data-label="Próx. Vencimento">
-                                            {pag.proxima_parcela_vencimento ? 
-                                                new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
-                                                '-'
-                                            }
-                                        </td>
-                                        <td data-label="Status">
-                                            <span 
-                                                onClick={() => {
-                                                    if (pag.status === 'Ativo') {
+                                            
+                                            {/* Bolinhas = Parcelas */}
+                                            <div className="parcelas-dots" style={{ color: corConfig.cor }}>
+                                                {Array.from({ length: Math.min(pag.numero_parcelas, 10) }, (_, i) => (
+                                                    <div 
+                                                        key={i}
+                                                        className={`parcela-dot ${i < parcelasPagas ? 'paga' : 'pendente'}`}
+                                                        style={{ borderColor: corConfig.cor, background: i < parcelasPagas ? corConfig.cor : 'transparent' }}
+                                                        title={i < parcelasPagas ? `Parcela ${i + 1} - Paga` : `Parcela ${i + 1} - Pendente`}
+                                                    />
+                                                ))}
+                                                {pag.numero_parcelas > 10 && (
+                                                    <span style={{ fontSize: '10px', marginLeft: '4px' }}>+{pag.numero_parcelas - 10}</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Conteúdo */}
+                                        <div className="parcela-popup-content">
+                                            {/* Valor Total */}
+                                            <div className="parcela-popup-valor">
+                                                <div className="parcela-popup-valor-number">
+                                                    {formatCurrency(pag.valor_total)}
+                                                </div>
+                                                <div className="parcela-popup-periodo">
+                                                    {pag.periodicidade || 'Mensal'}
+                                                </div>
+                                            </div>
+
+                                            {/* Info Grid */}
+                                            <div className="parcela-popup-info-grid">
+                                                <div className="parcela-popup-info-item">
+                                                    <div className="parcela-popup-info-label">Parcela</div>
+                                                    <div className="parcela-popup-info-value">
+                                                        {pag.proxima_parcela_numero || pag.numero_parcelas}/{pag.numero_parcelas}
+                                                    </div>
+                                                </div>
+                                                <div className="parcela-popup-info-item">
+                                                    <div className="parcela-popup-info-label">Valor/Parc</div>
+                                                    <div className="parcela-popup-info-value">
+                                                        {formatCurrency(pag.valor_proxima_parcela || pag.valor_parcela).replace('R$', '')}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Vencimento */}
+                                            <div className="parcela-popup-vencimento">
+                                                <span className="parcela-popup-vencimento-label">📅 Vencimento</span>
+                                                <span className="parcela-popup-vencimento-value">
+                                                    {pag.proxima_parcela_vencimento ? 
+                                                        new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
+                                                        'Quitado'
+                                                    }
+                                                </span>
+                                            </div>
+
+                                            {/* Barra de Progresso */}
+                                            <div className="parcela-popup-progress">
+                                                <div className="parcela-popup-progress-header">
+                                                    <span className="parcela-popup-progress-label">Progresso</span>
+                                                    <span className="parcela-popup-progress-percent" style={{ color: corConfig.corText }}>{progresso}%</span>
+                                                </div>
+                                                <div className="parcela-popup-progress-bar">
+                                                    <div 
+                                                        className="parcela-popup-progress-fill"
+                                                        style={{ width: `${progresso}%`, background: corConfig.cor }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className="parcela-popup-footer">
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button 
+                                                    className="parcela-popup-btn"
+                                                    style={{ flex: 1, background: corConfig.cor, color: corConfig.corText }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         handleMarcarParcelaPaga(pag);
-                                                    }
-                                                }}
-                                                style={{
-                                                    padding: '5px 12px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.85em',
-                                                    fontWeight: '600',
-                                                    backgroundColor: pag.status === 'Ativo' ? '#ff9800' : 
-                                                                   pag.status === 'Concluído' ? '#28a745' : '#6c757d',
-                                                    color: 'white',
-                                                    cursor: pag.status === 'Ativo' ? 'pointer' : 'default',
-                                                    transition: 'all 0.2s ease',
-                                                    display: 'inline-block'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    if (pag.status === 'Ativo') {
-                                                        e.target.style.transform = 'scale(1.05)';
-                                                        e.target.style.boxShadow = '0 2px 8px rgba(255, 152, 0, 0.4)';
-                                                    }
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.target.style.transform = 'scale(1)';
-                                                    e.target.style.boxShadow = 'none';
-                                                }}
-                                                title={pag.status === 'Ativo' ? 'Clique para pagar próxima parcela' : ''}
-                                            >
-                                                {pag.status === 'Ativo' ? 'Pendente' : pag.status}
-                                            </span>
-                                        </td>
-                                        <td data-label="Ações" style={{textAlign: 'center'}}>
-                                            {pag.status === 'Ativo' && (
-                                                <button
+                                                    }}
+                                                >
+                                                    💰 Pagar Parcela {pag.proxima_parcela_numero || pag.numero_parcelas}
+                                                </button>
+                                                <button 
+                                                    className="parcela-popup-btn"
+                                                    style={{ background: 'var(--cor-vermelho-bg)', color: 'var(--cor-vermelho)', padding: '10px 12px' }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleDeletePagamentoParcelado(pag.id);
                                                     }}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.3em',
-                                                        color: '#dc3545',
-                                                        padding: '5px',
-                                                        transition: 'transform 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
-                                                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                                    title="Excluir pagamento parcelado"
+                                                    title="Excluir parcelamento"
                                                 >
                                                     🗑️
                                                 </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     ) : (
-                        <p>Nenhum pagamento parcelado cadastrado.</p>
+                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                            Nenhum pagamento parcelado cadastrado.
+                        </p>
                     )}
                     </>
                     )}
