@@ -2200,6 +2200,50 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 )}
             </h2>
             
+            {/* Legenda de Tipos */}
+            {itemsPagos.length > 0 && (
+                <div style={{ 
+                    display: 'flex', 
+                    gap: '20px', 
+                    marginBottom: '16px',
+                    padding: '12px 16px',
+                    backgroundColor: 'var(--cor-fundo-secundario)',
+                    borderRadius: '8px',
+                    flexWrap: 'wrap'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                            width: '14px', 
+                            height: '14px', 
+                            borderRadius: '4px', 
+                            backgroundColor: '#6366f1',
+                            display: 'inline-block'
+                        }}></span>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Mão de Obra</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                            width: '14px', 
+                            height: '14px', 
+                            borderRadius: '4px', 
+                            backgroundColor: '#10b981',
+                            display: 'inline-block'
+                        }}></span>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Material</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                            width: '14px', 
+                            height: '14px', 
+                            borderRadius: '4px', 
+                            backgroundColor: '#f59e0b',
+                            display: 'inline-block'
+                        }}></span>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Equipamento</span>
+                    </div>
+                </div>
+            )}
+            
             {itemsPagos.length === 0 ? (
                 <div style={{ 
                     textAlign: 'center', 
@@ -2227,9 +2271,34 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagamentosExibidos.map((item, idx) => (
-                                    <tr key={item.id || idx}>
-                                        <td>{new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                                {pagamentosExibidos.map((item, idx) => {
+                                    // Determinar cor baseada no tipo
+                                    const getTipoColor = () => {
+                                        const tipo = item.tipo || item.tipo_pagamento || '';
+                                        const tipoLower = tipo.toLowerCase();
+                                        if (tipoLower.includes('mão') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1'; // Indigo
+                                        if (tipoLower.includes('material')) return '#10b981'; // Verde
+                                        if (tipoLower.includes('equipamento')) return '#f59e0b'; // Laranja
+                                        return '#94a3b8'; // Cinza padrão
+                                    };
+                                    const tipoColor = getTipoColor();
+                                    
+                                    return (
+                                    <tr key={item.id || idx} style={{ position: 'relative' }}>
+                                        <td style={{ position: 'relative', paddingLeft: '16px' }}>
+                                            {/* Indicador colorido */}
+                                            <span style={{
+                                                position: 'absolute',
+                                                left: '0',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                width: '4px',
+                                                height: '70%',
+                                                borderRadius: '2px',
+                                                backgroundColor: tipoColor
+                                            }}></span>
+                                            {new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                        </td>
                                         <td>
                                             <div style={{ fontWeight: '500' }}>{item.descricao}</div>
                                             {item.servico_nome && (
@@ -2321,7 +2390,8 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             </td>
                                         )}
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -2740,6 +2810,41 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                     <p><strong>Chave PIX:</strong> {servico.pix || 'N/A'}</p>
                     <hr />
                     <h3>Histórico de Pagamentos (do Serviço)</h3>
+                    
+                    {/* Legenda de Tipos */}
+                    {servico.pagamentos && servico.pagamentos.length > 0 && (
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '20px', 
+                            marginBottom: '12px',
+                            padding: '10px 12px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '6px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ 
+                                    width: '12px', 
+                                    height: '12px', 
+                                    borderRadius: '3px', 
+                                    backgroundColor: '#6366f1',
+                                    display: 'inline-block'
+                                }}></span>
+                                <span style={{ fontSize: '12px', color: '#334155' }}>Mão de Obra</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ 
+                                    width: '12px', 
+                                    height: '12px', 
+                                    borderRadius: '3px', 
+                                    backgroundColor: '#10b981',
+                                    display: 'inline-block'
+                                }}></span>
+                                <span style={{ fontSize: '12px', color: '#334155' }}>Material</span>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="tabela-scroll-container" style={{maxHeight: '250px', overflowX: 'auto'}}> 
                         <table className="tabela-pagamentos" style={{width: '100%', minWidth: '500px'}}>
                             <thead>
@@ -2754,9 +2859,23 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                             </thead>
                             <tbody>
                                 {servico.pagamentos && servico.pagamentos.length > 0 ? (
-                                    servico.pagamentos.map((pag) => (
+                                    servico.pagamentos.map((pag) => {
+                                        const tipoColor = pag.tipo_pagamento === 'mao_de_obra' ? '#6366f1' : '#10b981';
+                                        return (
                                         <tr key={pag.id || pag.parcela_id}>
-                                            <td style={{whiteSpace: 'nowrap'}}>{pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                                            <td style={{whiteSpace: 'nowrap', position: 'relative', paddingLeft: '14px'}}>
+                                                <span style={{
+                                                    position: 'absolute',
+                                                    left: '0',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    width: '4px',
+                                                    height: '60%',
+                                                    borderRadius: '2px',
+                                                    backgroundColor: tipoColor
+                                                }}></span>
+                                                {pag.data ? new Date(pag.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
+                                            </td>
                                             <td style={{fontSize: '0.85em'}}>{pag.tipo_pagamento === 'mao_de_obra' ? 'Mão de Obra' : 'Material'}</td>
                                             <td style={{fontSize: '0.85em'}}>{pag.fornecedor || '-'}</td>
                                             <td style={{textAlign: 'right', whiteSpace: 'nowrap', fontWeight: '500'}}>{formatCurrency(pag.valor_total)}</td>
@@ -2770,7 +2889,8 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
                                                 </td>
                                             )}
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                  ) : (
                                     <tr>
                                         <td colSpan={user.role === 'administrador' ? 6 : 5} style={{textAlign: 'center', padding: '20px', color: '#999'}}>Nenhum pagamento registrado.</td>
