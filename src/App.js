@@ -2783,12 +2783,17 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
 
     if (!servico) return null;
     
-    // Calcula totais pagos
+    // Separar pagamentos do serviço (PagamentoServico) dos lancamentos vinculados
+    const pagamentosServico = (servico.pagamentos || []).filter(p => !p.is_lancamento && !p.is_parcela);
+    const lancamentosEParcelas = (servico.pagamentos || []).filter(p => p.is_lancamento || p.is_parcela);
+    
+    // Calcula totais pagos (inclui todos: PagamentoServico, lancamentos e parcelas)
     const totalPagoMO = (servico.pagamentos || [])
         .filter(p => p.tipo_pagamento === 'mao_de_obra')
         .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
         
-    const totalGastoMO = (servico.pagamentos || [])
+    // Comprometido: PagamentoServico + total_gastos_vinculados (evita duplicar lancamentos)
+    const totalGastoMO = pagamentosServico
         .filter(p => p.tipo_pagamento === 'mao_de_obra')
         .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mo || 0);
 
@@ -2796,7 +2801,7 @@ const ServicoDetailsModal = ({ servico, onClose, onSave, fetchObraData, obraId }
         .filter(p => p.tipo_pagamento === 'material')
         .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
         
-    const totalGastoMat = (servico.pagamentos || [])
+    const totalGastoMat = pagamentosServico
         .filter(p => p.tipo_pagamento === 'material')
         .reduce((sum, p) => sum + (p.valor_total || 0), 0) + (servico.total_gastos_vinculados_mat || 0);
 
