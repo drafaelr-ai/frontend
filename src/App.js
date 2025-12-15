@@ -6534,6 +6534,17 @@ const totalOrcamentosPendentes = useMemo(() => {
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
                 console.log("Dados da obra recebidos:", data);
+                
+                // DEBUG: Verificar pagamentos dos serviços
+                if (data.servicos) {
+                    data.servicos.forEach(s => {
+                        console.log(`[DEBUG] Serviço '${s.nome}' (ID=${s.id}): ${(s.pagamentos || []).length} pagamentos`);
+                        if (s.pagamentos && s.pagamentos.length > 0) {
+                            s.pagamentos.forEach(p => console.log(`   - ${p.descricao}: R$ ${p.valor_pago}`));
+                        }
+                    });
+                }
+                
                 setObraSelecionada(data.obra || null);
                 setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
                 const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
