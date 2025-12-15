@@ -18,10 +18,6 @@ import './components/DashboardObra.css';
 // Import para compressão de imagens
 import { compressImages } from './utils/imageCompression';
 
-// NOVO: Import do módulo de IA
-import AssistenteIA from './components/AssistenteIA';
-import './components/AssistenteIA.css';
-
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -1120,7 +1116,6 @@ const Sidebar = ({
         { id: 'boletos', icon: '📄', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
         { id: 'orcamentos', icon: '📋', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
-        { id: 'assistente-ia', icon: '🤖', label: 'Assistente IA', shortLabel: 'IA' },
         { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
@@ -7942,15 +7937,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onUpdate={() => fetchObraData(obraSelecionada.id)}
-                        />
-                    )}
-
-                    {/* === PÁGINA: ASSISTENTE IA === */}
-                    {currentPage === 'assistente-ia' && (
-                        <AssistenteIA
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            onClose={() => setCurrentPage('home')}
                         />
                     )}
 
