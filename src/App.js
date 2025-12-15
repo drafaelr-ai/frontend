@@ -1950,6 +1950,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             let endpoint = '';
             let numericId = strId;
             let method = 'PATCH';
+            let body = {
+                servico_id: editandoItem.servico_id || null
+            };
             
             // Extrair ID numérico
             if (strId.startsWith('lanc-')) {
@@ -1966,18 +1969,22 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 const boletoId = editandoItem.boleto_id || strId.replace('boleto-', '');
                 endpoint = `${API_URL}/obras/${obraId}/boletos/${boletoId}`;
                 method = 'PUT';
+                body = { vinculado_servico_id: editandoItem.servico_id || null };
+            } else if (editandoItem.tipo_registro === 'parcela_individual') {
+                // CORREÇÃO: Parcela individual - atualizar o PagamentoParcelado pai
+                const pagParceladoId = editandoItem.pagamento_parcelado_id;
+                if (pagParceladoId) {
+                    endpoint = `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParceladoId}`;
+                    method = 'PUT';
+                    body = { 
+                        servico_id: editandoItem.servico_id || null,
+                        segmento: editandoItem.tipo === 'Mão de Obra' ? 'Mão de Obra' : 'Material'
+                    };
+                } else {
+                    throw new Error('ID do pagamento parcelado não encontrado');
+                }
             } else {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
-            }
-            
-            const body = {
-                servico_id: editandoItem.servico_id || null
-            };
-            
-            // Para boletos, usar vinculado_servico_id
-            if (editandoItem.tipo_registro === 'boleto') {
-                body.vinculado_servico_id = editandoItem.servico_id || null;
-                delete body.servico_id;
             }
             
             const response = await fetchWithAuth(endpoint, {
