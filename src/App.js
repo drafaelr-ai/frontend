@@ -9775,10 +9775,29 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
     const [parcelaEditando, setParcelaEditando] = useState(null);
     const [observacaoEditando, setObservacaoEditando] = useState(null);
     const [editandoDadosGerais, setEditandoDadosGerais] = useState(false);
+    const [servicos, setServicos] = useState([]);
     const [dadosGerais, setDadosGerais] = useState({
         descricao: pagamentoParcelado.descricao,
-        fornecedor: pagamentoParcelado.fornecedor || ''
+        fornecedor: pagamentoParcelado.fornecedor || '',
+        servico_id: pagamentoParcelado.servico_id || '',
+        segmento: pagamentoParcelado.segmento || 'Material'
     });
+
+    // Buscar serviços da obra
+    useEffect(() => {
+        const fetchServicos = async () => {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos-nomes`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setServicos(data.servicos || []);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar serviços:', error);
+            }
+        };
+        fetchServicos();
+    }, [obraId]);
 
     useEffect(() => {
         carregarParcelas();
@@ -10024,6 +10043,40 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                     }}
                                     placeholder="Fornecedor"
                                 />
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <select
+                                        value={dadosGerais.servico_id || ''}
+                                        onChange={(e) => setDadosGerais({...dadosGerais, servico_id: e.target.value || null})}
+                                        style={{ 
+                                            flex: 1,
+                                            minWidth: '200px',
+                                            fontSize: '14px', 
+                                            padding: '6px 12px', 
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--cor-borda)',
+                                            background: 'white'
+                                        }}
+                                    >
+                                        <option value="">Sem vínculo com serviço (Despesa Extra)</option>
+                                        {servicos.map(s => (
+                                            <option key={s.id} value={s.id}>{s.nome}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={dadosGerais.segmento || 'Material'}
+                                        onChange={(e) => setDadosGerais({...dadosGerais, segmento: e.target.value})}
+                                        style={{ 
+                                            fontSize: '14px', 
+                                            padding: '6px 12px', 
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--cor-borda)',
+                                            background: 'white'
+                                        }}
+                                    >
+                                        <option value="Material">Material</option>
+                                        <option value="Mão de Obra">Mão de Obra</option>
+                                    </select>
+                                </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
                                         ✓ Salvar
@@ -10061,6 +10114,19 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                 </h2>
                                 <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
                                     Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
+                                    {pagamentoParcelado.servico_id && (
+                                        <span style={{ 
+                                            marginLeft: '8px',
+                                            padding: '2px 8px',
+                                            backgroundColor: 'var(--cor-primaria-bg)',
+                                            color: 'var(--cor-primaria)',
+                                            borderRadius: '4px',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                        }}>
+                                            🔗 {servicos.find(s => s.id === pagamentoParcelado.servico_id)?.nome || 'Serviço vinculado'}
+                                        </span>
+                                    )}
                                 </p>
                             </>
                         )}
