@@ -7800,115 +7800,90 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {currentPage === 'home' && (
                         <div className="home-page-container">
                             {/* Header com Título + Cards de Resumo */}
-                            {(() => {
-                                // Calcular totais
-                                const getValorMO = (s) => parseFloat(s.valor_mo || s.valor_global_mao_de_obra || 0);
-                                const getValorMaterial = (s) => parseFloat(s.valor_material || s.valor_global_material || 0);
-                                const getValorTotal = (s) => getValorMO(s) + getValorMaterial(s);
-                                const getValorPago = (s) => {
-                                    const pagamentos = s.pagamentos || [];
-                                    return pagamentos.reduce((sum, p) => sum + (p.valor_pago || 0), 0);
-                                };
-                                
-                                const orcamentoTotal = servicos.reduce((sum, s) => sum + getValorTotal(s), 0);
-                                const valoresPagos = servicos.reduce((sum, s) => sum + getValorPago(s), 0);
-                                
-                                // Liberado na Fila (lançamentos pendentes + pagamentos futuros)
-                                const liberadoFila = lancamentos
-                                    .filter(l => l.status !== 'Pago')
-                                    .reduce((sum, l) => sum + ((l.valor_total || 0) - (l.valor_pago || 0)), 0);
-                                
-                                // Despesas extras (lançamentos sem serviço vinculado)
-                                const despesasExtras = lancamentos
-                                    .filter(l => !l.servico_id)
-                                    .reduce((sum, l) => sum + (l.valor_pago || 0), 0);
-                                
-                                return (
+                           {/* Header com Título + Cards de Resumo */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '16px 20px',
+                                background: '#fff',
+                                borderRadius: '12px',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                                marginBottom: '20px',
+                                flexWrap: 'wrap',
+                                gap: '16px'
+                            }}>
+                                {/* Título */}
+                                <h1 style={{ 
+                                    margin: 0,
+                                    fontSize: '1.4rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    color: '#1e293b'
+                                }}>
+                                    🏠 Início - {obraSelecionada.nome}
+                                </h1>
+
+                                {/* Cards de Resumo - Usando valores do backend (sumarios) */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '10px',
+                                    flexWrap: 'wrap'
+                                }}>
                                     <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '16px 20px',
-                                        background: '#fff',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                                        marginBottom: '20px',
-                                        flexWrap: 'wrap',
-                                        gap: '16px'
+                                        padding: '8px 14px',
+                                        background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid #ef4444',
+                                        minWidth: '130px'
                                     }}>
-                                        {/* Título */}
-                                        <h1 style={{ 
-                                            margin: 0,
-                                            fontSize: '1.4rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '10px',
-                                            color: '#1e293b'
-                                        }}>
-                                            🏠 Início - {obraSelecionada.nome}
-                                        </h1>
-
-                                        {/* Cards de Resumo */}
-                                        <div style={{
-                                            display: 'flex',
-                                            gap: '10px',
-                                            flexWrap: 'wrap'
-                                        }}>
-                                            <div style={{
-                                                padding: '8px 14px',
-                                                background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                                                borderRadius: '8px',
-                                                borderLeft: '4px solid #3b82f6',
-                                                minWidth: '130px'
-                                            }}>
-                                                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
-                                                <div style={{ fontSize: '15px', fontWeight: '700', color: '#3b82f6' }}>
-                                                    {formatCurrency(orcamentoTotal)}
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                padding: '8px 14px',
-                                                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                                                borderRadius: '8px',
-                                                borderLeft: '4px solid #22c55e',
-                                                minWidth: '130px'
-                                            }}>
-                                                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Valores Pagos</div>
-                                                <div style={{ fontSize: '15px', fontWeight: '700', color: '#22c55e' }}>
-                                                    {formatCurrency(valoresPagos)}
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                padding: '8px 14px',
-                                                background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-                                                borderRadius: '8px',
-                                                borderLeft: '4px solid #a855f7',
-                                                minWidth: '130px'
-                                            }}>
-                                                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Liberado (Fila)</div>
-                                                <div style={{ fontSize: '15px', fontWeight: '700', color: '#a855f7' }}>
-                                                    {formatCurrency(liberadoFila)}
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                padding: '8px 14px',
-                                                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                                                borderRadius: '8px',
-                                                borderLeft: '4px solid #f59e0b',
-                                                minWidth: '130px'
-                                            }}>
-                                                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Despesas Extras</div>
-                                                <div style={{ fontSize: '15px', fontWeight: '700', color: '#f59e0b' }}>
-                                                    {formatCurrency(despesasExtras)}
-                                                </div>
-                                            </div>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
+                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
+                                            {formatCurrency(sumarios?.orcamento_total || 0)}
                                         </div>
                                     </div>
-                                );
-                            })()}
+
+                                    <div style={{
+                                        padding: '8px 14px',
+                                        background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid #3b82f6',
+                                        minWidth: '130px'
+                                    }}>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Valores Pagos</div>
+                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#3b82f6' }}>
+                                            {formatCurrency(sumarios?.valores_pagos || 0)}
+                                        </div>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '8px 14px',
+                                        background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid #22c55e',
+                                        minWidth: '130px'
+                                    }}>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Liberado (Fila)</div>
+                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#22c55e' }}>
+                                            {formatCurrency(sumarios?.liberado_pagamento || 0)}
+                                        </div>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '8px 14px',
+                                        background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid #a855f7',
+                                        minWidth: '130px'
+                                    }}>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Despesas Extras</div>
+                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#a855f7' }}>
+                                            {formatCurrency(sumarios?.despesas_extras || 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             {/* Dashboard com Gráficos */}
                             <DashboardObra 
