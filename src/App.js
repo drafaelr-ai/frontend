@@ -6643,6 +6643,10 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     
     // Estado para modal de aprovação com escolha de serviço
     const [aprovandoOrcamento, setAprovandoOrcamento] = useState(null);
+    
+    // Estado para seleção múltipla
+    const [selecionados, setSelecionados] = useState([]);
+    const [aprovandoMultiplos, setAprovandoMultiplos] = useState(false);
 
     useEffect(() => {
         carregarDados();
@@ -6672,6 +6676,72 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     const handleAprovar = (orcamento) => {
         setAprovandoOrcamento(orcamento);
+    };
+
+    // Funções para seleção múltipla
+    const toggleSelecionado = (id) => {
+        setSelecionados(prev => 
+            prev.includes(id) 
+                ? prev.filter(x => x !== id) 
+                : [...prev, id]
+        );
+    };
+
+    const toggleSelecionarTodos = () => {
+        const pendentes = orcamentos.filter(orc => orc.status === 'Pendente');
+        if (selecionados.length === pendentes.length) {
+            setSelecionados([]);
+        } else {
+            setSelecionados(pendentes.map(orc => orc.id));
+        }
+    };
+
+    const handleAprovarSelecionados = async () => {
+        if (selecionados.length === 0) {
+            alert('Selecione pelo menos uma solicitação para aprovar.');
+            return;
+        }
+
+        if (!window.confirm(`Confirma a aprovação de ${selecionados.length} solicitação(ões)?`)) {
+            return;
+        }
+
+        setAprovandoMultiplos(true);
+        let aprovados = 0;
+        let erros = [];
+
+        for (const id of selecionados) {
+            try {
+                const response = await fetchWithAuth(
+                    `${API_URL}/orcamentos/${id}/aprovar`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({})
+                    }
+                );
+
+                if (response.ok) {
+                    aprovados++;
+                } else {
+                    const data = await response.json();
+                    erros.push(`ID ${id}: ${data.erro || 'Erro desconhecido'}`);
+                }
+            } catch (err) {
+                erros.push(`ID ${id}: ${err.message}`);
+            }
+        }
+
+        setAprovandoMultiplos(false);
+        setSelecionados([]);
+
+        if (erros.length > 0) {
+            alert(`✅ ${aprovados} aprovado(s)\n❌ ${erros.length} erro(s):\n${erros.join('\n')}`);
+        } else {
+            alert(`✅ ${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
+        }
+
+        if (onSave) onSave();
+        carregarDados();
     };
 
     const handleConfirmarAprovacao = async () => {
@@ -6840,19 +6910,44 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                             {formatCurrency(totalPendente)}
                         </span>
                     </div>
-                    <button 
-                        onClick={() => setAddModalVisible(true)}
-                        className="acao-btn add-btn"
-                        style={{ backgroundColor: 'var(--cor-info)' }}
-                    >
-                        + Nova Solicitação
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {selecionados.length > 0 && (
+                            <button 
+                                onClick={handleAprovarSelecionados}
+                                disabled={aprovandoMultiplos}
+                                className="acao-btn"
+                                style={{ 
+                                    backgroundColor: 'var(--cor-acento)', 
+                                    color: 'white',
+                                    opacity: aprovandoMultiplos ? 0.7 : 1
+                                }}
+                            >
+                                {aprovandoMultiplos ? '⏳ Aprovando...' : `✓ Aprovar Selecionados (${selecionados.length})`}
+                            </button>
+                        )}
+                        <button 
+                            onClick={() => setAddModalVisible(true)}
+                            className="acao-btn add-btn"
+                            style={{ backgroundColor: 'var(--cor-info)' }}
+                        >
+                            + Nova Solicitação
+                        </button>
+                    </div>
                 </div>
 
                 {orcamentosPendentes.length > 0 ? (
                     <table className="tabela-pendencias">
                         <thead>
                             <tr>
+                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                    <input 
+                                        type="checkbox"
+                                        checked={selecionados.length === orcamentosPendentes.length && orcamentosPendentes.length > 0}
+                                        onChange={toggleSelecionarTodos}
+                                        title="Selecionar todos"
+                                        style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                    />
+                                </th>
                                 <th>Descrição</th>
                                 <th>Fornecedor</th>
                                 <th>Segmento</th>
@@ -6863,7 +6958,17 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                         </thead>
                         <tbody>
                             {orcamentosPendentes.map(orc => (
-                                <tr key={orc.id}>
+                                <tr key={orc.id} style={{ 
+                                    backgroundColor: selecionados.includes(orc.id) ? '#e8f5e9' : 'transparent'
+                                }}>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <input 
+                                            type="checkbox"
+                                            checked={selecionados.includes(orc.id)}
+                                            onChange={() => toggleSelecionado(orc.id)}
+                                            style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                        />
+                                    </td>
                                     <td
                                         onClick={() => setEditingOrcamento(orc)}
                                         style={{
