@@ -7119,6 +7119,9 @@ function Dashboard() {
     // NOVO: Estado para modal do Caixa de Obra
     const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
     
+    // NOVO: Estado para mostrar obras concluídas
+    const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
+    
     // === NOVO: Estados para Sidebar ===
     const [currentPage, setCurrentPage] = useState('obras');
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -7304,11 +7307,14 @@ const totalOrcamentosPendentes = useMemo(() => {
     // Efeito para buscar obras
     useEffect(() => {
         console.log("Buscando lista de obras...");
-        fetchWithAuth(`${API_URL}/obras`)
+        const url = mostrarConcluidas 
+            ? `${API_URL}/obras?mostrar_concluidas=true` 
+            : `${API_URL}/obras`;
+        fetchWithAuth(url)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => { console.log("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
             .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
-    }, []); 
+    }, [mostrarConcluidas]); 
     
     // Callback para abrir modal de orçamentos
     useEffect(() => {
@@ -7486,6 +7492,26 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => console.error('Erro ao deletar obra:', error));
+    };
+    
+    // NOVO: Função para marcar obra como concluída/reabrir
+    const handleConcluirObra = (obraId, concluida) => {
+        const acao = concluida ? 'reabrir' : 'concluir';
+        if (!window.confirm(`Deseja ${acao} esta obra?`)) return;
+        
+        fetchWithAuth(`${API_URL}/obras/${obraId}/concluir`, { 
+            method: 'PATCH',
+            body: JSON.stringify({ concluida: !concluida })
+        })
+        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
+        .then((data) => { 
+            alert(data.sucesso);
+            // Atualiza a lista de obras
+            setObras(prevObras => prevObras.map(o => 
+                o.id === obraId ? { ...o, concluida: !concluida } : o
+            ).filter(o => mostrarConcluidas || !o.concluida));
+        })
+        .catch(error => { console.error('Erro ao concluir obra:', error); alert('Erro: ' + error.message); });
     };
     
     // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
@@ -7822,18 +7848,86 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 )}
                 
+                {/* Toggle para mostrar obras concluídas */}
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    marginBottom: '15px',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <label style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--cor-texto-secundario)',
+                        fontSize: '0.9em'
+                    }}>
+                        <input 
+                            type="checkbox"
+                            checked={mostrarConcluidas}
+                            onChange={(e) => setMostrarConcluidas(e.target.checked)}
+                            style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                        Mostrar obras concluídas
+                    </label>
+                </div>
+                
                 <div className="lista-obras">
                     {obras.length > 0 ? (
                         obras.map(obra => (
-                            <div key={obra.id} className="card-obra">
+                            <div 
+                                key={obra.id} 
+                                className="card-obra"
+                                style={{
+                                    opacity: obra.concluida ? 0.7 : 1,
+                                    border: obra.concluida ? '2px solid #22c55e' : undefined,
+                                    position: 'relative'
+                                }}
+                            >
+                                {obra.concluida && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '10px',
+                                        left: '10px',
+                                        backgroundColor: '#22c55e',
+                                        color: 'white',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '0.75em',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        ✓ CONCLUÍDA
+                                    </div>
+                                )}
+                                
                                 {(user.role === 'administrador' || user.role === 'master') && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
-                                        className="card-obra-delete-btn"
-                                        title="Excluir Obra"
-                                    >
-                                        🗑️
-                                    </button>
+                                    <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '5px' }}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleConcluirObra(obra.id, obra.concluida); }}
+                                            className="card-obra-action-btn"
+                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Concluída'}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '1.1em',
+                                                padding: '5px',
+                                                borderRadius: '4px',
+                                                opacity: 0.7
+                                            }}
+                                        >
+                                            {obra.concluida ? '🔄' : '✅'}
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
+                                            className="card-obra-delete-btn"
+                                            title="Excluir Obra"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
                                 )}
                                 
                                 <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
