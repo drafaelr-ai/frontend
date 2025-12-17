@@ -259,17 +259,17 @@ const NotificacoesDropdown = ({ user }) => {
                         onClick={() => setIsOpen(false)}
                     />
                     
-                    {/* Dropdown - aparece ACIMA do sino */}
+                    {/* Dropdown - aparece ABAIXO do sino, alinhado à direita */}
                     <div style={{
                         position: 'absolute',
-                        bottom: '100%',
-                        left: 0,
-                        marginBottom: '10px',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '10px',
                         width: '320px',
                         maxHeight: '400px',
                         backgroundColor: 'white',
                         borderRadius: '12px',
-                        boxShadow: '0 -5px 40px rgba(0,0,0,0.25)',
+                        boxShadow: '0 5px 40px rgba(0,0,0,0.25)',
                         zIndex: 1000,
                         overflow: 'hidden',
                         display: 'flex',
