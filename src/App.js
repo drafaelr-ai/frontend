@@ -435,6 +435,24 @@ const WindowsNavBar = ({
     onLogout 
 }) => {
     const [activeMenu, setActiveMenu] = useState(null);
+    const menuRef = React.useRef(null);
+
+    // Fechar menu ao clicar fora
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setActiveMenu(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, []);
 
     // Estrutura do menu estilo Windows
     const menuStructure = [
@@ -586,42 +604,52 @@ const WindowsNavBar = ({
             </div>
 
             {/* === BARRA DE MENUS === */}
-            <div className="windows-menu-bar">
+            <div className="windows-menu-bar" ref={menuRef}>
                 <div className="menu-bar-left">
                     {menuStructure.map(menu => (
                         <div key={menu.id} className="menu-dropdown-container">
                             <button
                                 className={`menu-bar-item ${activeMenu === menu.id ? 'active' : ''}`}
-                                onClick={() => handleMenuClick(menu.id)}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMenuClick(menu.id); }}
+                                onTouchEnd={(e) => { e.preventDefault(); handleMenuClick(menu.id); }}
                                 onMouseEnter={() => handleMouseEnter(menu.id)}
                             >
                                 {menu.label}
                             </button>
                             
                             {activeMenu === menu.id && (
-                                <div className="menu-dropdown">
-                                    {menu.items.map((item, idx) => {
-                                        if (!canShowItem(item)) return null;
-                                        
-                                        return item.type === 'separator' ? (
-                                            <div key={idx} className="menu-separator" />
-                                        ) : (
-                                            <button
-                                                key={item.id}
-                                                className={`menu-dropdown-item ${currentPage === item.id ? 'active' : ''}`}
-                                                onClick={() => handleItemClick(item)}
-                                            >
-                                                <span className="menu-item-left">
-                                                    <span className="menu-item-icon">{item.icon}</span>
-                                                    <span className="menu-item-label">{item.label}</span>
-                                                </span>
-                                                {item.shortcut && (
-                                                    <span className="menu-item-shortcut">{item.shortcut}</span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <>
+                                    {/* Overlay para fechar menu no mobile */}
+                                    <div 
+                                        className="menu-overlay-mobile"
+                                        onClick={() => setActiveMenu(null)}
+                                        onTouchEnd={(e) => { e.preventDefault(); setActiveMenu(null); }}
+                                    />
+                                    <div className="menu-dropdown" onClick={(e) => e.stopPropagation()}>
+                                        {menu.items.map((item, idx) => {
+                                            if (!canShowItem(item)) return null;
+                                            
+                                            return item.type === 'separator' ? (
+                                                <div key={idx} className="menu-separator" />
+                                            ) : (
+                                                <button
+                                                    key={item.id}
+                                                    className={`menu-dropdown-item ${currentPage === item.id ? 'active' : ''}`}
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleItemClick(item); }}
+                                                    onTouchEnd={(e) => { e.preventDefault(); handleItemClick(item); }}
+                                                >
+                                                    <span className="menu-item-left">
+                                                        <span className="menu-item-icon">{item.icon}</span>
+                                                        <span className="menu-item-label">{item.label}</span>
+                                                    </span>
+                                                    {item.shortcut && (
+                                                        <span className="menu-item-shortcut">{item.shortcut}</span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </>
                             )}
                         </div>
                     ))}
@@ -807,6 +835,9 @@ const WindowsNavStyles = () => (
             cursor: pointer;
             border-radius: 4px;
             transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
         }
         
         .menu-bar-item:hover,
@@ -828,6 +859,23 @@ const WindowsNavStyles = () => (
             animation: dropdownFadeIn 0.15s ease;
         }
         
+        .menu-overlay-mobile {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-overlay-mobile {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.3);
+                z-index: 9998;
+            }
+        }
+        
         @keyframes dropdownFadeIn {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
@@ -846,6 +894,9 @@ const WindowsNavStyles = () => (
             cursor: pointer;
             text-align: left;
             transition: all 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
         }
         
         .menu-dropdown-item:hover {
@@ -1067,9 +1118,35 @@ const WindowsNavStyles = () => (
             }
             
             .menu-bar-item {
-                padding: 8px 10px;
-                font-size: 12px;
+                padding: 10px 12px;
+                font-size: 13px;
                 white-space: nowrap;
+                min-height: 44px; /* Área de toque mínima para mobile */
+            }
+            
+            .menu-dropdown {
+                position: fixed;
+                top: 120px; /* Abaixo da barra de navegação */
+                left: 10px;
+                right: 10px;
+                bottom: auto;
+                max-height: 60vh;
+                overflow-y: auto;
+                min-width: auto;
+                width: calc(100% - 20px);
+                z-index: 9999;
+                border-radius: 12px;
+                box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+            }
+            
+            .menu-dropdown-item {
+                padding: 14px 16px;
+                min-height: 48px; /* Área de toque maior no mobile */
+                font-size: 15px;
+            }
+            
+            .menu-separator {
+                margin: 8px 0;
             }
             
             .obra-selector {
