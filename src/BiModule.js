@@ -650,10 +650,10 @@ const AlertasDashboard = ({ dados }) => {
  * Dashboard de Fluxo de Caixa (Projeção)
  */
 const FluxoCaixaDashboard = ({ dados }) => {
-    const { fluxoMensal = [] } = dados;
+    const { fluxoMensal = [], projecao = [] } = dados;
     
     // Se não tiver dados de fluxo, gerar mockup baseado nas obras
-    const dadosFluxo = fluxoMensal.length > 0 ? fluxoMensal : [
+    const dadosFluxo = fluxoMensal.length > 0 ? fluxoMensal : projecao.length > 0 ? projecao : [
         { mes: 'Jan', previsto: 0, realizado: 0 },
         { mes: 'Fev', previsto: 0, realizado: 0 },
         { mes: 'Mar', previsto: 0, realizado: 0 },
@@ -665,31 +665,507 @@ const FluxoCaixaDashboard = ({ dados }) => {
                 <ResponsiveContainer width="100%" height={350}>
                     <ComposedChart data={dadosFluxo} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                        <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
+                        <XAxis dataKey="mes_nome" tick={{ fontSize: 12 }} />
                         <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} tick={{ fontSize: 12 }} />
                         <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
                         <Legend />
                         <Area 
                             type="monotone" 
-                            dataKey="previsto" 
-                            name="Previsto" 
+                            dataKey="valor" 
+                            name="Projetado" 
                             fill={COLORS.info} 
                             fillOpacity={0.2}
                             stroke={COLORS.info}
                             strokeWidth={2}
                         />
-                        <Line 
-                            type="monotone" 
-                            dataKey="realizado" 
-                            name="Realizado" 
-                            stroke={COLORS.success}
-                            strokeWidth={3}
-                            dot={{ fill: COLORS.success, r: 5 }}
-                        />
+                        <Bar dataKey="valor" name="Valor" fill={COLORS.primary} radius={[4, 4, 0, 0]} />
                     </ComposedChart>
                 </ResponsiveContainer>
             </ChartCard>
         </div>
+    );
+};
+
+/**
+ * 🆕 Dashboard de Calendário de Vencimentos
+ */
+const CalendarioVencimentosDashboard = ({ dados }) => {
+    const { vencimentos = [], resumoVencimentos = {} } = dados;
+    const [filtroStatus, setFiltroStatus] = useState('todos');
+    const [filtroObra, setFiltroObra] = useState('todas');
+    
+    // Extrair obras únicas
+    const obrasUnicas = useMemo(() => {
+        const obras = new Set();
+        vencimentos.forEach(v => obras.add(v.obra_nome));
+        return ['todas', ...Array.from(obras)];
+    }, [vencimentos]);
+    
+    // Filtrar vencimentos
+    const vencimentosFiltrados = useMemo(() => {
+        return vencimentos.filter(v => {
+            if (filtroStatus !== 'todos' && v.status !== filtroStatus) return false;
+            if (filtroObra !== 'todas' && v.obra_nome !== filtroObra) return false;
+            return true;
+        });
+    }, [vencimentos, filtroStatus, filtroObra]);
+    
+    // Agrupar por data para visualização de calendário
+    const vencimentosPorDia = useMemo(() => {
+        const agrupado = {};
+        vencimentosFiltrados.forEach(v => {
+            if (!v.data) return;
+            if (!agrupado[v.data]) agrupado[v.data] = [];
+            agrupado[v.data].push(v);
+        });
+        return agrupado;
+    }, [vencimentosFiltrados]);
+    
+    // Próximos 30 dias
+    const proximosDias = useMemo(() => {
+        const dias = [];
+        const hoje = new Date();
+        for (let i = 0; i < 30; i++) {
+            const dia = new Date(hoje);
+            dia.setDate(dia.getDate() + i);
+            dias.push(dia.toISOString().split('T')[0]);
+        }
+        return dias;
+    }, []);
+    
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'vencido': return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' };
+            case 'hoje': return { bg: '#fffbeb', border: '#fde68a', text: '#d97706' };
+            default: return { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a' };
+        }
+    };
+    
+    return (
+        <>
+            {/* KPIs de Vencimentos */}
+            <div style={{ ...styles.grid, ...styles.grid4 }}>
+                <KpiCard
+                    title="Vencidos"
+                    value={resumoVencimentos.vencidos || 0}
+                    subtitle={formatCurrency(resumoVencimentos.valor_vencido || 0)}
+                    icon="🚨"
+                    color={COLORS.danger}
+                />
+                <KpiCard
+                    title="Vencem Hoje"
+                    value={resumoVencimentos.hoje || 0}
+                    subtitle={formatCurrency(resumoVencimentos.valor_hoje || 0)}
+                    icon="⚠️"
+                    color={COLORS.warning}
+                />
+                <KpiCard
+                    title="Próximos 7 Dias"
+                    value={resumoVencimentos.semana || 0}
+                    subtitle={formatCurrency(resumoVencimentos.valor_semana || 0)}
+                    icon="📅"
+                    color={COLORS.info}
+                />
+                <KpiCard
+                    title="Próximos 30 Dias"
+                    value={resumoVencimentos.mes || 0}
+                    subtitle={formatCurrency(resumoVencimentos.valor_mes || 0)}
+                    icon="📆"
+                    color={COLORS.success}
+                />
+            </div>
+            
+            {/* Filtros */}
+            <div style={{ ...styles.card, marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div>
+                        <label style={{ fontSize: '12px', color: '#64748b', marginRight: '8px' }}>Status:</label>
+                        <select 
+                            value={filtroStatus} 
+                            onChange={(e) => setFiltroStatus(e.target.value)}
+                            style={styles.select}
+                        >
+                            <option value="todos">Todos</option>
+                            <option value="vencido">Vencidos</option>
+                            <option value="hoje">Hoje</option>
+                            <option value="futuro">Futuros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style={{ fontSize: '12px', color: '#64748b', marginRight: '8px' }}>Obra:</label>
+                        <select 
+                            value={filtroObra} 
+                            onChange={(e) => setFiltroObra(e.target.value)}
+                            style={styles.select}
+                        >
+                            {obrasUnicas.map(obra => (
+                                <option key={obra} value={obra}>{obra === 'todas' ? 'Todas as obras' : obra}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div style={{ marginLeft: 'auto', fontSize: '14px', color: '#64748b' }}>
+                        {vencimentosFiltrados.length} vencimentos encontrados
+                    </div>
+                </div>
+            </div>
+            
+            {/* Visualização em Grid de Calendário */}
+            <div style={{ ...styles.grid, ...styles.grid2 }}>
+                {/* Mini Calendário dos próximos 30 dias */}
+                <ChartCard title="📅 Próximos 30 Dias" subtitle="Clique em um dia para ver detalhes">
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(7, 1fr)', 
+                        gap: '4px',
+                        marginTop: '10px'
+                    }}>
+                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(dia => (
+                            <div key={dia} style={{ 
+                                textAlign: 'center', 
+                                fontSize: '11px', 
+                                color: '#94a3b8',
+                                padding: '4px'
+                            }}>
+                                {dia}
+                            </div>
+                        ))}
+                        {proximosDias.map((dataStr, idx) => {
+                            const dataObj = new Date(dataStr + 'T12:00:00');
+                            const vencimentosDia = vencimentosPorDia[dataStr] || [];
+                            const temVencido = vencimentosDia.some(v => v.status === 'vencido');
+                            const temHoje = vencimentosDia.some(v => v.status === 'hoje');
+                            const valorTotal = vencimentosDia.reduce((sum, v) => sum + (v.valor || 0), 0);
+                            
+                            // Preencher dias vazios no início
+                            const diasVazios = idx === 0 ? dataObj.getDay() : 0;
+                            const elementos = [];
+                            
+                            if (idx === 0) {
+                                for (let i = 0; i < diasVazios; i++) {
+                                    elementos.push(<div key={`empty-${i}`} style={{ padding: '8px' }}></div>);
+                                }
+                            }
+                            
+                            elementos.push(
+                                <div 
+                                    key={dataStr}
+                                    style={{
+                                        padding: '8px 4px',
+                                        borderRadius: '8px',
+                                        textAlign: 'center',
+                                        backgroundColor: vencimentosDia.length > 0 
+                                            ? (temVencido ? '#fef2f2' : temHoje ? '#fffbeb' : '#f0fdf4')
+                                            : '#f8fafc',
+                                        border: vencimentosDia.length > 0 
+                                            ? `2px solid ${temVencido ? '#fecaca' : temHoje ? '#fde68a' : '#bbf7d0'}`
+                                            : '1px solid #e2e8f0',
+                                        cursor: vencimentosDia.length > 0 ? 'pointer' : 'default',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    title={vencimentosDia.length > 0 ? `${vencimentosDia.length} vencimento(s) - ${formatCurrency(valorTotal)}` : ''}
+                                >
+                                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{dataObj.getDate()}</div>
+                                    {vencimentosDia.length > 0 && (
+                                        <div style={{ 
+                                            fontSize: '10px', 
+                                            color: temVencido ? '#dc2626' : temHoje ? '#d97706' : '#16a34a',
+                                            fontWeight: '600'
+                                        }}>
+                                            {vencimentosDia.length}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                            
+                            return elementos;
+                        })}
+                    </div>
+                </ChartCard>
+                
+                {/* Lista de Vencimentos */}
+                <ChartCard title="📋 Lista de Vencimentos" subtitle="Ordenado por data">
+                    <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                        {vencimentosFiltrados.length === 0 ? (
+                            <div style={styles.emptyState}>
+                                <span style={{ fontSize: '32px' }}>✨</span>
+                                <p>Nenhum vencimento encontrado</p>
+                            </div>
+                        ) : (
+                            vencimentosFiltrados.slice(0, 20).map((v, idx) => {
+                                const statusColor = getStatusColor(v.status);
+                                return (
+                                    <div key={`${v.tipo}-${v.id}-${idx}`} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        marginBottom: '8px',
+                                        backgroundColor: statusColor.bg,
+                                        border: `1px solid ${statusColor.border}`
+                                    }}>
+                                        <div style={{
+                                            width: '50px',
+                                            textAlign: 'center',
+                                            marginRight: '12px'
+                                        }}>
+                                            <div style={{ fontSize: '18px', fontWeight: '700', color: statusColor.text }}>
+                                                {v.data ? new Date(v.data + 'T12:00:00').getDate() : '-'}
+                                            </div>
+                                            <div style={{ fontSize: '10px', color: '#64748b' }}>
+                                                {v.data ? new Date(v.data + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short' }) : ''}
+                                            </div>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: '500', fontSize: '14px', color: '#1e293b' }}>
+                                                {v.descricao}
+                                                {v.is_entrada && <span style={{ 
+                                                    marginLeft: '8px',
+                                                    padding: '2px 6px',
+                                                    backgroundColor: '#dbeafe',
+                                                    color: '#1d4ed8',
+                                                    borderRadius: '4px',
+                                                    fontSize: '10px'
+                                                }}>ENTRADA</span>}
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                {v.obra_nome} {v.fornecedor && `• ${v.fornecedor}`}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: '600', color: statusColor.text }}>
+                                                {formatCurrency(v.valor)}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '10px',
+                                                padding: '2px 8px',
+                                                borderRadius: '10px',
+                                                backgroundColor: statusColor.text,
+                                                color: '#fff'
+                                            }}>
+                                                {v.status === 'vencido' ? 'VENCIDO' : v.status === 'hoje' ? 'HOJE' : 'PENDENTE'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                        {vencimentosFiltrados.length > 20 && (
+                            <p style={{ textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                                ... e mais {vencimentosFiltrados.length - 20} vencimentos
+                            </p>
+                        )}
+                    </div>
+                </ChartCard>
+            </div>
+        </>
+    );
+};
+
+/**
+ * 🆕 Dashboard Temporal (Análise Histórica)
+ */
+const TemporalDashboard = ({ dados }) => {
+    const { historicoMensal = [], resumoHistorico = {} } = dados;
+    const [visualizacao, setVisualizacao] = useState('barras');
+    
+    // Preparar dados para gráficos
+    const dadosGrafico = useMemo(() => {
+        return historicoMensal.map(h => ({
+            ...h,
+            mes_display: h.mes_nome || h.mes
+        }));
+    }, [historicoMensal]);
+    
+    // Agrupar por ano para comparativo
+    const dadosPorAno = useMemo(() => {
+        const anos = {};
+        historicoMensal.forEach(h => {
+            const ano = h.ano || (h.mes ? parseInt(h.mes.split('-')[0]) : new Date().getFullYear());
+            if (!anos[ano]) anos[ano] = { ano, total: 0, meses: 0 };
+            anos[ano].total += h.total || 0;
+            anos[ano].meses += 1;
+        });
+        return Object.values(anos).sort((a, b) => a.ano - b.ano);
+    }, [historicoMensal]);
+    
+    // Sazonalidade (média por mês do ano)
+    const sazonalidade = useMemo(() => {
+        const meses = {};
+        const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        
+        historicoMensal.forEach(h => {
+            const mesNum = h.mes_num || (h.mes ? parseInt(h.mes.split('-')[1]) : 1);
+            if (!meses[mesNum]) meses[mesNum] = { mes: mesesNomes[mesNum - 1], total: 0, count: 0 };
+            meses[mesNum].total += h.total || 0;
+            meses[mesNum].count += 1;
+        });
+        
+        return Object.values(meses)
+            .map(m => ({ ...m, media: m.count > 0 ? m.total / m.count : 0 }))
+            .sort((a, b) => {
+                const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                return mesesNomes.indexOf(a.mes) - mesesNomes.indexOf(b.mes);
+            });
+    }, [historicoMensal]);
+    
+    return (
+        <>
+            {/* KPIs */}
+            <div style={{ ...styles.grid, ...styles.grid4 }}>
+                <KpiCard
+                    title="Total Histórico"
+                    value={formatCompactCurrency(resumoHistorico.total_geral || 0)}
+                    subtitle={`${resumoHistorico.total_meses || 0} meses de dados`}
+                    icon="💰"
+                    color={COLORS.primary}
+                />
+                <KpiCard
+                    title="Média Mensal"
+                    value={formatCompactCurrency(resumoHistorico.media_mensal || 0)}
+                    icon="📊"
+                    color={COLORS.info}
+                />
+                <KpiCard
+                    title="Melhor Mês"
+                    value={resumoHistorico.melhor_mes?.mes_nome || '-'}
+                    subtitle={formatCurrency(resumoHistorico.melhor_mes?.total || 0)}
+                    icon="📈"
+                    color={COLORS.success}
+                />
+                <KpiCard
+                    title="Menor Mês"
+                    value={resumoHistorico.pior_mes?.mes_nome || '-'}
+                    subtitle={formatCurrency(resumoHistorico.pior_mes?.total || 0)}
+                    icon="📉"
+                    color={COLORS.warning}
+                />
+            </div>
+            
+            {/* Seletor de Visualização */}
+            <div style={{ ...styles.card, marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {[
+                        { id: 'barras', label: '📊 Barras' },
+                        { id: 'linha', label: '📈 Linha' },
+                        { id: 'area', label: '🌊 Área' }
+                    ].map(v => (
+                        <button
+                            key={v.id}
+                            onClick={() => setVisualizacao(v.id)}
+                            style={{
+                                ...styles.button,
+                                backgroundColor: visualizacao === v.id ? COLORS.primary : '#f1f5f9',
+                                color: visualizacao === v.id ? '#fff' : '#64748b'
+                            }}
+                        >
+                            {v.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Gráfico Principal - Histórico Mensal */}
+            <div style={{ ...styles.grid, gridTemplateColumns: '1fr' }}>
+                <ChartCard title="📅 Histórico de Pagamentos" subtitle="Evolução mensal dos gastos">
+                    {dadosGrafico.length === 0 ? (
+                        <div style={styles.emptyState}>
+                            <span style={{ fontSize: '48px' }}>📊</span>
+                            <p>Nenhum dado histórico disponível</p>
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={350}>
+                            {visualizacao === 'barras' ? (
+                                <BarChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="mes_display" 
+                                        tick={{ fontSize: 11 }}
+                                        angle={-45}
+                                        textAnchor="end"
+                                    />
+                                    <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                                    <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                                    <Legend />
+                                    <Bar dataKey="mao_obra" name="Mão de Obra" fill={COLORS.primary} stackId="a" />
+                                    <Bar dataKey="material" name="Material" fill={COLORS.success} stackId="a" />
+                                </BarChart>
+                            ) : visualizacao === 'linha' ? (
+                                <LineChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="mes_display" 
+                                        tick={{ fontSize: 11 }}
+                                        angle={-45}
+                                        textAnchor="end"
+                                    />
+                                    <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                                    <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="total" name="Total" stroke={COLORS.primary} strokeWidth={3} dot={{ r: 5 }} />
+                                    <Line type="monotone" dataKey="mao_obra" name="Mão de Obra" stroke={COLORS.info} strokeWidth={2} />
+                                    <Line type="monotone" dataKey="material" name="Material" stroke={COLORS.success} strokeWidth={2} />
+                                </LineChart>
+                            ) : (
+                                <AreaChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="mes_display" 
+                                        tick={{ fontSize: 11 }}
+                                        angle={-45}
+                                        textAnchor="end"
+                                    />
+                                    <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                                    <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                                    <Legend />
+                                    <Area type="monotone" dataKey="total" name="Total" fill={COLORS.primary} fillOpacity={0.3} stroke={COLORS.primary} />
+                                </AreaChart>
+                            )}
+                        </ResponsiveContainer>
+                    )}
+                </ChartCard>
+            </div>
+            
+            {/* Gráficos Secundários */}
+            <div style={{ ...styles.grid, ...styles.grid2 }}>
+                {/* Sazonalidade */}
+                <ChartCard title="🌡️ Sazonalidade" subtitle="Média de gastos por mês do ano">
+                    {sazonalidade.length === 0 ? (
+                        <div style={styles.emptyState}>
+                            <p>Dados insuficientes</p>
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={sazonalidade}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                                <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                                <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                                <Bar dataKey="media" name="Média" fill={COLORS.purple} radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                </ChartCard>
+                
+                {/* Comparativo Anual */}
+                <ChartCard title="📆 Comparativo Anual" subtitle="Total por ano">
+                    {dadosPorAno.length === 0 ? (
+                        <div style={styles.emptyState}>
+                            <p>Dados insuficientes</p>
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={dadosPorAno} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <XAxis type="number" tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                                <YAxis type="category" dataKey="ano" tick={{ fontSize: 12 }} width={50} />
+                                <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+                                <Bar dataKey="total" name="Total" fill={COLORS.info} radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    )}
+                </ChartCard>
+            </div>
+        </>
     );
 };
 
@@ -710,7 +1186,11 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
     const [dados, setDados] = useState({
         obras: [],
         resumo: {},
-        vencimentos: {},
+        vencimentos: [],
+        resumoVencimentos: {},
+        historicoMensal: [],
+        resumoHistorico: {},
+        projecao: [],
         fluxoMensal: []
     });
     const [error, setError] = useState(null);
@@ -727,21 +1207,55 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                 if (!resObras.ok) throw new Error('Erro ao buscar obras');
                 const obras = await resObras.json();
                 
-                // TODO: Buscar dados adicionais de vencimentos quando endpoint existir
-                // const resVencimentos = await fetchWithAuth(`${apiUrl}/bi/vencimentos`);
+                // Buscar vencimentos
+                let vencimentos = [];
+                let resumoVencimentos = {};
+                try {
+                    const resVencimentos = await fetchWithAuth(`${apiUrl}/bi/vencimentos`);
+                    if (resVencimentos.ok) {
+                        const dataVenc = await resVencimentos.json();
+                        vencimentos = dataVenc.vencimentos || [];
+                        resumoVencimentos = dataVenc.resumo || {};
+                    }
+                } catch (e) {
+                    console.log('Vencimentos não disponível:', e);
+                }
+                
+                // Buscar histórico mensal
+                let historicoMensal = [];
+                let resumoHistorico = {};
+                try {
+                    const resHistorico = await fetchWithAuth(`${apiUrl}/bi/historico-mensal`);
+                    if (resHistorico.ok) {
+                        const dataHist = await resHistorico.json();
+                        historicoMensal = dataHist.historico || [];
+                        resumoHistorico = dataHist.resumo || {};
+                    }
+                } catch (e) {
+                    console.log('Histórico não disponível:', e);
+                }
+                
+                // Buscar projeção
+                let projecao = [];
+                try {
+                    const resProjecao = await fetchWithAuth(`${apiUrl}/bi/projecao`);
+                    if (resProjecao.ok) {
+                        const dataProj = await resProjecao.json();
+                        projecao = dataProj.projecao || [];
+                    }
+                } catch (e) {
+                    console.log('Projeção não disponível:', e);
+                }
                 
                 setDados({
                     obras: Array.isArray(obras) ? obras : [],
                     resumo: {},
-                    vencimentos: {
-                        vencidos: 0,
-                        valor_vencido: 0,
-                        hoje: 0,
-                        valor_hoje: 0,
-                        semana: 0,
-                        valor_semana: 0
-                    },
-                    fluxoMensal: []
+                    vencimentos,
+                    resumoVencimentos,
+                    historicoMensal,
+                    resumoHistorico,
+                    projecao,
+                    fluxoMensal: projecao // Usar projeção como fluxo
                 });
             } catch (err) {
                 console.error('Erro ao carregar dados do BI:', err);
@@ -757,8 +1271,10 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
     const tabs = [
         { id: 'financeiro', label: '💰 Financeiro', component: FinanceiroDashboard },
         { id: 'obras', label: '🏗️ Obras', component: ObrasDashboard },
+        { id: 'calendario', label: '📅 Calendário', component: CalendarioVencimentosDashboard },
+        { id: 'temporal', label: '📈 Temporal', component: TemporalDashboard },
         { id: 'alertas', label: '🔔 Alertas', component: AlertasDashboard },
-        { id: 'fluxo', label: '📈 Fluxo de Caixa', component: FluxoCaixaDashboard }
+        { id: 'fluxo', label: '💸 Projeção', component: FluxoCaixaDashboard }
     ];
     
     const TabComponent = tabs.find(t => t.id === activeTab)?.component || FinanceiroDashboard;
@@ -832,7 +1348,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
             
             {/* Footer */}
             <div style={{ marginTop: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>
-                <p>Obraly BI Module v1.0 • Dados atualizados em tempo real</p>
+                <p>Obraly BI Module v1.1 • Dados atualizados em tempo real</p>
             </div>
         </div>
     );
@@ -853,6 +1369,8 @@ export {
     ObrasDashboard,
     AlertasDashboard,
     FluxoCaixaDashboard,
+    CalendarioVencimentosDashboard,
+    TemporalDashboard,
     COLORS,
     formatCurrency,
     formatPercent,
