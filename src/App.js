@@ -18,6 +18,10 @@ import './components/DashboardObra.css';
 // Import para compressão de imagens
 import { compressImages } from './utils/imageCompression';
 
+// 🆕 MÓDULO BI - Import do Business Intelligence Dashboard
+// NOTA: Coloque o arquivo BiModule.js na pasta src/
+import { BiDashboard } from './BiModule';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -7919,6 +7923,17 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
     if (!obraSelecionada) {
+        // 🆕 Se estiver na página de BI, mostrar dashboard
+        if (currentPage === 'bi') {
+            return (
+                <BiDashboard
+                    apiUrl={API_URL}
+                    fetchWithAuth={fetchWithAuth}
+                    onClose={() => setCurrentPage('obras')}
+                />
+            );
+        }
+        
         return (
             <div className="container">
                 {isAdminPanelVisible && <AdminPanelModal 
@@ -7934,6 +7949,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
+                        {/* 🆕 Botão BI Dashboard */}
+                        <button 
+                            onClick={() => setCurrentPage('bi')} 
+                            className="export-btn" 
+                            style={{marginRight: '10px', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6'}}
+                        >
+                            📈 BI Dashboard
+                        </button>
+                        
                         <button 
                             onClick={() => setRelatorioCronogramaVisible(true)} 
                             className="export-btn pdf" 
