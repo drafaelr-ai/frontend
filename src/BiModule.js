@@ -1226,10 +1226,16 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                 let resumoHistorico = {};
                 try {
                     const resHistorico = await fetchWithAuth(`${apiUrl}/bi/historico-mensal`);
+                    console.log('[BI] Resposta histórico:', resHistorico.status);
                     if (resHistorico.ok) {
                         const dataHist = await resHistorico.json();
+                        console.log('[BI] Dados histórico:', dataHist);
                         historicoMensal = dataHist.historico || [];
                         resumoHistorico = dataHist.resumo || {};
+                        console.log('[BI] Histórico mensal:', historicoMensal.length, 'meses');
+                    } else {
+                        const errText = await resHistorico.text();
+                        console.log('[BI] Erro histórico:', errText);
                     }
                 } catch (e) {
                     console.log('Histórico não disponível:', e);
