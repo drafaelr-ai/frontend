@@ -7214,6 +7214,9 @@ function Dashboard() {
 
     // Expor navigateTo globalmente para uso no Sidebar
     window.navigateTo = navigateTo;
+    
+    // Estado para controlar se a URL inicial já foi processada
+    const [urlProcessada, setUrlProcessada] = useState(false);
 
     // Escutar botão voltar do navegador
     useEffect(() => {
@@ -7222,7 +7225,25 @@ function Dashboard() {
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
-                    fetchObraData(event.state.obraId);
+                    // fetchObraData será chamado pelo useEffect abaixo
+                    const obraId = event.state.obraId;
+                    setIsLoading(true);
+                    fetchWithAuth(`${API_URL}/obras/${obraId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            setObraSelecionada(data.obra || null);
+                            setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
+                            const servicosComPagamentosArray = (Array.isArray(data.servicos) ? data.servicos : []).map(serv => ({
+                                ...serv,
+                                pagamentos: Array.isArray(serv.pagamentos) ? serv.pagamentos : []
+                            }));
+                            setServicos(servicosComPagamentosArray);
+                            setSumarios(data.sumarios || null);
+                            setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
+                            setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
+                        })
+                        .catch(error => console.error('Erro popstate:', error))
+                        .finally(() => setIsLoading(false));
                 } else {
                     setObraSelecionada(null);
                 }
@@ -7234,30 +7255,6 @@ function Dashboard() {
         };
 
         window.addEventListener('popstate', handlePopState);
-
-        // Definir estado inicial na URL (apenas se não houver estado)
-        if (!window.history.state) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const pageFromUrl = urlParams.get('page');
-            const obraFromUrl = urlParams.get('obra');
-            
-            if (pageFromUrl) {
-                setCurrentPage(pageFromUrl);
-            }
-            if (obraFromUrl) {
-                const obraId = parseInt(obraFromUrl);
-                if (!isNaN(obraId)) {
-                    fetchObraData(obraId);
-                }
-            }
-            
-            // Definir estado inicial
-            window.history.replaceState(
-                { page: pageFromUrl || 'obras', obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
-                '',
-                window.location.href
-            );
-        }
 
         return () => {
             window.removeEventListener('popstate', handlePopState);
@@ -7437,6 +7434,37 @@ const totalOrcamentosPendentes = useMemo(() => {
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
             .finally(() => setIsLoading(false));
     };
+    
+    // CORREÇÃO: Processar URL inicial ao montar o componente
+    useEffect(() => {
+        if (urlProcessada) return;
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageFromUrl = urlParams.get('page');
+        const obraFromUrl = urlParams.get('obra');
+        
+        console.log("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
+        
+        if (obraFromUrl) {
+            const obraId = parseInt(obraFromUrl);
+            if (!isNaN(obraId)) {
+                console.log("[URL INIT] Carregando obra:", obraId);
+                fetchObraData(obraId);
+                setCurrentPage(pageFromUrl || 'home');
+            }
+        } else if (pageFromUrl) {
+            setCurrentPage(pageFromUrl);
+        }
+        
+        // Atualizar history state
+        window.history.replaceState(
+            { page: pageFromUrl || 'obras', obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
+            '',
+            window.location.href
+        );
+        
+        setUrlProcessada(true);
+    }, [urlProcessada]);
     
     // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
