@@ -22,6 +22,9 @@ import { compressImages } from './utils/imageCompression';
 // NOTA: Coloque o arquivo BiModule.js na pasta src/
 import { BiDashboard } from './BiModule';
 
+// 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
+import OrcamentoEngenharia from './components/OrcamentoEngenharia';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -525,6 +528,7 @@ const WindowsNavBar = ({
     // Barra de ferramentas rápidas
     const toolbarItems = [
         { id: 'home', icon: '🏠', label: 'Início' },
+        { id: 'orcamento-eng', icon: '📋', label: 'Orçamento' },
         { id: 'financeiro', icon: '💰', label: 'Financeiro' },
         { id: 'cronograma-obra', icon: '📅', label: 'Cronograma' },
         { id: 'boletos', icon: '📄', label: 'Boletos' },
@@ -1188,10 +1192,11 @@ const Sidebar = ({
     onLogout,
     isCollapsed,
     setIsCollapsed 
-}) => {
+}}) => {
     // Menu items - só aparece quando obra está selecionada
     const menuItems = [
         { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
+        { id: 'orcamento-eng', icon: '📐', label: 'Orçamento de Engenharia', shortLabel: 'Orçamento' },
         { id: 'cronograma-obra', icon: '📅', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
         { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
         { id: 'boletos', icon: '📄', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
@@ -8269,6 +8274,17 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraNome={obraSelecionada.nome}
                             onClose={() => setCurrentPage('home')}
                             embedded={true}
+                        />
+                    )}
+
+                    {/* === PÁGINA: ORÇAMENTO DE ENGENHARIA === */}
+                    {currentPage === 'orcamento-eng' && (
+                        <OrcamentoEngenharia 
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            apiUrl={API_URL}
+                            fetchWithAuth={fetchWithAuth}
+                            onClose={() => setCurrentPage('home')}
                         />
                     )}
 
