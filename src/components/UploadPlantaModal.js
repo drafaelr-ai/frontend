@@ -12,6 +12,24 @@
 import React, { useState, useCallback } from 'react';
 
 // =====================================================
+// FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
+// =====================================================
+const localFetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem('token');
+    const headers = { ...options.headers };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    
+    return fetch(url, { ...options, headers });
+};
+
+// =====================================================
 // ESTILOS
 // =====================================================
 
@@ -443,7 +461,7 @@ const formatNumber = (value, decimals = 2) => {
 // COMPONENTE PRINCIPAL
 // =====================================================
 
-const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl, fetchWithAuth }) => {
+const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
     // Estados
     const [etapa, setEtapa] = useState('upload'); // upload | processing | results
     const [imagem, setImagem] = useState(null);
@@ -552,7 +570,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl, fetchWithAuth 
             const mediaType = header.match(/data:(.*?);/)?.[1] || 'image/jpeg';
             
             // Chamar API
-            const response = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/gerar-por-planta`, {
+            const response = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/gerar-por-planta`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -688,7 +706,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl, fetchWithAuth 
         if (!resultado) return;
         
         try {
-            const response = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/importar-gerado`, {
+            const response = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/importar-gerado`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

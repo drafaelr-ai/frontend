@@ -13,6 +13,24 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import UploadPlantaModal from './UploadPlantaModal';
 
 // =====================================================
+// FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
+// =====================================================
+const localFetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem('token');
+    const headers = { ...options.headers };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    
+    return fetch(url, { ...options, headers });
+};
+
+// =====================================================
 // ESTILOS
 // =====================================================
 
@@ -561,7 +579,7 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
 // COMPONENTE: MODAL NOVO ITEM
 // =====================================================
 
-const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, fetchWithAuth }) => {
+const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl }) => {
     const [form, setForm] = useState({
         etapa_id: etapaId || '',
         codigo: '',
@@ -593,7 +611,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, fetchWithAuth
         
         setBuscando(true);
         try {
-            const res = await fetchWithAuth(`${apiUrl}/servicos-autocomplete?q=${encodeURIComponent(termo)}`);
+            const res = await localFetchWithAuth(`${apiUrl}/servicos-autocomplete?q=${encodeURIComponent(termo)}`);
             if (res.ok) {
                 const data = await res.json();
                 setAutocomplete({
@@ -608,7 +626,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, fetchWithAuth
             console.error('Erro no autocomplete:', e);
         }
         setBuscando(false);
-    }, [apiUrl, fetchWithAuth]);
+    }, [apiUrl]);
 
     // Debounce para autocomplete
     useEffect(() => {
@@ -1000,7 +1018,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, fetchWithAuth
 // COMPONENTE PRINCIPAL: ORÇAMENTO DE ENGENHARIA
 // =====================================================
 
-const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose }) => {
+const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const [dados, setDados] = useState({ etapas: [], resumo: {} });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -1017,7 +1035,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
     const carregarDados = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng`);
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng`);
             if (res.ok) {
                 const data = await res.json();
                 setDados(data);
@@ -1035,7 +1053,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
             console.error(e);
         }
         setLoading(false);
-    }, [apiUrl, obraId, fetchWithAuth]);
+    }, [apiUrl, obraId]);
 
     useEffect(() => {
         carregarDados();
@@ -1052,7 +1070,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
     // Criar etapa
     const criarEtapa = async (dados) => {
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
@@ -1069,7 +1087,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
     // Criar item
     const criarItem = async (form) => {
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens`, {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1105,7 +1123,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
         if (!window.confirm('Excluir este item e o serviço vinculado?')) return;
         
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -1121,7 +1139,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
         if (!window.confirm('Excluir esta etapa e todos os seus itens?')) return;
         
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -1513,7 +1531,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
                     etapas={dados.etapas}
                     etapaId={etapaParaNovoItem}
                     apiUrl={apiUrl}
-                    fetchWithAuth={fetchWithAuth}
                 />
             )}
             
@@ -1523,7 +1540,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, fetchWithAuth, onClose 
                     onImportar={carregarDados}
                     obraId={obraId}
                     apiUrl={apiUrl}
-                    fetchWithAuth={fetchWithAuth}
                 />
             )}
         </div>

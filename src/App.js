@@ -8283,7 +8283,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             apiUrl={API_URL}
-                            fetchWithAuth={fetchWithAuth}
                             onClose={() => setCurrentPage('home')}
                         />
                     )}
