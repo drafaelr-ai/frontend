@@ -494,9 +494,9 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
         if (!file) return;
         
         // Verificar tipo
-        const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+        const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (!tiposPermitidos.includes(file.type)) {
-            setErro('Formato não suportado. Use JPG, PNG, WEBP ou PDF.');
+            setErro('Formato não suportado. Use JPG, PNG, WEBP ou GIF.');
             return;
         }
         
@@ -789,11 +789,11 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         <div style={styles.uploadIcon}>📐</div>
                                         <div style={styles.uploadTitle}>Arraste a planta baixa aqui</div>
                                         <div style={styles.uploadSubtitle}>ou clique para selecionar o arquivo</div>
-                                        <div style={styles.uploadFormats}>Formatos aceitos: JPG, PNG, WEBP, PDF (máx. 20MB)</div>
+                                        <div style={styles.uploadFormats}>Formatos aceitos: JPG, PNG, WEBP, GIF (máx. 20MB)</div>
                                         <input
                                             id="fileInput"
                                             type="file"
-                                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                                            accept="image/jpeg,image/png,image/webp,image/gif"
                                             onChange={handleInputChange}
                                             style={{ display: 'none' }}
                                         />
