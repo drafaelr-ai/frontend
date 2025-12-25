@@ -1192,7 +1192,7 @@ const Sidebar = ({
     onLogout,
     isCollapsed,
     setIsCollapsed 
-}}) => {
+}) => {
     // Menu items - só aparece quando obra está selecionada
     const menuItems = [
         { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
