@@ -557,17 +557,66 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
         }, 2000);
         
         try {
-            // Converter imagem para base64
+            let arquivoParaEnviar = imagem;
+            let mediaType = imagem.type;
+            
+            // Comprimir imagem se não for PDF (para acelerar a análise)
+            if (imagem.type !== 'application/pdf') {
+                console.log('[IA] Comprimindo imagem...');
+                
+                // Criar canvas para compressão
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(imagem);
+                });
+                
+                // Redimensionar se muito grande (max 1500px no maior lado)
+                const maxSize = 1500;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height = (height / width) * maxSize;
+                        width = maxSize;
+                    } else {
+                        width = (width / height) * maxSize;
+                        height = maxSize;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Converter para blob com qualidade 0.8
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                });
+                
+                arquivoParaEnviar = blob;
+                mediaType = 'image/jpeg';
+                
+                URL.revokeObjectURL(img.src);
+                console.log(`[IA] Imagem comprimida: ${imagem.size} -> ${blob.size} bytes`);
+            }
+            
+            // Converter para base64
             const base64 = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
                 reader.onerror = reject;
-                reader.readAsDataURL(imagem);
+                reader.readAsDataURL(arquivoParaEnviar);
             });
             
             // Extrair dados do base64
             const [header, data] = base64.split(',');
-            const mediaType = header.match(/data:(.*?);/)?.[1] || 'image/jpeg';
+            const finalMediaType = header.match(/data:(.*?);/)?.[1] || mediaType;
             
             // Chamar API
             const response = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/gerar-por-planta`, {
@@ -575,7 +624,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     imagem_base64: data,
-                    media_type: mediaType,
+                    media_type: finalMediaType,
                     area_total: areaTotal ? parseFloat(areaTotal) : null,
                     padrao,
                     pavimentos: parseInt(pavimentos),
