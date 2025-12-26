@@ -96,6 +96,10 @@ const styles = {
         backgroundColor: '#10b981',
         color: '#fff'
     },
+    buttonInfo: {
+        backgroundColor: '#3b82f6',
+        color: '#fff'
+    },
     buttonDanger: {
         backgroundColor: '#ef4444',
         color: '#fff'
@@ -579,28 +583,51 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
 // COMPONENTE: MODAL NOVO ITEM
 // =====================================================
 
-const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl }) => {
+const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEditar = null }) => {
+    const isEdicao = !!itemParaEditar;
+    
     const [form, setForm] = useState({
-        etapa_id: etapaId || '',
-        codigo: '',
-        descricao: '',
-        unidade: 'm²',
-        quantidade: '',
-        tipo_composicao: 'separado',
-        preco_mao_obra: '',
-        preco_material: '',
-        preco_unitario: '',
-        rateio_mo: 50,
-        rateio_mat: 50,
+        etapa_id: itemParaEditar?.etapa_id || etapaId || '',
+        codigo: itemParaEditar?.codigo || '',
+        descricao: itemParaEditar?.descricao || '',
+        unidade: itemParaEditar?.unidade || 'm²',
+        quantidade: itemParaEditar?.quantidade?.toString() || '',
+        tipo_composicao: itemParaEditar?.tipo_composicao || 'separado',
+        preco_mao_obra: itemParaEditar?.preco_mao_obra?.toString() || '',
+        preco_material: itemParaEditar?.preco_material?.toString() || '',
+        preco_unitario: itemParaEditar?.preco_unitario?.toString() || '',
+        rateio_mo: itemParaEditar?.rateio_mo || 50,
+        rateio_mat: itemParaEditar?.rateio_mat || 50,
         opcao_servico: 'criar',
-        servico_id: null,
+        servico_id: itemParaEditar?.servico_id || null,
         responsavel: '',
-        salvar_biblioteca: true
+        salvar_biblioteca: !isEdicao
     });
     
     const [salvando, setSalvando] = useState(false);
     const [autocomplete, setAutocomplete] = useState({ show: false, results: { usuario: [], base: [] } });
     const [buscando, setBuscando] = useState(false);
+
+    // Resetar form para novo item
+    const resetForm = () => {
+        setForm({
+            etapa_id: etapaId || form.etapa_id,
+            codigo: '',
+            descricao: '',
+            unidade: 'm²',
+            quantidade: '',
+            tipo_composicao: 'separado',
+            preco_mao_obra: '',
+            preco_material: '',
+            preco_unitario: '',
+            rateio_mo: 50,
+            rateio_mat: 50,
+            opcao_servico: 'criar',
+            servico_id: null,
+            responsavel: '',
+            salvar_biblioteca: true
+        });
+    };
 
     // Buscar autocomplete
     const buscarAutocomplete = useCallback(async (termo) => {
@@ -666,18 +693,24 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl }) => {
         }
     };
 
-    const handleSalvar = async () => {
+    const handleSalvar = async (continuarAdicionando = false) => {
         if (!form.etapa_id || !form.descricao || !form.unidade) return;
         setSalvando(true);
-        await onSave(form);
+        const sucesso = await onSave(form, isEdicao, itemParaEditar?.id);
         setSalvando(false);
+        
+        if (sucesso && continuarAdicionando) {
+            resetForm();
+        } else if (sucesso) {
+            onClose();
+        }
     };
 
     return (
         <div style={styles.modalOverlay} onClick={onClose}>
             <div style={{ ...styles.modal, maxWidth: '800px' }} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>➕ Novo Item do Orçamento</h2>
+                    <h2 style={styles.modalTitle}>{isEdicao ? '✏️ Editar Item do Orçamento' : '➕ Novo Item do Orçamento'}</h2>
                     <button style={styles.closeBtn} onClick={onClose}>×</button>
                 </div>
                 
@@ -1001,12 +1034,21 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl }) => {
                     >
                         Cancelar
                     </button>
+                    {!isEdicao && (
+                        <button 
+                            style={{ ...styles.button, ...styles.buttonInfo }}
+                            onClick={() => handleSalvar(true)}
+                            disabled={!form.etapa_id || !form.descricao || salvando}
+                        >
+                            {salvando ? 'Salvando...' : '💾 Salvar e Adicionar Outro'}
+                        </button>
+                    )}
                     <button 
                         style={{ ...styles.button, ...styles.buttonSuccess }}
-                        onClick={handleSalvar}
+                        onClick={() => handleSalvar(false)}
                         disabled={!form.etapa_id || !form.descricao || salvando}
                     >
-                        {salvando ? 'Salvando...' : '💾 Salvar Item'}
+                        {salvando ? 'Salvando...' : isEdicao ? '💾 Salvar Alterações' : '💾 Salvar Item'}
                     </button>
                 </div>
             </div>
@@ -1030,6 +1072,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const [showNovoItem, setShowNovoItem] = useState(false);
     const [etapaParaNovoItem, setEtapaParaNovoItem] = useState(null);
     const [showUploadPlanta, setShowUploadPlanta] = useState(false);
+    const [itemParaEditar, setItemParaEditar] = useState(null);  // NOVO: para edição
 
     // Carregar dados
     const carregarDados = useCallback(async () => {
@@ -1084,11 +1127,15 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         }
     };
 
-    // Criar item
-    const criarItem = async (form) => {
+    // Criar/Editar item
+    const salvarItem = async (form, isEdicao = false, itemId = null) => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens`, {
-                method: 'POST',
+            const url = isEdicao 
+                ? `${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`
+                : `${apiUrl}/obras/${obraId}/orcamento-eng/itens`;
+            
+            const res = await localFetchWithAuth(url, {
+                method: isEdicao ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     etapa_id: parseInt(form.etapa_id),
@@ -1109,13 +1156,27 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 })
             });
             if (res.ok) {
-                setShowNovoItem(false);
-                setEtapaParaNovoItem(null);
                 carregarDados();
+                return true;
             }
+            return false;
         } catch (e) {
             console.error(e);
+            return false;
         }
+    };
+    
+    // Handler para abrir edição de item
+    const abrirEdicaoItem = (item) => {
+        setItemParaEditar(item);
+        setShowNovoItem(true);
+    };
+    
+    // Handler para fechar modal
+    const fecharModalItem = () => {
+        setShowNovoItem(false);
+        setItemParaEditar(null);
+        setEtapaParaNovoItem(null);
     };
 
     // Deletar item
@@ -1148,6 +1209,113 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         } catch (e) {
             console.error(e);
         }
+    };
+    
+    // Exportar para Excel
+    const exportarExcel = () => {
+        // Criar dados para CSV
+        let csv = 'CÓDIGO;DESCRIÇÃO;UNIDADE;QTD;PREÇO MO;PREÇO MAT;TOTAL MO;TOTAL MAT;TOTAL\n';
+        
+        dados.etapas.forEach(etapa => {
+            // Linha da etapa (header)
+            csv += `${etapa.codigo};${etapa.nome};;;;;;;\n`;
+            
+            // Itens da etapa
+            etapa.itens.forEach(item => {
+                const totalMO = (item.quantidade || 0) * (item.preco_mao_obra || 0);
+                const totalMat = (item.quantidade || 0) * (item.preco_material || 0);
+                const total = item.total_geral || (totalMO + totalMat);
+                
+                csv += `${item.codigo};${item.descricao};${item.unidade};${item.quantidade || 0};`;
+                csv += `${item.preco_mao_obra || 0};${item.preco_material || 0};`;
+                csv += `${totalMO};${totalMat};${total}\n`;
+            });
+        });
+        
+        // Adicionar resumo
+        csv += '\n;;;;;;;\n';
+        csv += `RESUMO;;;;;;\n`;
+        csv += `Total Mão de Obra;${resumoComBdi.total_mao_obra || 0};;;;;\n`;
+        csv += `Total Material;${resumoComBdi.total_material || 0};;;;;\n`;
+        csv += `Subtotal;${resumoComBdi.subtotal || 0};;;;;\n`;
+        csv += `BDI (${bdi}%);${resumoComBdi.valor_bdi || 0};;;;;\n`;
+        csv += `TOTAL GERAL;${resumoComBdi.total_geral || 0};;;;;\n`;
+        
+        // Download
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `orcamento_${obraNome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    };
+    
+    // Importar de Excel/CSV
+    const importarExcel = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            const linhas = text.split('\n').filter(l => l.trim());
+            
+            // Pular cabeçalho
+            let etapaAtual = null;
+            let itensParaImportar = [];
+            
+            for (let i = 1; i < linhas.length; i++) {
+                const cols = linhas[i].split(';');
+                if (cols.length < 3) continue;
+                
+                const codigo = cols[0]?.trim();
+                const descricao = cols[1]?.trim();
+                const unidade = cols[2]?.trim();
+                
+                // Linha de etapa (não tem unidade)
+                if (codigo && descricao && !unidade) {
+                    // Criar etapa se não existir
+                    const etapaExistente = dados.etapas.find(e => e.codigo === codigo);
+                    if (etapaExistente) {
+                        etapaAtual = etapaExistente;
+                    } else {
+                        // Criar nova etapa
+                        const resEtapa = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ codigo, nome: descricao })
+                        });
+                        if (resEtapa.ok) {
+                            const novaEtapa = await resEtapa.json();
+                            etapaAtual = novaEtapa;
+                        }
+                    }
+                } else if (etapaAtual && descricao && unidade) {
+                    // Linha de item
+                    itensParaImportar.push({
+                        etapa_id: etapaAtual.id,
+                        codigo,
+                        descricao,
+                        unidade,
+                        quantidade: parseFloat(cols[3]?.replace(',', '.')) || 0,
+                        preco_mao_obra: parseFloat(cols[4]?.replace(',', '.')) || 0,
+                        preco_material: parseFloat(cols[5]?.replace(',', '.')) || 0,
+                        tipo_composicao: 'separado',
+                        opcao_servico: 'nao'
+                    });
+                }
+            }
+            
+            // Criar itens
+            for (const item of itensParaImportar) {
+                await salvarItem(item);
+            }
+            
+            carregarDados();
+            alert(`Importação concluída! ${itensParaImportar.length} itens importados.`);
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+        event.target.value = ''; // Reset input
     };
 
     // Renderizar status
@@ -1240,6 +1408,37 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                     >
                         ➕ Novo Item
                     </button>
+                    
+                    {/* Botões de Excel */}
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', paddingLeft: '8px', borderLeft: '1px solid #e2e8f0' }}>
+                        <button 
+                            style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
+                            onClick={exportarExcel}
+                            title="Exportar orçamento para CSV/Excel"
+                        >
+                            📥 Exportar
+                        </button>
+                        <label style={{ margin: 0 }}>
+                            <input 
+                                type="file" 
+                                accept=".csv,.txt"
+                                onChange={importarExcel}
+                                style={{ display: 'none' }}
+                            />
+                            <span 
+                                style={{ 
+                                    ...styles.button, 
+                                    ...styles.buttonSecondary, 
+                                    ...styles.buttonSmall,
+                                    cursor: 'pointer',
+                                    display: 'inline-block'
+                                }}
+                                title="Importar orçamento de CSV/Excel"
+                            >
+                                📤 Importar
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -1391,8 +1590,11 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 key={item.id}
                                                 style={{
                                                     ...styles.itemRow,
-                                                    backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa'
+                                                    backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
+                                                    cursor: 'pointer'
                                                 }}
+                                                onClick={() => abrirEdicaoItem(item)}
+                                                title="Clique para editar"
                                             >
                                                 <td style={{ ...styles.td, ...styles.tdCodigo }}>{item.codigo}</td>
                                                 <td style={{ ...styles.td, ...styles.tdDescricao }}>
@@ -1429,14 +1631,23 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                                     {renderStatus(item)}
                                                 </td>
-                                                <td style={styles.td}>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#ef4444' }}
-                                                        onClick={() => deletarItem(item.id)}
-                                                        title="Excluir item"
-                                                    >
-                                                        🗑️
-                                                    </button>
+                                                <td style={styles.td} onClick={(e) => e.stopPropagation()}>
+                                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                                        <button 
+                                                            style={{ ...styles.actionBtn, color: '#3b82f6' }}
+                                                            onClick={() => abrirEdicaoItem(item)}
+                                                            title="Editar item"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                        <button 
+                                                            style={{ ...styles.actionBtn, color: '#ef4444' }}
+                                                            onClick={() => deletarItem(item.id)}
+                                                            title="Excluir item"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -1526,11 +1737,12 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             
             {showNovoItem && (
                 <NovoItemModal 
-                    onClose={() => { setShowNovoItem(false); setEtapaParaNovoItem(null); }}
-                    onSave={criarItem}
+                    onClose={fecharModalItem}
+                    onSave={salvarItem}
                     etapas={dados.etapas}
                     etapaId={etapaParaNovoItem}
                     apiUrl={apiUrl}
+                    itemParaEditar={itemParaEditar}
                 />
             )}
             

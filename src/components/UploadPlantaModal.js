@@ -975,9 +975,12 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                 <div style={styles.warningBox}>
                                     <span>⚠️</span>
                                     <div>
-                                        <strong>Revise os quantitativos antes de confirmar!</strong>
+                                        <strong>Atenção: Dados aproximados!</strong>
                                         <br />
-                                        Os valores foram estimados pela IA e podem precisar de ajustes. Clique na quantidade para editar.
+                                        Os quantitativos foram estimados pela IA com base na análise visual da planta e <strong>devem ser conferidos</strong>.
+                                        Este recurso agiliza a montagem inicial do orçamento, mas um engenheiro deve revisar e ajustar os valores.
+                                        <br />
+                                        <span style={{ fontSize: '12px', color: '#92400e' }}>💡 Clique na quantidade para editar antes de importar.</span>
                                     </div>
                                 </div>
                                 
