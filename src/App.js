@@ -2025,10 +2025,39 @@ const ServicosKanbanView = ({ servicos, onViewServico, onAddServico, onNavigateT
         return pagamentos.some(p => p.is_parcela) || getValorComprometido(s) > 0;
     };
     
-    // Determinar status baseado no progresso
+    // Marcar/desmarcar serviço como concluído
+    const handleMarcarConcluido = async (servicoId, concluido) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/servicos/${servicoId}/concluir`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ concluido })
+            });
+            
+            if (response.ok) {
+                // Recarregar dados - chamar função de refresh se disponível
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.erro || 'Erro ao atualizar serviço');
+            }
+        } catch (error) {
+            console.error('Erro ao marcar como concluído:', error);
+            alert('Erro ao atualizar serviço');
+        }
+    };
+    
+    // Determinar status baseado no campo concluido OU progresso de pagamento
     const getStatus = (s) => {
+        // Primeiro verifica se foi marcado manualmente como concluído
+        if (s.concluido) return 'Concluído';
         if (s.status) return s.status;
         const progresso = getProgresso(s);
+        // Só marca como concluído automaticamente se 100% pago
         if (progresso >= 100) return 'Concluído';
         if (progresso > 0) return 'Em Andamento';
         return 'A Iniciar';
@@ -2190,7 +2219,7 @@ const ServicosKanbanView = ({ servicos, onViewServico, onAddServico, onNavigateT
                     // Layout Desktop Completo
                     <div style={{ paddingLeft: '10px' }}>
                         {/* Tags */}
-                        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                             <span style={{
                                 padding: '3px 8px',
                                 borderRadius: '6px',
@@ -2237,6 +2266,62 @@ const ServicosKanbanView = ({ servicos, onViewServico, onAddServico, onNavigateT
                                 }} title="Pagamentos do Cronograma Financeiro vinculados">
                                     📅 CF
                                 </span>
+                            )}
+                            
+                            {/* Botão Marcar como Concluído */}
+                            {status !== 'Concluído' && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm(`Marcar "${servico.nome}" como concluído?`)) {
+                                            handleMarcarConcluido(servico.id, true);
+                                        }
+                                    }}
+                                    style={{
+                                        marginLeft: 'auto',
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '10px',
+                                        fontWeight: '600',
+                                        background: '#f0fdf4',
+                                        color: '#10b981',
+                                        border: '1px solid #10b981',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                    title="Marcar serviço como concluído"
+                                >
+                                    ✓ Concluir
+                                </button>
+                            )}
+                            {status === 'Concluído' && servico.concluido && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm(`Desmarcar "${servico.nome}" como concluído?`)) {
+                                            handleMarcarConcluido(servico.id, false);
+                                        }
+                                    }}
+                                    style={{
+                                        marginLeft: 'auto',
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '10px',
+                                        fontWeight: '600',
+                                        background: '#fef2f2',
+                                        color: '#ef4444',
+                                        border: '1px solid #ef4444',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                    title="Desmarcar como concluído"
+                                >
+                                    ✗ Reabrir
+                                </button>
                             )}
                         </div>
                         
