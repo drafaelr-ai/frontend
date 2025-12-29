@@ -1317,6 +1317,29 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         reader.readAsText(file, 'UTF-8');
         event.target.value = ''; // Reset input
     };
+    
+    // Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia
+    const sincronizarServicos = async () => {
+        if (!window.confirm('Atualizar os valores de todos os Serviços do Kanban com os valores do Orçamento de Engenharia?')) return;
+        
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/sincronizar-servicos`, {
+                method: 'POST'
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.mensagem || 'Sincronização concluída!');
+                carregarDados();
+            } else {
+                const data = await res.json();
+                alert(data.erro || 'Erro ao sincronizar');
+            }
+        } catch (e) {
+            console.error('Erro ao sincronizar:', e);
+            alert('Erro ao sincronizar serviços');
+        }
+    };
 
     // Renderizar status
     const renderStatus = (item) => {
@@ -1438,6 +1461,13 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                 📤 Importar
                             </span>
                         </label>
+                        <button 
+                            style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
+                            onClick={sincronizarServicos}
+                            title="Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia"
+                        >
+                            🔄 Sincronizar Kanban
+                        </button>
                     </div>
                 </div>
             </div>
