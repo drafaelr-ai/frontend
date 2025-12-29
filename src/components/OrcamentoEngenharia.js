@@ -1340,6 +1340,43 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             alert('Erro ao sincronizar serviços');
         }
     };
+    
+    // Apagar todo o orçamento de engenharia
+    const apagarOrcamentoCompleto = async () => {
+        const confirmacao = window.prompt(
+            '⚠️ ATENÇÃO: Esta ação irá APAGAR TODO o orçamento de engenharia!\n\n' +
+            'Isso inclui:\n' +
+            '- Todas as etapas\n' +
+            '- Todos os itens\n' +
+            '- Serviços vinculados (sem pagamentos)\n\n' +
+            'Digite "APAGAR" para confirmar:'
+        );
+        
+        if (confirmacao !== 'APAGAR') {
+            if (confirmacao !== null) {
+                alert('Operação cancelada. Digite exatamente "APAGAR" para confirmar.');
+            }
+            return;
+        }
+        
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/apagar-tudo`, {
+                method: 'DELETE'
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                alert(`${data.mensagem}\n\nEtapas: ${data.etapas_deletadas}\nItens: ${data.itens_deletados}\nServiços: ${data.servicos_deletados}`);
+                carregarDados();
+            } else {
+                const data = await res.json();
+                alert(data.erro || 'Erro ao apagar orçamento');
+            }
+        } catch (e) {
+            console.error('Erro ao apagar:', e);
+            alert('Erro ao apagar orçamento');
+        }
+    };
 
     // Renderizar status
     const renderStatus = (item) => {
@@ -1467,6 +1504,13 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                             title="Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia"
                         >
                             🔄 Sincronizar Kanban
+                        </button>
+                        <button 
+                            style={{ ...styles.button, ...styles.buttonDanger, ...styles.buttonSmall }}
+                            onClick={apagarOrcamentoCompleto}
+                            title="Apagar todo o orçamento de engenharia"
+                        >
+                            🗑️ Apagar Tudo
                         </button>
                     </div>
                 </div>
