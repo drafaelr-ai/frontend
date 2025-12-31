@@ -25,6 +25,9 @@ import { BiDashboard } from './BiModule';
 // 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
 
+// 🆕 MÓDULO AGENDA DE DEMANDAS
+import AgendaDemandas from './components/AgendaDemandas';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -508,6 +511,7 @@ const WindowsNavBar = ({
             id: 'ferramentas',
             label: 'Ferramentas',
             items: [
+                { id: 'agenda', label: 'Agenda de Demandas', icon: '📋', shortcut: 'F9' },
                 { id: 'usuarios', label: 'Gerenciar Usuários', icon: '👥', masterOnly: true },
                 { type: 'separator' },
                 { id: 'configuracoes', label: 'Configurações', icon: '⚙️' },
@@ -535,6 +539,7 @@ const WindowsNavBar = ({
         { id: 'relatorios', icon: '📊', label: 'Relatórios' },
         { id: 'diario', icon: '📔', label: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa' },
+        { id: 'agenda', icon: '📋', label: 'Agenda' },
     ];
 
     const handleMenuClick = (menuId) => {
@@ -1204,6 +1209,7 @@ const Sidebar = ({
         { id: 'orcamentos', icon: '📋', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
         { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
+        { id: 'agenda', icon: '📋', label: 'Agenda de Demandas', shortLabel: 'Agenda' },
     ];
 
     const bottomItems = [
@@ -8449,6 +8455,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onUpdate={() => fetchObraData(obraSelecionada.id)}
+                        />
+                    )}
+
+                    {/* === PÁGINA: AGENDA DE DEMANDAS === */}
+                    {currentPage === 'agenda' && (
+                        <AgendaDemandas
+                            obraId={obraSelecionada.id}
+                            obaNome={obraSelecionada.nome}
+                            apiUrl={API_URL}
                         />
                     )}
 
