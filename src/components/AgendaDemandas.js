@@ -592,7 +592,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         observacoes: '',
         origem: '',
         pagamento_servico_id: null,
-        orcamento_item_id: null
+        orcamento_item_id: null,
+        tipo: 'material'
     });
 
     // =====================================================
@@ -751,7 +752,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 method: 'POST',
                 body: JSON.stringify({
                     ...formImportar,
-                    tipo: 'material'
+                    tipo: formImportar.tipo || 'material'
                 })
             });
             
@@ -770,7 +771,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 observacoes: '',
                 origem: '',
                 pagamento_servico_id: null,
-                orcamento_item_id: null
+                orcamento_item_id: null,
+                tipo: 'material'
             });
             carregarDemandas();
             carregarPagamentosImportar();
@@ -829,16 +831,23 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const selecionarParaImportar = (item, tipo) => {
         if (tipo === 'pagamento') {
+            // Determinar tipo de demanda baseado no tipo de pagamento
+            let tipoDemanda = 'material';
+            if (item.tipo === 'mao_de_obra' || item.tipo === 'Mão de Obra') {
+                tipoDemanda = 'servico';
+            }
+            
             setFormImportar({
                 descricao: item.descricao,
                 fornecedor: item.fornecedor || '',
                 telefone: item.telefone || '',
                 valor: item.valor,
                 data_prevista: '',
-                observacoes: `Serviço: ${item.servico || '-'} | ${item.status === 'Pago' ? 'Pago' : 'Lançado'} em: ${formatDate(item.data_pagamento)}`,
+                observacoes: `Serviço: ${item.servico || '-'} | Status: ${item.status} | Data: ${formatDate(item.data_pagamento)}`,
                 origem: 'pagamento',
-                pagamento_servico_id: item.id,
-                orcamento_item_id: null
+                pagamento_servico_id: typeof item.id === 'number' ? item.id : null,
+                orcamento_item_id: null,
+                tipo: tipoDemanda
             });
         } else {
             setFormImportar({
@@ -850,7 +859,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 observacoes: `Etapa: ${item.etapa} | Qtd: ${item.quantidade}`,
                 origem: 'orcamento',
                 pagamento_servico_id: null,
-                orcamento_item_id: item.id
+                orcamento_item_id: item.id,
+                tipo: 'material'
             });
         }
         setShowModalImportar(false);
@@ -1400,15 +1410,45 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     pagamentosFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: item.status === 'Pago' ? '#d1fae5' : '#dbeafe' }}>
-                                                {item.status === 'Pago' ? '✅' : '💳'}
+                                            <div style={{ 
+                                                ...styles.listIcon, 
+                                                backgroundColor: item.tipo === 'material' ? '#d1fae5' : item.tipo === 'mao_de_obra' ? '#dbeafe' : '#fef3c7'
+                                            }}>
+                                                {item.tipo === 'material' ? '📦' : item.tipo === 'mao_de_obra' ? '👷' : '💳'}
                                             </div>
                                             <div style={styles.listInfo}>
-                                                <div style={styles.listTitle}>{item.descricao}</div>
+                                                <div style={styles.listTitle}>
+                                                    {item.descricao}
+                                                    {item.fonte === 'pagamento_futuro' && (
+                                                        <span style={{ 
+                                                            marginLeft: '8px', 
+                                                            fontSize: '10px', 
+                                                            background: '#fef3c7', 
+                                                            color: '#92400e',
+                                                            padding: '2px 6px',
+                                                            borderRadius: '4px'
+                                                        }}>Futuro</span>
+                                                    )}
+                                                    {item.fonte === 'pagamento_parcelado' && (
+                                                        <span style={{ 
+                                                            marginLeft: '8px', 
+                                                            fontSize: '10px', 
+                                                            background: '#e0e7ff', 
+                                                            color: '#3730a3',
+                                                            padding: '2px 6px',
+                                                            borderRadius: '4px'
+                                                        }}>Parcelado</span>
+                                                    )}
+                                                </div>
                                                 <div style={styles.listMeta}>
                                                     <span>🔧 {item.servico || '-'}</span>
                                                     <span>👤 {item.fornecedor || '-'}</span>
-                                                    <span>📅 {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : `Lançado em ${formatDate(item.data_pagamento)}`}</span>
+                                                    <span>📅 {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : formatDate(item.data_pagamento)}</span>
+                                                    <span style={{ 
+                                                        color: item.status === 'Pago' ? '#059669' : item.status === 'Previsto' ? '#d97706' : '#6b7280'
+                                                    }}>
+                                                        {item.status === 'Pago' ? '✅' : item.status === 'Previsto' ? '⏳' : '📋'} {item.status}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div style={styles.listValor}>{formatCurrency(item.valor)}</div>
