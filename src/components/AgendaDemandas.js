@@ -835,7 +835,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 telefone: item.telefone || '',
                 valor: item.valor,
                 data_prevista: '',
-                observacoes: `Serviço: ${item.servico || '-'} | Pago em: ${formatDate(item.data_pagamento)}`,
+                observacoes: `Serviço: ${item.servico || '-'} | ${item.status === 'Pago' ? 'Pago' : 'Lançado'} em: ${formatDate(item.data_pagamento)}`,
                 origem: 'pagamento',
                 pagamento_servico_id: item.id,
                 orcamento_item_id: null
@@ -1400,13 +1400,15 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     pagamentosFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: '#dbeafe' }}>💳</div>
+                                            <div style={{ ...styles.listIcon, backgroundColor: item.status === 'Pago' ? '#d1fae5' : '#dbeafe' }}>
+                                                {item.status === 'Pago' ? '✅' : '💳'}
+                                            </div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>{item.descricao}</div>
                                                 <div style={styles.listMeta}>
                                                     <span>🔧 {item.servico || '-'}</span>
                                                     <span>👤 {item.fornecedor || '-'}</span>
-                                                    <span>📅 Pago em {formatDate(item.data_pagamento)}</span>
+                                                    <span>📅 {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : `Lançado em ${formatDate(item.data_pagamento)}`}</span>
                                                 </div>
                                             </div>
                                             <div style={styles.listValor}>{formatCurrency(item.valor)}</div>
