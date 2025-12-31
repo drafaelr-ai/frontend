@@ -552,7 +552,7 @@ const styles = {
 // =====================================================
 // COMPONENTE PRINCIPAL
 // =====================================================
-const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
+const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     // Estados
     const [demandas, setDemandas] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -648,7 +648,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
             case 'aguardando':
                 return <span style={{ ...styles.badge, ...styles.badgeAguardando }}>⏳ Aguardando</span>;
             case 'concluido':
-                return <span style={{ ...styles.badge, ...styles.badgeConcluido }}>✓ Concluído</span>;
+                return <span style={{ ...styles.badge, ...styles.badgeConcluido }}>✓ Recebido</span>;
             case 'atrasado':
                 return <span style={{ ...styles.badge, ...styles.badgeAtrasado }}>⚠️ {diasAtraso}d atraso</span>;
             default:
@@ -950,7 +950,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                     <h1 style={styles.title}>
                         📅 Agenda de Demandas
                     </h1>
-                    <p style={styles.subtitle}>{obaNome || 'Obra'}</p>
+                    <p style={styles.subtitle}>{obraNome || 'Obra'}</p>
                 </div>
                 <div style={styles.headerActions}>
                     <button 
@@ -979,7 +979,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                     <div style={styles.kpiValue}>{atrasados.length}</div>
                 </div>
                 <div style={{ ...styles.kpiCard, borderLeftColor: '#10b981' }}>
-                    <div style={styles.kpiLabel}>✓ Concluídos</div>
+                    <div style={styles.kpiLabel}>✓ Recebidos</div>
                     <div style={styles.kpiValue}>{concluidos.length}</div>
                 </div>
                 <div style={{ ...styles.kpiCard, borderLeftColor: '#6366f1' }}>
@@ -1002,7 +1002,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                         {f === 'todos' && `Todos (${demandas.length})`}
                         {f === 'aguardando' && `⏳ Aguardando (${aguardando.length})`}
                         {f === 'atrasado' && `⚠️ Atrasados (${atrasados.length})`}
-                        {f === 'concluido' && `✓ Concluídos (${concluidos.length})`}
+                        {f === 'concluido' && `✓ Recebidos (${concluidos.length})`}
                     </button>
                 ))}
             </div>
@@ -1075,7 +1075,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
                                     >
-                                        ✓ Concluído
+                                        ✓ Recebido
                                     </button>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
@@ -1116,7 +1116,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
                                     >
-                                        ✓ Concluído
+                                        ✓ Recebido
                                     </button>
                                 </div>
                             </div>
@@ -1150,7 +1150,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
                                     >
-                                        ✓ Concluído
+                                        ✓ Recebido
                                     </button>
                                 </div>
                             </div>
@@ -1184,7 +1184,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
                                     >
-                                        ✓ Concluído
+                                        ✓ Recebido
                                     </button>
                                 </div>
                             </div>
@@ -1193,10 +1193,10 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                 </div>
             )}
 
-            {/* Concluídos */}
+            {/* Recebidos */}
             {concluidos.length > 0 && (filtro === 'todos' || filtro === 'concluido') && (
                 <div style={styles.section}>
-                    <h3 style={{ ...styles.sectionTitle, color: '#059669' }}>✅ Concluídos</h3>
+                    <h3 style={{ ...styles.sectionTitle, color: '#059669' }}>✅ Recebidos</h3>
                     <div style={styles.card}>
                         {concluidos.slice(0, filtro === 'concluido' ? undefined : 5).map(demanda => (
                             <div key={demanda.id} style={{ ...styles.demandaItem, opacity: 0.7 }}>
@@ -1209,7 +1209,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                                     <div style={styles.demandaMeta}>
                                         <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
                                         <span>📅 Previsto: {formatDateShort(demanda.data_prevista)}</span>
-                                        <span>✓ Concluído: {formatDateShort(demanda.data_conclusao)}</span>
+                                        <span>✓ Recebido em {formatDateShort(demanda.data_conclusao)}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
@@ -1585,7 +1585,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalConcluir(null)}>
                     <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>✓ Confirmar Conclusão</h2>
+                            <h2 style={styles.modalTitle}>✓ Confirmar Recebimento</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalConcluir(null)}>×</button>
                         </div>
                         <div style={styles.modalBody}>
@@ -1624,20 +1624,10 @@ const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
 
 // Componente auxiliar para o formulário de conclusão
 const ConcluirForm = ({ onConcluir, onCancelar }) => {
-    const [dataConclusao, setDataConclusao] = useState(new Date().toISOString().split('T')[0]);
     const [observacoes, setObservacoes] = useState('');
 
     return (
         <>
-            <div style={styles.formGroup}>
-                <label style={styles.label}>📅 Data da Conclusão</label>
-                <input 
-                    type="date" 
-                    style={styles.input}
-                    value={dataConclusao}
-                    onChange={(e) => setDataConclusao(e.target.value)}
-                />
-            </div>
             <div style={styles.formGroup}>
                 <label style={styles.label}>📝 Observações (opcional)</label>
                 <textarea 
@@ -1656,9 +1646,9 @@ const ConcluirForm = ({ onConcluir, onCancelar }) => {
                 </button>
                 <button 
                     style={{ ...styles.button, ...styles.buttonSuccess }}
-                    onClick={() => onConcluir(dataConclusao, observacoes)}
+                    onClick={() => onConcluir(new Date().toISOString().split('T')[0], observacoes)}
                 >
-                    ✓ Confirmar Conclusão
+                    ✓ Confirmar Recebimento
                 </button>
             </div>
         </>

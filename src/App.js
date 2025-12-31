@@ -8462,7 +8462,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {currentPage === 'agenda' && (
                         <AgendaDemandas
                             obraId={obraSelecionada.id}
-                            obaNome={obraSelecionada.nome}
+                            obraNome={obraSelecionada.nome}
                             apiUrl={API_URL}
                         />
                     )}
