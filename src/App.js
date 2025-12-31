@@ -1,16 +1,16 @@
 /**
  * =====================================================
- * OBRALY - MÓDULO DE ORÇAMENTO DE ENGENHARIA
+ * OBRALY - MÓDULO AGENDA DE DEMANDAS
  * =====================================================
  * 
- * Componente para gerenciar orçamento detalhado de obras
- * com integração automática ao Kanban de serviços
+ * Componente para gerenciar agenda de entregas, visitas,
+ * serviços contratados e outras demandas da obra.
+ * Permite importar de Pagamentos ou Orçamento de Engenharia.
  * 
  * =====================================================
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import UploadPlantaModal from './UploadPlantaModal';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -33,7 +33,6 @@ const localFetchWithAuth = async (url, options = {}) => {
 // =====================================================
 // ESTILOS
 // =====================================================
-
 const styles = {
     container: {
         padding: '20px',
@@ -96,221 +95,219 @@ const styles = {
         backgroundColor: '#10b981',
         color: '#fff'
     },
-    buttonInfo: {
-        backgroundColor: '#3b82f6',
+    buttonWarning: {
+        backgroundColor: '#f59e0b',
         color: '#fff'
     },
     buttonDanger: {
         backgroundColor: '#ef4444',
         color: '#fff'
     },
-    buttonSmall: {
-        padding: '6px 12px',
-        fontSize: '12px'
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        marginBottom: '20px'
     },
-    // Cards de Resumo
-    summaryGrid: {
+    cardHeader: {
+        padding: '16px 20px',
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    cardTitle: {
+        fontSize: '16px',
+        fontWeight: '600',
+        color: '#374151',
+        margin: 0
+    },
+    // KPIs
+    kpiContainer: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: '16px',
         marginBottom: '20px'
     },
-    summaryCard: {
-        backgroundColor: '#fff',
+    kpiCard: {
+        backgroundColor: 'white',
         borderRadius: '12px',
-        padding: '16px 20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        padding: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        borderLeft: '4px solid #4f46e5'
     },
-    summaryLabel: {
-        fontSize: '11px',
-        fontWeight: '600',
+    kpiLabel: {
+        fontSize: '13px',
         color: '#64748b',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
         marginBottom: '4px'
     },
-    summaryValue: {
-        fontSize: '22px',
+    kpiValue: {
+        fontSize: '28px',
         fontWeight: '700',
         color: '#1e293b'
     },
-    summarySubtext: {
-        fontSize: '11px',
-        color: '#94a3b8',
-        marginTop: '4px'
+    // Filtros
+    filterBar: {
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '20px',
+        flexWrap: 'wrap'
     },
-    // BDI Config
-    bdiConfig: {
+    filterChip: {
+        padding: '8px 16px',
+        backgroundColor: 'white',
+        color: '#64748b',
+        border: '1px solid #e5e7eb',
+        borderRadius: '20px',
+        fontSize: '13px',
+        fontWeight: '500',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px'
+    },
+    filterChipActive: {
+        backgroundColor: '#4f46e5',
+        color: 'white',
+        border: 'none'
+    },
+    // Lista de demandas
+    demandaItem: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '16px 20px',
+        borderBottom: '1px solid #f1f5f9',
+        gap: '16px',
+        transition: 'background-color 0.2s'
+    },
+    demandaIcon: {
+        width: '44px',
+        height: '44px',
+        borderRadius: '10px',
+        backgroundColor: '#f1f5f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '20px'
+    },
+    demandaInfo: {
+        flex: 1,
+        minWidth: 0
+    },
+    demandaTitle: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#1e293b',
+        marginBottom: '4px',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        padding: '8px 12px',
+        flexWrap: 'wrap'
+    },
+    demandaMeta: {
+        fontSize: '12px',
+        color: '#64748b',
+        display: 'flex',
+        gap: '12px',
+        flexWrap: 'wrap'
+    },
+    demandaValor: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#059669',
+        minWidth: '100px',
+        textAlign: 'right'
+    },
+    demandaActions: {
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center'
+    },
+    // Badges
+    badge: {
+        padding: '4px 10px',
+        borderRadius: '12px',
+        fontSize: '11px',
+        fontWeight: '600'
+    },
+    badgePagamento: {
+        backgroundColor: '#dbeafe',
+        color: '#1e40af'
+    },
+    badgeOrcamento: {
         backgroundColor: '#fef3c7',
-        borderRadius: '8px',
-        fontSize: '13px',
         color: '#92400e'
     },
-    bdiInput: {
-        width: '50px',
-        padding: '4px 6px',
-        borderRadius: '4px',
-        border: '1px solid #fcd34d',
-        fontSize: '13px',
-        textAlign: 'center'
+    badgeManual: {
+        backgroundColor: '#f3e8ff',
+        color: '#7c3aed'
     },
-    // Progress Bar
-    progressContainer: {
-        backgroundColor: '#fff',
+    badgeAguardando: {
+        backgroundColor: '#fef3c7',
+        color: '#92400e'
+    },
+    badgeConcluido: {
+        backgroundColor: '#d1fae5',
+        color: '#065f46'
+    },
+    badgeAtrasado: {
+        backgroundColor: '#fee2e2',
+        color: '#991b1b'
+    },
+    // Seções
+    section: {
+        marginBottom: '24px'
+    },
+    sectionTitle: {
+        fontSize: '16px',
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+    },
+    // Alert banner
+    alertBanner: {
+        backgroundColor: '#fef2f2',
+        border: '1px solid #fecaca',
         borderRadius: '12px',
         padding: '16px 20px',
         marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
     },
-    progressBar: {
-        height: '12px',
-        backgroundColor: '#e2e8f0',
-        borderRadius: '6px',
-        overflow: 'hidden'
-    },
-    progressFill: {
-        height: '100%',
-        backgroundColor: '#16a34a',
-        borderRadius: '6px',
-        transition: 'width 0.5s'
-    },
-    // Tabela
-    tableContainer: {
-        backgroundColor: '#fff',
+    infoBanner: {
+        backgroundColor: '#eff6ff',
+        border: '1px solid #bfdbfe',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
+        padding: '16px 20px',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px'
     },
-    table: {
-        width: '100%',
-        borderCollapse: 'collapse',
-        fontSize: '13px'
-    },
-    th: {
-        backgroundColor: '#f8fafc',
-        padding: '12px 12px',
-        textAlign: 'left',
-        fontWeight: '600',
-        color: '#475569',
-        fontSize: '10px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-        borderBottom: '2px solid #e2e8f0',
-        position: 'sticky',
-        top: 0,
-        whiteSpace: 'nowrap'
-    },
-    thRight: {
-        textAlign: 'right'
-    },
-    thCenter: {
+    // Empty state
+    emptyState: {
+        padding: '60px 20px',
         textAlign: 'center'
     },
-    // Etapa Row
-    etapaRow: {
-        backgroundColor: '#4f46e5',
-        color: '#fff',
-        cursor: 'pointer',
-        transition: 'background-color 0.2s'
+    emptyIcon: {
+        fontSize: '48px',
+        marginBottom: '16px'
     },
-    etapaTd: {
-        padding: '12px',
+    emptyTitle: {
+        fontSize: '18px',
         fontWeight: '600',
-        fontSize: '13px'
+        color: '#374151',
+        marginBottom: '8px'
     },
-    // Item Row
-    itemRow: {
-        borderBottom: '1px solid #f1f5f9',
-        transition: 'background-color 0.2s',
-        cursor: 'pointer'
-    },
-    td: {
-        padding: '10px 12px',
-        color: '#334155',
-        verticalAlign: 'middle'
-    },
-    tdCodigo: {
-        color: '#64748b',
-        fontFamily: 'monospace',
-        fontSize: '11px'
-    },
-    tdDescricao: {
-        fontWeight: '500',
-        maxWidth: '250px'
-    },
-    tdUnidade: {
-        textAlign: 'center',
-        color: '#64748b',
-        fontSize: '11px'
-    },
-    tdNumero: {
-        textAlign: 'right',
-        fontFamily: 'monospace',
-        fontSize: '12px'
-    },
-    tdTotal: {
-        textAlign: 'right',
-        fontWeight: '600',
-        color: '#1e293b'
-    },
-    // Status
-    statusBadge: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '4px 8px',
-        borderRadius: '12px',
-        fontSize: '10px',
-        fontWeight: '600',
-        whiteSpace: 'nowrap'
-    },
-    statusPago: {
-        backgroundColor: '#dcfce7',
-        color: '#16a34a'
-    },
-    statusEmAndamento: {
-        backgroundColor: '#fef3c7',
-        color: '#d97706'
-    },
-    statusAFazer: {
-        backgroundColor: '#f1f5f9',
-        color: '#64748b'
-    },
-    // Serviço Badge
-    servicoBadge: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '2px 6px',
-        borderRadius: '4px',
-        fontSize: '9px',
-        fontWeight: '600',
-        backgroundColor: '#dbeafe',
-        color: '#2563eb',
-        marginLeft: '6px'
-    },
-    // Subtotal Row
-    subtotalRow: {
-        backgroundColor: '#f1f5f9',
-        fontWeight: '600'
-    },
-    subtotalTd: {
-        padding: '8px 12px',
-        fontSize: '12px'
-    },
-    // Total Row
-    totalRow: {
-        backgroundColor: '#1e293b',
-        color: '#fff'
-    },
-    totalTd: {
-        padding: '14px 12px',
+    emptyText: {
         fontSize: '14px',
-        fontWeight: '700'
+        color: '#64748b',
+        marginBottom: '24px'
     },
     // Modal
     modalOverlay: {
@@ -327,17 +324,26 @@ const styles = {
         padding: '20px'
     },
     modal: {
-        backgroundColor: '#fff',
+        backgroundColor: 'white',
         borderRadius: '16px',
         maxWidth: '700px',
         width: '100%',
         maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+    },
+    modalSmall: {
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        maxWidth: '500px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'auto'
     },
     modalHeader: {
         padding: '20px 24px',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid #e5e7eb',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -346,14 +352,19 @@ const styles = {
         fontSize: '18px',
         fontWeight: '700',
         color: '#1e293b',
-        margin: 0
+        margin: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
     },
     modalBody: {
-        padding: '24px'
+        padding: '24px',
+        overflow: 'auto',
+        flex: 1
     },
     modalFooter: {
         padding: '16px 24px',
-        borderTop: '1px solid #e2e8f0',
+        borderTop: '1px solid #e5e7eb',
         display: 'flex',
         justifyContent: 'flex-end',
         gap: '12px'
@@ -363,1047 +374,552 @@ const styles = {
         border: 'none',
         fontSize: '24px',
         cursor: 'pointer',
-        color: '#9ca3af',
-        padding: '0'
+        color: '#9ca3af'
+    },
+    // Tabs
+    tabs: {
+        display: 'flex',
+        borderBottom: '2px solid #e5e7eb',
+        backgroundColor: '#f8fafc'
+    },
+    tab: {
+        flex: 1,
+        padding: '16px 24px',
+        backgroundColor: 'transparent',
+        color: '#64748b',
+        border: 'none',
+        borderBottom: '2px solid transparent',
+        marginBottom: '-2px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+    },
+    tabActive: {
+        color: '#4f46e5',
+        borderBottom: '2px solid #4f46e5'
     },
     // Form
     formGroup: {
         marginBottom: '16px'
     },
-    formLabel: {
+    label: {
         display: 'block',
         fontSize: '13px',
         fontWeight: '600',
         color: '#374151',
         marginBottom: '6px'
     },
-    formInput: {
+    input: {
         width: '100%',
-        padding: '10px 12px',
+        padding: '12px',
+        border: '2px solid #e5e7eb',
         borderRadius: '8px',
-        border: '1px solid #d1d5db',
         fontSize: '14px',
-        transition: 'border-color 0.2s',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        transition: 'border-color 0.2s'
+    },
+    inputDisabled: {
+        width: '100%',
+        padding: '12px',
+        border: '2px solid #e5e7eb',
+        borderRadius: '8px',
+        fontSize: '14px',
+        boxSizing: 'border-box',
+        backgroundColor: '#f8fafc',
+        color: '#64748b'
     },
     formRow: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: '12px'
+        gap: '16px'
     },
-    formRow3: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '12px'
+    searchBox: {
+        padding: '16px 24px',
+        borderBottom: '1px solid #e5e7eb'
     },
-    // Radio Group
-    radioGroup: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        padding: '12px',
-        backgroundColor: '#f8fafc',
+    searchInput: {
+        width: '100%',
+        padding: '12px 16px',
+        border: '2px solid #e5e7eb',
         borderRadius: '8px',
-        border: '1px solid #e2e8f0'
+        fontSize: '14px',
+        boxSizing: 'border-box'
     },
-    radioOption: {
+    // Lista de importação
+    listItem: {
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: '10px',
-        cursor: 'pointer',
-        padding: '8px',
-        borderRadius: '6px',
-        transition: 'background-color 0.2s'
-    },
-    radioOptionSelected: {
-        backgroundColor: '#eff6ff'
-    },
-    // Autocomplete
-    autocompleteContainer: {
-        position: 'relative'
-    },
-    autocompleteDropdown: {
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
-        backgroundColor: '#fff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        maxHeight: '300px',
-        overflow: 'auto',
-        zIndex: 100
-    },
-    autocompleteSection: {
-        padding: '8px 12px',
-        backgroundColor: '#f8fafc',
-        fontSize: '11px',
-        fontWeight: '600',
-        color: '#64748b',
-        textTransform: 'uppercase',
-        borderBottom: '1px solid #e2e8f0'
-    },
-    autocompleteItem: {
-        padding: '10px 12px',
-        cursor: 'pointer',
+        alignItems: 'center',
+        padding: '16px 24px',
         borderBottom: '1px solid #f1f5f9',
-        transition: 'background-color 0.2s'
+        cursor: 'pointer',
+        transition: 'background-color 0.2s',
+        gap: '16px'
     },
-    autocompleteItemHover: {
-        backgroundColor: '#f1f5f9'
+    listIcon: {
+        width: '44px',
+        height: '44px',
+        borderRadius: '10px',
+        backgroundColor: '#f1f5f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '20px'
+    },
+    listInfo: {
+        flex: 1
+    },
+    listTitle: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#1e293b',
+        marginBottom: '4px'
+    },
+    listMeta: {
+        fontSize: '12px',
+        color: '#64748b',
+        display: 'flex',
+        gap: '12px',
+        flexWrap: 'wrap'
+    },
+    listValor: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#059669',
+        minWidth: '100px',
+        textAlign: 'right'
+    },
+    listAction: {
+        padding: '8px 16px',
+        backgroundColor: '#4f46e5',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        fontSize: '12px',
+        fontWeight: '600',
+        cursor: 'pointer'
+    },
+    // Highlight
+    highlightField: {
+        backgroundColor: '#fef3c7',
+        border: '2px solid #fbbf24',
+        borderRadius: '8px',
+        padding: '16px',
+        marginTop: '20px'
+    },
+    highlightLabel: {
+        fontSize: '11px',
+        fontWeight: '700',
+        color: '#92400e',
+        textTransform: 'uppercase',
+        marginBottom: '12px'
+    },
+    importedBox: {
+        backgroundColor: '#f0fdf4',
+        border: '2px solid #86efac',
+        borderRadius: '8px',
+        padding: '12px 16px',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
     },
     // Info Box
     infoBox: {
-        padding: '12px 16px',
-        backgroundColor: '#eff6ff',
-        borderRadius: '8px',
-        border: '1px solid #bfdbfe',
-        fontSize: '13px',
-        color: '#1e40af',
-        marginTop: '16px'
+        backgroundColor: '#f8fafc',
+        borderRadius: '12px',
+        padding: '16px',
+        marginBottom: '20px'
     },
-    // Empty State
-    emptyState: {
-        textAlign: 'center',
-        padding: '60px 20px',
-        color: '#9ca3af'
-    },
-    // Actions
-    actionsCell: {
+    infoRow: {
         display: 'flex',
-        gap: '4px',
-        justifyContent: 'flex-end'
+        justifyContent: 'space-between',
+        padding: '8px 0',
+        fontSize: '14px'
     },
-    actionBtn: {
-        padding: '4px 6px',
-        borderRadius: '4px',
-        border: 'none',
-        backgroundColor: 'transparent',
-        cursor: 'pointer',
-        fontSize: '12px',
-        transition: 'background-color 0.2s'
+    infoLabel: {
+        color: '#64748b'
     },
-    // Valor Pago
-    valorPago: {
-        fontSize: '10px',
-        color: '#16a34a',
-        fontWeight: '500'
+    infoValue: {
+        fontWeight: '600',
+        color: '#1e293b'
     }
 };
 
 // =====================================================
-// FUNÇÕES AUXILIARES
+// COMPONENTE PRINCIPAL
 // =====================================================
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', { 
-        style: 'currency', 
-        currency: 'BRL',
-        minimumFractionDigits: 2
-    }).format(value || 0);
-};
-
-const formatNumber = (value, decimals = 2) => {
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value || 0);
-};
-
-// =====================================================
-// COMPONENTE: MODAL NOVA ETAPA
-// =====================================================
-
-const NovaEtapaModal = ({ onClose, onSave }) => {
-    const [nome, setNome] = useState('');
-    const [codigo, setCodigo] = useState('');
-    const [salvando, setSalvando] = useState(false);
-
-    const handleSalvar = async () => {
-        if (!nome.trim()) return;
-        setSalvando(true);
-        await onSave({ nome: nome.trim(), codigo: codigo.trim() });
-        setSalvando(false);
-    };
-
-    return (
-        <div style={styles.modalOverlay} onClick={onClose}>
-            <div style={styles.modal} onClick={e => e.stopPropagation()}>
-                <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>➕ Nova Etapa</h2>
-                    <button style={styles.closeBtn} onClick={onClose}>×</button>
-                </div>
-                <div style={styles.modalBody}>
-                    <div style={styles.formRow}>
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Código (opcional)</label>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={codigo}
-                                onChange={e => setCodigo(e.target.value)}
-                                placeholder="Ex: 01"
-                            />
-                        </div>
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Nome da Etapa *</label>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={nome}
-                                onChange={e => setNome(e.target.value)}
-                                placeholder="Ex: FUNDAÇÃO"
-                                autoFocus
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div style={styles.modalFooter}>
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSecondary }} 
-                        onClick={onClose}
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSuccess }}
-                        onClick={handleSalvar}
-                        disabled={!nome.trim() || salvando}
-                    >
-                        {salvando ? 'Salvando...' : '💾 Salvar Etapa'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// =====================================================
-// COMPONENTE: MODAL NOVO ITEM
-// =====================================================
-
-const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEditar = null }) => {
-    const isEdicao = !!itemParaEditar;
-    
-    const [form, setForm] = useState({
-        etapa_id: itemParaEditar?.etapa_id || etapaId || '',
-        codigo: itemParaEditar?.codigo || '',
-        descricao: itemParaEditar?.descricao || '',
-        unidade: itemParaEditar?.unidade || 'm²',
-        quantidade: itemParaEditar?.quantidade?.toString() || '',
-        tipo_composicao: itemParaEditar?.tipo_composicao || 'separado',
-        preco_mao_obra: itemParaEditar?.preco_mao_obra?.toString() || '',
-        preco_material: itemParaEditar?.preco_material?.toString() || '',
-        preco_unitario: itemParaEditar?.preco_unitario?.toString() || '',
-        rateio_mo: itemParaEditar?.rateio_mo || 50,
-        rateio_mat: itemParaEditar?.rateio_mat || 50,
-        opcao_servico: 'criar',
-        servico_id: itemParaEditar?.servico_id || null,
-        responsavel: '',
-        salvar_biblioteca: !isEdicao
-    });
-    
-    const [salvando, setSalvando] = useState(false);
-    const [autocomplete, setAutocomplete] = useState({ show: false, results: { usuario: [], base: [] } });
-    const [buscando, setBuscando] = useState(false);
-
-    // Resetar form para novo item
-    const resetForm = () => {
-        setForm({
-            etapa_id: etapaId || form.etapa_id,
-            codigo: '',
-            descricao: '',
-            unidade: 'm²',
-            quantidade: '',
-            tipo_composicao: 'separado',
-            preco_mao_obra: '',
-            preco_material: '',
-            preco_unitario: '',
-            rateio_mo: 50,
-            rateio_mat: 50,
-            opcao_servico: 'criar',
-            servico_id: null,
-            responsavel: '',
-            salvar_biblioteca: true
-        });
-    };
-
-    // Buscar autocomplete
-    const buscarAutocomplete = useCallback(async (termo) => {
-        if (termo.length < 2) {
-            setAutocomplete({ show: false, results: { usuario: [], base: [] } });
-            return;
-        }
-        
-        setBuscando(true);
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/servicos-autocomplete?q=${encodeURIComponent(termo)}`);
-            if (res.ok) {
-                const data = await res.json();
-                setAutocomplete({
-                    show: true,
-                    results: {
-                        usuario: data.servicos_usuario || [],
-                        base: data.servicos_base || []
-                    }
-                });
-            }
-        } catch (e) {
-            console.error('Erro no autocomplete:', e);
-        }
-        setBuscando(false);
-    }, [apiUrl]);
-
-    // Debounce para autocomplete
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (form.descricao.length >= 2) {
-                buscarAutocomplete(form.descricao);
-            }
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [form.descricao, buscarAutocomplete]);
-
-    // Selecionar item do autocomplete
-    const selecionarAutocomplete = (servico) => {
-        setForm(prev => ({
-            ...prev,
-            descricao: servico.descricao,
-            unidade: servico.unidade,
-            tipo_composicao: servico.tipo_composicao,
-            preco_mao_obra: servico.preco_mao_obra || '',
-            preco_material: servico.preco_material || '',
-            preco_unitario: servico.preco_unitario || '',
-            rateio_mo: servico.rateio_mo || 50,
-            rateio_mat: servico.rateio_mat || 50
-        }));
-        setAutocomplete({ show: false, results: { usuario: [], base: [] } });
-    };
-
-    // Calcular total
-    const calcularTotal = () => {
-        const qtd = parseFloat(form.quantidade) || 0;
-        if (form.tipo_composicao === 'composto') {
-            return qtd * (parseFloat(form.preco_unitario) || 0);
-        } else {
-            const mo = qtd * (parseFloat(form.preco_mao_obra) || 0);
-            const mat = qtd * (parseFloat(form.preco_material) || 0);
-            return mo + mat;
-        }
-    };
-
-    const handleSalvar = async (continuarAdicionando = false) => {
-        if (!form.etapa_id || !form.descricao || !form.unidade) return;
-        setSalvando(true);
-        const sucesso = await onSave(form, isEdicao, itemParaEditar?.id);
-        setSalvando(false);
-        
-        if (sucesso && continuarAdicionando) {
-            resetForm();
-        } else if (sucesso) {
-            onClose();
-        }
-    };
-
-    return (
-        <div style={styles.modalOverlay} onClick={onClose}>
-            <div style={{ ...styles.modal, maxWidth: '800px' }} onClick={e => e.stopPropagation()}>
-                <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>{isEdicao ? '✏️ Editar Item do Orçamento' : '➕ Novo Item do Orçamento'}</h2>
-                    <button style={styles.closeBtn} onClick={onClose}>×</button>
-                </div>
-                
-                <div style={styles.modalBody}>
-                    {/* Etapa */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>Etapa *</label>
-                        <select 
-                            style={styles.formInput}
-                            value={form.etapa_id}
-                            onChange={e => setForm({...form, etapa_id: e.target.value})}
-                        >
-                            <option value="">Selecione a etapa...</option>
-                            {etapas.map(e => (
-                                <option key={e.id} value={e.id}>{e.codigo} - {e.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    {/* Código e Descrição */}
-                    <div style={styles.formRow}>
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Código (auto)</label>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={form.codigo}
-                                onChange={e => setForm({...form, codigo: e.target.value})}
-                                placeholder="Ex: 01.01"
-                            />
-                        </div>
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Unidade *</label>
-                            <select 
-                                style={styles.formInput}
-                                value={form.unidade}
-                                onChange={e => setForm({...form, unidade: e.target.value})}
-                            >
-                                <option value="m²">m² - Metro quadrado</option>
-                                <option value="m³">m³ - Metro cúbico</option>
-                                <option value="m">m - Metro linear</option>
-                                <option value="kg">kg - Quilograma</option>
-                                <option value="un">un - Unidade</option>
-                                <option value="pt">pt - Ponto</option>
-                                <option value="vb">vb - Verba</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    {/* Descrição com Autocomplete */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>Descrição do Serviço *</label>
-                        <div style={styles.autocompleteContainer}>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={form.descricao}
-                                onChange={e => setForm({...form, descricao: e.target.value})}
-                                placeholder="Digite para buscar ou criar..."
-                                onFocus={() => form.descricao.length >= 2 && buscarAutocomplete(form.descricao)}
-                                onBlur={() => setTimeout(() => setAutocomplete(prev => ({...prev, show: false})), 200)}
-                            />
-                            {buscando && <span style={{ position: 'absolute', right: 12, top: 12, fontSize: '12px', color: '#9ca3af' }}>Buscando...</span>}
-                            
-                            {autocomplete.show && (autocomplete.results.usuario.length > 0 || autocomplete.results.base.length > 0) && (
-                                <div style={styles.autocompleteDropdown}>
-                                    {autocomplete.results.usuario.length > 0 && (
-                                        <>
-                                            <div style={styles.autocompleteSection}>📋 Meus Serviços</div>
-                                            {autocomplete.results.usuario.map(s => (
-                                                <div 
-                                                    key={`u-${s.id}`}
-                                                    style={styles.autocompleteItem}
-                                                    onClick={() => selecionarAutocomplete(s)}
-                                                    onMouseEnter={e => e.target.style.backgroundColor = '#f1f5f9'}
-                                                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-                                                >
-                                                    <div style={{ fontWeight: '500' }}>{s.descricao}</div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                                        {s.unidade} • {s.tipo_composicao === 'composto' 
-                                                            ? formatCurrency(s.preco_unitario)
-                                                            : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
-                                                        }
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </>
-                                    )}
-                                    {autocomplete.results.base.length > 0 && (
-                                        <>
-                                            <div style={styles.autocompleteSection}>📚 Base de Referência</div>
-                                            {autocomplete.results.base.map(s => (
-                                                <div 
-                                                    key={`b-${s.id}`}
-                                                    style={styles.autocompleteItem}
-                                                    onClick={() => selecionarAutocomplete(s)}
-                                                    onMouseEnter={e => e.target.style.backgroundColor = '#f1f5f9'}
-                                                    onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
-                                                >
-                                                    <div style={{ fontWeight: '500' }}>{s.descricao}</div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                                        {s.unidade} • {s.tipo_composicao === 'composto' 
-                                                            ? formatCurrency(s.preco_unitario)
-                                                            : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
-                                                        }
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    
-                    {/* Tipo de Composição */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>💰 Tipo de Composição</label>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.tipo_composicao === 'separado'}
-                                    onChange={() => setForm({...form, tipo_composicao: 'separado'})}
-                                />
-                                Separado (MO + Material)
-                            </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.tipo_composicao === 'composto'}
-                                    onChange={() => setForm({...form, tipo_composicao: 'composto'})}
-                                />
-                                Composto (Preço fechado)
-                            </label>
-                        </div>
-                    </div>
-                    
-                    {/* Quantidade e Valores */}
-                    {form.tipo_composicao === 'separado' ? (
-                        <div style={styles.formRow3}>
-                            <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Quantidade</label>
-                                <input 
-                                    type="number" 
-                                    style={styles.formInput}
-                                    value={form.quantidade}
-                                    onChange={e => setForm({...form, quantidade: e.target.value})}
-                                    placeholder="0,00"
-                                    step="0.01"
-                                />
-                            </div>
-                            <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Mão de Obra (R$/{form.unidade})</label>
-                                <input 
-                                    type="number" 
-                                    style={styles.formInput}
-                                    value={form.preco_mao_obra}
-                                    onChange={e => setForm({...form, preco_mao_obra: e.target.value})}
-                                    placeholder="0,00"
-                                    step="0.01"
-                                />
-                            </div>
-                            <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Material (R$/{form.unidade})</label>
-                                <input 
-                                    type="number" 
-                                    style={styles.formInput}
-                                    value={form.preco_material}
-                                    onChange={e => setForm({...form, preco_material: e.target.value})}
-                                    placeholder="0,00"
-                                    step="0.01"
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div style={styles.formRow}>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.formLabel}>Quantidade</label>
-                                    <input 
-                                        type="number" 
-                                        style={styles.formInput}
-                                        value={form.quantidade}
-                                        onChange={e => setForm({...form, quantidade: e.target.value})}
-                                        placeholder="0,00"
-                                        step="0.01"
-                                    />
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.formLabel}>Preço Unitário (R$/{form.unidade})</label>
-                                    <input 
-                                        type="number" 
-                                        style={styles.formInput}
-                                        value={form.preco_unitario}
-                                        onChange={e => setForm({...form, preco_unitario: e.target.value})}
-                                        placeholder="0,00"
-                                        step="0.01"
-                                    />
-                                </div>
-                            </div>
-                            <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Rateio Estimado (para relatórios)</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontSize: '13px' }}>MO:</span>
-                                    <input 
-                                        type="range" 
-                                        min="0" 
-                                        max="100" 
-                                        value={form.rateio_mo}
-                                        onChange={e => setForm({
-                                            ...form, 
-                                            rateio_mo: parseInt(e.target.value),
-                                            rateio_mat: 100 - parseInt(e.target.value)
-                                        })}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <span style={{ fontSize: '13px', minWidth: '80px' }}>
-                                        {form.rateio_mo}% / {form.rateio_mat}%
-                                    </span>
-                                    <span style={{ fontSize: '13px' }}>:Mat</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                    
-                    {/* Resumo do Item */}
-                    <div style={{ 
-                        padding: '12px 16px', 
-                        backgroundColor: '#f0fdf4', 
-                        borderRadius: '8px',
-                        border: '1px solid #bbf7d0',
-                        marginBottom: '16px'
-                    }}>
-                        <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600', marginBottom: '4px' }}>
-                            📊 TOTAL DO ITEM
-                        </div>
-                        <div style={{ fontSize: '20px', fontWeight: '700', color: '#15803d' }}>
-                            {formatCurrency(calcularTotal())}
-                        </div>
-                        {form.tipo_composicao === 'separado' && (
-                            <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
-                                MO: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_mao_obra) || 0))} | 
-                                Mat: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_material) || 0))}
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Opções de Serviço */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>📦 Criação de Serviço no Kanban</label>
-                        <div style={styles.radioGroup}>
-                            <label style={{
-                                ...styles.radioOption,
-                                ...(form.opcao_servico === 'criar' ? styles.radioOptionSelected : {})
-                            }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.opcao_servico === 'criar'}
-                                    onChange={() => setForm({...form, opcao_servico: 'criar'})}
-                                />
-                                <div>
-                                    <strong>Criar serviço automaticamente</strong>
-                                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                        Um novo card será criado no Kanban com os valores deste item
-                                    </div>
-                                </div>
-                            </label>
-                            
-                            <label style={{
-                                ...styles.radioOption,
-                                ...(form.opcao_servico === 'nao' ? styles.radioOptionSelected : {})
-                            }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.opcao_servico === 'nao'}
-                                    onChange={() => setForm({...form, opcao_servico: 'nao'})}
-                                />
-                                <div>
-                                    <strong>Não criar serviço agora</strong>
-                                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                        Apenas salvar no orçamento (pode vincular depois)
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    {/* Responsável */}
-                    {form.opcao_servico === 'criar' && (
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Responsável pelo Serviço (opcional)</label>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={form.responsavel}
-                                onChange={e => setForm({...form, responsavel: e.target.value})}
-                                placeholder="Nome do responsável"
-                            />
-                        </div>
-                    )}
-                    
-                    {/* Salvar na Biblioteca */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
-                        <input 
-                            type="checkbox" 
-                            id="salvarBiblioteca"
-                            checked={form.salvar_biblioteca}
-                            onChange={e => setForm({...form, salvar_biblioteca: e.target.checked})}
-                        />
-                        <label htmlFor="salvarBiblioteca" style={{ fontSize: '13px', color: '#4b5563', cursor: 'pointer' }}>
-                            Salvar este serviço na minha biblioteca para uso futuro
-                        </label>
-                    </div>
-                </div>
-                
-                <div style={styles.modalFooter}>
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSecondary }} 
-                        onClick={onClose}
-                    >
-                        Cancelar
-                    </button>
-                    {!isEdicao && (
-                        <button 
-                            style={{ ...styles.button, ...styles.buttonInfo }}
-                            onClick={() => handleSalvar(true)}
-                            disabled={!form.etapa_id || !form.descricao || salvando}
-                        >
-                            {salvando ? 'Salvando...' : '💾 Salvar e Adicionar Outro'}
-                        </button>
-                    )}
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSuccess }}
-                        onClick={() => handleSalvar(false)}
-                        disabled={!form.etapa_id || !form.descricao || salvando}
-                    >
-                        {salvando ? 'Salvando...' : isEdicao ? '💾 Salvar Alterações' : '💾 Salvar Item'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// =====================================================
-// COMPONENTE PRINCIPAL: ORÇAMENTO DE ENGENHARIA
-// =====================================================
-
-const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
-    const [dados, setDados] = useState({ etapas: [], resumo: {} });
+const AgendaDemandas = ({ obraId, apiUrl, obaNome }) => {
+    // Estados
+    const [demandas, setDemandas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [bdi, setBdi] = useState(0);
-    const [etapasExpandidas, setEtapasExpandidas] = useState({});
+    const [filtro, setFiltro] = useState('todos'); // todos, aguardando, atrasado, concluido
     
     // Modais
-    const [showNovaEtapa, setShowNovaEtapa] = useState(false);
-    const [showNovoItem, setShowNovoItem] = useState(false);
-    const [etapaParaNovoItem, setEtapaParaNovoItem] = useState(null);
-    const [showUploadPlanta, setShowUploadPlanta] = useState(false);
-    const [itemParaEditar, setItemParaEditar] = useState(null);  // NOVO: para edição
+    const [showModalManual, setShowModalManual] = useState(false);
+    const [showModalImportar, setShowModalImportar] = useState(false);
+    const [showModalConcluir, setShowModalConcluir] = useState(null);
+    const [showModalConfirmar, setShowModalConfirmar] = useState(null);
+    const [abaImportar, setAbaImportar] = useState('pagamentos');
+    
+    // Dados para importação
+    const [pagamentosImportar, setPagamentosImportar] = useState([]);
+    const [orcamentoImportar, setOrcamentoImportar] = useState([]);
+    const [buscaImportar, setBuscaImportar] = useState('');
+    
+    // Formulário manual
+    const [formManual, setFormManual] = useState({
+        descricao: '',
+        tipo: 'material',
+        fornecedor: '',
+        telefone: '',
+        valor: '',
+        data_prevista: '',
+        observacoes: ''
+    });
+    
+    // Formulário de importação
+    const [formImportar, setFormImportar] = useState({
+        descricao: '',
+        fornecedor: '',
+        telefone: '',
+        valor: '',
+        data_prevista: '',
+        observacoes: '',
+        origem: '',
+        pagamento_servico_id: null,
+        orcamento_item_id: null
+    });
 
-    // Carregar dados
-    const carregarDados = useCallback(async () => {
-        setLoading(true);
+    // =====================================================
+    // FUNÇÕES AUXILIARES
+    // =====================================================
+    const formatCurrency = (value) => {
+        if (!value && value !== 0) return '-';
+        return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('pt-BR');
+    };
+
+    const formatDateShort = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    };
+
+    const getTipoIcon = (tipo) => {
+        switch (tipo) {
+            case 'material': return '📦';
+            case 'servico': return '🔧';
+            case 'visita': return '👷';
+            default: return '📋';
+        }
+    };
+
+    const getOrigemBadge = (origem) => {
+        switch (origem) {
+            case 'pagamento':
+                return <span style={{ ...styles.badge, ...styles.badgePagamento }}>Pagamento</span>;
+            case 'orcamento':
+                return <span style={{ ...styles.badge, ...styles.badgeOrcamento }}>Orçamento</span>;
+            default:
+                return <span style={{ ...styles.badge, ...styles.badgeManual }}>Manual</span>;
+        }
+    };
+
+    const getStatusBadge = (status, dataPrevista) => {
+        // Calcular dias de atraso
+        let diasAtraso = 0;
+        if (status === 'atrasado' && dataPrevista) {
+            const hoje = new Date();
+            const prevista = new Date(dataPrevista + 'T00:00:00');
+            diasAtraso = Math.floor((hoje - prevista) / (1000 * 60 * 60 * 24));
+        }
+        
+        switch (status) {
+            case 'aguardando':
+                return <span style={{ ...styles.badge, ...styles.badgeAguardando }}>⏳ Aguardando</span>;
+            case 'concluido':
+                return <span style={{ ...styles.badge, ...styles.badgeConcluido }}>✓ Concluído</span>;
+            case 'atrasado':
+                return <span style={{ ...styles.badge, ...styles.badgeAtrasado }}>⚠️ {diasAtraso}d atraso</span>;
+            default:
+                return null;
+        }
+    };
+
+    // =====================================================
+    // CARREGAR DADOS
+    // =====================================================
+    const carregarDemandas = useCallback(async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng`);
+            setLoading(true);
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`);
+            if (!res.ok) throw new Error('Erro ao carregar demandas');
+            const data = await res.json();
+            setDemandas(data);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            console.error('Erro ao carregar demandas:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [apiUrl, obraId]);
+
+    const carregarPagamentosImportar = useCallback(async () => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/pagamentos`);
             if (res.ok) {
                 const data = await res.json();
-                setDados(data);
-                setBdi(data.resumo.bdi || 0);
-                
-                // Expandir todas as etapas por padrão
-                const expandidas = {};
-                data.etapas.forEach(e => expandidas[e.id] = true);
-                setEtapasExpandidas(expandidas);
-            } else {
-                setError('Erro ao carregar orçamento');
+                setPagamentosImportar(data);
             }
-        } catch (e) {
-            setError('Erro ao carregar orçamento');
-            console.error(e);
+        } catch (err) {
+            console.error('Erro ao carregar pagamentos:', err);
         }
-        setLoading(false);
+    }, [apiUrl, obraId]);
+
+    const carregarOrcamentoImportar = useCallback(async () => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/orcamento`);
+            if (res.ok) {
+                const data = await res.json();
+                setOrcamentoImportar(data);
+            }
+        } catch (err) {
+            console.error('Erro ao carregar orçamento:', err);
+        }
     }, [apiUrl, obraId]);
 
     useEffect(() => {
-        carregarDados();
-    }, [carregarDados]);
+        carregarDemandas();
+    }, [carregarDemandas]);
 
-    // Toggle etapa
-    const toggleEtapa = (etapaId) => {
-        setEtapasExpandidas(prev => ({
-            ...prev,
-            [etapaId]: !prev[etapaId]
-        }));
-    };
-
-    // Criar etapa
-    const criarEtapa = async (dados) => {
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
-            });
-            if (res.ok) {
-                setShowNovaEtapa(false);
-                carregarDados();
-            }
-        } catch (e) {
-            console.error(e);
+    useEffect(() => {
+        if (showModalImportar) {
+            carregarPagamentosImportar();
+            carregarOrcamentoImportar();
         }
-    };
+    }, [showModalImportar, carregarPagamentosImportar, carregarOrcamentoImportar]);
 
-    // Criar/Editar item
-    const salvarItem = async (form, isEdicao = false, itemId = null) => {
+    // =====================================================
+    // AÇÕES
+    // =====================================================
+    const criarDemandaManual = async () => {
         try {
-            const url = isEdicao 
-                ? `${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`
-                : `${apiUrl}/obras/${obraId}/orcamento-eng/itens`;
-            
-            const res = await localFetchWithAuth(url, {
-                method: isEdicao ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
+                method: 'POST',
                 body: JSON.stringify({
-                    etapa_id: parseInt(form.etapa_id),
-                    codigo: form.codigo,
-                    descricao: form.descricao,
-                    unidade: form.unidade,
-                    quantidade: parseFloat(form.quantidade) || 0,
-                    tipo_composicao: form.tipo_composicao,
-                    preco_mao_obra: parseFloat(form.preco_mao_obra) || null,
-                    preco_material: parseFloat(form.preco_material) || null,
-                    preco_unitario: parseFloat(form.preco_unitario) || null,
-                    rateio_mo: form.rateio_mo,
-                    rateio_mat: form.rateio_mat,
-                    opcao_servico: form.opcao_servico,
-                    servico_id: form.servico_id,
-                    responsavel: form.responsavel,
-                    salvar_biblioteca: form.salvar_biblioteca
+                    ...formManual,
+                    valor: formManual.valor ? parseFloat(formManual.valor.replace(/\D/g, '')) / 100 : null,
+                    origem: 'manual'
                 })
             });
-            if (res.ok) {
-                carregarDados();
-                return true;
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.erro || 'Erro ao criar demanda');
             }
-            return false;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
-    };
-    
-    // Handler para abrir edição de item
-    const abrirEdicaoItem = (item) => {
-        setItemParaEditar(item);
-        setShowNovoItem(true);
-    };
-    
-    // Handler para fechar modal
-    const fecharModalItem = () => {
-        setShowNovoItem(false);
-        setItemParaEditar(null);
-        setEtapaParaNovoItem(null);
-    };
-
-    // Deletar item
-    const deletarItem = async (itemId) => {
-        if (!window.confirm('Excluir este item e o serviço vinculado?')) return;
-        
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
-                method: 'DELETE'
+            
+            setShowModalManual(false);
+            setFormManual({
+                descricao: '',
+                tipo: 'material',
+                fornecedor: '',
+                telefone: '',
+                valor: '',
+                data_prevista: '',
+                observacoes: ''
             });
-            if (res.ok) {
-                carregarDados();
-            }
-        } catch (e) {
-            console.error(e);
+            carregarDemandas();
+        } catch (err) {
+            alert(err.message);
         }
     };
 
-    // Deletar etapa
-    const deletarEtapa = async (etapaId) => {
-        if (!window.confirm('Excluir esta etapa e todos os seus itens?')) return;
-        
+    const criarDemandaImportada = async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
-                method: 'DELETE'
-            });
-            if (res.ok) {
-                carregarDados();
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
-    
-    // Exportar para Excel
-    const exportarExcel = () => {
-        // Criar dados para CSV
-        let csv = 'CÓDIGO;DESCRIÇÃO;UNIDADE;QTD;PREÇO MO;PREÇO MAT;TOTAL MO;TOTAL MAT;TOTAL\n';
-        
-        dados.etapas.forEach(etapa => {
-            // Linha da etapa (header)
-            csv += `${etapa.codigo};${etapa.nome};;;;;;;\n`;
-            
-            // Itens da etapa
-            etapa.itens.forEach(item => {
-                const totalMO = (item.quantidade || 0) * (item.preco_mao_obra || 0);
-                const totalMat = (item.quantidade || 0) * (item.preco_material || 0);
-                const total = item.total_geral || (totalMO + totalMat);
-                
-                csv += `${item.codigo};${item.descricao};${item.unidade};${item.quantidade || 0};`;
-                csv += `${item.preco_mao_obra || 0};${item.preco_material || 0};`;
-                csv += `${totalMO};${totalMat};${total}\n`;
-            });
-        });
-        
-        // Adicionar resumo
-        csv += '\n;;;;;;;\n';
-        csv += `RESUMO;;;;;;\n`;
-        csv += `Total Mão de Obra;${resumoComBdi.total_mao_obra || 0};;;;;\n`;
-        csv += `Total Material;${resumoComBdi.total_material || 0};;;;;\n`;
-        csv += `Subtotal;${resumoComBdi.subtotal || 0};;;;;\n`;
-        csv += `BDI (${bdi}%);${resumoComBdi.valor_bdi || 0};;;;;\n`;
-        csv += `TOTAL GERAL;${resumoComBdi.total_geral || 0};;;;;\n`;
-        
-        // Download
-        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `orcamento_${obraNome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-    };
-    
-    // Importar de Excel/CSV
-    const importarExcel = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const text = e.target.result;
-            const linhas = text.split('\n').filter(l => l.trim());
-            
-            // Pular cabeçalho
-            let etapaAtual = null;
-            let itensParaImportar = [];
-            
-            for (let i = 1; i < linhas.length; i++) {
-                const cols = linhas[i].split(';');
-                if (cols.length < 3) continue;
-                
-                const codigo = cols[0]?.trim();
-                const descricao = cols[1]?.trim();
-                const unidade = cols[2]?.trim();
-                
-                // Linha de etapa (não tem unidade)
-                if (codigo && descricao && !unidade) {
-                    // Criar etapa se não existir
-                    const etapaExistente = dados.etapas.find(e => e.codigo === codigo);
-                    if (etapaExistente) {
-                        etapaAtual = etapaExistente;
-                    } else {
-                        // Criar nova etapa
-                        const resEtapa = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ codigo, nome: descricao })
-                        });
-                        if (resEtapa.ok) {
-                            const novaEtapa = await resEtapa.json();
-                            etapaAtual = novaEtapa;
-                        }
-                    }
-                } else if (etapaAtual && descricao && unidade) {
-                    // Linha de item
-                    itensParaImportar.push({
-                        etapa_id: etapaAtual.id,
-                        codigo,
-                        descricao,
-                        unidade,
-                        quantidade: parseFloat(cols[3]?.replace(',', '.')) || 0,
-                        preco_mao_obra: parseFloat(cols[4]?.replace(',', '.')) || 0,
-                        preco_material: parseFloat(cols[5]?.replace(',', '.')) || 0,
-                        tipo_composicao: 'separado',
-                        opcao_servico: 'nao'
-                    });
-                }
-            }
-            
-            // Criar itens
-            for (const item of itensParaImportar) {
-                await salvarItem(item);
-            }
-            
-            carregarDados();
-            alert(`Importação concluída! ${itensParaImportar.length} itens importados.`);
-        };
-        
-        reader.readAsText(file, 'UTF-8');
-        event.target.value = ''; // Reset input
-    };
-    
-    // Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia
-    const sincronizarServicos = async () => {
-        if (!window.confirm('Atualizar os valores de todos os Serviços do Kanban com os valores do Orçamento de Engenharia?')) return;
-        
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/sincronizar-servicos`, {
-                method: 'POST'
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ...formImportar,
+                    tipo: 'material'
+                })
             });
             
-            if (res.ok) {
-                const data = await res.json();
-                alert(data.mensagem || 'Sincronização concluída!');
-                carregarDados();
-            } else {
-                const data = await res.json();
-                alert(data.erro || 'Erro ao sincronizar');
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.erro || 'Erro ao criar demanda');
             }
-        } catch (e) {
-            console.error('Erro ao sincronizar:', e);
-            alert('Erro ao sincronizar serviços');
-        }
-    };
-    
-    // Apagar todo o orçamento de engenharia
-    const apagarOrcamentoCompleto = async () => {
-        const confirmacao = window.prompt(
-            '⚠️ ATENÇÃO: Esta ação irá APAGAR TODO o orçamento de engenharia!\n\n' +
-            'Isso inclui:\n' +
-            '- Todas as etapas\n' +
-            '- Todos os itens\n' +
-            '- Serviços vinculados (sem pagamentos)\n\n' +
-            'Digite "APAGAR" para confirmar:'
-        );
-        
-        if (confirmacao !== 'APAGAR') {
-            if (confirmacao !== null) {
-                alert('Operação cancelada. Digite exatamente "APAGAR" para confirmar.');
-            }
-            return;
-        }
-        
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/apagar-tudo`, {
-                method: 'DELETE'
-            });
             
-            if (res.ok) {
-                const data = await res.json();
-                alert(`${data.mensagem}\n\nEtapas: ${data.etapas_deletadas}\nItens: ${data.itens_deletados}\nServiços: ${data.servicos_deletados}`);
-                carregarDados();
-            } else {
-                const data = await res.json();
-                alert(data.erro || 'Erro ao apagar orçamento');
-            }
-        } catch (e) {
-            console.error('Erro ao apagar:', e);
-            alert('Erro ao apagar orçamento');
+            setShowModalConfirmar(null);
+            setFormImportar({
+                descricao: '',
+                fornecedor: '',
+                telefone: '',
+                valor: '',
+                data_prevista: '',
+                observacoes: '',
+                origem: '',
+                pagamento_servico_id: null,
+                orcamento_item_id: null
+            });
+            carregarDemandas();
+            carregarPagamentosImportar();
+            carregarOrcamentoImportar();
+        } catch (err) {
+            alert(err.message);
         }
     };
 
-    // Renderizar status
-    const renderStatus = (item) => {
-        const percent = item.percentual_executado || 0;
-        if (percent >= 100) {
-            return <span style={{ ...styles.statusBadge, ...styles.statusPago }}>✅ Pago</span>;
-        } else if (percent > 0) {
-            return <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}>🔄 {percent.toFixed(0)}%</span>;
+    const concluirDemanda = async (demanda, dataConclusao, observacoes) => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}/concluir`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    data_conclusao: dataConclusao,
+                    observacoes
+                })
+            });
+            
+            if (!res.ok) throw new Error('Erro ao concluir demanda');
+            
+            setShowModalConcluir(null);
+            carregarDemandas();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const reabrirDemanda = async (demanda) => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}/reabrir`, {
+                method: 'PUT'
+            });
+            
+            if (!res.ok) throw new Error('Erro ao reabrir demanda');
+            carregarDemandas();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const excluirDemanda = async (demanda) => {
+        if (!window.confirm(`Excluir "${demanda.descricao}"?`)) return;
+        
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!res.ok) throw new Error('Erro ao excluir demanda');
+            carregarDemandas();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const selecionarParaImportar = (item, tipo) => {
+        if (tipo === 'pagamento') {
+            setFormImportar({
+                descricao: item.descricao,
+                fornecedor: item.fornecedor || '',
+                telefone: item.telefone || '',
+                valor: item.valor,
+                data_prevista: '',
+                observacoes: `Serviço: ${item.servico || '-'} | Pago em: ${formatDate(item.data_pagamento)}`,
+                origem: 'pagamento',
+                pagamento_servico_id: item.id,
+                orcamento_item_id: null
+            });
         } else {
-            return <span style={{ ...styles.statusBadge, ...styles.statusAFazer }}>⏳ A Fazer</span>;
+            setFormImportar({
+                descricao: item.descricao,
+                fornecedor: '',
+                telefone: '',
+                valor: item.valor,
+                data_prevista: '',
+                observacoes: `Etapa: ${item.etapa} | Qtd: ${item.quantidade}`,
+                origem: 'orcamento',
+                pagamento_servico_id: null,
+                orcamento_item_id: item.id
+            });
         }
+        setShowModalImportar(false);
+        setShowModalConfirmar(tipo);
     };
 
-    // Calcular totais com BDI
-    const resumoComBdi = useMemo(() => {
-        const r = dados.resumo || {};
-        const subtotal = r.subtotal || 0;
-        const valorBdi = subtotal * (bdi / 100);
-        const total = subtotal + valorBdi;
-        return { ...r, bdi, valor_bdi: valorBdi, total_geral: total };
-    }, [dados.resumo, bdi]);
+    // =====================================================
+    // FILTROS E CÁLCULOS
+    // =====================================================
+    const demandasFiltradas = demandas.filter(d => {
+        if (filtro === 'todos') return true;
+        return d.status === filtro;
+    });
 
-    if (loading) {
+    const atrasados = demandas.filter(d => d.status === 'atrasado');
+    const aguardando = demandas.filter(d => d.status === 'aguardando');
+    const concluidos = demandas.filter(d => d.status === 'concluido');
+
+    // Agrupar por período
+    const hoje = new Date();
+    const inicioSemana = new Date(hoje);
+    inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+    const fimSemana = new Date(inicioSemana);
+    fimSemana.setDate(inicioSemana.getDate() + 6);
+    
+    const inicioProxSemana = new Date(fimSemana);
+    inicioProxSemana.setDate(fimSemana.getDate() + 1);
+    const fimProxSemana = new Date(inicioProxSemana);
+    fimProxSemana.setDate(inicioProxSemana.getDate() + 6);
+
+    const estaSemana = demandasFiltradas.filter(d => {
+        if (d.status !== 'aguardando') return false;
+        const data = new Date(d.data_prevista + 'T00:00:00');
+        return data >= inicioSemana && data <= fimSemana;
+    });
+
+    const proximaSemana = demandasFiltradas.filter(d => {
+        if (d.status !== 'aguardando') return false;
+        const data = new Date(d.data_prevista + 'T00:00:00');
+        return data >= inicioProxSemana && data <= fimProxSemana;
+    });
+
+    const futuro = demandasFiltradas.filter(d => {
+        if (d.status !== 'aguardando') return false;
+        const data = new Date(d.data_prevista + 'T00:00:00');
+        return data > fimProxSemana;
+    });
+
+    // Filtrar lista de importação
+    const pagamentosFiltrados = pagamentosImportar.filter(p => 
+        p.descricao?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
+        p.fornecedor?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
+        p.servico?.toLowerCase().includes(buscaImportar.toLowerCase())
+    );
+
+    const orcamentoFiltrados = orcamentoImportar.filter(o => 
+        o.descricao?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
+        o.etapa?.toLowerCase().includes(buscaImportar.toLowerCase())
+    );
+
+    // =====================================================
+    // RENDER
+    // =====================================================
+    if (loading && demandas.length === 0) {
         return (
             <div style={styles.container}>
-                <div style={styles.emptyState}>
-                    <p>Carregando orçamento...</p>
+                <div style={{ textAlign: 'center', padding: '60px' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+                    <div>Carregando agenda...</div>
                 </div>
             </div>
         );
@@ -1412,11 +928,12 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     if (error) {
         return (
             <div style={styles.container}>
-                <div style={styles.emptyState}>
-                    <p>❌ {error}</p>
+                <div style={{ textAlign: 'center', padding: '60px', color: '#dc2626' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '16px' }}>❌</div>
+                    <div>{error}</div>
                     <button 
-                        style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '12px' }}
-                        onClick={carregarDados}
+                        style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '16px' }}
+                        onClick={carregarDemandas}
                     >
                         Tentar novamente
                     </button>
@@ -1430,406 +947,722 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             {/* Header */}
             <div style={styles.header}>
                 <div>
-                    <h1 style={styles.title}>📋 Orçamento de Engenharia</h1>
-                    <p style={styles.subtitle}>{obraNome}</p>
+                    <h1 style={styles.title}>
+                        📅 Agenda de Demandas
+                    </h1>
+                    <p style={styles.subtitle}>{obaNome || 'Obra'}</p>
                 </div>
                 <div style={styles.headerActions}>
-                    <div style={styles.bdiConfig}>
-                        <span>📊 BDI:</span>
-                        <input 
-                            type="number" 
-                            value={bdi}
-                            onChange={e => setBdi(parseFloat(e.target.value) || 0)}
-                            style={styles.bdiInput}
-                            step="0.5"
-                        />
-                        <span>%</span>
-                    </div>
                     <button 
-                        style={{ 
-                            ...styles.button, 
-                            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-                            color: '#fff'
-                        }}
-                        onClick={() => setShowUploadPlanta(true)}
-                        title="Gerar orçamento automaticamente a partir de uma planta baixa"
+                        style={{ ...styles.button, ...styles.buttonSecondary }}
+                        onClick={() => setShowModalManual(true)}
                     >
-                        🤖 IA - Planta Baixa
-                    </button>
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSuccess }}
-                        onClick={() => setShowNovaEtapa(true)}
-                    >
-                        ➕ Nova Etapa
+                        ✏️ Cadastrar Manual
                     </button>
                     <button 
                         style={{ ...styles.button, ...styles.buttonPrimary }}
-                        onClick={() => setShowNovoItem(true)}
+                        onClick={() => setShowModalImportar(true)}
                     >
-                        ➕ Novo Item
+                        📥 Importar
                     </button>
-                    
-                    {/* Botões de Excel */}
-                    <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', paddingLeft: '8px', borderLeft: '1px solid #e2e8f0' }}>
-                        <button 
-                            style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
-                            onClick={exportarExcel}
-                            title="Exportar orçamento para CSV/Excel"
-                        >
-                            📥 Exportar
-                        </button>
-                        <label style={{ margin: 0 }}>
-                            <input 
-                                type="file" 
-                                accept=".csv,.txt"
-                                onChange={importarExcel}
-                                style={{ display: 'none' }}
-                            />
-                            <span 
-                                style={{ 
-                                    ...styles.button, 
-                                    ...styles.buttonSecondary, 
-                                    ...styles.buttonSmall,
-                                    cursor: 'pointer',
-                                    display: 'inline-block'
-                                }}
-                                title="Importar orçamento de CSV/Excel"
-                            >
-                                📤 Importar
-                            </span>
-                        </label>
-                        <button 
-                            style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
-                            onClick={sincronizarServicos}
-                            title="Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia"
-                        >
-                            🔄 Sincronizar Kanban
-                        </button>
-                        <button 
-                            style={{ ...styles.button, ...styles.buttonDanger, ...styles.buttonSmall }}
-                            onClick={apagarOrcamentoCompleto}
-                            title="Apagar todo o orçamento de engenharia"
-                        >
-                            🗑️ Apagar Tudo
-                        </button>
-                    </div>
                 </div>
             </div>
 
             {/* KPIs */}
-            <div style={styles.summaryGrid}>
-                <div style={styles.summaryCard}>
-                    <div style={styles.summaryLabel}>Mão de Obra</div>
-                    <div style={{ ...styles.summaryValue, color: '#4f46e5', fontSize: '20px' }}>
-                        {formatCurrency(resumoComBdi.total_mao_obra)}
-                    </div>
-                    <div style={styles.summarySubtext}>
-                        Pago: {formatCurrency(resumoComBdi.total_pago_mo)}
-                    </div>
+            <div style={styles.kpiContainer}>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#f59e0b' }}>
+                    <div style={styles.kpiLabel}>⏳ Aguardando</div>
+                    <div style={styles.kpiValue}>{aguardando.length}</div>
                 </div>
-                <div style={styles.summaryCard}>
-                    <div style={styles.summaryLabel}>Material</div>
-                    <div style={{ ...styles.summaryValue, color: '#10b981', fontSize: '20px' }}>
-                        {formatCurrency(resumoComBdi.total_material)}
-                    </div>
-                    <div style={styles.summarySubtext}>
-                        Pago: {formatCurrency(resumoComBdi.total_pago_mat)}
-                    </div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#ef4444' }}>
+                    <div style={styles.kpiLabel}>⚠️ Atrasados</div>
+                    <div style={styles.kpiValue}>{atrasados.length}</div>
                 </div>
-                <div style={styles.summaryCard}>
-                    <div style={styles.summaryLabel}>BDI ({bdi}%)</div>
-                    <div style={{ ...styles.summaryValue, color: '#f59e0b', fontSize: '20px' }}>
-                        {formatCurrency(resumoComBdi.valor_bdi)}
-                    </div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#10b981' }}>
+                    <div style={styles.kpiLabel}>✓ Concluídos</div>
+                    <div style={styles.kpiValue}>{concluidos.length}</div>
                 </div>
-                <div style={styles.summaryCard}>
-                    <div style={styles.summaryLabel}>Executado</div>
-                    <div style={{ ...styles.summaryValue, color: '#16a34a', fontSize: '20px' }}>
-                        {formatCurrency(resumoComBdi.total_pago)}
-                    </div>
-                    <div style={styles.summarySubtext}>
-                        {formatNumber(resumoComBdi.percentual_executado || 0, 1)}% do orçamento
-                    </div>
-                </div>
-                <div style={{ ...styles.summaryCard, backgroundColor: '#1e293b' }}>
-                    <div style={{ ...styles.summaryLabel, color: '#94a3b8' }}>Total Geral</div>
-                    <div style={{ ...styles.summaryValue, color: '#fff', fontSize: '20px' }}>
-                        {formatCurrency(resumoComBdi.total_geral)}
-                    </div>
-                    <div style={{ ...styles.summarySubtext, color: '#64748b' }}>
-                        {resumoComBdi.total_etapas || 0} etapas • {resumoComBdi.total_itens || 0} itens
-                    </div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#6366f1' }}>
+                    <div style={styles.kpiLabel}>📋 Total</div>
+                    <div style={styles.kpiValue}>{demandas.length}</div>
                 </div>
             </div>
 
-            {/* Barra de Progresso */}
-            <div style={styles.progressContainer}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>📊 Progresso Geral</span>
-                    <span style={{ fontWeight: '700', color: '#16a34a' }}>
-                        {formatNumber(resumoComBdi.percentual_executado || 0, 1)}%
-                    </span>
-                </div>
-                <div style={styles.progressBar}>
-                    <div style={{ ...styles.progressFill, width: `${resumoComBdi.percentual_executado || 0}%` }} />
-                </div>
+            {/* Filtros */}
+            <div style={styles.filterBar}>
+                {['todos', 'aguardando', 'atrasado', 'concluido'].map(f => (
+                    <button
+                        key={f}
+                        style={{
+                            ...styles.filterChip,
+                            ...(filtro === f ? styles.filterChipActive : {})
+                        }}
+                        onClick={() => setFiltro(f)}
+                    >
+                        {f === 'todos' && `Todos (${demandas.length})`}
+                        {f === 'aguardando' && `⏳ Aguardando (${aguardando.length})`}
+                        {f === 'atrasado' && `⚠️ Atrasados (${atrasados.length})`}
+                        {f === 'concluido' && `✓ Concluídos (${concluidos.length})`}
+                    </button>
+                ))}
             </div>
 
-            {/* Tabela */}
-            {dados.etapas.length === 0 ? (
-                <div style={{ ...styles.tableContainer, ...styles.emptyState }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
-                    <p style={{ fontSize: '16px', marginBottom: '8px' }}>Nenhuma etapa cadastrada</p>
-                    <p style={{ fontSize: '14px', color: '#9ca3af' }}>Clique em "Nova Etapa" para começar</p>
+            {/* Alerta de Atrasados */}
+            {atrasados.length > 0 && filtro !== 'concluido' && (
+                <div style={styles.alertBanner}>
+                    <span style={{ fontSize: '24px' }}>⚠️</span>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>
+                            {atrasados.length} {atrasados.length === 1 ? 'item atrasado' : 'itens atrasados'}!
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#b91c1c' }}>
+                            Entre em contato com os fornecedores para atualizar as datas
+                        </div>
+                    </div>
                 </div>
-            ) : (
-                <div style={styles.tableContainer}>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={{ ...styles.th, width: '70px' }}>Código</th>
-                                    <th style={styles.th}>Descrição</th>
-                                    <th style={{ ...styles.th, ...styles.thCenter, width: '50px' }}>Un.</th>
-                                    <th style={{ ...styles.th, ...styles.thRight, width: '70px' }}>Qtd.</th>
-                                    <th style={{ ...styles.th, ...styles.thRight, width: '90px' }}>M. Obra</th>
-                                    <th style={{ ...styles.th, ...styles.thRight, width: '90px' }}>Material</th>
-                                    <th style={{ ...styles.th, ...styles.thRight, width: '100px' }}>Total</th>
-                                    <th style={{ ...styles.th, ...styles.thRight, width: '90px' }}>Pago</th>
-                                    <th style={{ ...styles.th, ...styles.thCenter, width: '80px' }}>Status</th>
-                                    <th style={{ ...styles.th, width: '60px' }}></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dados.etapas.map(etapa => (
-                                    <React.Fragment key={etapa.id}>
-                                        {/* Linha da Etapa */}
-                                        <tr 
-                                            style={styles.etapaRow}
-                                            onClick={() => toggleEtapa(etapa.id)}
-                                        >
-                                            <td style={styles.etapaTd}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    {etapasExpandidas[etapa.id] ? '▼' : '▶'} {etapa.codigo}
-                                                </span>
-                                            </td>
-                                            <td style={styles.etapaTd} colSpan={5}>{etapa.nome}</td>
-                                            <td style={{ ...styles.etapaTd, textAlign: 'right', fontWeight: '700' }}>
-                                                {formatCurrency(etapa.total)}
-                                            </td>
-                                            <td style={{ ...styles.etapaTd, textAlign: 'right' }}>
-                                                {formatCurrency(etapa.total_pago)}
-                                            </td>
-                                            <td style={{ ...styles.etapaTd, textAlign: 'center' }}>
-                                                <span style={{ 
-                                                    display: 'inline-block',
-                                                    padding: '2px 8px', 
-                                                    backgroundColor: 'rgba(255,255,255,0.2)', 
-                                                    borderRadius: '10px',
-                                                    fontSize: '11px'
-                                                }}>
-                                                    {formatNumber(etapa.percentual, 0)}%
-                                                </span>
-                                            </td>
-                                            <td style={styles.etapaTd}>
-                                                <div style={{ display: 'flex', gap: '4px' }}>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fff' }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            setEtapaParaNovoItem(etapa.id);
-                                                            setShowNovoItem(true); 
-                                                        }}
-                                                        title="Adicionar item"
-                                                    >
-                                                        ➕
-                                                    </button>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fca5a5' }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            deletarEtapa(etapa.id); 
-                                                        }}
-                                                        title="Excluir etapa"
-                                                    >
-                                                        🗑️
-                                                    </button>
+            )}
+
+            {/* Lista vazia */}
+            {demandas.length === 0 && (
+                <div style={styles.card}>
+                    <div style={styles.emptyState}>
+                        <div style={styles.emptyIcon}>📅</div>
+                        <div style={styles.emptyTitle}>Nenhuma demanda agendada</div>
+                        <div style={styles.emptyText}>
+                            Importe de pagamentos/orçamento ou cadastre manualmente
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonPrimary }}
+                                onClick={() => setShowModalImportar(true)}
+                            >
+                                📥 Importar
+                            </button>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonSecondary }}
+                                onClick={() => setShowModalManual(true)}
+                            >
+                                ✏️ Cadastrar Manual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Atrasados */}
+            {atrasados.length > 0 && (filtro === 'todos' || filtro === 'atrasado') && (
+                <div style={styles.section}>
+                    <h3 style={{ ...styles.sectionTitle, color: '#dc2626' }}>🔴 Atrasados</h3>
+                    <div style={styles.card}>
+                        {atrasados.map(demanda => (
+                            <div key={demanda.id} style={{ ...styles.demandaItem, backgroundColor: '#fef2f2' }}>
+                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaInfo}>
+                                    <div style={styles.demandaTitle}>
+                                        {demanda.descricao}
+                                        {getOrigemBadge(demanda.origem)}
+                                    </div>
+                                    <div style={styles.demandaMeta}>
+                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
+                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.telefone && <span>📞 {demanda.telefone}</span>}
+                                    </div>
+                                </div>
+                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
+                                {getStatusBadge(demanda.status, demanda.data_prevista)}
+                                <div style={styles.demandaActions}>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => setShowModalConcluir(demanda)}
+                                    >
+                                        ✓ Concluído
+                                    </button>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => excluirDemanda(demanda)}
+                                        title="Excluir"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Esta Semana */}
+            {estaSemana.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>📋 Esta Semana</h3>
+                    <div style={styles.card}>
+                        {estaSemana.map(demanda => (
+                            <div key={demanda.id} style={styles.demandaItem}>
+                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaInfo}>
+                                    <div style={styles.demandaTitle}>
+                                        {demanda.descricao}
+                                        {getOrigemBadge(demanda.origem)}
+                                    </div>
+                                    <div style={styles.demandaMeta}>
+                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
+                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                    </div>
+                                </div>
+                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
+                                {getStatusBadge(demanda.status)}
+                                <div style={styles.demandaActions}>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => setShowModalConcluir(demanda)}
+                                    >
+                                        ✓ Concluído
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Próxima Semana */}
+            {proximaSemana.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>📅 Próxima Semana</h3>
+                    <div style={styles.card}>
+                        {proximaSemana.map(demanda => (
+                            <div key={demanda.id} style={styles.demandaItem}>
+                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaInfo}>
+                                    <div style={styles.demandaTitle}>
+                                        {demanda.descricao}
+                                        {getOrigemBadge(demanda.origem)}
+                                    </div>
+                                    <div style={styles.demandaMeta}>
+                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
+                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                    </div>
+                                </div>
+                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
+                                {getStatusBadge(demanda.status)}
+                                <div style={styles.demandaActions}>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => setShowModalConcluir(demanda)}
+                                    >
+                                        ✓ Concluído
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Futuro */}
+            {futuro.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>🗓️ Mais Adiante</h3>
+                    <div style={styles.card}>
+                        {futuro.map(demanda => (
+                            <div key={demanda.id} style={styles.demandaItem}>
+                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaInfo}>
+                                    <div style={styles.demandaTitle}>
+                                        {demanda.descricao}
+                                        {getOrigemBadge(demanda.origem)}
+                                    </div>
+                                    <div style={styles.demandaMeta}>
+                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
+                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                    </div>
+                                </div>
+                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
+                                {getStatusBadge(demanda.status)}
+                                <div style={styles.demandaActions}>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => setShowModalConcluir(demanda)}
+                                    >
+                                        ✓ Concluído
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Concluídos */}
+            {concluidos.length > 0 && (filtro === 'todos' || filtro === 'concluido') && (
+                <div style={styles.section}>
+                    <h3 style={{ ...styles.sectionTitle, color: '#059669' }}>✅ Concluídos</h3>
+                    <div style={styles.card}>
+                        {concluidos.slice(0, filtro === 'concluido' ? undefined : 5).map(demanda => (
+                            <div key={demanda.id} style={{ ...styles.demandaItem, opacity: 0.7 }}>
+                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaInfo}>
+                                    <div style={styles.demandaTitle}>
+                                        {demanda.descricao}
+                                        {getOrigemBadge(demanda.origem)}
+                                    </div>
+                                    <div style={styles.demandaMeta}>
+                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
+                                        <span>📅 Previsto: {formatDateShort(demanda.data_prevista)}</span>
+                                        <span>✓ Concluído: {formatDateShort(demanda.data_conclusao)}</span>
+                                    </div>
+                                </div>
+                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
+                                {getStatusBadge(demanda.status)}
+                                <div style={styles.demandaActions}>
+                                    <button 
+                                        style={{ ...styles.button, ...styles.buttonSecondary, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => reabrirDemanda(demanda)}
+                                        title="Reabrir"
+                                    >
+                                        ↩️ Reabrir
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {filtro === 'todos' && concluidos.length > 5 && (
+                            <div style={{ padding: '16px', textAlign: 'center' }}>
+                                <button 
+                                    style={{ ...styles.button, ...styles.buttonSecondary }}
+                                    onClick={() => setFiltro('concluido')}
+                                >
+                                    Ver todos os {concluidos.length} concluídos
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Cadastro Manual */}
+            {showModalManual && (
+                <div style={styles.modalOverlay} onClick={() => setShowModalManual(false)}>
+                    <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>✏️ Cadastrar Manualmente</h2>
+                            <button style={styles.closeBtn} onClick={() => setShowModalManual(false)}>×</button>
+                        </div>
+                        <div style={styles.modalBody}>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📦 Descrição *</label>
+                                <input 
+                                    type="text" 
+                                    style={styles.input}
+                                    value={formManual.descricao}
+                                    onChange={(e) => setFormManual({...formManual, descricao: e.target.value})}
+                                    placeholder="Ex: Porcelanato 60x60, Visita técnica..."
+                                />
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📋 Tipo</label>
+                                <select 
+                                    style={styles.input}
+                                    value={formManual.tipo}
+                                    onChange={(e) => setFormManual({...formManual, tipo: e.target.value})}
+                                >
+                                    <option value="material">📦 Material / Compra</option>
+                                    <option value="servico">🔧 Serviço Contratado</option>
+                                    <option value="visita">👷 Visita / Reunião</option>
+                                    <option value="outro">📋 Outro</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.input}
+                                        value={formManual.fornecedor}
+                                        onChange={(e) => setFormManual({...formManual, fornecedor: e.target.value})}
+                                        placeholder="Nome do fornecedor"
+                                    />
+                                </div>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>📞 Telefone</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.input}
+                                        value={formManual.telefone}
+                                        onChange={(e) => setFormManual({...formManual, telefone: e.target.value})}
+                                        placeholder="(00) 00000-0000"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>💰 Valor (R$)</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.input}
+                                        value={formManual.valor}
+                                        onChange={(e) => setFormManual({...formManual, valor: e.target.value})}
+                                        placeholder="0,00"
+                                    />
+                                </div>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>📅 Data *</label>
+                                    <input 
+                                        type="date" 
+                                        style={styles.input}
+                                        value={formManual.data_prevista}
+                                        onChange={(e) => setFormManual({...formManual, data_prevista: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📝 Observações</label>
+                                <textarea 
+                                    style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
+                                    value={formManual.observacoes}
+                                    onChange={(e) => setFormManual({...formManual, observacoes: e.target.value})}
+                                    placeholder="Detalhes adicionais..."
+                                />
+                            </div>
+                        </div>
+                        <div style={styles.modalFooter}>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonSecondary }}
+                                onClick={() => setShowModalManual(false)}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                style={{ 
+                                    ...styles.button, 
+                                    ...styles.buttonSuccess,
+                                    opacity: (formManual.descricao && formManual.data_prevista) ? 1 : 0.5
+                                }}
+                                onClick={criarDemandaManual}
+                                disabled={!formManual.descricao || !formManual.data_prevista}
+                            >
+                                ✅ Adicionar à Agenda
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Importar */}
+            {showModalImportar && (
+                <div style={styles.modalOverlay} onClick={() => setShowModalImportar(false)}>
+                    <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>📥 Importar para Agenda</h2>
+                            <button style={styles.closeBtn} onClick={() => setShowModalImportar(false)}>×</button>
+                        </div>
+                        
+                        {/* Tabs */}
+                        <div style={styles.tabs}>
+                            <button 
+                                style={{ ...styles.tab, ...(abaImportar === 'pagamentos' ? styles.tabActive : {}) }}
+                                onClick={() => setAbaImportar('pagamentos')}
+                            >
+                                💳 Pagamentos ({pagamentosImportar.length})
+                            </button>
+                            <button 
+                                style={{ ...styles.tab, ...(abaImportar === 'orcamento' ? styles.tabActive : {}) }}
+                                onClick={() => setAbaImportar('orcamento')}
+                            >
+                                📋 Orçamento ({orcamentoImportar.length})
+                            </button>
+                        </div>
+
+                        {/* Search */}
+                        <div style={styles.searchBox}>
+                            <input 
+                                type="text" 
+                                style={styles.searchInput}
+                                placeholder="🔍 Buscar..."
+                                value={buscaImportar}
+                                onChange={(e) => setBuscaImportar(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Lista */}
+                        <div style={{ ...styles.modalBody, padding: 0, maxHeight: '400px' }}>
+                            {abaImportar === 'pagamentos' ? (
+                                pagamentosFiltrados.length === 0 ? (
+                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                                        {pagamentosImportar.length === 0 
+                                            ? 'Nenhum pagamento de material disponível para importar'
+                                            : 'Nenhum resultado encontrado'
+                                        }
+                                    </div>
+                                ) : (
+                                    pagamentosFiltrados.map(item => (
+                                        <div key={item.id} style={styles.listItem}>
+                                            <div style={{ ...styles.listIcon, backgroundColor: '#dbeafe' }}>💳</div>
+                                            <div style={styles.listInfo}>
+                                                <div style={styles.listTitle}>{item.descricao}</div>
+                                                <div style={styles.listMeta}>
+                                                    <span>🔧 {item.servico || '-'}</span>
+                                                    <span>👤 {item.fornecedor || '-'}</span>
+                                                    <span>📅 Pago em {formatDate(item.data_pagamento)}</span>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        
-                                        {/* Itens da Etapa */}
-                                        {etapasExpandidas[etapa.id] && etapa.itens.map((item, idx) => (
-                                            <tr 
-                                                key={item.id}
-                                                style={{
-                                                    ...styles.itemRow,
-                                                    backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => abrirEdicaoItem(item)}
-                                                title="Clique para editar"
+                                            </div>
+                                            <div style={styles.listValor}>{formatCurrency(item.valor)}</div>
+                                            <button 
+                                                style={styles.listAction}
+                                                onClick={() => selecionarParaImportar(item, 'pagamento')}
                                             >
-                                                <td style={{ ...styles.td, ...styles.tdCodigo }}>{item.codigo}</td>
-                                                <td style={{ ...styles.td, ...styles.tdDescricao }}>
-                                                    {item.descricao}
-                                                    {item.servico_id && (
-                                                        <span style={styles.servicoBadge}>📦 Kanban</span>
-                                                    )}
-                                                    {item.tipo_composicao === 'composto' && (
-                                                        <span style={{ ...styles.servicoBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>
-                                                            Composto
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td style={{ ...styles.td, ...styles.tdUnidade }}>{item.unidade}</td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    {formatNumber(item.quantidade, item.unidade === 'vb' || item.unidade === 'un' ? 0 : 2)}
-                                                </td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    <div style={{ color: '#4f46e5' }}>{formatCurrency(item.total_mao_obra)}</div>
-                                                    {item.valor_pago_mo > 0 && (
-                                                        <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mo)}</div>
-                                                    )}
-                                                </td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    <div style={{ color: '#10b981' }}>{formatCurrency(item.total_material)}</div>
-                                                    {item.valor_pago_mat > 0 && (
-                                                        <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mat)}</div>
-                                                    )}
-                                                </td>
-                                                <td style={{ ...styles.td, ...styles.tdTotal }}>{formatCurrency(item.total)}</td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero, color: '#16a34a', fontWeight: '600' }}>
-                                                    {formatCurrency(item.total_pago)}
-                                                </td>
-                                                <td style={{ ...styles.td, textAlign: 'center' }}>
-                                                    {renderStatus(item)}
-                                                </td>
-                                                <td style={styles.td} onClick={(e) => e.stopPropagation()}>
-                                                    <div style={{ display: 'flex', gap: '4px' }}>
-                                                        <button 
-                                                            style={{ ...styles.actionBtn, color: '#3b82f6' }}
-                                                            onClick={() => abrirEdicaoItem(item)}
-                                                            title="Editar item"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button 
-                                                            style={{ ...styles.actionBtn, color: '#ef4444' }}
-                                                            onClick={() => deletarItem(item.id)}
-                                                            title="Excluir item"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </React.Fragment>
-                                ))}
-                                
-                                {/* Subtotal */}
-                                <tr style={{ ...styles.subtotalRow, backgroundColor: '#e2e8f0' }}>
-                                    <td style={{ ...styles.subtotalTd, fontWeight: '700' }} colSpan={6}>
-                                        SUBTOTAL (sem BDI)
-                                    </td>
-                                    <td style={{ ...styles.subtotalTd, textAlign: 'right', fontWeight: '700' }}>
-                                        {formatCurrency(resumoComBdi.subtotal)}
-                                    </td>
-                                    <td style={{ ...styles.subtotalTd, textAlign: 'right', fontWeight: '700', color: '#16a34a' }}>
-                                        {formatCurrency(resumoComBdi.total_pago)}
-                                    </td>
-                                    <td style={{ ...styles.subtotalTd, textAlign: 'center', fontWeight: '700' }}>
-                                        {formatNumber(resumoComBdi.percentual_executado || 0, 0)}%
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                
-                                {/* BDI */}
-                                <tr style={{ backgroundColor: '#fef3c7' }}>
-                                    <td style={{ ...styles.td, fontWeight: '600' }} colSpan={6}>
-                                        BDI ({bdi}%)
-                                    </td>
-                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: '#92400e' }}>
-                                        {formatCurrency(resumoComBdi.valor_bdi)}
-                                    </td>
-                                    <td colSpan={3}></td>
-                                </tr>
-                                
-                                {/* Total Geral */}
-                                <tr style={styles.totalRow}>
-                                    <td style={styles.totalTd} colSpan={6}>💰 TOTAL GERAL</td>
-                                    <td style={{ ...styles.totalTd, textAlign: 'right', fontSize: '16px' }}>
-                                        {formatCurrency(resumoComBdi.total_geral)}
-                                    </td>
-                                    <td style={{ ...styles.totalTd, textAlign: 'right', color: '#22c55e' }}>
-                                        {formatCurrency(resumoComBdi.total_pago)}
-                                    </td>
-                                    <td style={{ ...styles.totalTd, textAlign: 'center' }}>
-                                        {formatNumber(resumoComBdi.percentual_executado || 0, 0)}%
-                                    </td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                                + Importar
+                                            </button>
+                                        </div>
+                                    ))
+                                )
+                            ) : (
+                                orcamentoFiltrados.length === 0 ? (
+                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                                        {orcamentoImportar.length === 0 
+                                            ? 'Nenhum item do orçamento disponível para importar'
+                                            : 'Nenhum resultado encontrado'
+                                        }
+                                    </div>
+                                ) : (
+                                    orcamentoFiltrados.map(item => (
+                                        <div key={item.id} style={styles.listItem}>
+                                            <div style={{ ...styles.listIcon, backgroundColor: '#fef3c7' }}>📋</div>
+                                            <div style={styles.listInfo}>
+                                                <div style={styles.listTitle}>{item.descricao}</div>
+                                                <div style={styles.listMeta}>
+                                                    <span>📁 {item.etapa}</span>
+                                                    <span>📦 {item.quantidade}</span>
+                                                </div>
+                                            </div>
+                                            <div style={styles.listValor}>{formatCurrency(item.valor)}</div>
+                                            <button 
+                                                style={styles.listAction}
+                                                onClick={() => selecionarParaImportar(item, 'orcamento')}
+                                            >
+                                                + Importar
+                                            </button>
+                                        </div>
+                                    ))
+                                )
+                            )}
+                        </div>
+
+                        <div style={styles.modalFooter}>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonSecondary }}
+                                onClick={() => setShowModalImportar(false)}
+                            >
+                                Fechar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Legenda */}
-            <div style={{ 
-                marginTop: '20px', 
-                padding: '16px 20px', 
-                backgroundColor: '#fff', 
-                borderRadius: '12px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '24px',
-                flexWrap: 'wrap',
-                fontSize: '12px'
-            }}>
-                <span style={{ fontWeight: '600' }}>Legenda:</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={styles.servicoBadge}>📦 Kanban</span> Vinculado ao Kanban
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ ...styles.statusBadge, ...styles.statusPago }}>✅ Pago</span> 100%
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}>🔄 %</span> Em andamento
-                </span>
-            </div>
+            {/* Modal Confirmar Importação */}
+            {showModalConfirmar && (
+                <div style={styles.modalOverlay} onClick={() => setShowModalConfirmar(null)}>
+                    <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>📅 Adicionar à Agenda</h2>
+                            <button style={styles.closeBtn} onClick={() => setShowModalConfirmar(null)}>×</button>
+                        </div>
+                        <div style={styles.modalBody}>
+                            {/* Banner de importação */}
+                            <div style={styles.importedBox}>
+                                <span style={{ fontSize: '24px' }}>✅</span>
+                                <div>
+                                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#166534' }}>
+                                        Dados importados de {showModalConfirmar === 'pagamento' ? 'Pagamento' : 'Orçamento'}
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#15803d' }}>
+                                        Campos preenchidos automaticamente
+                                    </div>
+                                </div>
+                            </div>
 
-            {/* Modais */}
-            {showNovaEtapa && (
-                <NovaEtapaModal 
-                    onClose={() => setShowNovaEtapa(false)}
-                    onSave={criarEtapa}
-                />
+                            {/* Campos preenchidos automaticamente */}
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📦 Descrição</label>
+                                <input 
+                                    type="text" 
+                                    style={styles.inputDisabled}
+                                    value={formImportar.descricao}
+                                    readOnly
+                                />
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <input 
+                                        type="text" 
+                                        style={showModalConfirmar === 'pagamento' ? styles.inputDisabled : styles.input}
+                                        value={formImportar.fornecedor}
+                                        onChange={(e) => setFormImportar({...formImportar, fornecedor: e.target.value})}
+                                        placeholder={showModalConfirmar === 'orcamento' ? 'Informe o fornecedor' : ''}
+                                        readOnly={showModalConfirmar === 'pagamento'}
+                                    />
+                                </div>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>💰 Valor</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.inputDisabled}
+                                        value={formatCurrency(formImportar.valor)}
+                                        readOnly
+                                    />
+                                </div>
+                            </div>
+
+                            {formImportar.observacoes && (
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>📝 Informações Importadas</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.inputDisabled}
+                                        value={formImportar.observacoes}
+                                        readOnly
+                                    />
+                                </div>
+                            )}
+
+                            {/* Campo obrigatório destacado */}
+                            <div style={styles.highlightField}>
+                                <div style={styles.highlightLabel}>⚠️ Preencha a data</div>
+                                <div style={styles.formRow}>
+                                    <div style={styles.formGroup}>
+                                        <label style={styles.label}>📅 Data *</label>
+                                        <input 
+                                            type="date" 
+                                            style={{ ...styles.input, borderColor: '#fbbf24' }}
+                                            value={formImportar.data_prevista}
+                                            onChange={(e) => setFormImportar({...formImportar, data_prevista: e.target.value})}
+                                        />
+                                    </div>
+                                    <div style={styles.formGroup}>
+                                        <label style={styles.label}>📞 Telefone</label>
+                                        <input 
+                                            type="text" 
+                                            style={styles.input}
+                                            value={formImportar.telefone}
+                                            onChange={(e) => setFormImportar({...formImportar, telefone: e.target.value})}
+                                            placeholder="(00) 00000-0000"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={styles.modalFooter}>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonSecondary }}
+                                onClick={() => setShowModalConfirmar(null)}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                style={{ 
+                                    ...styles.button, 
+                                    ...styles.buttonSuccess,
+                                    opacity: formImportar.data_prevista ? 1 : 0.5
+                                }}
+                                onClick={criarDemandaImportada}
+                                disabled={!formImportar.data_prevista}
+                            >
+                                ✅ Adicionar à Agenda
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
-            
-            {showNovoItem && (
-                <NovoItemModal 
-                    onClose={fecharModalItem}
-                    onSave={salvarItem}
-                    etapas={dados.etapas}
-                    etapaId={etapaParaNovoItem}
-                    apiUrl={apiUrl}
-                    itemParaEditar={itemParaEditar}
-                />
-            )}
-            
-            {showUploadPlanta && (
-                <UploadPlantaModal 
-                    onClose={() => setShowUploadPlanta(false)}
-                    onImportar={carregarDados}
-                    obraId={obraId}
-                    apiUrl={apiUrl}
-                />
+
+            {/* Modal Concluir */}
+            {showModalConcluir && (
+                <div style={styles.modalOverlay} onClick={() => setShowModalConcluir(null)}>
+                    <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>✓ Confirmar Conclusão</h2>
+                            <button style={styles.closeBtn} onClick={() => setShowModalConcluir(null)}>×</button>
+                        </div>
+                        <div style={styles.modalBody}>
+                            <div style={styles.infoBox}>
+                                <div style={styles.infoRow}>
+                                    <span style={styles.infoLabel}>Descrição:</span>
+                                    <span style={styles.infoValue}>{showModalConcluir.descricao}</span>
+                                </div>
+                                <div style={styles.infoRow}>
+                                    <span style={styles.infoLabel}>Fornecedor:</span>
+                                    <span style={styles.infoValue}>{showModalConcluir.fornecedor || '-'}</span>
+                                </div>
+                                <div style={styles.infoRow}>
+                                    <span style={styles.infoLabel}>Previsão:</span>
+                                    <span style={styles.infoValue}>{formatDate(showModalConcluir.data_prevista)}</span>
+                                </div>
+                                <div style={{ ...styles.infoRow, borderBottom: 'none' }}>
+                                    <span style={styles.infoLabel}>Valor:</span>
+                                    <span style={{ ...styles.infoValue, color: '#059669' }}>
+                                        {formatCurrency(showModalConcluir.valor)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <ConcluirForm 
+                                onConcluir={(data, obs) => concluirDemanda(showModalConcluir, data, obs)}
+                                onCancelar={() => setShowModalConcluir(null)}
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
 };
 
-export default OrcamentoEngenharia;
+// Componente auxiliar para o formulário de conclusão
+const ConcluirForm = ({ onConcluir, onCancelar }) => {
+    const [dataConclusao, setDataConclusao] = useState(new Date().toISOString().split('T')[0]);
+    const [observacoes, setObservacoes] = useState('');
+
+    return (
+        <>
+            <div style={styles.formGroup}>
+                <label style={styles.label}>📅 Data da Conclusão</label>
+                <input 
+                    type="date" 
+                    style={styles.input}
+                    value={dataConclusao}
+                    onChange={(e) => setDataConclusao(e.target.value)}
+                />
+            </div>
+            <div style={styles.formGroup}>
+                <label style={styles.label}>📝 Observações (opcional)</label>
+                <textarea 
+                    style={{...styles.input, minHeight: '80px'}}
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Ex: Entregue completo, sem avarias..."
+                />
+            </div>
+            <div style={styles.modalFooter}>
+                <button 
+                    style={{ ...styles.button, ...styles.buttonSecondary }}
+                    onClick={onCancelar}
+                >
+                    Cancelar
+                </button>
+                <button 
+                    style={{ ...styles.button, ...styles.buttonSuccess }}
+                    onClick={() => onConcluir(dataConclusao, observacoes)}
+                >
+                    ✓ Confirmar Conclusão
+                </button>
+            </div>
+        </>
+    );
+};
+
+export default AgendaDemandas;

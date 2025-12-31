@@ -2619,3 +2619,146 @@ body {
 .periodo-semanal { background: var(--cor-warning-light); color: #92400e; }
 .periodo-quinzenal { background: var(--cor-warning); color: white; }
 .periodo-mensal { background: var(--cor-info-light); color: #0369a1; }
+
+/* =====================================================
+   AGENDA DE DEMANDAS
+   ===================================================== */
+
+/* Container principal */
+.agenda-container {
+    padding: 20px;
+    background-color: #f8fafc;
+    min-height: 100%;
+}
+
+/* Botão do menu - Agenda */
+.icon-btn.agenda-btn {
+    position: relative;
+}
+
+.icon-btn.agenda-btn .badge-novo {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* Animação para itens atrasados */
+@keyframes pulse-atrasado {
+    0%, 100% { 
+        background-color: #fef2f2; 
+    }
+    50% { 
+        background-color: #fee2e2; 
+    }
+}
+
+.demanda-atrasada {
+    animation: pulse-atrasado 2s ease-in-out infinite;
+}
+
+/* Hover nos itens da lista */
+.agenda-item:hover {
+    background-color: #f8fafc;
+}
+
+.agenda-item-atrasado:hover {
+    background-color: #fee2e2 !important;
+}
+
+/* Badges de origem */
+.badge-origem-pagamento {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-origem-orcamento {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-origem-manual {
+    background-color: #f3e8ff;
+    color: #7c3aed;
+}
+
+/* Badges de status */
+.badge-status-aguardando {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-status-concluido {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-status-atrasado {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Modal de importação */
+.import-list-item {
+    transition: background-color 0.2s;
+}
+
+.import-list-item:hover {
+    background-color: #f8fafc;
+}
+
+/* Campo destacado para data */
+.highlight-field {
+    background-color: #fef3c7;
+    border: 2px solid #fbbf24;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.highlight-field .highlight-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400e;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+/* Banner de importação */
+.imported-box {
+    background-color: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .agenda-kpi-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .agenda-demanda-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .agenda-demanda-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .agenda-form-row {
+        grid-template-columns: 1fr;
+    }
+}
