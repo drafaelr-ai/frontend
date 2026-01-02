@@ -24,6 +24,7 @@ import { BiDashboard } from './BiModule';
 
 // 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
+import AgendaDemandas from './components/AgendaDemandas';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -535,6 +536,7 @@ const WindowsNavBar = ({
         { id: 'relatorios', icon: '📊', label: 'Relatórios' },
         { id: 'diario', icon: '📔', label: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa' },
+        { id: 'agenda', icon: '📅', label: 'Agenda' },
     ];
 
     const handleMenuClick = (menuId) => {
@@ -8440,6 +8442,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraNome={obraSelecionada.nome}
                             onClose={() => setCurrentPage('home')}
                             embedded={true}
+                        />
+                    )}
+
+                    {/* === PÁGINA: AGENDA DE EVENTOS === */}
+                    {currentPage === 'agenda' && (
+                        <AgendaDemandas
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            apiUrl={API_URL}
                         />
                     )}
 
