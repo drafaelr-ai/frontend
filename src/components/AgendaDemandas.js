@@ -1793,7 +1793,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📅 Data Prevista *</label>
+                                    <label style={styles.label}>📅 Data *</label>
                                     <input 
                                         type="date" 
                                         style={styles.input}
@@ -1801,6 +1801,19 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onChange={(e) => setShowModalEditar({...showModalEditar, data_prevista: e.target.value})}
                                     />
                                 </div>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>🕐 Horário</label>
+                                    <input 
+                                        type="time" 
+                                        style={styles.input}
+                                        value={showModalEditar.horario || ''}
+                                        onChange={(e) => setShowModalEditar({...showModalEditar, horario: e.target.value})}
+                                    />
+                                </div>
+                                <div style={styles.formGroup}></div>
                             </div>
 
                             <div style={styles.formGroup}>
