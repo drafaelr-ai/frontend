@@ -564,6 +564,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const [showModalImportar, setShowModalImportar] = useState(false);
     const [showModalConcluir, setShowModalConcluir] = useState(null);
     const [showModalConfirmar, setShowModalConfirmar] = useState(null);
+    const [showModalEditar, setShowModalEditar] = useState(null);
     const [abaImportar, setAbaImportar] = useState('pagamentos');
     
     // Dados para importação
@@ -829,6 +830,42 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         }
     };
 
+    const abrirModalEditar = (demanda) => {
+        setShowModalEditar({
+            ...demanda,
+            data_prevista: demanda.data_prevista || ''
+        });
+    };
+
+    const salvarEdicao = async () => {
+        if (!showModalEditar) return;
+        
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${showModalEditar.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    descricao: showModalEditar.descricao,
+                    tipo: showModalEditar.tipo,
+                    fornecedor: showModalEditar.fornecedor,
+                    telefone: showModalEditar.telefone,
+                    valor: showModalEditar.valor,
+                    data_prevista: showModalEditar.data_prevista,
+                    observacoes: showModalEditar.observacoes
+                })
+            });
+            
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.erro || 'Erro ao salvar');
+            }
+            
+            setShowModalEditar(null);
+            carregarDemandas();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     const selecionarParaImportar = (item, tipo) => {
         if (tipo === 'pagamento') {
             // Determinar tipo de demanda baseado no tipo de pagamento
@@ -1065,7 +1102,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     <h3 style={{ ...styles.sectionTitle, color: '#dc2626' }}>🔴 Atrasados</h3>
                     <div style={styles.card}>
                         {atrasados.map(demanda => (
-                            <div key={demanda.id} style={{ ...styles.demandaItem, backgroundColor: '#fef2f2' }}>
+                            <div 
+                                key={demanda.id} 
+                                style={{ ...styles.demandaItem, backgroundColor: '#fef2f2', cursor: 'pointer' }}
+                                onClick={() => abrirModalEditar(demanda)}
+                            >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
@@ -1080,7 +1121,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
                                 {getStatusBadge(demanda.status, demanda.data_prevista)}
-                                <div style={styles.demandaActions}>
+                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
@@ -1107,7 +1148,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     <h3 style={styles.sectionTitle}>📋 Esta Semana</h3>
                     <div style={styles.card}>
                         {estaSemana.map(demanda => (
-                            <div key={demanda.id} style={styles.demandaItem}>
+                            <div 
+                                key={demanda.id} 
+                                style={{ ...styles.demandaItem, cursor: 'pointer' }}
+                                onClick={() => abrirModalEditar(demanda)}
+                            >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
@@ -1121,7 +1166,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
                                 {getStatusBadge(demanda.status)}
-                                <div style={styles.demandaActions}>
+                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
@@ -1141,7 +1186,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     <h3 style={styles.sectionTitle}>📅 Próxima Semana</h3>
                     <div style={styles.card}>
                         {proximaSemana.map(demanda => (
-                            <div key={demanda.id} style={styles.demandaItem}>
+                            <div 
+                                key={demanda.id} 
+                                style={{ ...styles.demandaItem, cursor: 'pointer' }}
+                                onClick={() => abrirModalEditar(demanda)}
+                            >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
@@ -1155,7 +1204,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
                                 {getStatusBadge(demanda.status)}
-                                <div style={styles.demandaActions}>
+                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
@@ -1175,7 +1224,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     <h3 style={styles.sectionTitle}>🗓️ Mais Adiante</h3>
                     <div style={styles.card}>
                         {futuro.map(demanda => (
-                            <div key={demanda.id} style={styles.demandaItem}>
+                            <div 
+                                key={demanda.id} 
+                                style={{ ...styles.demandaItem, cursor: 'pointer' }}
+                                onClick={() => abrirModalEditar(demanda)}
+                            >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
@@ -1189,7 +1242,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
                                 {getStatusBadge(demanda.status)}
-                                <div style={styles.demandaActions}>
+                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => setShowModalConcluir(demanda)}
@@ -1209,7 +1262,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     <h3 style={{ ...styles.sectionTitle, color: '#059669' }}>✅ Recebidos</h3>
                     <div style={styles.card}>
                         {concluidos.slice(0, filtro === 'concluido' ? undefined : 5).map(demanda => (
-                            <div key={demanda.id} style={{ ...styles.demandaItem, opacity: 0.7 }}>
+                            <div 
+                                key={demanda.id} 
+                                style={{ ...styles.demandaItem, opacity: 0.7, cursor: 'pointer' }}
+                                onClick={() => abrirModalEditar(demanda)}
+                            >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
@@ -1224,7 +1281,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
                                 {getStatusBadge(demanda.status)}
-                                <div style={styles.demandaActions}>
+                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonSecondary, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => reabrirDemanda(demanda)}
@@ -1617,6 +1674,138 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             >
                                 ✅ Adicionar à Agenda
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Editar */}
+            {showModalEditar && (
+                <div style={styles.modalOverlay} onClick={() => setShowModalEditar(null)}>
+                    <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>✏️ Editar Demanda</h2>
+                            <button style={styles.closeBtn} onClick={() => setShowModalEditar(null)}>×</button>
+                        </div>
+                        <div style={styles.modalBody}>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📝 Descrição *</label>
+                                <input 
+                                    type="text" 
+                                    style={styles.input}
+                                    value={showModalEditar.descricao || ''}
+                                    onChange={(e) => setShowModalEditar({...showModalEditar, descricao: e.target.value})}
+                                />
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📋 Tipo</label>
+                                <select 
+                                    style={styles.input}
+                                    value={showModalEditar.tipo || 'material'}
+                                    onChange={(e) => setShowModalEditar({...showModalEditar, tipo: e.target.value})}
+                                >
+                                    <option value="material">📦 Material / Compra</option>
+                                    <option value="servico">🔧 Serviço Contratado</option>
+                                    <option value="visita">👷 Visita / Reunião</option>
+                                    <option value="outro">📋 Outro</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.input}
+                                        value={showModalEditar.fornecedor || ''}
+                                        onChange={(e) => setShowModalEditar({...showModalEditar, fornecedor: e.target.value})}
+                                    />
+                                </div>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>📞 Telefone</label>
+                                    <input 
+                                        type="text" 
+                                        style={styles.input}
+                                        value={showModalEditar.telefone || ''}
+                                        onChange={(e) => setShowModalEditar({...showModalEditar, telefone: e.target.value})}
+                                        placeholder="(00) 00000-0000"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>💰 Valor (R$)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01"
+                                        style={styles.input}
+                                        value={showModalEditar.valor || ''}
+                                        onChange={(e) => setShowModalEditar({...showModalEditar, valor: e.target.value})}
+                                    />
+                                </div>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>📅 Data Prevista *</label>
+                                    <input 
+                                        type="date" 
+                                        style={styles.input}
+                                        value={showModalEditar.data_prevista || ''}
+                                        onChange={(e) => setShowModalEditar({...showModalEditar, data_prevista: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>📝 Observações</label>
+                                <textarea 
+                                    style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
+                                    value={showModalEditar.observacoes || ''}
+                                    onChange={(e) => setShowModalEditar({...showModalEditar, observacoes: e.target.value})}
+                                />
+                            </div>
+
+                            {/* Info de origem */}
+                            <div style={{ 
+                                padding: '12px', 
+                                background: '#f1f5f9', 
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                color: '#64748b',
+                                marginTop: '8px'
+                            }}>
+                                <span>Origem: {showModalEditar.origem === 'manual' ? '✍️ Manual' : showModalEditar.origem === 'pagamento' ? '💳 Pagamento' : '📋 Orçamento'}</span>
+                                {showModalEditar.created_at && (
+                                    <span style={{ marginLeft: '16px' }}>Criado em: {formatDate(showModalEditar.created_at)}</span>
+                                )}
+                            </div>
+                        </div>
+                        <div style={styles.modalFooter}>
+                            <button 
+                                style={{ ...styles.button, ...styles.buttonDanger }}
+                                onClick={() => {
+                                    if (window.confirm(`Excluir "${showModalEditar.descricao}"?`)) {
+                                        excluirDemanda(showModalEditar);
+                                        setShowModalEditar(null);
+                                    }
+                                }}
+                            >
+                                🗑️ Excluir
+                            </button>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button 
+                                    style={{ ...styles.button, ...styles.buttonSecondary }}
+                                    onClick={() => setShowModalEditar(null)}
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    style={{ ...styles.button, ...styles.buttonPrimary }}
+                                    onClick={salvarEdicao}
+                                >
+                                    💾 Salvar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
