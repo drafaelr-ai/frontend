@@ -1521,7 +1521,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         </div>
                                     ))
                                 )
-                            ) : (
+                            ) : abaImportar === 'orcamento' ? (
                                 orcamentoFiltrados.length === 0 ? (
                                     <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                                         {orcamentoImportar.length === 0 
