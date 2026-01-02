@@ -1245,6 +1245,9 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         🗑️
                                     </button>
                                 </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
