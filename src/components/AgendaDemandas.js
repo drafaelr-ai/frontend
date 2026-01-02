@@ -239,6 +239,10 @@ const styles = {
         backgroundColor: '#fef3c7',
         color: '#92400e'
     },
+    badgeCronograma: {
+        backgroundColor: '#dbeafe',
+        color: '#1e40af'
+    },
     badgeManual: {
         backgroundColor: '#f3e8ff',
         color: '#7c3aed'
@@ -557,12 +561,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const [demandas, setDemandas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filtro, setFiltro] = useState('todos'); // todos, aguardando, atrasado, concluido
+    const [filtro, setFiltro] = useState('todos'); // todos, hoje, semana, futuro
     
     // Modais
     const [showModalManual, setShowModalManual] = useState(false);
     const [showModalImportar, setShowModalImportar] = useState(false);
-    const [showModalConcluir, setShowModalConcluir] = useState(null);
     const [showModalConfirmar, setShowModalConfirmar] = useState(null);
     const [showModalEditar, setShowModalEditar] = useState(null);
     const [abaImportar, setAbaImportar] = useState('pagamentos');
@@ -570,6 +573,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     // Dados para importação
     const [pagamentosImportar, setPagamentosImportar] = useState([]);
     const [orcamentoImportar, setOrcamentoImportar] = useState([]);
+    const [servicosImportar, setServicosImportar] = useState([]);
     const [buscaImportar, setBuscaImportar] = useState('');
     
     // Formulário manual
@@ -580,6 +584,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         telefone: '',
         valor: '',
         data_prevista: '',
+        horario: '',
         observacoes: ''
     });
     
@@ -590,10 +595,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         telefone: '',
         valor: '',
         data_prevista: '',
+        horario: '',
         observacoes: '',
         origem: '',
         pagamento_servico_id: null,
         orcamento_item_id: null,
+        servico_id: null,
         tipo: 'material'
     });
 
@@ -632,30 +639,33 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 return <span style={{ ...styles.badge, ...styles.badgePagamento }}>Pagamento</span>;
             case 'orcamento':
                 return <span style={{ ...styles.badge, ...styles.badgeOrcamento }}>Orçamento</span>;
+            case 'cronograma':
+                return <span style={{ ...styles.badge, ...styles.badgeCronograma }}>Cronograma</span>;
             default:
                 return <span style={{ ...styles.badge, ...styles.badgeManual }}>Manual</span>;
         }
     };
 
-    const getStatusBadge = (status, dataPrevista) => {
-        // Calcular dias de atraso
-        let diasAtraso = 0;
-        if (status === 'atrasado' && dataPrevista) {
-            const hoje = new Date();
-            const prevista = new Date(dataPrevista + 'T00:00:00');
-            diasAtraso = Math.floor((hoje - prevista) / (1000 * 60 * 60 * 24));
-        }
-        
-        switch (status) {
-            case 'aguardando':
-                return <span style={{ ...styles.badge, ...styles.badgeAguardando }}>⏳ Aguardando</span>;
-            case 'concluido':
-                return <span style={{ ...styles.badge, ...styles.badgeConcluido }}>✓ Recebido</span>;
-            case 'atrasado':
-                return <span style={{ ...styles.badge, ...styles.badgeAtrasado }}>⚠️ {diasAtraso}d atraso</span>;
-            default:
-                return null;
-        }
+    const formatHorario = (horario) => {
+        if (!horario) return '';
+        return horario.substring(0, 5); // HH:MM
+    };
+
+    // Verificar se evento é hoje
+    const isHoje = (dateStr) => {
+        if (!dateStr) return false;
+        const hoje = new Date();
+        const data = new Date(dateStr + 'T00:00:00');
+        return data.toDateString() === hoje.toDateString();
+    };
+
+    // Verificar se evento já passou
+    const isPassado = (dateStr) => {
+        if (!dateStr) return false;
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const data = new Date(dateStr + 'T00:00:00');
+        return data < hoje;
     };
 
     // =====================================================
@@ -701,6 +711,18 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         }
     }, [apiUrl, obraId]);
 
+    const carregarServicosImportar = useCallback(async () => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/servicos`);
+            if (res.ok) {
+                const data = await res.json();
+                setServicosImportar(data);
+            }
+        } catch (err) {
+            console.error('Erro ao carregar serviços:', err);
+        }
+    }, [apiUrl, obraId]);
+
     useEffect(() => {
         carregarDemandas();
     }, [carregarDemandas]);
@@ -709,8 +731,9 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         if (showModalImportar) {
             carregarPagamentosImportar();
             carregarOrcamentoImportar();
+            carregarServicosImportar();
         }
-    }, [showModalImportar, carregarPagamentosImportar, carregarOrcamentoImportar]);
+    }, [showModalImportar, carregarPagamentosImportar, carregarOrcamentoImportar, carregarServicosImportar]);
 
     // =====================================================
     // AÇÕES
@@ -739,6 +762,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 telefone: '',
                 valor: '',
                 data_prevista: '',
+                horario: '',
                 observacoes: ''
             });
             carregarDemandas();
@@ -769,47 +793,18 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 telefone: '',
                 valor: '',
                 data_prevista: '',
+                horario: '',
                 observacoes: '',
                 origem: '',
                 pagamento_servico_id: null,
                 orcamento_item_id: null,
+                servico_id: null,
                 tipo: 'material'
             });
             carregarDemandas();
             carregarPagamentosImportar();
             carregarOrcamentoImportar();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    const concluirDemanda = async (demanda, dataConclusao, observacoes) => {
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}/concluir`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    data_conclusao: dataConclusao,
-                    observacoes
-                })
-            });
-            
-            if (!res.ok) throw new Error('Erro ao concluir demanda');
-            
-            setShowModalConcluir(null);
-            carregarDemandas();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
-
-    const reabrirDemanda = async (demanda) => {
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}/reabrir`, {
-                method: 'PUT'
-            });
-            
-            if (!res.ok) throw new Error('Erro ao reabrir demanda');
-            carregarDemandas();
+            carregarServicosImportar();
         } catch (err) {
             alert(err.message);
         }
@@ -850,6 +845,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     telefone: showModalEditar.telefone,
                     valor: showModalEditar.valor,
                     data_prevista: showModalEditar.data_prevista,
+                    horario: showModalEditar.horario,
                     observacoes: showModalEditar.observacoes
                 })
             });
@@ -868,7 +864,6 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const selecionarParaImportar = (item, tipo) => {
         if (tipo === 'pagamento') {
-            // Determinar tipo de demanda baseado no tipo de pagamento
             let tipoDemanda = 'material';
             if (item.tipo === 'mao_de_obra' || item.tipo === 'Mão de Obra') {
                 tipoDemanda = 'servico';
@@ -880,24 +875,43 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 telefone: item.telefone || '',
                 valor: item.valor,
                 data_prevista: '',
+                horario: '',
                 observacoes: `Serviço: ${item.servico || '-'} | Status: ${item.status} | Data: ${formatDate(item.data_pagamento)}`,
                 origem: 'pagamento',
                 pagamento_servico_id: typeof item.id === 'number' ? item.id : null,
                 orcamento_item_id: null,
+                servico_id: null,
                 tipo: tipoDemanda
             });
-        } else {
+        } else if (tipo === 'orcamento') {
             setFormImportar({
                 descricao: item.descricao,
                 fornecedor: '',
                 telefone: '',
                 valor: item.valor,
                 data_prevista: '',
+                horario: '',
                 observacoes: `Etapa: ${item.etapa} | Qtd: ${item.quantidade}`,
                 origem: 'orcamento',
                 pagamento_servico_id: null,
                 orcamento_item_id: item.id,
+                servico_id: null,
                 tipo: 'material'
+            });
+        } else if (tipo === 'cronograma') {
+            setFormImportar({
+                descricao: `Início: ${item.nome}`,
+                fornecedor: item.responsavel || '',
+                telefone: '',
+                valor: null,
+                data_prevista: item.data_inicio || '',
+                horario: '',
+                observacoes: item.etapa ? `Etapa: ${item.etapa}` : '',
+                origem: 'cronograma',
+                pagamento_servico_id: null,
+                orcamento_item_id: null,
+                servico_id: item.id,
+                tipo: 'servico'
             });
         }
         setShowModalImportar(false);
@@ -907,17 +921,17 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     // =====================================================
     // FILTROS E CÁLCULOS
     // =====================================================
-    const demandasFiltradas = demandas.filter(d => {
-        if (filtro === 'todos') return true;
-        return d.status === filtro;
+    
+    // Filtrar apenas eventos futuros (incluindo hoje) - eventos passados somem automaticamente
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    const eventosAtivos = demandas.filter(d => {
+        const data = new Date(d.data_prevista + 'T00:00:00');
+        return data >= hoje; // Só mostra eventos de hoje em diante
     });
 
-    const atrasados = demandas.filter(d => d.status === 'atrasado');
-    const aguardando = demandas.filter(d => d.status === 'aguardando');
-    const concluidos = demandas.filter(d => d.status === 'concluido');
-
     // Agrupar por período
-    const hoje = new Date();
     const inicioSemana = new Date(hoje);
     inicioSemana.setDate(hoje.getDate() - hoje.getDay());
     const fimSemana = new Date(inicioSemana);
@@ -928,23 +942,42 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const fimProxSemana = new Date(inicioProxSemana);
     fimProxSemana.setDate(inicioProxSemana.getDate() + 6);
 
-    const estaSemana = demandasFiltradas.filter(d => {
-        if (d.status !== 'aguardando') return false;
+    // Eventos de hoje
+    const eventosHoje = eventosAtivos.filter(d => {
         const data = new Date(d.data_prevista + 'T00:00:00');
-        return data >= inicioSemana && data <= fimSemana;
-    });
+        return data.toDateString() === hoje.toDateString();
+    }).sort((a, b) => (a.horario || '').localeCompare(b.horario || ''));
 
-    const proximaSemana = demandasFiltradas.filter(d => {
-        if (d.status !== 'aguardando') return false;
+    // Eventos desta semana (exceto hoje)
+    const estaSemana = eventosAtivos.filter(d => {
+        const data = new Date(d.data_prevista + 'T00:00:00');
+        return data > hoje && data <= fimSemana;
+    }).sort((a, b) => new Date(a.data_prevista) - new Date(b.data_prevista));
+
+    // Eventos da próxima semana
+    const proximaSemana = eventosAtivos.filter(d => {
         const data = new Date(d.data_prevista + 'T00:00:00');
         return data >= inicioProxSemana && data <= fimProxSemana;
-    });
+    }).sort((a, b) => new Date(a.data_prevista) - new Date(b.data_prevista));
 
-    const futuro = demandasFiltradas.filter(d => {
-        if (d.status !== 'aguardando') return false;
+    // Eventos futuros (após próxima semana)
+    const futuro = eventosAtivos.filter(d => {
         const data = new Date(d.data_prevista + 'T00:00:00');
         return data > fimProxSemana;
-    });
+    }).sort((a, b) => new Date(a.data_prevista) - new Date(b.data_prevista));
+
+    // Aplicar filtro de visualização
+    const aplicarFiltro = (eventos) => {
+        if (filtro === 'todos') return eventos;
+        if (filtro === 'hoje') return eventos.filter(d => isHoje(d.data_prevista));
+        if (filtro === 'semana') {
+            return eventos.filter(d => {
+                const data = new Date(d.data_prevista + 'T00:00:00');
+                return data >= hoje && data <= fimSemana;
+            });
+        }
+        return eventos;
+    };
 
     // Filtrar lista de importação
     const pagamentosFiltrados = pagamentosImportar.filter(p => 
@@ -956,6 +989,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const orcamentoFiltrados = orcamentoImportar.filter(o => 
         o.descricao?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
         o.etapa?.toLowerCase().includes(buscaImportar.toLowerCase())
+    );
+
+    const servicosFiltrados = servicosImportar.filter(s => 
+        s.nome?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
+        s.etapa?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
+        s.responsavel?.toLowerCase().includes(buscaImportar.toLowerCase())
     );
 
     // =====================================================
@@ -995,7 +1034,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             <div style={styles.header}>
                 <div>
                     <h1 style={styles.title}>
-                        📅 Agenda de Demandas
+                        📅 Agenda de Eventos
                     </h1>
                     <p style={styles.subtitle}>{obraNome || 'Obra'}</p>
                 </div>
@@ -1004,7 +1043,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         style={{ ...styles.button, ...styles.buttonSecondary }}
                         onClick={() => setShowModalManual(true)}
                     >
-                        ✏️ Cadastrar Manual
+                        ✏️ Novo Evento
                     </button>
                     <button 
                         style={{ ...styles.button, ...styles.buttonPrimary }}
@@ -1017,27 +1056,27 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
             {/* KPIs */}
             <div style={styles.kpiContainer}>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#f59e0b' }}>
-                    <div style={styles.kpiLabel}>⏳ Aguardando</div>
-                    <div style={styles.kpiValue}>{aguardando.length}</div>
-                </div>
                 <div style={{ ...styles.kpiCard, borderLeftColor: '#ef4444' }}>
-                    <div style={styles.kpiLabel}>⚠️ Atrasados</div>
-                    <div style={styles.kpiValue}>{atrasados.length}</div>
+                    <div style={styles.kpiLabel}>🔴 Hoje</div>
+                    <div style={styles.kpiValue}>{eventosHoje.length}</div>
                 </div>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#10b981' }}>
-                    <div style={styles.kpiLabel}>✓ Recebidos</div>
-                    <div style={styles.kpiValue}>{concluidos.length}</div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#f59e0b' }}>
+                    <div style={styles.kpiLabel}>📅 Esta Semana</div>
+                    <div style={styles.kpiValue}>{eventosHoje.length + estaSemana.length}</div>
+                </div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: '#3b82f6' }}>
+                    <div style={styles.kpiLabel}>🗓️ Próx. Semana</div>
+                    <div style={styles.kpiValue}>{proximaSemana.length}</div>
                 </div>
                 <div style={{ ...styles.kpiCard, borderLeftColor: '#6366f1' }}>
-                    <div style={styles.kpiLabel}>📋 Total</div>
-                    <div style={styles.kpiValue}>{demandas.length}</div>
+                    <div style={styles.kpiLabel}>📋 Total Ativos</div>
+                    <div style={styles.kpiValue}>{eventosAtivos.length}</div>
                 </div>
             </div>
 
             {/* Filtros */}
             <div style={styles.filterBar}>
-                {['todos', 'aguardando', 'atrasado', 'concluido'].map(f => (
+                {['todos', 'hoje', 'semana'].map(f => (
                     <button
                         key={f}
                         style={{
@@ -1046,37 +1085,36 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         }}
                         onClick={() => setFiltro(f)}
                     >
-                        {f === 'todos' && `Todos (${demandas.length})`}
-                        {f === 'aguardando' && `⏳ Aguardando (${aguardando.length})`}
-                        {f === 'atrasado' && `⚠️ Atrasados (${atrasados.length})`}
-                        {f === 'concluido' && `✓ Recebidos (${concluidos.length})`}
+                        {f === 'todos' && `Todos (${eventosAtivos.length})`}
+                        {f === 'hoje' && `🔴 Hoje (${eventosHoje.length})`}
+                        {f === 'semana' && `📅 Esta Semana (${eventosHoje.length + estaSemana.length})`}
                     </button>
                 ))}
             </div>
 
-            {/* Alerta de Atrasados */}
-            {atrasados.length > 0 && filtro !== 'concluido' && (
-                <div style={styles.alertBanner}>
-                    <span style={{ fontSize: '24px' }}>⚠️</span>
+            {/* Alerta de Eventos Hoje */}
+            {eventosHoje.length > 0 && (
+                <div style={{ ...styles.alertBanner, backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}>
+                    <span style={{ fontSize: '24px' }}>📌</span>
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>
-                            {atrasados.length} {atrasados.length === 1 ? 'item atrasado' : 'itens atrasados'}!
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>
+                            {eventosHoje.length} {eventosHoje.length === 1 ? 'evento hoje' : 'eventos hoje'}!
                         </div>
-                        <div style={{ fontSize: '13px', color: '#b91c1c' }}>
-                            Entre em contato com os fornecedores para atualizar as datas
+                        <div style={{ fontSize: '13px', color: '#b45309' }}>
+                            Confira os eventos programados para hoje
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Lista vazia */}
-            {demandas.length === 0 && (
+            {eventosAtivos.length === 0 && (
                 <div style={styles.card}>
                     <div style={styles.emptyState}>
                         <div style={styles.emptyIcon}>📅</div>
-                        <div style={styles.emptyTitle}>Nenhuma demanda agendada</div>
+                        <div style={styles.emptyTitle}>Nenhum evento agendado</div>
                         <div style={styles.emptyText}>
-                            Importe de pagamentos/orçamento ou cadastre manualmente
+                            Importe de pagamentos, orçamento, cronograma ou cadastre manualmente
                         </div>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <button 
@@ -1089,19 +1127,19 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.button, ...styles.buttonSecondary }}
                                 onClick={() => setShowModalManual(true)}
                             >
-                                ✏️ Cadastrar Manual
+                                ✏️ Novo Evento
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Atrasados */}
-            {atrasados.length > 0 && (filtro === 'todos' || filtro === 'atrasado') && (
+            {/* Hoje */}
+            {eventosHoje.length > 0 && (filtro === 'todos' || filtro === 'hoje' || filtro === 'semana') && (
                 <div style={styles.section}>
-                    <h3 style={{ ...styles.sectionTitle, color: '#dc2626' }}>🔴 Atrasados</h3>
+                    <h3 style={{ ...styles.sectionTitle, color: '#dc2626' }}>🔴 Hoje</h3>
                     <div style={styles.card}>
-                        {atrasados.map(demanda => (
+                        {eventosHoje.map(demanda => (
                             <div 
                                 key={demanda.id} 
                                 style={{ ...styles.demandaItem, backgroundColor: '#fef2f2', cursor: 'pointer' }}
@@ -1114,20 +1152,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
-                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
+                                        <span>👤 {demanda.fornecedor || '-'}</span>
                                         {demanda.telefone && <span>📞 {demanda.telefone}</span>}
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
-                                {getStatusBadge(demanda.status, demanda.data_prevista)}
                                 <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
-                                    <button 
-                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
-                                        onClick={() => setShowModalConcluir(demanda)}
-                                    >
-                                        ✓ Recebido
-                                    </button>
                                     <button 
                                         style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
                                         onClick={() => excluirDemanda(demanda)}
@@ -1143,7 +1174,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             )}
 
             {/* Esta Semana */}
-            {estaSemana.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+            {estaSemana.length > 0 && (filtro === 'todos' || filtro === 'semana') && (
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>📋 Esta Semana</h3>
                     <div style={styles.card}>
@@ -1160,18 +1191,19 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
                                         <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
+                                        <span>👤 {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
-                                {getStatusBadge(demanda.status)}
                                 <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
-                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
-                                        onClick={() => setShowModalConcluir(demanda)}
+                                        style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => excluirDemanda(demanda)}
+                                        title="Excluir"
                                     >
-                                        ✓ Recebido
+                                        🗑️
                                     </button>
                                 </div>
                             </div>
@@ -1181,7 +1213,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             )}
 
             {/* Próxima Semana */}
-            {proximaSemana.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+            {proximaSemana.length > 0 && filtro === 'todos' && (
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>📅 Próxima Semana</h3>
                     <div style={styles.card}>
@@ -1198,28 +1230,26 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
                                         <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
+                                        <span>👤 {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
-                                {getStatusBadge(demanda.status)}
                                 <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
-                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
-                                        onClick={() => setShowModalConcluir(demanda)}
+                                        style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => excluirDemanda(demanda)}
+                                        title="Excluir"
                                     >
-                                        ✓ Recebido
+                                        🗑️
                                     </button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             )}
 
             {/* Futuro */}
-            {futuro.length > 0 && (filtro === 'todos' || filtro === 'aguardando') && (
+            {futuro.length > 0 && filtro === 'todos' && (
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>🗓️ Mais Adiante</h3>
                     <div style={styles.card}>
@@ -1236,72 +1266,23 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
                                         <span>📅 {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
+                                        <span>👤 {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
-                                {getStatusBadge(demanda.status)}
                                 <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
                                     <button 
-                                        style={{ ...styles.button, ...styles.buttonSuccess, padding: '8px 12px', fontSize: '12px' }}
-                                        onClick={() => setShowModalConcluir(demanda)}
+                                        style={{ ...styles.button, ...styles.buttonDanger, padding: '8px 12px', fontSize: '12px' }}
+                                        onClick={() => excluirDemanda(demanda)}
+                                        title="Excluir"
                                     >
-                                        ✓ Recebido
+                                        🗑️
                                     </button>
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Recebidos */}
-            {concluidos.length > 0 && (filtro === 'todos' || filtro === 'concluido') && (
-                <div style={styles.section}>
-                    <h3 style={{ ...styles.sectionTitle, color: '#059669' }}>✅ Recebidos</h3>
-                    <div style={styles.card}>
-                        {concluidos.slice(0, filtro === 'concluido' ? undefined : 5).map(demanda => (
-                            <div 
-                                key={demanda.id} 
-                                style={{ ...styles.demandaItem, opacity: 0.7, cursor: 'pointer' }}
-                                onClick={() => abrirModalEditar(demanda)}
-                            >
-                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
-                                <div style={styles.demandaInfo}>
-                                    <div style={styles.demandaTitle}>
-                                        {demanda.descricao}
-                                        {getOrigemBadge(demanda.origem)}
-                                    </div>
-                                    <div style={styles.demandaMeta}>
-                                        <span>👤 {demanda.fornecedor || 'Sem fornecedor'}</span>
-                                        <span>📅 Previsto: {formatDateShort(demanda.data_prevista)}</span>
-                                        <span>✓ Recebido em {formatDateShort(demanda.data_conclusao)}</span>
-                                    </div>
-                                </div>
-                                <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
-                                {getStatusBadge(demanda.status)}
-                                <div style={styles.demandaActions} onClick={e => e.stopPropagation()}>
-                                    <button 
-                                        style={{ ...styles.button, ...styles.buttonSecondary, padding: '8px 12px', fontSize: '12px' }}
-                                        onClick={() => reabrirDemanda(demanda)}
-                                        title="Reabrir"
-                                    >
-                                        ↩️ Reabrir
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                        {filtro === 'todos' && concluidos.length > 5 && (
-                            <div style={{ padding: '16px', textAlign: 'center' }}>
-                                <button 
-                                    style={{ ...styles.button, ...styles.buttonSecondary }}
-                                    onClick={() => setFiltro('concluido')}
-                                >
-                                    Ver todos os {concluidos.length} concluídos
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}
@@ -1311,18 +1292,18 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalManual(false)}>
                     <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>✏️ Cadastrar Manualmente</h2>
+                            <h2 style={styles.modalTitle}>✏️ Novo Evento</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalManual(false)}>×</button>
                         </div>
                         <div style={styles.modalBody}>
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📦 Descrição *</label>
+                                <label style={styles.label}>📝 Descrição *</label>
                                 <input 
                                     type="text" 
                                     style={styles.input}
                                     value={formManual.descricao}
                                     onChange={(e) => setFormManual({...formManual, descricao: e.target.value})}
-                                    placeholder="Ex: Porcelanato 60x60, Visita técnica..."
+                                    placeholder="Ex: Entrega porcelanato, Visita técnica..."
                                 />
                             </div>
 
@@ -1333,8 +1314,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     value={formManual.tipo}
                                     onChange={(e) => setFormManual({...formManual, tipo: e.target.value})}
                                 >
-                                    <option value="material">📦 Material / Compra</option>
-                                    <option value="servico">🔧 Serviço Contratado</option>
+                                    <option value="material">📦 Material / Entrega</option>
+                                    <option value="servico">🔧 Início de Serviço</option>
                                     <option value="visita">👷 Visita / Reunião</option>
                                     <option value="outro">📋 Outro</option>
                                 </select>
@@ -1383,6 +1364,19 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onChange={(e) => setFormManual({...formManual, data_prevista: e.target.value})}
                                     />
                                 </div>
+                            </div>
+
+                            <div style={styles.formRow}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>🕐 Horário</label>
+                                    <input 
+                                        type="time" 
+                                        style={styles.input}
+                                        value={formManual.horario}
+                                        onChange={(e) => setFormManual({...formManual, horario: e.target.value})}
+                                    />
+                                </div>
+                                <div style={styles.formGroup}></div>
                             </div>
 
                             <div style={styles.formGroup}>
@@ -1440,6 +1434,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 onClick={() => setAbaImportar('orcamento')}
                             >
                                 📋 Orçamento ({orcamentoImportar.length})
+                            </button>
+                            <button 
+                                style={{ ...styles.tab, ...(abaImportar === 'cronograma' ? styles.tabActive : {}) }}
+                                onClick={() => setAbaImportar('cronograma')}
+                            >
+                                🔧 Serviços a Iniciar ({servicosImportar.length})
                             </button>
                         </div>
 
@@ -1547,7 +1547,39 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         </div>
                                     ))
                                 )
-                            )}
+                            ) : abaImportar === 'cronograma' ? (
+                                servicosFiltrados.length === 0 ? (
+                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                                        {servicosImportar.length === 0 
+                                            ? 'Nenhum serviço com data de início disponível'
+                                            : 'Nenhum resultado encontrado'
+                                        }
+                                    </div>
+                                ) : (
+                                    servicosFiltrados.map(item => (
+                                        <div key={item.id} style={styles.listItem}>
+                                            <div style={{ ...styles.listIcon, backgroundColor: '#dbeafe' }}>🔧</div>
+                                            <div style={styles.listInfo}>
+                                                <div style={styles.listTitle}>{item.nome}</div>
+                                                <div style={styles.listMeta}>
+                                                    <span>📁 {item.etapa || '-'}</span>
+                                                    <span>📅 Início: {formatDate(item.data_inicio)}</span>
+                                                    {item.responsavel && <span>👤 {item.responsavel}</span>}
+                                                </div>
+                                            </div>
+                                            <div style={{ ...styles.listValor, color: '#3b82f6' }}>
+                                                {item.status || 'A Iniciar'}
+                                            </div>
+                                            <button 
+                                                style={styles.listAction}
+                                                onClick={() => selecionarParaImportar(item, 'cronograma')}
+                                            >
+                                                + Importar
+                                            </button>
+                                        </div>
+                                    ))
+                                )
+                            ) : null}
                         </div>
 
                         <div style={styles.modalFooter}>
@@ -1576,7 +1608,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 <span style={{ fontSize: '24px' }}>✅</span>
                                 <div>
                                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#166534' }}>
-                                        Dados importados de {showModalConfirmar === 'pagamento' ? 'Pagamento' : 'Orçamento'}
+                                        Dados importados de {showModalConfirmar === 'pagamento' ? 'Pagamento' : showModalConfirmar === 'orcamento' ? 'Orçamento' : 'Cronograma'}
                                     </div>
                                     <div style={{ fontSize: '12px', color: '#15803d' }}>
                                         Campos preenchidos automaticamente
@@ -1638,11 +1670,22 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         <label style={styles.label}>📅 Data *</label>
                                         <input 
                                             type="date" 
-                                            style={{ ...styles.input, borderColor: '#fbbf24' }}
+                                            style={{ ...styles.input, borderColor: formImportar.data_prevista ? '#10b981' : '#fbbf24' }}
                                             value={formImportar.data_prevista}
                                             onChange={(e) => setFormImportar({...formImportar, data_prevista: e.target.value})}
                                         />
                                     </div>
+                                    <div style={styles.formGroup}>
+                                        <label style={styles.label}>🕐 Horário</label>
+                                        <input 
+                                            type="time" 
+                                            style={styles.input}
+                                            value={formImportar.horario}
+                                            onChange={(e) => setFormImportar({...formImportar, horario: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                <div style={styles.formRow}>
                                     <div style={styles.formGroup}>
                                         <label style={styles.label}>📞 Telefone</label>
                                         <input 
@@ -1653,6 +1696,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                             placeholder="(00) 00000-0000"
                                         />
                                     </div>
+                                    <div style={styles.formGroup}></div>
                                 </div>
                             </div>
                         </div>
@@ -1774,7 +1818,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 color: '#64748b',
                                 marginTop: '8px'
                             }}>
-                                <span>Origem: {showModalEditar.origem === 'manual' ? '✍️ Manual' : showModalEditar.origem === 'pagamento' ? '💳 Pagamento' : '📋 Orçamento'}</span>
+                                <span>Origem: {showModalEditar.origem === 'manual' ? '✍️ Manual' : showModalEditar.origem === 'pagamento' ? '💳 Pagamento' : showModalEditar.origem === 'cronograma' ? '🔧 Cronograma' : '📋 Orçamento'}</span>
                                 {showModalEditar.created_at && (
                                     <span style={{ marginLeft: '16px' }}>Criado em: {formatDate(showModalEditar.created_at)}</span>
                                 )}
@@ -1810,79 +1854,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                     </div>
                 </div>
             )}
-
-            {/* Modal Concluir */}
-            {showModalConcluir && (
-                <div style={styles.modalOverlay} onClick={() => setShowModalConcluir(null)}>
-                    <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
-                        <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>✓ Confirmar Recebimento</h2>
-                            <button style={styles.closeBtn} onClick={() => setShowModalConcluir(null)}>×</button>
-                        </div>
-                        <div style={styles.modalBody}>
-                            <div style={styles.infoBox}>
-                                <div style={styles.infoRow}>
-                                    <span style={styles.infoLabel}>Descrição:</span>
-                                    <span style={styles.infoValue}>{showModalConcluir.descricao}</span>
-                                </div>
-                                <div style={styles.infoRow}>
-                                    <span style={styles.infoLabel}>Fornecedor:</span>
-                                    <span style={styles.infoValue}>{showModalConcluir.fornecedor || '-'}</span>
-                                </div>
-                                <div style={styles.infoRow}>
-                                    <span style={styles.infoLabel}>Previsão:</span>
-                                    <span style={styles.infoValue}>{formatDate(showModalConcluir.data_prevista)}</span>
-                                </div>
-                                <div style={{ ...styles.infoRow, borderBottom: 'none' }}>
-                                    <span style={styles.infoLabel}>Valor:</span>
-                                    <span style={{ ...styles.infoValue, color: '#059669' }}>
-                                        {formatCurrency(showModalConcluir.valor)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <ConcluirForm 
-                                onConcluir={(data, obs) => concluirDemanda(showModalConcluir, data, obs)}
-                                onCancelar={() => setShowModalConcluir(null)}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
-    );
-};
-
-// Componente auxiliar para o formulário de conclusão
-const ConcluirForm = ({ onConcluir, onCancelar }) => {
-    const [observacoes, setObservacoes] = useState('');
-
-    return (
-        <>
-            <div style={styles.formGroup}>
-                <label style={styles.label}>📝 Observações (opcional)</label>
-                <textarea 
-                    style={{...styles.input, minHeight: '80px'}}
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    placeholder="Ex: Entregue completo, sem avarias..."
-                />
-            </div>
-            <div style={styles.modalFooter}>
-                <button 
-                    style={{ ...styles.button, ...styles.buttonSecondary }}
-                    onClick={onCancelar}
-                >
-                    Cancelar
-                </button>
-                <button 
-                    style={{ ...styles.button, ...styles.buttonSuccess }}
-                    onClick={() => onConcluir(new Date().toISOString().split('T')[0], observacoes)}
-                >
-                    ✓ Confirmar Recebimento
-                </button>
-            </div>
-        </>
     );
 };
 
