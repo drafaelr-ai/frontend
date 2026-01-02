@@ -687,6 +687,25 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         }
     }, [apiUrl, obraId]);
 
+    // Sincronizar cronograma automaticamente
+    const sincronizarCronograma = useCallback(async () => {
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/sincronizar-cronograma`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.importados > 0) {
+                    console.log(`[SYNC] ${data.importados} serviços do cronograma importados automaticamente`);
+                    // Recarregar demandas após sincronização
+                    carregarDemandas();
+                }
+            }
+        } catch (err) {
+            console.error('Erro ao sincronizar cronograma:', err);
+        }
+    }, [apiUrl, obraId, carregarDemandas]);
+
     const carregarPagamentosImportar = useCallback(async () => {
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/pagamentos`);
@@ -726,6 +745,11 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     useEffect(() => {
         carregarDemandas();
     }, [carregarDemandas]);
+
+    // Sincronizar cronograma automaticamente ao montar o componente
+    useEffect(() => {
+        sincronizarCronograma();
+    }, [sincronizarCronograma]);
 
     useEffect(() => {
         if (showModalImportar) {
