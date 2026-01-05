@@ -152,6 +152,22 @@ const NotificacoesDropdown = ({ user }) => {
             console.error('Erro ao limpar notificações:', err);
         }
     };
+
+    // Limpar todas as notificações
+    const limparTodas = async () => {
+        if (!window.confirm('Limpar TODAS as notificações?')) return;
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${API_URL}/notificacoes/limpar-todas`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setNotificacoes([]);
+            setCount(0);
+        } catch (err) {
+            console.error('Erro ao limpar todas notificações:', err);
+        }
+    };
     
     // Marcar todas como lidas
     const marcarTodasLidas = async () => {
@@ -322,7 +338,20 @@ const NotificacoesDropdown = ({ user }) => {
                                     }}
                                     title="Limpar notificações lidas"
                                 >
-                                    🗑️ Limpar lidas
+                                    🗑️ Lidas
+                                </button>
+                                <button
+                                    onClick={limparTodas}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#ef4444',
+                                        cursor: 'pointer',
+                                        fontSize: '0.8em'
+                                    }}
+                                    title="Limpar TODAS as notificações"
+                                >
+                                    🗑️ Todas
                                 </button>
                             </div>
                         </div>
