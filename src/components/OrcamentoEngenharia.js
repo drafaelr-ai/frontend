@@ -711,7 +711,18 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
     };
 
     const handleSalvar = async (continuarAdicionando = false) => {
-        if (!form.etapa_id || !form.descricao || !form.unidade) return;
+        if (!form.etapa_id) {
+            alert('Selecione uma etapa');
+            return;
+        }
+        if (!form.descricao || !form.descricao.trim()) {
+            alert('Preencha a descrição do serviço');
+            return;
+        }
+        if (!form.unidade) {
+            alert('Selecione uma unidade');
+            return;
+        }
         setSalvando(true);
         const sucesso = await onSave(form, isEdicao, itemParaEditar?.id);
         setSalvando(false);
