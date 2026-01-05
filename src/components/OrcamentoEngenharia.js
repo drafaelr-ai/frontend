@@ -2425,6 +2425,41 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             console.error(e);
         }
     };
+
+    // Mover etapa para cima ou para baixo
+    const moverEtapa = async (etapaId, direcao) => {
+        const etapas = [...dados.etapas];
+        const index = etapas.findIndex(e => e.id === etapaId);
+        
+        if (index === -1) return;
+        if (direcao === 'cima' && index === 0) return;
+        if (direcao === 'baixo' && index === etapas.length - 1) return;
+        
+        const novoIndex = direcao === 'cima' ? index - 1 : index + 1;
+        
+        // Trocar posições
+        [etapas[index], etapas[novoIndex]] = [etapas[novoIndex], etapas[index]];
+        
+        // Atualizar ordem e códigos
+        const etapasOrdem = etapas.map((etapa, idx) => ({
+            id: etapa.id,
+            ordem: idx,
+            codigo: String(idx + 1).padStart(2, '0')
+        }));
+        
+        try {
+            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/reordenar-etapas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ etapas: etapasOrdem })
+            });
+            if (res.ok) {
+                carregarDados();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
     
     // Exportar para Excel
     const exportarExcel = () => {
@@ -2848,6 +2883,28 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                             </td>
                                             <td style={styles.etapaTd}>
                                                 <div style={{ display: 'flex', gap: '4px' }}>
+                                                    <button 
+                                                        style={{ ...styles.actionBtn, color: '#fff', opacity: dados.etapas.indexOf(etapa) === 0 ? 0.3 : 1 }}
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            moverEtapa(etapa.id, 'cima');
+                                                        }}
+                                                        title="Mover para cima"
+                                                        disabled={dados.etapas.indexOf(etapa) === 0}
+                                                    >
+                                                        ⬆️
+                                                    </button>
+                                                    <button 
+                                                        style={{ ...styles.actionBtn, color: '#fff', opacity: dados.etapas.indexOf(etapa) === dados.etapas.length - 1 ? 0.3 : 1 }}
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            moverEtapa(etapa.id, 'baixo');
+                                                        }}
+                                                        title="Mover para baixo"
+                                                        disabled={dados.etapas.indexOf(etapa) === dados.etapas.length - 1}
+                                                    >
+                                                        ⬇️
+                                                    </button>
                                                     <button 
                                                         style={{ ...styles.actionBtn, color: '#fff' }}
                                                         onClick={(e) => { 
