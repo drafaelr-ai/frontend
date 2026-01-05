@@ -518,12 +518,21 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
     const [nome, setNome] = useState('');
     const [codigo, setCodigo] = useState('');
     const [salvando, setSalvando] = useState(false);
+    const [adicionarOutra, setAdicionarOutra] = useState(false);
 
     const handleSalvar = async () => {
         if (!nome.trim()) return;
         setSalvando(true);
         await onSave({ nome: nome.trim(), codigo: codigo.trim() });
         setSalvando(false);
+        
+        if (adicionarOutra) {
+            // Limpa os campos para adicionar outra
+            setNome('');
+            setCodigo('');
+        } else {
+            onClose();
+        }
     };
 
     return (
@@ -559,6 +568,15 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
                     </div>
                 </div>
                 <div style={styles.modalFooter}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto', cursor: 'pointer' }}>
+                        <input 
+                            type="checkbox" 
+                            checked={adicionarOutra}
+                            onChange={e => setAdicionarOutra(e.target.checked)}
+                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#6b7280' }}>Adicionar outra</span>
+                    </label>
                     <button 
                         style={{ ...styles.button, ...styles.buttonSecondary }} 
                         onClick={onClose}
@@ -1465,6 +1483,29 @@ const spinnerStyle = `
 `;
 
 // =====================================================
+// FUNÇÕES AUXILIARES
+// =====================================================
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', { 
+        style: 'currency', 
+        currency: 'BRL',
+        minimumFractionDigits: 2
+    }).format(value || 0);
+};
+
+const formatNumber = (value, decimals = 2) => {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    }).format(value || 0);
+};
+
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+// =====================================================
 // UPLOAD PLANTA MODAL - COMPONENTE
 // =====================================================
 
@@ -2293,7 +2334,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 body: JSON.stringify(dados)
             });
             if (res.ok) {
-                setShowNovaEtapa(false);
+                // Não fecha o modal aqui - o modal controla isso internamente
                 carregarDados();
             }
         } catch (e) {
