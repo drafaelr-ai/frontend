@@ -24,7 +24,6 @@ import { BiDashboard } from './BiModule';
 
 // 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
-import AgendaDemandas from './components/AgendaDemandas';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -153,7 +152,7 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Limpar todas as notificações
+    // Limpar TODAS as notificações
     const limparTodas = async () => {
         if (!window.confirm('Limpar TODAS as notificações?')) return;
         try {
@@ -164,6 +163,7 @@ const NotificacoesDropdown = ({ user }) => {
             });
             setNotificacoes([]);
             setCount(0);
+            setIsOpen(false);
         } catch (err) {
             console.error('Erro ao limpar todas notificações:', err);
         }
@@ -565,7 +565,6 @@ const WindowsNavBar = ({
         { id: 'relatorios', icon: '📊', label: 'Relatórios' },
         { id: 'diario', icon: '📔', label: 'Diário' },
         { id: 'caixa', icon: '🏦', label: 'Caixa' },
-        { id: 'agenda', icon: '📅', label: 'Agenda' },
     ];
 
     const handleMenuClick = (menuId) => {
@@ -8474,15 +8473,6 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: AGENDA DE EVENTOS === */}
-                    {currentPage === 'agenda' && (
-                        <AgendaDemandas
-                            obraId={obraSelecionada.id}
-                            obraNome={obraSelecionada.nome}
-                            apiUrl={API_URL}
-                        />
-                    )}
-
                     {/* === PÁGINA: GESTÃO DE BOLETOS === */}
                     {currentPage === 'boletos' && (
                         <GestaoBoletos
@@ -10303,29 +10293,6 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
     const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
     const [reanexandoId, setReanexandoId] = useState(null); // ID da movimentação sendo editada
-    const [movimentacaoEditar, setMovimentacaoEditar] = useState(null); // Movimentação sendo editada
-
-    // Função para excluir movimentação
-    const handleExcluirMovimentacao = async (movId, descricao) => {
-        if (!window.confirm(`Excluir movimentação "${descricao}"?\n\nEsta ação não pode ser desfeita.`)) {
-            return;
-        }
-        
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
-                { method: 'DELETE' }
-            );
-            
-            if (!response.ok) throw new Error('Erro ao excluir');
-            
-            alert('Movimentação excluída com sucesso!');
-            carregarDados();
-        } catch (error) {
-            console.error('Erro ao excluir:', error);
-            alert('Erro ao excluir movimentação');
-        }
-    };
 
     // Função para reanexar comprovante
     const handleReanexarComprovante = async (movId, file) => {
@@ -10696,77 +10663,37 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                     )}
                                     
                                     {/* Botão para reanexar comprovante */}
-                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <label 
-                                                style={{ 
-                                                    cursor: 'pointer',
-                                                    padding: '5px 10px',
-                                                    backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
-                                                    color: 'white',
-                                                    borderRadius: '5px',
-                                                    fontSize: '0.85em',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px'
+                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <label 
+                                            style={{ 
+                                                cursor: 'pointer',
+                                                padding: '5px 10px',
+                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
+                                                color: 'white',
+                                                borderRadius: '5px',
+                                                fontSize: '0.85em',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '5px'
+                                            }}
+                                        >
+                                            {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    if (e.target.files[0]) {
+                                                        handleReanexarComprovante(mov.id, e.target.files[0]);
+                                                    }
                                                 }}
-                                            >
-                                                {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        if (e.target.files[0]) {
-                                                            handleReanexarComprovante(mov.id, e.target.files[0]);
-                                                        }
-                                                    }}
-                                                />
-                                            </label>
-                                            {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                                <span style={{ fontSize: '0.75em', color: '#999' }}>
-                                                    ⚠️ Precisa reanexar
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Botões de Editar e Excluir */}
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button
-                                                onClick={() => setMovimentacaoEditar(mov)}
-                                                style={{
-                                                    padding: '5px 10px',
-                                                    backgroundColor: '#2196F3',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.85em',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
-                                                }}
-                                            >
-                                                ✏️ Editar
-                                            </button>
-                                            <button
-                                                onClick={() => handleExcluirMovimentacao(mov.id, mov.descricao)}
-                                                style={{
-                                                    padding: '5px 10px',
-                                                    backgroundColor: '#f44336',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.85em',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
-                                                }}
-                                            >
-                                                🗑️ Excluir
-                                            </button>
-                                        </div>
+                                            />
+                                        </label>
+                                        {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
+                                            <span style={{ fontSize: '0.75em', color: '#999' }}>
+                                                ⚠️ Precisa reanexar
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -10789,19 +10716,6 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                     onClose={() => setModalAberto(false)}
                     onSave={() => {
                         setModalAberto(false);
-                        carregarDados();
-                    }}
-                />
-            )}
-
-            {/* Modal de Editar Movimentação */}
-            {movimentacaoEditar && (
-                <ModalEditarMovimentacaoCaixa
-                    obraId={obraId}
-                    movimentacao={movimentacaoEditar}
-                    onClose={() => setMovimentacaoEditar(null)}
-                    onSave={() => {
-                        setMovimentacaoEditar(null);
                         carregarDados();
                     }}
                 />
@@ -11066,167 +10980,6 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                         style={{ padding: '12px 24px', fontSize: '1.1em' }}
                     >
                         {isCompressing ? '⏳ Comprimindo...' : isSubmitting ? 'Salvando...' : '💾 Salvar'}
-                    </button>
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-// Modal de Editar Movimentação do Caixa
-const ModalEditarMovimentacaoCaixa = ({ obraId, movimentacao, onClose, onSave }) => {
-    const [tipo, setTipo] = useState(movimentacao.tipo || 'Saída');
-    const [valor, setValor] = useState(movimentacao.valor || '');
-    const [descricao, setDescricao] = useState(movimentacao.descricao || '');
-    const [observacoes, setObservacoes] = useState(movimentacao.observacoes || '');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async () => {
-        if (!valor || !descricao) {
-            alert('Preencha valor e descrição');
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-            
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movimentacao.id}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        tipo,
-                        valor: parseFloat(valor),
-                        descricao,
-                        observacoes
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao atualizar');
-
-            alert('✅ Movimentação atualizada!');
-            onSave();
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao atualizar movimentação');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <div style={{ padding: '20px' }}>
-                <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>
-                    ✏️ Editar Movimentação
-                </h2>
-
-                {/* Tipo */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Tipo:
-                    </label>
-                    <div style={{ display: 'flex', gap: '20px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Saída"
-                                checked={tipo === 'Saída'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📤 Saída</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Entrada"
-                                checked={tipo === 'Entrada'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📥 Entrada</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Valor */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Valor (R$):
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={valor}
-                        onChange={e => setValor(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd'
-                        }}
-                    />
-                </div>
-
-                {/* Descrição */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Descrição:
-                    </label>
-                    <textarea
-                        value={descricao}
-                        onChange={e => setDescricao(e.target.value)}
-                        rows={3}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Observações */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Observações (opcional):
-                    </label>
-                    <textarea
-                        value={observacoes}
-                        onChange={e => setObservacoes(e.target.value)}
-                        rows={2}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Botões */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button
-                        onClick={onClose}
-                        className="voltar-btn"
-                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="submit-btn"
-                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                    >
-                        {isSubmitting ? 'Salvando...' : '💾 Salvar'}
                     </button>
                 </div>
             </div>
