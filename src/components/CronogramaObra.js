@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './CronogramaObra.css';
 
 const API_URL = 'https://backend-production-78c9.up.railway.app';
@@ -31,10 +31,18 @@ const addDays = (dateStr, days) => {
     return date.toISOString().split('T')[0];
 };
 
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
 const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     const [cronograma, setCronograma] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // NOVO: Estado para modo de visualização
+    const [viewMode, setViewMode] = useState('lista'); // 'kanban', 'timeline', 'lista'
+    const [filtroStatus, setFiltroStatus] = useState('todos');
     
     // Estados para modal de novo serviço
     const [showAddModal, setShowAddModal] = useState(false);
@@ -52,8 +60,8 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     // Estados para edição de serviço
     const [editingServico, setEditingServico] = useState(null);
     
-    // Estados para ETAPA PAI (nova)
-    const [showAddEtapaPaiModal, setShowAddEtapaPaiModal] = useState(null); // cronograma_id
+    // Estados para ETAPA PAI
+    const [showAddEtapaPaiModal, setShowAddEtapaPaiModal] = useState(null);
     const [novaEtapaPai, setNovaEtapaPai] = useState({
         nome: '',
         etapa_anterior_id: null,
@@ -62,8 +70,8 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         observacoes: ''
     });
     
-    // Estados para SUBETAPA (antigo "etapa")
-    const [showAddSubetapaModal, setShowAddSubetapaModal] = useState(null); // etapa_pai_id
+    // Estados para SUBETAPA
+    const [showAddSubetapaModal, setShowAddSubetapaModal] = useState(null);
     const [novaSubetapa, setNovaSubetapa] = useState({
         nome: '',
         duracao_dias: 1,
@@ -86,6 +94,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     
     // Estados para controle de expansão das etapas
     const [expandedEtapas, setExpandedEtapas] = useState({});
+    
+    // NOVO: Estado para modal de detalhes
+    const [servicoDetalhes, setServicoDetalhes] = useState(null);
 
     // Função para buscar com autenticação
     const fetchWithAuth = useCallback(async (url, options = {}) => {
@@ -173,7 +184,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
     // ==================== CRUD SERVIÇO ====================
     
-    // Adicionar novo serviço
     const handleAddServico = async () => {
         if (!novoServico.servico_nome.trim()) {
             alert('Informe o nome do serviço');
@@ -215,7 +225,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Importar serviço existente (múltiplos)
     const handleImportServicos = async () => {
         if (servicosSelecionados.length === 0) {
             alert('Selecione pelo menos um serviço para importar');
@@ -247,7 +256,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
     
-    // Toggle seleção de serviço para importar
     const toggleServicoSelecionado = (servico) => {
         setServicosSelecionados(prev => {
             const isSelected = prev.some(s => s.id === servico.id);
@@ -259,7 +267,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         });
     };
     
-    // Selecionar/desmarcar todos
     const toggleSelectAll = () => {
         if (servicosSelecionados.length === servicosDisponiveis.length) {
             setServicosSelecionados([]);
@@ -268,7 +275,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Excluir serviço
     const handleDeleteServico = async (servicoId) => {
         if (!window.confirm('Excluir este serviço e todas suas etapas?')) return;
 
@@ -286,7 +292,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
     // ==================== CRUD ETAPA PAI ====================
     
-    // Adicionar nova etapa pai
     const handleAddEtapaPai = async () => {
         if (!novaEtapaPai.nome.trim()) {
             alert('Informe o nome da etapa');
@@ -299,7 +304,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 observacoes: novaEtapaPai.observacoes
             };
             
-            // Se tem etapa anterior, adicionar condições
             if (novaEtapaPai.etapa_anterior_id) {
                 payload.etapa_anterior_id = novaEtapaPai.etapa_anterior_id;
                 payload.tipo_condicao = novaEtapaPai.tipo_condicao;
@@ -333,7 +337,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Editar etapa pai
     const handleUpdateEtapaPai = async () => {
         try {
             const response = await fetchWithAuth(
@@ -359,7 +362,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Excluir etapa pai
     const handleDeleteEtapaPai = async (cronogramaId, etapaId, etapaNome) => {
         if (!window.confirm(`Excluir etapa "${etapaNome}" e todas suas subetapas?`)) return;
 
@@ -378,7 +380,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
     // ==================== CRUD SUBETAPA ====================
     
-    // Adicionar nova subetapa
     const handleAddSubetapa = async () => {
         if (!novaSubetapa.nome.trim()) {
             alert('Informe o nome da subetapa');
@@ -425,7 +426,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Editar subetapa
     const handleUpdateSubetapa = async () => {
         try {
             const response = await fetchWithAuth(
@@ -450,7 +450,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
-    // Excluir subetapa
     const handleDeleteSubetapa = async (cronogramaId, subetapaId, subetapaNome) => {
         if (!window.confirm(`Excluir subetapa "${subetapaNome}"?`)) return;
 
@@ -469,7 +468,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
     // ==================== HELPERS ====================
     
-    // Atualizar data_fim quando mudar data_inicio ou duracao
     useEffect(() => {
         if (novoServico.data_inicio && novoServico.duracao_dias) {
             setNovoServico(prev => ({
@@ -479,35 +477,42 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     }, [novoServico.data_inicio, novoServico.duracao_dias]);
 
-    // Status do serviço
     const getStatus = (servico) => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
         const percentual = servico.percentual_conclusao || 0;
 
-        if (percentual >= 100) return { label: 'Concluído', color: '#28a745', icon: '✅' };
-        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: '#dc3545', icon: '🔴' };
-        if (servico.data_inicio_real) return { label: 'Em Andamento', color: '#007bff', icon: '🔄' };
-        return { label: 'A Iniciar', color: '#6c757d', icon: '⏳' };
+        if (percentual >= 100) return { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅', key: 'concluido' };
+        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️', key: 'atrasado' };
+        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄', key: 'em_andamento' };
+        return { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳', key: 'a_iniciar' };
     };
 
-    // Indicador EVM
-    const getEVMIndicator = (servicoNome) => {
+    // NOVO: Calcular status EVM simplificado
+    const getEVMStatus = (servicoNome) => {
         const evm = evmData[servicoNome];
         if (!evm || !evm.valor_total) return null;
 
         const percentualPago = evm.percentual_pago || 0;
         const percentualExecutado = evm.percentual_executado || 0;
-        const diferenca = percentualExecutado - percentualPago;
+        const diferenca = percentualPago - percentualExecutado;
 
-        if (diferenca >= 5) return { label: 'ADIANTADO', color: '#28a745', icon: '🟢' };
-        if (diferenca >= -5) return { label: 'NO PRAZO', color: '#007bff', icon: '🔵' };
-        if (diferenca >= -15) return { label: 'ATENÇÃO', color: '#ffc107', icon: '🟡' };
-        return { label: 'CRÍTICO', color: '#dc3545', icon: '🔴' };
+        if (percentualExecutado === 0 && percentualPago === 0) {
+            return { status: 'neutro', label: 'Não iniciado', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' };
+        }
+        if (percentualExecutado >= 100 && percentualPago <= 105) {
+            return { status: 'concluido', label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' };
+        }
+        if (diferenca <= -10) {
+            return { status: 'otimo', label: 'Saudável', color: '#10b981', bg: '#d1fae5', icon: '🟢', msg: 'Executou mais do que pagou' };
+        }
+        if (diferenca <= 5) {
+            return { status: 'normal', label: 'No Prazo', color: '#f59e0b', bg: '#fef3c7', icon: '🟡', msg: 'Pagamento alinhado' };
+        }
+        return { status: 'atencao', label: 'Atenção', color: '#ef4444', bg: '#fee2e2', icon: '🔴', msg: 'Pagando mais do que executou' };
     };
 
-    // Gerar PDF
     const handleGerarPDF = async () => {
         try {
             const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma-obra/relatorio-pdf`);
@@ -527,6 +532,658 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
+    // ==================== DADOS CALCULADOS ====================
+    
+    const servicosPorStatus = useMemo(() => {
+        return {
+            'a_iniciar': cronograma.filter(s => getStatus(s).key === 'a_iniciar'),
+            'em_andamento': cronograma.filter(s => getStatus(s).key === 'em_andamento'),
+            'concluido': cronograma.filter(s => getStatus(s).key === 'concluido'),
+            'atrasado': cronograma.filter(s => getStatus(s).key === 'atrasado')
+        };
+    }, [cronograma]);
+
+    const servicosFiltrados = useMemo(() => {
+        if (filtroStatus === 'todos') return cronograma;
+        return cronograma.filter(s => getStatus(s).key === filtroStatus);
+    }, [cronograma, filtroStatus]);
+
+    const stats = useMemo(() => {
+        const total = cronograma.length;
+        const concluidos = servicosPorStatus.concluido.length;
+        const atrasados = servicosPorStatus.atrasado.length;
+        const progressoGeral = total > 0 
+            ? Math.round(cronograma.reduce((acc, s) => acc + (s.percentual_conclusao || 0), 0) / total)
+            : 0;
+        const comAtencao = cronograma.filter(s => {
+            const evmStatus = getEVMStatus(s.servico_nome);
+            return evmStatus?.status === 'atencao';
+        }).length;
+
+        return { total, concluidos, atrasados, progressoGeral, comAtencao };
+    }, [cronograma, servicosPorStatus]);
+
+    const statusConfig = {
+        'a_iniciar': { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' },
+        'em_andamento': { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄' },
+        'concluido': { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' },
+        'atrasado': { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️' }
+    };
+
+    const getTimelineRange = useMemo(() => {
+        if (cronograma.length === 0) return { start: new Date(), end: new Date() };
+        
+        let minDate = new Date();
+        let maxDate = new Date();
+        
+        cronograma.forEach(s => {
+            if (s.data_inicio) {
+                const d = new Date(s.data_inicio + 'T00:00:00');
+                if (d < minDate) minDate = d;
+            }
+            if (s.data_fim_prevista) {
+                const d = new Date(s.data_fim_prevista + 'T00:00:00');
+                if (d > maxDate) maxDate = d;
+            }
+        });
+        
+        minDate.setDate(minDate.getDate() - 7);
+        maxDate.setDate(maxDate.getDate() + 14);
+        
+        return { start: minDate, end: maxDate };
+    }, [cronograma]);
+
+    const getTimelinePosition = (date) => {
+        if (!date) return 0;
+        const d = new Date(date + 'T00:00:00');
+        const { start, end } = getTimelineRange;
+        const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+        const daysFromStart = (d - start) / (1000 * 60 * 60 * 24);
+        return Math.max(0, Math.min(100, (daysFromStart / totalDays) * 100));
+    };
+
+    const getTimelineWidth = (startDate, endDate) => {
+        if (!startDate || !endDate) return 5;
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T00:00:00');
+        const { start: rangeStart, end: rangeEnd } = getTimelineRange;
+        const totalDays = (rangeEnd - rangeStart) / (1000 * 60 * 60 * 24);
+        const duration = (end - start) / (1000 * 60 * 60 * 24);
+        return Math.max(3, (duration / totalDays) * 100);
+    };
+
+    const getTimelineMonths = useMemo(() => {
+        const { start, end } = getTimelineRange;
+        const months = [];
+        const current = new Date(start);
+        current.setDate(1);
+        
+        while (current <= end) {
+            months.push(current.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }));
+            current.setMonth(current.getMonth() + 1);
+        }
+        
+        return months;
+    }, [getTimelineRange]);
+
+    // ==================== COMPONENTES DE VISUALIZAÇÃO ====================
+
+    // Componente de barras EVM simplificado
+    const EVMProgressBars = ({ servico, compact = false }) => {
+        const evm = evmData[servico.servico_nome];
+        if (!evm || !evm.valor_total) return null;
+
+        const percentualPago = Math.round(evm.percentual_pago || 0);
+        const percentualExecutado = Math.round(evm.percentual_executado || 0);
+        const evmStatus = getEVMStatus(servico.servico_nome);
+
+        return (
+            <div className="evm-progress-section">
+                <div className="evm-progress-row">
+                    <span className="evm-progress-label">🔧 Exec</span>
+                    <div className="evm-progress-bar">
+                        <div 
+                            className="evm-progress-fill executed"
+                            style={{ width: `${Math.min(percentualExecutado, 100)}%` }}
+                        />
+                    </div>
+                    <span className="evm-progress-value executed">{percentualExecutado}%</span>
+                </div>
+                <div className="evm-progress-row">
+                    <span className="evm-progress-label">💰 Pago</span>
+                    <div className="evm-progress-bar">
+                        <div 
+                            className="evm-progress-fill paid"
+                            style={{ width: `${Math.min(percentualPago, 100)}%` }}
+                        />
+                    </div>
+                    <span className="evm-progress-value paid">{percentualPago}%</span>
+                </div>
+                {!compact && evmStatus && (
+                    <div 
+                        className="evm-status-badge"
+                        style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
+                    >
+                        {evmStatus.icon} {evmStatus.label}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Card para Kanban
+    const ServicoCardKanban = ({ servico }) => {
+        const status = getStatus(servico);
+        const evm = evmData[servico.servico_nome];
+        const evmStatus = getEVMStatus(servico.servico_nome);
+
+        return (
+            <div 
+                className="kanban-card"
+                style={{ borderLeftColor: status.color }}
+                onClick={() => setServicoDetalhes(servico)}
+            >
+                <div className="kanban-card-header">
+                    <span className="kanban-card-ordem">#{servico.ordem}</span>
+                    <h4 className="kanban-card-nome">{servico.servico_nome}</h4>
+                    {evmStatus && (
+                        <span 
+                            className="kanban-evm-badge"
+                            style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
+                            title={evmStatus.msg || evmStatus.label}
+                        >
+                            {evmStatus.icon}
+                        </span>
+                    )}
+                </div>
+
+                {/* Barra de progresso */}
+                <div className="kanban-progress-section">
+                    <div className="kanban-progress-header">
+                        <span>Execução</span>
+                        <span>{(servico.percentual_conclusao || 0).toFixed(0)}%</span>
+                    </div>
+                    <div className="kanban-progress-bar">
+                        <div 
+                            className="kanban-progress-fill"
+                            style={{ 
+                                width: `${servico.percentual_conclusao || 0}%`,
+                                backgroundColor: status.color
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* EVM simplificado */}
+                {evm && evm.valor_total > 0 && (
+                    <EVMProgressBars servico={servico} compact={true} />
+                )}
+
+                {/* Datas */}
+                <div className="kanban-card-dates">
+                    <span>📅 {formatDate(servico.data_inicio)} → {formatDate(servico.data_fim_prevista)}</span>
+                </div>
+
+                {/* Ações */}
+                <div className="kanban-card-actions" onClick={e => e.stopPropagation()}>
+                    <button 
+                        className="kanban-action-btn"
+                        onClick={() => setEditingServico(servico)}
+                        title="Editar"
+                    >
+                        ✏️
+                    </button>
+                    <button 
+                        className="kanban-action-btn"
+                        onClick={() => {
+                            const etapasExistentes = servico.etapas || [];
+                            const ultimaEtapa = etapasExistentes.length > 0 
+                                ? etapasExistentes[etapasExistentes.length - 1] 
+                                : null;
+                            setNovaEtapaPai({
+                                nome: '',
+                                etapa_anterior_id: ultimaEtapa?.id || null,
+                                tipo_condicao: 'apos_termino',
+                                dias_offset: 0,
+                                observacoes: ''
+                            });
+                            setShowAddEtapaPaiModal(servico.id);
+                        }}
+                        title="Adicionar Etapa"
+                    >
+                        ➕
+                    </button>
+                    <button 
+                        className="kanban-action-btn danger"
+                        onClick={() => handleDeleteServico(servico.id)}
+                        title="Excluir"
+                    >
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    // VIEW: KANBAN
+    const KanbanView = () => (
+        <div className="kanban-container">
+            {Object.entries(servicosPorStatus).map(([statusKey, lista]) => (
+                <div key={statusKey} className="kanban-column">
+                    <div 
+                        className="kanban-column-header"
+                        style={{ backgroundColor: statusConfig[statusKey].bg }}
+                    >
+                        <span className="kanban-status-icon">{statusConfig[statusKey].icon}</span>
+                        <span className="kanban-status-label" style={{ color: statusConfig[statusKey].color }}>
+                            {statusConfig[statusKey].label}
+                        </span>
+                        <span 
+                            className="kanban-count"
+                            style={{ backgroundColor: statusConfig[statusKey].color }}
+                        >
+                            {lista.length}
+                        </span>
+                    </div>
+                    <div className="kanban-cards">
+                        {lista.map(servico => (
+                            <ServicoCardKanban key={servico.id} servico={servico} />
+                        ))}
+                        {lista.length === 0 && (
+                            <div className="kanban-empty">
+                                Nenhum serviço
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    // VIEW: TIMELINE
+    const TimelineView = () => (
+        <div className="timeline-container">
+            <div className="timeline-header">
+                <div className="timeline-label-header">Serviço</div>
+                <div className="timeline-bars-header">
+                    {getTimelineMonths.map((month, idx) => (
+                        <div key={idx} className="timeline-month">{month}</div>
+                    ))}
+                </div>
+            </div>
+            <div className="timeline-body">
+                {/* Linha de hoje */}
+                <div 
+                    className="timeline-today-line"
+                    style={{ left: `calc(200px + ${getTimelinePosition(getTodayString())}%)` }}
+                >
+                    <span className="timeline-today-label">HOJE</span>
+                </div>
+
+                {servicosFiltrados.map(servico => {
+                    const status = getStatus(servico);
+                    const evm = evmData[servico.servico_nome];
+                    const evmStatus = getEVMStatus(servico.servico_nome);
+                    const percentualPago = evm ? Math.round(evm.percentual_pago || 0) : 0;
+
+                    return (
+                        <div key={servico.id} className="timeline-row">
+                            <div className="timeline-label">
+                                <div className="timeline-servico-info">
+                                    <span className="timeline-servico-nome">{servico.servico_nome}</span>
+                                    {evmStatus && (
+                                        <span 
+                                            className="timeline-evm-badge"
+                                            style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
+                                        >
+                                            {evmStatus.icon}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="timeline-track">
+                                <div
+                                    className="timeline-bar"
+                                    style={{
+                                        left: `${getTimelinePosition(servico.data_inicio)}%`,
+                                        width: `${getTimelineWidth(servico.data_inicio, servico.data_fim_prevista)}%`,
+                                        backgroundColor: status.color
+                                    }}
+                                    onClick={() => setServicoDetalhes(servico)}
+                                    title={`${servico.servico_nome}: ${servico.percentual_conclusao || 0}% executado, ${percentualPago}% pago`}
+                                >
+                                    <div 
+                                        className="timeline-bar-progress"
+                                        style={{ width: `${servico.percentual_conclusao || 0}%` }}
+                                    />
+                                    <span className="timeline-bar-label">
+                                        {(servico.percentual_conclusao || 0).toFixed(0)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+
+    // VIEW: LISTA (modo detalhado original)
+    const ListView = () => (
+        <div className="lista-container">
+            {servicosFiltrados.map((servico) => {
+                const status = getStatus(servico);
+                const evmIndicator = getEVMStatus(servico.servico_nome);
+                const evm = evmData[servico.servico_nome];
+                
+                return (
+                    <div key={servico.id} className="servico-card">
+                        {/* Cabeçalho do Card */}
+                        <div className="card-header" style={{ borderLeftColor: status.color }}>
+                            <div className="header-left">
+                                <span className="servico-ordem">#{servico.ordem}</span>
+                                <h3 className="servico-nome">{servico.servico_nome}</h3>
+                                <span 
+                                    className="status-badge"
+                                    style={{ backgroundColor: status.color }}
+                                >
+                                    {status.icon} {status.label}
+                                </span>
+                                {evmIndicator && (
+                                    <span 
+                                        className="evm-indicator-badge"
+                                        style={{ backgroundColor: evmIndicator.bg, color: evmIndicator.color }}
+                                        title={evmIndicator.msg || ''}
+                                    >
+                                        {evmIndicator.icon} {evmIndicator.label}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="header-right">
+                                <span className="tipo-badge">
+                                    {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
+                                     servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Barra de Progresso Principal */}
+                        <div 
+                            className="progress-section"
+                            onClick={() => setEditingServico(servico)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className="progress-header">
+                                <span>Execução Física</span>
+                                <span className="progress-value">{(servico.percentual_conclusao || 0).toFixed(1)}%</span>
+                            </div>
+                            <div className="cronograma-progress-bar">
+                                <div 
+                                    className="cronograma-progress-fill"
+                                    style={{ 
+                                        width: `${servico.percentual_conclusao || 0}%`,
+                                        backgroundColor: status.color
+                                    }}
+                                ></div>
+                            </div>
+                            <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>✏️ Clique para editar</span>
+                        </div>
+
+                        {/* EVM Simplificado */}
+                        {evm && evm.valor_total > 0 && (
+                            <div className="evm-section-new">
+                                <div className="evm-header-new">
+                                    <span>📊 Executado vs Pago</span>
+                                    {evmIndicator && (
+                                        <span 
+                                            className="evm-badge"
+                                            style={{ backgroundColor: evmIndicator.bg, color: evmIndicator.color }}
+                                        >
+                                            {evmIndicator.icon} {evmIndicator.label}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="evm-bars-new">
+                                    <div className="evm-bar-row-new">
+                                        <span className="evm-bar-label-new">🔧 Executado</span>
+                                        <div className="evm-bar-track">
+                                            <div 
+                                                className="evm-bar-fill-new executed"
+                                                style={{ width: `${Math.min(evm.percentual_executado || 0, 100)}%` }}
+                                            />
+                                        </div>
+                                        <span className="evm-bar-value executed">{(evm.percentual_executado || 0).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="evm-bar-row-new">
+                                        <span className="evm-bar-label-new">💰 Pago</span>
+                                        <div className="evm-bar-track">
+                                            <div 
+                                                className="evm-bar-fill-new paid"
+                                                style={{ width: `${Math.min(evm.percentual_pago || 0, 100)}%` }}
+                                            />
+                                        </div>
+                                        <span className="evm-bar-value paid">{(evm.percentual_pago || 0).toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                                <div className="evm-values">
+                                    <span>Orçado: {formatCurrency(evm.valor_total)}</span>
+                                    <span>Pago: {formatCurrency(evm.valor_pago)}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Datas */}
+                        <div className="datas-section">
+                            <div className="data-item">
+                                <span className="data-label">📅 Início Previsto</span>
+                                <span className="data-value">{formatDate(servico.data_inicio)}</span>
+                            </div>
+                            <div className="data-item">
+                                <span className="data-label">📅 Término Previsto</span>
+                                <span className="data-value">{formatDate(servico.data_fim_prevista)}</span>
+                            </div>
+                            {servico.data_inicio_real && (
+                                <div className="data-item real">
+                                    <span className="data-label">▶️ Início Real</span>
+                                    <span className="data-value">{formatDate(servico.data_inicio_real)}</span>
+                                </div>
+                            )}
+                            {servico.data_fim_real && (
+                                <div className="data-item real">
+                                    <span className="data-label">⏹️ Término Real</span>
+                                    <span className="data-value">{formatDate(servico.data_fim_real)}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Medição por Área */}
+                        {servico.tipo_medicao === 'area' && servico.area_total && (
+                            <div 
+                                className="area-section clickable"
+                                onClick={() => setEditingServico(servico)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <span>📐 Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
+                                <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>✏️ Clique para editar</span>
+                            </div>
+                        )}
+
+                        {/* ETAPAS HIERÁRQUICAS */}
+                        {servico.tipo_medicao === 'etapas' && servico.etapas && servico.etapas.length > 0 && (
+                            <div className="etapas-section">
+                                <div className="etapas-header">
+                                    <h4>
+                                        📋 Etapas ({servico.etapas.length}) - {
+                                            servico.etapas.reduce((acc, e) => acc + (e.total_dias || e.duracao_dias || 0), 0)
+                                        } dias
+                                    </h4>
+                                </div>
+                                
+                                <div className="etapas-list">
+                                    {servico.etapas.map((etapa, etapaIdx) => {
+                                        const hasSubetapas = etapa.subetapas && etapa.subetapas.length > 0;
+                                        const isExpanded = expandedEtapas[etapa.id];
+                                        const percentual = etapa.percentual_conclusao || 0;
+                                        const totalDias = etapa.total_dias || etapa.duracao_dias || 0;
+                                        
+                                        return (
+                                            <div key={etapa.id} className="etapa-pai-container">
+                                                <div 
+                                                    className="etapa-pai-header"
+                                                    onClick={() => toggleEtapaExpansion(etapa.id)}
+                                                >
+                                                    <div className="etapa-pai-left">
+                                                        <span className="etapa-expand-icon">
+                                                            {hasSubetapas ? (isExpanded ? '▼' : '▶') : '○'}
+                                                        </span>
+                                                        <span className="etapa-numero">Etapa {etapaIdx + 1}</span>
+                                                        <span className="etapa-nome">{etapa.nome}</span>
+                                                        <span className="etapa-dias-badge">{totalDias} dias</span>
+                                                    </div>
+                                                    <div className="etapa-pai-right">
+                                                        <span className="etapa-datas">
+                                                            {formatDate(etapa.data_inicio)} → {formatDate(etapa.data_fim)}
+                                                        </span>
+                                                        <div className="mini-progress-container">
+                                                            <div className="mini-progress-bar">
+                                                                <div 
+                                                                    className="mini-progress-fill"
+                                                                    style={{ 
+                                                                        width: `${percentual}%`,
+                                                                        backgroundColor: percentual >= 100 ? '#10b981' : '#3b82f6'
+                                                                    }}
+                                                                ></div>
+                                                            </div>
+                                                            <span className="etapa-percent">{percentual.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div className="etapa-actions" onClick={e => e.stopPropagation()}>
+                                                            <button 
+                                                                className="btn-icon"
+                                                                onClick={() => setEditingEtapaPai({ ...etapa, cronograma_id: servico.id })}
+                                                                title="Editar etapa"
+                                                            >
+                                                                ✏️
+                                                            </button>
+                                                            <button 
+                                                                className="btn-icon danger"
+                                                                onClick={() => handleDeleteEtapaPai(servico.id, etapa.id, etapa.nome)}
+                                                                title="Excluir etapa"
+                                                            >
+                                                                🗑️
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Subetapas */}
+                                                {isExpanded && (
+                                                    <div className="subetapas-container">
+                                                        {hasSubetapas && (
+                                                            <div className="subetapas-list">
+                                                                {etapa.subetapas.map((sub, subIdx) => (
+                                                                    <div key={sub.id} className="subetapa-item">
+                                                                        <div className="subetapa-info">
+                                                                            <span className="subetapa-ordem">{etapaIdx + 1}.{subIdx + 1}</span>
+                                                                            <span className="subetapa-nome">{sub.nome}</span>
+                                                                            <span className="subetapa-dias">{sub.duracao_dias} dias</span>
+                                                                        </div>
+                                                                        <div className="subetapa-datas">
+                                                                            <span>{formatDate(sub.data_inicio)} → {formatDate(sub.data_fim)}</span>
+                                                                        </div>
+                                                                        <div 
+                                                                            className="subetapa-progress clickable"
+                                                                            onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                            style={{ cursor: 'pointer' }}
+                                                                        >
+                                                                            <div className="mini-progress-bar small">
+                                                                                <div 
+                                                                                    className="mini-progress-fill"
+                                                                                    style={{ 
+                                                                                        width: `${sub.percentual_conclusao}%`,
+                                                                                        backgroundColor: sub.percentual_conclusao >= 100 ? '#10b981' : '#3b82f6'
+                                                                                    }}
+                                                                                ></div>
+                                                                            </div>
+                                                                            <span className="subetapa-percent">{sub.percentual_conclusao}%</span>
+                                                                        </div>
+                                                                        <div className="subetapa-actions">
+                                                                            <button 
+                                                                                className="btn-icon small"
+                                                                                onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                            >
+                                                                                ✏️
+                                                                            </button>
+                                                                            <button 
+                                                                                className="btn-icon small danger"
+                                                                                onClick={() => handleDeleteSubetapa(servico.id, sub.id, sub.nome)}
+                                                                            >
+                                                                                🗑️
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <button 
+                                                            className="btn-add-subetapa"
+                                                            onClick={() => setShowAddSubetapaModal({ 
+                                                                etapa_pai_id: etapa.id, 
+                                                                cronograma_id: servico.id,
+                                                                etapa_nome: etapa.nome
+                                                            })}
+                                                        >
+                                                            ➕ Adicionar Subetapa
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Ações do Card */}
+                        <div className="card-actions">
+                            <button 
+                                className="btn-action primary"
+                                onClick={() => {
+                                    const etapasExistentes = servico.etapas || [];
+                                    const ultimaEtapa = etapasExistentes.length > 0 
+                                        ? etapasExistentes[etapasExistentes.length - 1] 
+                                        : null;
+                                    setNovaEtapaPai({
+                                        nome: '',
+                                        etapa_anterior_id: ultimaEtapa?.id || null,
+                                        tipo_condicao: 'apos_termino',
+                                        dias_offset: 0,
+                                        observacoes: ''
+                                    });
+                                    setShowAddEtapaPaiModal(servico.id);
+                                }}
+                            >
+                                ➕ Adicionar Etapa
+                            </button>
+                            <button 
+                                className="btn-action"
+                                onClick={() => setEditingServico(servico)}
+                            >
+                                ✏️ Editar
+                            </button>
+                            <button 
+                                className="btn-action danger"
+                                onClick={() => handleDeleteServico(servico.id)}
+                            >
+                                🗑️ Excluir
+                            </button>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
     // ==================== RENDER ====================
 
     if (loading) {
@@ -543,463 +1200,123 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             <div className="cronograma-header">
                 <h2>📅 Cronograma de Obras - {obraNome}</h2>
                 <div className="header-actions">
-                    <button className="btn-pdf" onClick={handleGerarPDF}>
-                        📄 Gerar PDF
-                    </button>
-                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>
-                        ➕ Novo Serviço
-                    </button>
-                    <button 
-                        className="btn-secondary"
-                        onClick={() => {
-                            fetchServicosDisponiveis();
-                            setShowImportModal(true);
-                        }}
-                    >
-                        📋 Importar Serviço
-                    </button>
+                    <div className="view-toggle">
+                        <button 
+                            className={`view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                            onClick={() => setViewMode('kanban')}
+                        >
+                            📋 Kanban
+                        </button>
+                        <button 
+                            className={`view-btn ${viewMode === 'timeline' ? 'active' : ''}`}
+                            onClick={() => setViewMode('timeline')}
+                        >
+                            📅 Timeline
+                        </button>
+                        <button 
+                            className={`view-btn ${viewMode === 'lista' ? 'active' : ''}`}
+                            onClick={() => setViewMode('lista')}
+                        >
+                            📝 Lista
+                        </button>
+                    </div>
+                    <button className="btn-pdf" onClick={handleGerarPDF}>📄 PDF</button>
+                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>➕ Novo Serviço</button>
+                    <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}>📋 Importar</button>
                 </div>
             </div>
 
-            {/* Legenda */}
-            <div className="legenda-container">
-                <span className="legenda-item"><span className="dot gray"></span> A Iniciar</span>
-                <span className="legenda-item"><span className="dot blue"></span> Em Andamento</span>
-                <span className="legenda-item"><span className="dot green"></span> Concluído</span>
-                <span className="legenda-item"><span className="dot red"></span> Atrasado</span>
+            {/* Stats */}
+            <div className="stats-cards">
+                <div className="stat-card">
+                    <div className="stat-value">{stats.total}</div>
+                    <div className="stat-label">Total</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.progressoGeral}%</div>
+                    <div className="stat-label">Progresso</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.concluidos}</div>
+                    <div className="stat-label">Concluídos</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? '#ef4444' : '#10b981' }}>{stats.comAtencao}</div>
+                    <div className="stat-label">Atenção (EVM)</div>
+                </div>
             </div>
 
-            {/* Lista de Serviços */}
-            {cronograma.length === 0 ? (
-                <div className="empty-state">
-                    <p>Nenhuma etapa cadastrada no cronograma.</p>
-                    <p>Clique em "Novo Serviço" ou "Importar Serviço" para começar.</p>
-                </div>
-            ) : (
-                <div className="cronograma-list">
-                    {cronograma.map((servico) => {
-                        const status = getStatus(servico);
-                        const evmIndicator = getEVMIndicator(servico.servico_nome);
-                        const evm = evmData[servico.servico_nome];
-                        
-                        return (
-                            <div key={servico.id} className="servico-card">
-                                {/* Cabeçalho do Card */}
-                                <div className="card-header" style={{ borderLeftColor: status.color }}>
-                                    <div className="header-left">
-                                        <span className="servico-ordem">#{servico.ordem}</span>
-                                        <h3 className="servico-nome">{servico.servico_nome}</h3>
-                                        <span 
-                                            className="status-badge"
-                                            style={{ backgroundColor: status.color }}
-                                        >
-                                            {status.icon} {status.label}
-                                        </span>
-                                    </div>
-                                    <div className="header-right">
-                                        <span className="tipo-badge">
-                                            {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
-                                             servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Barra de Progresso Principal - CLICÁVEL */}
-                                <div 
-                                    className="progress-section"
-                                    onClick={() => setEditingServico(servico)}
-                                    style={{ cursor: 'pointer' }}
-                                    title={servico.tipo_medicao === 'etapas' 
-                                        ? 'Percentual calculado pelas etapas - Clique para ver detalhes' 
-                                        : 'Clique para ajustar o andamento'}
-                                >
-                                    <div className="progress-header">
-                                        <span>Execução Física</span>
-                                        <span className="progress-value">{(servico.percentual_conclusao || 0).toFixed(1)}%</span>
-                                    </div>
-                                    <div 
-                                        className="cronograma-progress-bar"
-                                        style={{
-                                            display: 'block',
-                                            width: '100%',
-                                            height: '12px',
-                                            background: '#e2e8f0',
-                                            borderRadius: '6px',
-                                            overflow: 'hidden',
-                                            position: 'relative'
-                                        }}
-                                    >
-                                        <div 
-                                            style={{ 
-                                                position: 'absolute',
-                                                left: 0,
-                                                top: 0,
-                                                width: `${servico.percentual_conclusao || 0}%`,
-                                                height: '100%',
-                                                backgroundColor: status.color,
-                                                borderRadius: '6px',
-                                                transition: 'width 0.3s ease'
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>✏️ Clique para editar</span>
-                                </div>
-
-                                {/* Datas */}
-                                <div className="datas-section">
-                                    <div className="data-item">
-                                        <span className="data-label">📅 Início Previsto</span>
-                                        <span className="data-value">{formatDate(servico.data_inicio)}</span>
-                                    </div>
-                                    <div className="data-item">
-                                        <span className="data-label">📅 Término Previsto</span>
-                                        <span className="data-value">{formatDate(servico.data_fim_prevista)}</span>
-                                    </div>
-                                    {servico.data_inicio_real && (
-                                        <div className="data-item real">
-                                            <span className="data-label">▶️ Início Real</span>
-                                            <span className="data-value">{formatDate(servico.data_inicio_real)}</span>
-                                        </div>
-                                    )}
-                                    {servico.data_fim_real && (
-                                        <div className="data-item real">
-                                            <span className="data-label">⏹️ Término Real</span>
-                                            <span className="data-value">{formatDate(servico.data_fim_real)}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Medição por Área - CLICÁVEL */}
-                                {servico.tipo_medicao === 'area' && servico.area_total && (
-                                    <div 
-                                        className="area-section clickable"
-                                        onClick={() => setEditingServico(servico)}
-                                        style={{ cursor: 'pointer', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '8px', marginTop: '10px' }}
-                                        title="Clique para ajustar a área executada"
-                                    >
-                                        <span>📐 Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
-                                        <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>✏️ Clique para editar</span>
-                                    </div>
-                                )}
-
-                                {/* ========== ETAPAS HIERÁRQUICAS ========== */}
-                                {servico.tipo_medicao === 'etapas' && servico.etapas && servico.etapas.length > 0 && (
-                                    <div className="etapas-section">
-                                        <div className="etapas-header">
-                                            <h4>
-                                                📋 Etapas ({servico.etapas.length}) - {
-                                                    servico.etapas.reduce((acc, e) => acc + (e.total_dias || e.duracao_dias || 0), 0)
-                                                } dias
-                                            </h4>
-                                        </div>
-                                        
-                                        {servico.etapas.map((etapa, etapaIdx) => {
-                                            const isExpanded = expandedEtapas[etapa.id] !== false;
-                                            const hasSubetapas = etapa.subetapas && etapa.subetapas.length > 0;
-                                            const totalDias = etapa.total_dias || etapa.duracao_dias || 0;
-                                            const percentual = etapa.percentual_conclusao || 0;
-                                            
-                                            return (
-                                                <div key={etapa.id} className="etapa-pai-container">
-                                                    {/* Header da Etapa Pai */}
-                                                    <div 
-                                                        className="etapa-pai-header"
-                                                        onClick={() => toggleEtapaExpansion(etapa.id)}
-                                                    >
-                                                        <div className="etapa-pai-left">
-                                                            <span className="etapa-expand-icon">
-                                                                {hasSubetapas ? (isExpanded ? '▼' : '▶') : '○'}
-                                                            </span>
-                                                            <span className="etapa-numero">Etapa {etapaIdx + 1}</span>
-                                                            <span className="etapa-nome">{etapa.nome}</span>
-                                                            <span className="etapa-dias-badge">{totalDias} dias</span>
-                                                            {etapa.tipo_condicao && etapa.tipo_condicao !== 'manual' && etapaIdx > 0 && (
-                                                                <span className="etapa-condicao-badge" title={
-                                                                    etapa.tipo_condicao === 'apos_termino' ? 'Após término da etapa anterior' :
-                                                                    etapa.tipo_condicao === 'dias_apos' ? `${etapa.dias_offset} dias após término` :
-                                                                    etapa.tipo_condicao === 'dias_antes' ? `${etapa.dias_offset} dias antes do término` : ''
-                                                                }>
-                                                                    🔗
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="etapa-pai-right">
-                                                            <span className="etapa-datas">
-                                                                {formatDate(etapa.data_inicio)} → {formatDate(etapa.data_fim)}
-                                                            </span>
-                                                            <div className="mini-progress-container">
-                                                                <div className="mini-progress-bar">
-                                                                    <div 
-                                                                        className="mini-progress-fill"
-                                                                        style={{ 
-                                                                            width: `${percentual}%`,
-                                                                            backgroundColor: percentual >= 100 ? '#28a745' : '#007bff'
-                                                                        }}
-                                                                    ></div>
-                                                                </div>
-                                                                <span className="etapa-percent">{percentual.toFixed(0)}%</span>
-                                                            </div>
-                                                            <div className="etapa-actions" onClick={e => e.stopPropagation()}>
-                                                                <button 
-                                                                    className="btn-icon"
-                                                                    onClick={() => setEditingEtapaPai({ ...etapa, cronograma_id: servico.id })}
-                                                                    title="Editar etapa"
-                                                                >
-                                                                    ✏️
-                                                                </button>
-                                                                <button 
-                                                                    className="btn-icon danger"
-                                                                    onClick={() => handleDeleteEtapaPai(servico.id, etapa.id, etapa.nome)}
-                                                                    title="Excluir etapa"
-                                                                >
-                                                                    🗑️
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Subetapas (colapsável) */}
-                                                    {isExpanded && (
-                                                        <div className="subetapas-container">
-                                                            {hasSubetapas && (
-                                                                <div className="subetapas-list">
-                                                                    {etapa.subetapas.map((sub, subIdx) => (
-                                                                        <div key={sub.id} className="subetapa-item">
-                                                                            <div className="subetapa-info">
-                                                                                <span className="subetapa-ordem">{etapaIdx + 1}.{subIdx + 1}</span>
-                                                                                <span className="subetapa-nome">{sub.nome}</span>
-                                                                                <span className="subetapa-dias">{sub.duracao_dias} dias</span>
-                                                                            </div>
-                                                                            <div className="subetapa-datas">
-                                                                                <span>{formatDate(sub.data_inicio)} → {formatDate(sub.data_fim)}</span>
-                                                                                {sub.inicio_ajustado_manualmente && (
-                                                                                    <span className="ajustado-badge" title="Data ajustada manualmente">✏️</span>
-                                                                                )}
-                                                                            </div>
-                                                                            <div 
-                                                                                className="subetapa-progress clickable"
-                                                                                onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
-                                                                                title="Clique para ajustar o andamento"
-                                                                                style={{ cursor: 'pointer' }}
-                                                                            >
-                                                                                <div className="mini-progress-bar small">
-                                                                                    <div 
-                                                                                        className="mini-progress-fill"
-                                                                                        style={{ 
-                                                                                            width: `${sub.percentual_conclusao}%`,
-                                                                                            backgroundColor: sub.percentual_conclusao >= 100 ? '#28a745' : '#007bff'
-                                                                                        }}
-                                                                                    ></div>
-                                                                                </div>
-                                                                                <span className="subetapa-percent">{sub.percentual_conclusao}%</span>
-                                                                            </div>
-                                                                            <div className="subetapa-actions">
-                                                                                <button 
-                                                                                    className="btn-icon small"
-                                                                                    onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
-                                                                                    title="Editar"
-                                                                                >
-                                                                                    ✏️
-                                                                                </button>
-                                                                                <button 
-                                                                                    className="btn-icon small danger"
-                                                                                    onClick={() => handleDeleteSubetapa(servico.id, sub.id, sub.nome)}
-                                                                                    title="Excluir"
-                                                                                >
-                                                                                    🗑️
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                            
-                                                            {/* Botão Adicionar Subetapa */}
-                                                            <button 
-                                                                className="btn-add-subetapa"
-                                                                onClick={() => setShowAddSubetapaModal({ 
-                                                                    etapa_pai_id: etapa.id, 
-                                                                    cronograma_id: servico.id,
-                                                                    etapa_nome: etapa.nome
-                                                                })}
-                                                            >
-                                                                ➕ Adicionar Subetapa
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                {/* Análise EVM */}
-                                {evm && evm.valor_total > 0 && (
-                                    <div className="evm-section" style={{ borderColor: evmIndicator?.color }}>
-                                        <div className="evm-header">
-                                            <span>💰 Análise de Valor Agregado (EVM)</span>
-                                            {evmIndicator && (
-                                                <span 
-                                                    className="evm-badge"
-                                                    style={{ backgroundColor: evmIndicator.color }}
-                                                >
-                                                    {evmIndicator.icon} {evmIndicator.label}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="evm-content">
-                                            <div className="evm-row">
-                                                <span>💵 Total Orçado:</span>
-                                                <span>{formatCurrency(evm.valor_total)}</span>
-                                            </div>
-                                            <div className="evm-row">
-                                                <span>✅ Já Pago:</span>
-                                                <span>{formatCurrency(evm.valor_pago)} ({(evm.percentual_pago || 0).toFixed(1)}%)</span>
-                                            </div>
-                                            <div className="evm-bars">
-                                                <div className="evm-bar-row">
-                                                    <span>💰</span>
-                                                    <span style={{ minWidth: '40px' }}>Pago</span>
-                                                    <div className="evm-bar" style={{ background: '#e0e0e0' }}>
-                                                        <div 
-                                                            className="evm-bar-fill paid"
-                                                            style={{ 
-                                                                width: `${Math.min(evm.percentual_pago || 0, 100)}%`,
-                                                                background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
-                                                                minWidth: (evm.percentual_pago || 0) > 0 ? '3px' : '0'
-                                                            }}
-                                                        ></div>
-                                                    </div>
-                                                    <span style={{ minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{(evm.percentual_pago || 0).toFixed(0)}%</span>
-                                                </div>
-                                                <div className="evm-bar-row">
-                                                    <span>🏗️</span>
-                                                    <span style={{ minWidth: '40px' }}>Exec</span>
-                                                    <div className="evm-bar" style={{ background: '#e0e0e0' }}>
-                                                        <div 
-                                                            className="evm-bar-fill executed"
-                                                            style={{ 
-                                                                width: `${Math.min(evm.percentual_executado || 0, 100)}%`,
-                                                                background: 'linear-gradient(90deg, #10b981, #34d399)',
-                                                                minWidth: (evm.percentual_executado || 0) > 0 ? '3px' : '0'
-                                                            }}
-                                                        ></div>
-                                                    </div>
-                                                    <span style={{ minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{(evm.percentual_executado || 0).toFixed(0)}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Ações do Card */}
-                                <div className="card-actions">
-                                    <button 
-                                        className="btn-action primary"
-                                        onClick={() => {
-                                            // Preparar modal com etapas existentes para condição
-                                            const etapasExistentes = servico.etapas || [];
-                                            const ultimaEtapa = etapasExistentes.length > 0 
-                                                ? etapasExistentes[etapasExistentes.length - 1] 
-                                                : null;
-                                            setNovaEtapaPai({
-                                                nome: '',
-                                                etapa_anterior_id: ultimaEtapa?.id || null,
-                                                tipo_condicao: 'apos_termino',
-                                                dias_offset: 0,
-                                                observacoes: ''
-                                            });
-                                            setShowAddEtapaPaiModal(servico.id);
-                                        }}
-                                    >
-                                        ➕ Adicionar Etapa
-                                    </button>
-                                    <button 
-                                        className="btn-action"
-                                        onClick={() => setEditingServico(servico)}
-                                    >
-                                        ✏️ Editar
-                                    </button>
-                                    <button 
-                                        className="btn-action danger"
-                                        onClick={() => handleDeleteServico(servico.id)}
-                                    >
-                                        🗑️ Excluir
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
+            {/* Filtros */}
+            {(viewMode === 'lista' || viewMode === 'timeline') && (
+                <div className="filtros-bar">
+                    <button className={`filtro-chip ${filtroStatus === 'todos' ? 'active' : ''}`} onClick={() => setFiltroStatus('todos')}>
+                        Todos ({cronograma.length})
+                    </button>
+                    {Object.entries(statusConfig).map(([key, config]) => (
+                        <button
+                            key={key}
+                            className={`filtro-chip ${filtroStatus === key ? 'active' : ''}`}
+                            style={filtroStatus === key ? { backgroundColor: config.color, color: 'white' } : {}}
+                            onClick={() => setFiltroStatus(key)}
+                        >
+                            {config.icon} {config.label} ({servicosPorStatus[key].length})
+                        </button>
+                    ))}
                 </div>
             )}
 
-            {/* ========== MODAIS ========== */}
+            {/* Conteúdo */}
+            {cronograma.length === 0 ? (
+                <div className="empty-state">
+                    <p>Nenhuma etapa cadastrada.</p>
+                    <p>Clique em "Novo Serviço" ou "Importar" para começar.</p>
+                </div>
+            ) : (
+                <>
+                    {viewMode === 'kanban' && <KanbanView />}
+                    {viewMode === 'timeline' && <TimelineView />}
+                    {viewMode === 'lista' && <ListView />}
+                </>
+            )}
+
+            {/* MODAIS */}
             
-            {/* Modal Adicionar Serviço */}
+            {/* Modal Novo Serviço */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3>➕ Novo Serviço</h3>
-                        
                         <div className="form-group">
                             <label>Nome do Serviço *</label>
-                            <input
-                                type="text"
-                                value={novoServico.servico_nome}
-                                onChange={(e) => setNovoServico({...novoServico, servico_nome: e.target.value})}
-                                placeholder="Ex: Construção da Piscina"
-                            />
+                            <input type="text" value={novoServico.servico_nome} onChange={(e) => setNovoServico({...novoServico, servico_nome: e.target.value})} placeholder="Ex: Construção da Piscina" />
                         </div>
-                        
                         <div className="form-group">
                             <label>Tipo de Medição</label>
-                            <select
-                                value={novoServico.tipo_medicao}
-                                onChange={(e) => setNovoServico({...novoServico, tipo_medicao: e.target.value})}
-                            >
-                                <option value="etapas">📋 Por Etapas (recomendado)</option>
-                                <option value="empreitada">🔧 Empreitada (global)</option>
-                                <option value="area">📐 Por Área (m², m³, etc)</option>
+                            <select value={novoServico.tipo_medicao} onChange={(e) => setNovoServico({...novoServico, tipo_medicao: e.target.value})}>
+                                <option value="etapas">📋 Por Etapas</option>
+                                <option value="empreitada">🔧 Empreitada</option>
+                                <option value="area">📐 Por Área</option>
                             </select>
                         </div>
-                        
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Data Início</label>
-                                <input
-                                    type="date"
-                                    value={novoServico.data_inicio}
-                                    onChange={(e) => setNovoServico({...novoServico, data_inicio: e.target.value})}
-                                />
+                                <input type="date" value={novoServico.data_inicio} onChange={(e) => setNovoServico({...novoServico, data_inicio: e.target.value})} />
                             </div>
                             <div className="form-group">
                                 <label>Duração (dias)</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={novoServico.duracao_dias}
-                                    onChange={(e) => setNovoServico({...novoServico, duracao_dias: parseInt(e.target.value) || 1})}
-                                />
+                                <input type="number" min="1" value={novoServico.duracao_dias} onChange={(e) => setNovoServico({...novoServico, duracao_dias: parseInt(e.target.value) || 1})} />
                             </div>
                         </div>
-                        
                         {novoServico.tipo_medicao === 'area' && (
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Área Total</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={novoServico.area_total}
-                                        onChange={(e) => setNovoServico({...novoServico, area_total: e.target.value})}
-                                    />
+                                    <input type="number" step="0.01" value={novoServico.area_total} onChange={(e) => setNovoServico({...novoServico, area_total: e.target.value})} />
                                 </div>
                                 <div className="form-group">
                                     <label>Unidade</label>
-                                    <select
-                                        value={novoServico.unidade_medida}
-                                        onChange={(e) => setNovoServico({...novoServico, unidade_medida: e.target.value})}
-                                    >
+                                    <select value={novoServico.unidade_medida} onChange={(e) => setNovoServico({...novoServico, unidade_medida: e.target.value})}>
                                         <option value="m²">m²</option>
                                         <option value="m³">m³</option>
                                         <option value="m">m</option>
@@ -1008,228 +1325,120 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 </div>
                             </div>
                         )}
-                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowAddModal(false)}>
-                                Cancelar
-                            </button>
-                            <button className="btn-save" onClick={handleAddServico}>
-                                Salvar
-                            </button>
+                            <button className="btn-cancel" onClick={() => setShowAddModal(false)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleAddServico}>Salvar</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal Adicionar Etapa Pai */}
+            {/* Modal Importar */}
+            {showImportModal && (
+                <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>📋 Importar Serviços</h3>
+                        {servicosDisponiveis.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Todos os serviços já estão no cronograma.</div>
+                        ) : (
+                            <>
+                                <div style={{ marginBottom: '10px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input type="checkbox" checked={servicosSelecionados.length === servicosDisponiveis.length} onChange={toggleSelectAll} />
+                                        <strong>Selecionar Todos ({servicosDisponiveis.length})</strong>
+                                    </label>
+                                </div>
+                                <div className="servicos-import-list">
+                                    {servicosDisponiveis.map(servico => (
+                                        <label key={servico.id} className={`servico-import-item ${servicosSelecionados.some(s => s.id === servico.id) ? 'selected' : ''}`}>
+                                            <input type="checkbox" checked={servicosSelecionados.some(s => s.id === servico.id)} onChange={() => toggleServicoSelecionado(servico)} />
+                                            <span>{servico.nome}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setShowImportModal(false)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleImportServicos} disabled={servicosSelecionados.length === 0}>Importar ({servicosSelecionados.length})</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Nova Etapa */}
             {showAddEtapaPaiModal && (
                 <div className="modal-overlay" onClick={() => setShowAddEtapaPaiModal(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3>➕ Nova Etapa</h3>
-                        
                         <div className="form-group">
                             <label>Nome da Etapa *</label>
-                            <input
-                                type="text"
-                                value={novaEtapaPai.nome}
-                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, nome: e.target.value})}
-                                placeholder="Ex: Infraestrutura, Revestimento, Acabamento"
-                            />
+                            <input type="text" value={novaEtapaPai.nome} onChange={(e) => setNovaEtapaPai({...novaEtapaPai, nome: e.target.value})} placeholder="Ex: Infraestrutura" />
                         </div>
-                        
-                        {/* Condições de início - só se já existem etapas */}
                         {(() => {
                             const servico = cronograma.find(s => s.id === showAddEtapaPaiModal);
-                            const etapasExistentes = servico?.etapas || [];
-                            
-                            if (etapasExistentes.length > 0) {
+                            if (servico?.etapas?.length > 0) {
                                 return (
-                                    <>
-                                        <div className="form-group">
-                                            <label>Condição de Início</label>
-                                            <select
-                                                value={novaEtapaPai.tipo_condicao}
-                                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, tipo_condicao: e.target.value})}
-                                            >
-                                                <option value="apos_termino">Após término da etapa anterior (D+1)</option>
-                                                <option value="dias_apos">X dias após término da etapa anterior</option>
-                                                <option value="dias_antes">X dias antes do término da etapa anterior</option>
-                                                <option value="manual">Data específica (manual)</option>
-                                            </select>
-                                        </div>
-                                        
-                                        {(novaEtapaPai.tipo_condicao === 'dias_apos' || novaEtapaPai.tipo_condicao === 'dias_antes') && (
-                                            <div className="form-group">
-                                                <label>
-                                                    {novaEtapaPai.tipo_condicao === 'dias_apos' 
-                                                        ? 'Quantos dias após o término?' 
-                                                        : 'Quantos dias antes do término?'}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={novaEtapaPai.dias_offset}
-                                                    onChange={(e) => setNovaEtapaPai({...novaEtapaPai, dias_offset: e.target.value})}
-                                                />
-                                                <small className="form-hint">
-                                                    {novaEtapaPai.tipo_condicao === 'dias_antes' 
-                                                        ? 'Permite iniciar antes da etapa anterior terminar (sobreposição)'
-                                                        : 'Adiciona folga entre as etapas'}
-                                                </small>
-                                            </div>
-                                        )}
-                                    </>
+                                    <div className="form-group">
+                                        <label>Condição de Início</label>
+                                        <select value={novaEtapaPai.tipo_condicao} onChange={(e) => setNovaEtapaPai({...novaEtapaPai, tipo_condicao: e.target.value})}>
+                                            <option value="apos_termino">Após término da anterior</option>
+                                            <option value="dias_apos">X dias após término</option>
+                                            <option value="dias_antes">X dias antes do término</option>
+                                            <option value="manual">Data específica</option>
+                                        </select>
+                                    </div>
                                 );
                             }
                             return null;
                         })()}
-                        
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={novaEtapaPai.observacoes}
-                                onChange={(e) => setNovaEtapaPai({...novaEtapaPai, observacoes: e.target.value})}
-                                rows="2"
-                            />
-                        </div>
-                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowAddEtapaPaiModal(null)}>
-                                Cancelar
-                            </button>
-                            <button className="btn-save" onClick={handleAddEtapaPai}>
-                                Criar Etapa
-                            </button>
+                            <button className="btn-cancel" onClick={() => setShowAddEtapaPaiModal(null)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleAddEtapaPai}>Criar Etapa</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal Adicionar Subetapa */}
+            {/* Modal Nova Subetapa */}
             {showAddSubetapaModal && (
                 <div className="modal-overlay" onClick={() => setShowAddSubetapaModal(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3>➕ Nova Subetapa - {showAddSubetapaModal.etapa_nome}</h3>
-                        
                         <div className="form-group">
                             <label>Nome da Subetapa *</label>
-                            <input
-                                type="text"
-                                value={novaSubetapa.nome}
-                                onChange={(e) => setNovaSubetapa({...novaSubetapa, nome: e.target.value})}
-                                placeholder="Ex: Escavação, Tubulação, Concretagem"
-                            />
+                            <input type="text" value={novaSubetapa.nome} onChange={(e) => setNovaSubetapa({...novaSubetapa, nome: e.target.value})} placeholder="Ex: Escavação" />
                         </div>
-                        
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Duração (dias)</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={novaSubetapa.duracao_dias}
-                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, duracao_dias: e.target.value})}
-                                />
+                                <input type="number" min="1" value={novaSubetapa.duracao_dias} onChange={(e) => setNovaSubetapa({...novaSubetapa, duracao_dias: e.target.value})} />
                             </div>
                             <div className="form-group">
-                                <label>Data Início (opcional)</label>
-                                <input
-                                    type="date"
-                                    value={novaSubetapa.data_inicio}
-                                    onChange={(e) => setNovaSubetapa({...novaSubetapa, data_inicio: e.target.value})}
-                                />
-                                <small className="form-hint">Deixe em branco para calcular automaticamente</small>
+                                <label>Percentual (%)</label>
+                                <input type="number" min="0" max="100" value={novaSubetapa.percentual_conclusao} onChange={(e) => setNovaSubetapa({...novaSubetapa, percentual_conclusao: e.target.value})} />
                             </div>
                         </div>
-                        
-                        <div className="form-group">
-                            <label>Percentual Concluído</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={novaSubetapa.percentual_conclusao}
-                                onChange={(e) => setNovaSubetapa({...novaSubetapa, percentual_conclusao: e.target.value})}
-                            />
-                        </div>
-                        
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={novaSubetapa.observacoes}
-                                onChange={(e) => setNovaSubetapa({...novaSubetapa, observacoes: e.target.value})}
-                                rows="2"
-                            />
-                        </div>
-                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setShowAddSubetapaModal(null)}>
-                                Cancelar
-                            </button>
-                            <button className="btn-save" onClick={handleAddSubetapa}>
-                                Criar Subetapa
-                            </button>
+                            <button className="btn-cancel" onClick={() => setShowAddSubetapaModal(null)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleAddSubetapa}>Criar Subetapa</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal Editar Etapa Pai */}
+            {/* Modal Editar Etapa */}
             {editingEtapaPai && (
                 <div className="modal-overlay" onClick={() => setEditingEtapaPai(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3>✏️ Editar Etapa</h3>
-                        
                         <div className="form-group">
-                            <label>Nome da Etapa *</label>
-                            <input
-                                type="text"
-                                value={editingEtapaPai.nome}
-                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, nome: e.target.value})}
-                            />
+                            <label>Nome *</label>
+                            <input type="text" value={editingEtapaPai.nome} onChange={(e) => setEditingEtapaPai({...editingEtapaPai, nome: e.target.value})} />
                         </div>
-                        
-                        <div className="form-group">
-                            <label>Condição de Início</label>
-                            <select
-                                value={editingEtapaPai.tipo_condicao || 'apos_termino'}
-                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, tipo_condicao: e.target.value})}
-                            >
-                                <option value="apos_termino">Após término da etapa anterior (D+1)</option>
-                                <option value="dias_apos">X dias após término</option>
-                                <option value="dias_antes">X dias antes do término</option>
-                                <option value="manual">Manual</option>
-                            </select>
-                        </div>
-                        
-                        {(editingEtapaPai.tipo_condicao === 'dias_apos' || editingEtapaPai.tipo_condicao === 'dias_antes') && (
-                            <div className="form-group">
-                                <label>Dias de offset</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={editingEtapaPai.dias_offset || 0}
-                                    onChange={(e) => setEditingEtapaPai({...editingEtapaPai, dias_offset: e.target.value})}
-                                />
-                            </div>
-                        )}
-                        
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={editingEtapaPai.observacoes || ''}
-                                onChange={(e) => setEditingEtapaPai({...editingEtapaPai, observacoes: e.target.value})}
-                                rows="2"
-                            />
-                        </div>
-                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setEditingEtapaPai(null)}>
-                                Cancelar
-                            </button>
-                            <button className="btn-save" onClick={handleUpdateEtapaPai}>
-                                Salvar
-                            </button>
+                            <button className="btn-cancel" onClick={() => setEditingEtapaPai(null)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleUpdateEtapaPai}>Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -1240,226 +1449,26 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 <div className="modal-overlay" onClick={() => setEditingSubetapa(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3>✏️ Editar Subetapa</h3>
-                        
                         <div className="form-group">
-                            <label>Nome da Subetapa *</label>
-                            <input
-                                type="text"
-                                value={editingSubetapa.nome}
-                                onChange={(e) => setEditingSubetapa({...editingSubetapa, nome: e.target.value})}
-                            />
+                            <label>Nome *</label>
+                            <input type="text" value={editingSubetapa.nome} onChange={(e) => setEditingSubetapa({...editingSubetapa, nome: e.target.value})} />
                         </div>
-                        
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Duração (dias)</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={editingSubetapa.duracao_dias}
-                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, duracao_dias: e.target.value})}
-                                />
+                                <input type="number" min="1" value={editingSubetapa.duracao_dias} onChange={(e) => setEditingSubetapa({...editingSubetapa, duracao_dias: parseInt(e.target.value) || 1})} />
                             </div>
-                        </div>
-                        
-                        {/* Campo de Andamento com Slider Visual */}
-                        <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
-                            <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>📊 Andamento da Subetapa</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    step="5"
-                                    value={editingSubetapa.percentual_conclusao || 0}
-                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value)})}
-                                    style={{ flex: 1, height: '8px' }}
-                                />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="1"
-                                    value={editingSubetapa.percentual_conclusao || 0}
-                                    onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value) || 0})}
-                                    style={{ width: '60px', textAlign: 'center', fontWeight: 'bold' }}
-                                />
-                                <span style={{ fontWeight: 'bold' }}>%</span>
-                            </div>
-                            <div style={{ marginTop: '10px', height: '25px', backgroundColor: '#e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
-                                <div style={{ 
-                                    width: `${editingSubetapa.percentual_conclusao || 0}%`, 
-                                    height: '100%', 
-                                    backgroundColor: (editingSubetapa.percentual_conclusao || 0) >= 100 ? '#4caf50' : 
-                                                    (editingSubetapa.percentual_conclusao || 0) >= 50 ? '#8bc34a' : '#ff9800',
-                                    transition: 'width 0.3s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    fontSize: '0.85em'
-                                }}>
-                                    {(editingSubetapa.percentual_conclusao || 0) >= 20 && `${editingSubetapa.percentual_conclusao || 0}%`}
+                            <div className="form-group">
+                                <label>Percentual</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input type="range" min="0" max="100" value={editingSubetapa.percentual_conclusao || 0} onChange={(e) => setEditingSubetapa({...editingSubetapa, percentual_conclusao: parseFloat(e.target.value)})} style={{ flex: 1 }} />
+                                    <span style={{ minWidth: '40px', fontWeight: 'bold' }}>{editingSubetapa.percentual_conclusao || 0}%</span>
                                 </div>
                             </div>
-                            {/* Botões rápidos de andamento */}
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                {[0, 25, 50, 75, 100].map(val => (
-                                    <button
-                                        key={val}
-                                        type="button"
-                                        onClick={() => setEditingSubetapa({...editingSubetapa, percentual_conclusao: val})}
-                                        style={{
-                                            padding: '5px 12px',
-                                            border: (editingSubetapa.percentual_conclusao || 0) === val ? '2px solid #2e7d32' : '1px solid #ccc',
-                                            borderRadius: '15px',
-                                            backgroundColor: (editingSubetapa.percentual_conclusao || 0) === val ? '#c8e6c9' : '#fff',
-                                            cursor: 'pointer',
-                                            fontWeight: (editingSubetapa.percentual_conclusao || 0) === val ? 'bold' : 'normal'
-                                        }}
-                                    >
-                                        {val}%
-                                    </button>
-                                ))}
-                            </div>
                         </div>
-                        
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={editingSubetapa.observacoes || ''}
-                                onChange={(e) => setEditingSubetapa({...editingSubetapa, observacoes: e.target.value})}
-                                rows="2"
-                            />
-                        </div>
-                        
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setEditingSubetapa(null)}>
-                                Cancelar
-                            </button>
-                            <button className="btn-save" onClick={handleUpdateSubetapa}>
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Importar Serviço */}
-            {showImportModal && (
-                <div className="modal-overlay" onClick={() => { setShowImportModal(false); setServicosSelecionados([]); }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-                        <h3>📋 Importar Serviços</h3>
-                        <p>Selecione os serviços da planilha de custos para importar:</p>
-                        
-                        {servicosDisponiveis.length === 0 ? (
-                            <div className="empty-message">
-                                Todos os serviços já foram importados ou não há serviços disponíveis.
-                            </div>
-                        ) : (
-                            <>
-                                {/* Botão Selecionar Todos */}
-                                <div style={{ 
-                                    marginBottom: '15px', 
-                                    paddingBottom: '10px', 
-                                    borderBottom: '1px solid #e2e8f0',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={servicosSelecionados.length === servicosDisponiveis.length}
-                                            onChange={toggleSelectAll}
-                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                        />
-                                        <span style={{ fontWeight: '600' }}>Selecionar Todos</span>
-                                    </label>
-                                    <span style={{ 
-                                        fontSize: '0.9em', 
-                                        color: '#666',
-                                        backgroundColor: '#e2e8f0',
-                                        padding: '4px 10px',
-                                        borderRadius: '12px'
-                                    }}>
-                                        {servicosSelecionados.length} selecionado(s)
-                                    </span>
-                                </div>
-                                
-                                {/* Lista de serviços com checkboxes */}
-                                <div style={{ 
-                                    maxHeight: '350px', 
-                                    overflowY: 'auto',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px'
-                                }}>
-                                    {servicosDisponiveis.map(servico => {
-                                        const isSelected = servicosSelecionados.some(s => s.id === servico.id);
-                                        const valorTotal = (servico.valor_global_mao_de_obra || 0) + (servico.valor_global_material || 0);
-                                        
-                                        return (
-                                            <label 
-                                                key={servico.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    padding: '12px 15px',
-                                                    borderBottom: '1px solid #f1f5f9',
-                                                    cursor: 'pointer',
-                                                    transition: 'background 0.2s',
-                                                    backgroundColor: isSelected ? '#e0f2fe' : 'transparent'
-                                                }}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = isSelected ? '#e0f2fe' : '#f8fafc'}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = isSelected ? '#e0f2fe' : 'transparent'}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => toggleServicoSelecionado(servico)}
-                                                    style={{ 
-                                                        width: '18px', 
-                                                        height: '18px', 
-                                                        marginRight: '12px',
-                                                        cursor: 'pointer',
-                                                        accentColor: '#4f46e5'
-                                                    }}
-                                                />
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: '500', color: '#2d3748' }}>
-                                                        {servico.nome}
-                                                    </div>
-                                                    {valorTotal > 0 && (
-                                                        <div style={{ fontSize: '0.85em', color: '#666', marginTop: '2px' }}>
-                                                            {formatCurrency(valorTotal)}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                            </>
-                        )}
-                        
-                        <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => { setShowImportModal(false); setServicosSelecionados([]); }}>
-                                Cancelar
-                            </button>
-                            {servicosDisponiveis.length > 0 && (
-                                <button 
-                                    className="btn-save" 
-                                    onClick={handleImportServicos}
-                                    disabled={servicosSelecionados.length === 0}
-                                    style={{
-                                        opacity: servicosSelecionados.length === 0 ? 0.5 : 1,
-                                        cursor: servicosSelecionados.length === 0 ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    ✓ Importar {servicosSelecionados.length > 0 ? `(${servicosSelecionados.length})` : ''}
-                                </button>
-                            )}
+                            <button className="btn-cancel" onClick={() => setEditingSubetapa(null)}>Cancelar</button>
+                            <button className="btn-save" onClick={handleUpdateSubetapa}>Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -1468,278 +1477,119 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {/* Modal Editar Serviço */}
             {editingServico && (
                 <div className="modal-overlay" onClick={() => setEditingServico(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar Serviço</h3>
-                        
+                    <div className="modal-content large" onClick={e => e.stopPropagation()}>
+                        <h3>✏️ Editar: {editingServico.servico_nome}</h3>
                         <div className="form-group">
-                            <label>Nome do Serviço</label>
-                            <input
-                                type="text"
-                                value={editingServico.servico_nome}
-                                onChange={(e) => setEditingServico({...editingServico, servico_nome: e.target.value})}
-                            />
+                            <label>Nome do Serviço *</label>
+                            <input type="text" value={editingServico.servico_nome} onChange={(e) => setEditingServico({...editingServico, servico_nome: e.target.value})} />
                         </div>
-                        
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Data Início</label>
-                                <input
-                                    type="date"
-                                    value={editingServico.data_inicio || ''}
-                                    onChange={(e) => setEditingServico({...editingServico, data_inicio: e.target.value})}
-                                />
+                                <label>Início Previsto</label>
+                                <input type="date" value={editingServico.data_inicio || ''} onChange={(e) => setEditingServico({...editingServico, data_inicio: e.target.value})} />
                             </div>
                             <div className="form-group">
-                                <label>Data Término</label>
-                                <input
-                                    type="date"
-                                    value={editingServico.data_fim_prevista || ''}
-                                    onChange={(e) => setEditingServico({...editingServico, data_fim_prevista: e.target.value})}
-                                />
+                                <label>Término Previsto</label>
+                                <input type="date" value={editingServico.data_fim_prevista || ''} onChange={(e) => setEditingServico({...editingServico, data_fim_prevista: e.target.value})} />
                             </div>
                         </div>
-                        
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Início Real</label>
-                                <input
-                                    type="date"
-                                    value={editingServico.data_inicio_real || ''}
-                                    onChange={(e) => setEditingServico({...editingServico, data_inicio_real: e.target.value})}
-                                />
+                                <input type="date" value={editingServico.data_inicio_real || ''} onChange={(e) => setEditingServico({...editingServico, data_inicio_real: e.target.value})} />
                             </div>
                             <div className="form-group">
                                 <label>Término Real</label>
-                                <input
-                                    type="date"
-                                    value={editingServico.data_fim_real || ''}
-                                    onChange={(e) => setEditingServico({...editingServico, data_fim_real: e.target.value})}
-                                />
+                                <input type="date" value={editingServico.data_fim_real || ''} onChange={(e) => setEditingServico({...editingServico, data_fim_real: e.target.value})} />
                             </div>
                         </div>
                         
-                        {/* ========== TIPO DE MEDIÇÃO ========== */}
-                        <div className="form-group">
-                            <label style={{ fontWeight: 'bold' }}>📊 Tipo de Medição</label>
-                            <select
-                                value={editingServico.tipo_medicao || 'empreitada'}
-                                onChange={(e) => {
-                                    const novoTipo = e.target.value;
-                                    const updates = { tipo_medicao: novoTipo };
-                                    
-                                    // Resetar campos específicos ao mudar tipo
-                                    if (novoTipo === 'area') {
-                                        updates.area_total = editingServico.area_total || 100;
-                                        updates.area_executada = editingServico.area_executada || 0;
-                                        updates.unidade_medida = editingServico.unidade_medida || 'm²';
-                                    }
-                                    
-                                    setEditingServico({...editingServico, ...updates});
-                                }}
-                                style={{ 
-                                    width: '100%', 
-                                    padding: '10px 12px',
-                                    borderRadius: '6px',
-                                    border: '1px solid #d1d5db',
-                                    fontSize: '1rem',
-                                    backgroundColor: 'white'
-                                }}
-                            >
-                                <option value="empreitada">🔧 Empreitada/Manual (editar % diretamente)</option>
-                                <option value="etapas">📋 Por Etapas (% calculado pelas etapas)</option>
-                                <option value="area">📐 Por Área (área executada / total)</option>
-                            </select>
-                            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                                {editingServico.tipo_medicao === 'etapas' && '⚠️ Se mudar de "Por Etapas", as etapas existentes não serão excluídas.'}
-                                {editingServico.tipo_medicao === 'area' && '📐 Defina a área total e a área já executada.'}
-                                {(editingServico.tipo_medicao === 'empreitada' || !editingServico.tipo_medicao) && '🔧 Ajuste o percentual de execução manualmente.'}
-                            </small>
-                        </div>
-                        
-                        {/* ========== CAMPOS ADICIONAIS PARA ÁREA ========== */}
-                        {editingServico.tipo_medicao === 'area' && (
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Área Total</label>
-                                    <input
-                                        type="number"
-                                        min="0.01"
-                                        step="0.01"
-                                        value={editingServico.area_total || ''}
-                                        onChange={(e) => {
-                                            const areaTotal = parseFloat(e.target.value) || 0;
-                                            const areaExec = editingServico.area_executada || 0;
-                                            const percentual = areaTotal > 0 ? Math.min(100, (areaExec / areaTotal) * 100) : 0;
-                                            setEditingServico({
-                                                ...editingServico, 
-                                                area_total: areaTotal,
-                                                percentual_conclusao: percentual
-                                            });
-                                        }}
-                                        placeholder="Ex: 150"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Unidade de Medida</label>
-                                    <select
-                                        value={editingServico.unidade_medida || 'm²'}
-                                        onChange={(e) => setEditingServico({...editingServico, unidade_medida: e.target.value})}
-                                    >
-                                        <option value="m²">m² (metros quadrados)</option>
-                                        <option value="m³">m³ (metros cúbicos)</option>
-                                        <option value="m">m (metros lineares)</option>
-                                        <option value="un">un (unidades)</option>
-                                        <option value="kg">kg (quilogramas)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* ========== CAMPOS DE EXECUÇÃO POR TIPO DE MEDIÇÃO ========== */}
-                        
-                        {/* TIPO: ÁREA - Editar área executada */}
+                        {/* Progresso por tipo */}
                         {editingServico.tipo_medicao === 'area' && (
                             <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Progresso por Área</label>
-                                <div style={{ marginTop: '10px' }}>
-                                    <label>Área Executada ({editingServico.unidade_medida || 'm²'})</label>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max={editingServico.area_total || 100}
-                                            step="0.1"
-                                            value={editingServico.area_executada || 0}
-                                            onChange={(e) => {
-                                                const areaExec = parseFloat(e.target.value) || 0;
-                                                const areaTotal = editingServico.area_total || 1;
-                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
-                                                setEditingServico({
-                                                    ...editingServico, 
-                                                    area_executada: areaExec,
-                                                    percentual_conclusao: percentual
-                                                });
-                                            }}
-                                            style={{ flex: 1 }}
-                                        />
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max={editingServico.area_total || 999999}
-                                            step="0.01"
-                                            value={editingServico.area_executada || 0}
-                                            onChange={(e) => {
-                                                const areaExec = parseFloat(e.target.value) || 0;
-                                                const areaTotal = editingServico.area_total || 1;
-                                                const percentual = Math.min(100, (areaExec / areaTotal) * 100);
-                                                setEditingServico({
-                                                    ...editingServico, 
-                                                    area_executada: areaExec,
-                                                    percentual_conclusao: percentual
-                                                });
-                                            }}
-                                            style={{ width: '80px', textAlign: 'center' }}
-                                        />
-                                        <span>/ {editingServico.area_total || 0} {editingServico.unidade_medida || 'm²'}</span>
-                                    </div>
-                                </div>
-                                <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#bbdefb', borderRadius: '5px', textAlign: 'center' }}>
-                                    <strong>Execução Física: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
-                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
-                                        <div style={{ 
-                                            width: `${editingServico.percentual_conclusao || 0}%`, 
-                                            height: '100%', 
-                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#2196f3',
-                                            transition: 'width 0.3s'
-                                        }}></div>
-                                    </div>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Área Executada</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                    <input type="range" min="0" max={editingServico.area_total || 100} step="0.1" value={editingServico.area_executada || 0} 
+                                        onChange={(e) => {
+                                            const areaExec = parseFloat(e.target.value) || 0;
+                                            const areaTotal = editingServico.area_total || 1;
+                                            setEditingServico({...editingServico, area_executada: areaExec, percentual_conclusao: Math.min(100, (areaExec / areaTotal) * 100)});
+                                        }} style={{ flex: 1 }} />
+                                    <span>{(editingServico.area_executada || 0).toFixed(1)} / {editingServico.area_total} {editingServico.unidade_medida}</span>
                                 </div>
                             </div>
                         )}
                         
-                        {/* TIPO: ETAPAS - Percentual calculado automaticamente */}
                         {editingServico.tipo_medicao === 'etapas' && (
                             <div className="form-group" style={{ backgroundColor: '#fff3e0', padding: '15px', borderRadius: '8px' }}>
                                 <label style={{ color: '#e65100', fontWeight: 'bold' }}>📋 Medição por Etapas</label>
-                                <p style={{ margin: '10px 0', color: '#666' }}>
-                                    O percentual de execução é calculado <strong>automaticamente</strong> com base no andamento das etapas e subetapas.
-                                </p>
-                                <div style={{ padding: '10px', backgroundColor: '#ffe0b2', borderRadius: '5px', textAlign: 'center' }}>
-                                    <strong>Execução Física Atual: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</strong>
-                                    <div style={{ marginTop: '5px', height: '20px', backgroundColor: '#e0e0e0', borderRadius: '10px', overflow: 'hidden' }}>
-                                        <div style={{ 
-                                            width: `${editingServico.percentual_conclusao || 0}%`, 
-                                            height: '100%', 
-                                            backgroundColor: (editingServico.percentual_conclusao || 0) >= 100 ? '#4caf50' : '#ff9800',
-                                            transition: 'width 0.3s'
-                                        }}></div>
-                                    </div>
-                                </div>
-                                <p style={{ margin: '10px 0 0', fontSize: '0.85em', color: '#888' }}>
-                                    💡 Para alterar o percentual, edite o andamento de cada etapa/subetapa individualmente.
-                                </p>
+                                <p style={{ margin: '10px 0', color: '#666' }}>O percentual é calculado automaticamente pelas etapas.</p>
+                                <div style={{ textAlign: 'center', fontWeight: 'bold' }}>Execução: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</div>
                             </div>
                         )}
                         
-                        {/* TIPO: EMPREITADA/MANUAL - Editar percentual diretamente */}
-                        {(editingServico.tipo_medicao === 'empreitada' || editingServico.tipo_medicao === 'manual' || !editingServico.tipo_medicao) && (
+                        {(editingServico.tipo_medicao === 'empreitada' || !editingServico.tipo_medicao) && (
                             <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>🔧 Execução Física (%)</label>
+                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>🔧 Execução (%)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="1"
-                                        value={editingServico.percentual_conclusao || 0}
-                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="0.1"
-                                        value={editingServico.percentual_conclusao || 0}
-                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value) || 0})}
-                                        style={{ width: '70px', textAlign: 'center' }}
-                                    />
-                                    <span>%</span>
+                                    <input type="range" min="0" max="100" value={editingServico.percentual_conclusao || 0} 
+                                        onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})} style={{ flex: 1 }} />
+                                    <span style={{ fontWeight: 'bold' }}>{(editingServico.percentual_conclusao || 0).toFixed(0)}%</span>
                                 </div>
                             </div>
                         )}
-                        
-                        <div className="form-group">
-                            <label>Observações</label>
-                            <textarea
-                                value={editingServico.observacoes || ''}
-                                onChange={(e) => setEditingServico({...editingServico, observacoes: e.target.value})}
-                                rows="2"
-                            />
-                        </div>
                         
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => setEditingServico(null)}>
-                                Cancelar
-                            </button>
+                            <button className="btn-cancel" onClick={() => setEditingServico(null)}>Cancelar</button>
                             <button className="btn-save" onClick={async () => {
                                 try {
-                                    const response = await fetchWithAuth(
-                                        `${API_URL}/cronograma/${editingServico.id}`,
-                                        {
-                                            method: 'PUT',
-                                            body: JSON.stringify(editingServico)
-                                        }
-                                    );
+                                    const response = await fetchWithAuth(`${API_URL}/cronograma/${editingServico.id}`, { method: 'PUT', body: JSON.stringify(editingServico) });
                                     if (!response.ok) throw new Error('Erro ao atualizar');
                                     fetchCronograma();
                                     setEditingServico(null);
-                                } catch (err) {
-                                    alert(err.message);
-                                }
-                            }}>
-                                Salvar
-                            </button>
+                                } catch (err) { alert(err.message); }
+                            }}>Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Detalhes */}
+            {servicoDetalhes && (
+                <div className="modal-overlay" onClick={() => setServicoDetalhes(null)}>
+                    <div className="modal-content large" onClick={e => e.stopPropagation()}>
+                        <h3>{servicoDetalhes.servico_nome}</h3>
+                        <div className="detalhes-grid">
+                            <div className="detalhe-item">
+                                <span className="detalhe-label">Status</span>
+                                <span className="status-badge" style={{ backgroundColor: getStatus(servicoDetalhes).color }}>{getStatus(servicoDetalhes).icon} {getStatus(servicoDetalhes).label}</span>
+                            </div>
+                            <div className="detalhe-item">
+                                <span className="detalhe-label">Execução</span>
+                                <span className="detalhe-value">{(servicoDetalhes.percentual_conclusao || 0).toFixed(1)}%</span>
+                            </div>
+                            <div className="detalhe-item">
+                                <span className="detalhe-label">Início</span>
+                                <span className="detalhe-value">{formatDate(servicoDetalhes.data_inicio)}</span>
+                            </div>
+                            <div className="detalhe-item">
+                                <span className="detalhe-label">Término</span>
+                                <span className="detalhe-value">{formatDate(servicoDetalhes.data_fim_prevista)}</span>
+                            </div>
+                        </div>
+                        {evmData[servicoDetalhes.servico_nome] && (
+                            <div className="evm-detalhes-section">
+                                <h4>📊 Executado vs Pago</h4>
+                                <EVMProgressBars servico={servicoDetalhes} compact={false} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+                                    <span>Orçado: {formatCurrency(evmData[servicoDetalhes.servico_nome].valor_total)}</span>
+                                    <span>Pago: {formatCurrency(evmData[servicoDetalhes.servico_nome].valor_pago)}</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => setServicoDetalhes(null)}>Fechar</button>
+                            <button className="btn-save" onClick={() => { setEditingServico(servicoDetalhes); setServicoDetalhes(null); }}>✏️ Editar</button>
                         </div>
                     </div>
                 </div>
@@ -1754,9 +1604,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     return (
         <div className="cronograma-obra-fullscreen">
             <div className="fullscreen-header">
-                <button className="btn-back" onClick={onClose}>
-                    ← Voltar
-                </button>
+                <button className="btn-back" onClick={onClose}>← Voltar</button>
             </div>
             {content}
         </div>
