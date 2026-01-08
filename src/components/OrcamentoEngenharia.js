@@ -1436,17 +1436,6 @@ const spinnerStyle = `
 `;
 
 // =====================================================
-// FUNÇÕES AUXILIARES
-// =====================================================
-
-const formatNumber = (value, decimals = 2) => {
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    }).format(value || 0);
-};
-
-// =====================================================
 // COMPONENTE PRINCIPAL
 // =====================================================
 
