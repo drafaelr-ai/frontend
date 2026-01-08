@@ -11214,14 +11214,14 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         return 'pendente';
     };
 
-    if (isLoading) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
-    if (error) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
+    if (isLoading) return <Modal customWidth="900px" onClose={onClose}><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
+    if (error) return <Modal customWidth="900px" onClose={onClose}><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
 
     const parcelasPagas = parcelas.filter(p => p.status === 'Pago').length;
     const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
 
     return (
-        <Modal customWidth="900px">
+        <Modal customWidth="900px" onClose={onClose}>
             <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 {/* Header */}
                 <div style={{
@@ -12639,7 +12639,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <div className="parcelas-cards-grid">
                             {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
-                                const parcelasPagas = pag.proxima_parcela_numero ? pag.proxima_parcela_numero - 1 : pag.numero_parcelas;
+                                // CORREÇÃO: proxima_parcela_numero indica qual parcela está pendente
+                                // Se proxima_parcela_numero = 0, entrada ainda não paga = 0 parcelas pagas
+                                // Se proxima_parcela_numero = 1, entrada paga, parcela 1 pendente = 1 parcela paga (entrada)
+                                // Se proxima_parcela_numero = null/undefined, todas pagas
+                                let parcelasPagas;
+                                if (pag.proxima_parcela_numero === null || pag.proxima_parcela_numero === undefined) {
+                                    parcelasPagas = pag.numero_parcelas; // Todas pagas
+                                } else {
+                                    parcelasPagas = pag.proxima_parcela_numero; // Número de parcelas já pagas
+                                }
                                 const progresso = Math.round((parcelasPagas / pag.numero_parcelas) * 100);
                                 
                                 // Cores por periodicidade
