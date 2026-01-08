@@ -1439,14 +1439,6 @@ const spinnerStyle = `
 // FUNÇÕES AUXILIARES
 // =====================================================
 
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', { 
-        style: 'currency', 
-        currency: 'BRL',
-        minimumFractionDigits: 2
-    }).format(value || 0);
-};
-
 const formatNumber = (value, decimals = 2) => {
     return new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: decimals,
