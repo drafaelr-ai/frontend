@@ -373,6 +373,26 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
+    // ==================== SINCRONIZAÇÃO COM ORÇAMENTO ====================
+    
+    const handleSincronizarOrcamento = async (servicoId) => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/cronograma/${servicoId}/sincronizar-orcamento`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.erro || 'Erro ao sincronizar');
+            }
+
+            const result = await response.json();
+            alert(`✅ ${result.mensagem}`);
+        } catch (err) {
+            alert(`Erro: ${err.message}`);
+        }
+    };
+
     // ==================== CRUD ETAPA PAI ====================
     
     const handleAddEtapaPai = async () => {
@@ -983,6 +1003,11 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 )}
                             </div>
                             <div className="header-right">
+                                {servico.orcamento_etapa_id && (
+                                    <span className="vinculo-badge" title={`Vinculado ao Orçamento: ${servico.orcamento_etapa_codigo || ''} - ${servico.orcamento_etapa_nome || ''}`}>
+                                        🔗 Orçamento
+                                    </span>
+                                )}
                                 <span className="tipo-badge">
                                     {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
                                      servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
@@ -1254,6 +1279,15 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             >
                                 ✏️ Editar
                             </button>
+                            {servico.orcamento_etapa_id && (
+                                <button 
+                                    className="btn-action sync"
+                                    onClick={() => handleSincronizarOrcamento(servico.id)}
+                                    title="Sincronizar % com Orçamento"
+                                >
+                                    🔄 Sincronizar
+                                </button>
+                            )}
                             <button 
                                 className="btn-action danger"
                                 onClick={() => handleDeleteServico(servico.id)}

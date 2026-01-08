@@ -1076,6 +1076,30 @@
     border-color: #fecaca;
 }
 
+.btn-action.sync {
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.btn-action.sync:hover {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+
+/* Badge de Vínculo com Orçamento */
+.vinculo-badge {
+    background: linear-gradient(135deg, #dbeafe, #ede9fe);
+    color: #4f46e5;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: 1px solid #c7d2fe;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* ==================== MODAIS ==================== */
 
 .modal-overlay {
