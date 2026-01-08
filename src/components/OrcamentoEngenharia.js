@@ -4,7 +4,7 @@
  * =====================================================
  * 
  * Componente para gerenciar orçamento detalhado de obras
- * com integração automática ao Kanban de serviços
+ * com integração ao Cronograma de Obras
  * 
  * =====================================================
  */
@@ -615,9 +615,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         preco_unitario: itemParaEditar?.preco_unitario?.toString() || '',
         rateio_mo: itemParaEditar?.rateio_mo || 50,
         rateio_mat: itemParaEditar?.rateio_mat || 50,
-        opcao_servico: 'criar',
         servico_id: itemParaEditar?.servico_id || null,
-        responsavel: '',
         salvar_biblioteca: !isEdicao
     });
     
@@ -639,9 +637,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
             preco_unitario: '',
             rateio_mo: 50,
             rateio_mat: 50,
-            opcao_servico: 'criar',
             servico_id: null,
-            responsavel: '',
             salvar_biblioteca: true
         });
     };
@@ -986,60 +982,6 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                             </div>
                         )}
                     </div>
-                    
-                    {/* Opções de Serviço */}
-                    <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>📦 Criação de Serviço no Kanban</label>
-                        <div style={styles.radioGroup}>
-                            <label style={{
-                                ...styles.radioOption,
-                                ...(form.opcao_servico === 'criar' ? styles.radioOptionSelected : {})
-                            }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.opcao_servico === 'criar'}
-                                    onChange={() => setForm({...form, opcao_servico: 'criar'})}
-                                />
-                                <div>
-                                    <strong>Criar serviço automaticamente</strong>
-                                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                        Um novo card será criado no Kanban com os valores deste item
-                                    </div>
-                                </div>
-                            </label>
-                            
-                            <label style={{
-                                ...styles.radioOption,
-                                ...(form.opcao_servico === 'nao' ? styles.radioOptionSelected : {})
-                            }}>
-                                <input 
-                                    type="radio" 
-                                    checked={form.opcao_servico === 'nao'}
-                                    onChange={() => setForm({...form, opcao_servico: 'nao'})}
-                                />
-                                <div>
-                                    <strong>Não criar serviço agora</strong>
-                                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                                        Apenas salvar no orçamento (pode vincular depois)
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    {/* Responsável */}
-                    {form.opcao_servico === 'criar' && (
-                        <div style={styles.formGroup}>
-                            <label style={styles.formLabel}>Responsável pelo Serviço (opcional)</label>
-                            <input 
-                                type="text" 
-                                style={styles.formInput}
-                                value={form.responsavel}
-                                onChange={e => setForm({...form, responsavel: e.target.value})}
-                                placeholder="Nome do responsável"
-                            />
-                        </div>
-                    )}
                     
                     {/* Salvar na Biblioteca */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
@@ -1494,6 +1436,29 @@ const spinnerStyle = `
 `;
 
 // =====================================================
+// FUNÇÕES AUXILIARES
+// =====================================================
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', { 
+        style: 'currency', 
+        currency: 'BRL',
+        minimumFractionDigits: 2
+    }).format(value || 0);
+};
+
+const formatNumber = (value, decimals = 2) => {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    }).format(value || 0);
+};
+
+// =====================================================
+// COMPONENTE PRINCIPAL
+// =====================================================
+
+// =====================================================
 // UPLOAD PLANTA MODAL - COMPONENTE
 // =====================================================
 
@@ -1809,7 +1774,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             }
             
             const data = await response.json();
-            alert(`✅ Orçamento importado!\n\n${data.etapas_criadas} etapas\n${data.itens_criados} itens\n${data.servicos_criados} serviços no Kanban`);
+            alert(`✅ Orçamento importado!\n\n${data.etapas_criadas} etapas\n${data.itens_criados} itens`);
             
             if (onImportar) onImportar();
             onClose();
@@ -2096,7 +2061,6 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                     <th style={{ ...uploadStyles.th, ...uploadStyles.thRight, width: '80px' }}>Qtd.</th>
                                                     <th style={{ ...uploadStyles.th, ...uploadStyles.thRight, width: '100px' }}>Preço Un.</th>
                                                     <th style={{ ...uploadStyles.th, ...uploadStyles.thRight, width: '100px' }}>Total</th>
-                                                    <th style={{ ...uploadStyles.th, ...uploadStyles.thCenter, width: '60px' }}>Kanban</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2104,7 +2068,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                     <React.Fragment key={etapa.codigo}>
                                                         {/* Linha da etapa */}
                                                         <tr style={uploadStyles.etapaRow}>
-                                                            <td style={uploadStyles.etapaTd} colSpan={8}>
+                                                            <td style={uploadStyles.etapaTd} colSpan={7}>
                                                                 {etapa.codigo} - {etapa.nome}
                                                             </td>
                                                         </tr>
@@ -2164,16 +2128,6 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                                     </td>
                                                                     <td style={{ ...uploadStyles.td, ...uploadStyles.tdNumero, fontWeight: '600' }}>
                                                                         {formatCurrency(item.total_estimado)}
-                                                                    </td>
-                                                                    <td style={{ ...uploadStyles.td, ...uploadStyles.tdCenter }}>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={item.criar_servico}
-                                                                            onChange={() => toggleCriarServico(etapaIdx, itemIdx)}
-                                                                            style={uploadStyles.checkbox}
-                                                                            disabled={!item.selecionado}
-                                                                            title="Criar serviço no Kanban"
-                                                                        />
                                                                     </td>
                                                                 </tr>
                                                             );
@@ -2352,9 +2306,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                     preco_unitario: parseFloat(form.preco_unitario) || null,
                     rateio_mo: form.rateio_mo,
                     rateio_mat: form.rateio_mat,
-                    opcao_servico: form.opcao_servico,
                     servico_id: form.servico_id,
-                    responsavel: form.responsavel,
                     salvar_biblioteca: form.salvar_biblioteca
                 })
             });
@@ -2537,8 +2489,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         quantidade: parseFloat(cols[3]?.replace(',', '.')) || 0,
                         preco_mao_obra: parseFloat(cols[4]?.replace(',', '.')) || 0,
                         preco_material: parseFloat(cols[5]?.replace(',', '.')) || 0,
-                        tipo_composicao: 'separado',
-                        opcao_servico: 'nao'
+                        tipo_composicao: 'separado'
                     });
                 }
             }
@@ -2554,29 +2505,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         
         reader.readAsText(file, 'UTF-8');
         event.target.value = ''; // Reset input
-    };
-    
-    // Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia
-    const sincronizarServicos = async () => {
-        if (!window.confirm('Atualizar os valores de todos os Serviços do Kanban com os valores do Orçamento de Engenharia?')) return;
-        
-        try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/sincronizar-servicos`, {
-                method: 'POST'
-            });
-            
-            if (res.ok) {
-                const data = await res.json();
-                alert(data.mensagem || 'Sincronização concluída!');
-                carregarDados();
-            } else {
-                const data = await res.json();
-                alert(data.erro || 'Erro ao sincronizar');
-            }
-        } catch (e) {
-            console.error('Erro ao sincronizar:', e);
-            alert('Erro ao sincronizar serviços');
-        }
     };
     
     // Apagar todo o orçamento de engenharia
@@ -2736,13 +2664,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                 📤 Importar
                             </span>
                         </label>
-                        <button 
-                            style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
-                            onClick={sincronizarServicos}
-                            title="Sincronizar valores dos Serviços do Kanban com o Orçamento de Engenharia"
-                        >
-                            🔄 Sincronizar Kanban
-                        </button>
                         <button 
                             style={{ ...styles.button, ...styles.buttonDanger, ...styles.buttonSmall }}
                             onClick={apagarOrcamentoCompleto}
@@ -2933,9 +2854,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 <td style={{ ...styles.td, ...styles.tdCodigo }}>{item.codigo}</td>
                                                 <td style={{ ...styles.td, ...styles.tdDescricao }}>
                                                     {item.descricao}
-                                                    {item.servico_id && (
-                                                        <span style={styles.servicoBadge}>📦 Kanban</span>
-                                                    )}
                                                     {item.tipo_composicao === 'composto' && (
                                                         <span style={{ ...styles.servicoBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>
                                                             Composto
@@ -3050,9 +2968,6 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 fontSize: '12px'
             }}>
                 <span style={{ fontWeight: '600' }}>Legenda:</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={styles.servicoBadge}>📦 Kanban</span> Vinculado ao Kanban
-                </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ ...styles.statusBadge, ...styles.statusPago }}>✅ Pago</span> 100%
                 </span>
