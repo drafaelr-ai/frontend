@@ -89,6 +89,16 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     const [showImportModal, setShowImportModal] = useState(false);
     const [servicosSelecionados, setServicosSelecionados] = useState([]);
     
+    // NOVO: Estados para importar do orçamento de engenharia
+    const [showImportOrcamentoModal, setShowImportOrcamentoModal] = useState(false);
+    const [etapasOrcamento, setEtapasOrcamento] = useState([]);
+    const [etapasOrcamentoSelecionadas, setEtapasOrcamentoSelecionadas] = useState([]);
+    const [importandoOrcamento, setImportandoOrcamento] = useState(false);
+    const [configImportacao, setConfigImportacao] = useState({
+        data_inicio: getTodayString(),
+        duracao_padrao: 30
+    });
+    
     // Estados para EVM
     const [evmData, setEvmData] = useState({});
     
@@ -272,6 +282,79 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             setServicosSelecionados([]);
         } else {
             setServicosSelecionados([...servicosDisponiveis]);
+        }
+    };
+
+    // ==================== IMPORTAR DO ORÇAMENTO ====================
+    
+    const fetchEtapasOrcamento = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma/importar-orcamento`);
+            if (response.ok) {
+                const data = await response.json();
+                setEtapasOrcamento(data.etapas || []);
+            } else {
+                setEtapasOrcamento([]);
+            }
+        } catch (err) {
+            console.error('Erro ao buscar etapas do orçamento:', err);
+            setEtapasOrcamento([]);
+        }
+    };
+
+    const toggleEtapaOrcamentoSelecionada = (etapa) => {
+        setEtapasOrcamentoSelecionadas(prev => {
+            const isSelected = prev.some(e => e.id === etapa.id);
+            if (isSelected) {
+                return prev.filter(e => e.id !== etapa.id);
+            } else {
+                return [...prev, etapa];
+            }
+        });
+    };
+
+    const toggleSelectAllOrcamento = () => {
+        const disponiveis = etapasOrcamento.filter(e => !e.ja_importado);
+        if (etapasOrcamentoSelecionadas.length === disponiveis.length) {
+            setEtapasOrcamentoSelecionadas([]);
+        } else {
+            setEtapasOrcamentoSelecionadas([...disponiveis]);
+        }
+    };
+
+    const handleImportarOrcamento = async () => {
+        if (etapasOrcamentoSelecionadas.length === 0) {
+            alert('Selecione pelo menos uma etapa para importar');
+            return;
+        }
+
+        try {
+            setImportandoOrcamento(true);
+            
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma/importar-orcamento`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    etapa_ids: etapasOrcamentoSelecionadas.map(e => e.id),
+                    data_inicio: configImportacao.data_inicio,
+                    duracao_padrao: parseInt(configImportacao.duracao_padrao) || 30
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.erro || 'Erro ao importar');
+            }
+
+            const result = await response.json();
+            alert(`✅ ${result.total_importados} serviço(s) importado(s) com sucesso!`);
+            
+            fetchCronograma();
+            setShowImportOrcamentoModal(false);
+            setEtapasOrcamentoSelecionadas([]);
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setImportandoOrcamento(false);
         }
     };
 
@@ -1223,6 +1306,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <button className="btn-pdf" onClick={handleGerarPDF}>📄 PDF</button>
                     <button className="btn-primary" onClick={() => setShowAddModal(true)}>➕ Novo Serviço</button>
                     <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}>📋 Importar</button>
+                    <button className="btn-orcamento" onClick={() => { fetchEtapasOrcamento(); setShowImportOrcamentoModal(true); }}>📊 Orçamento</button>
                 </div>
             </div>
 
@@ -1361,6 +1445,114 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         <div className="modal-actions">
                             <button className="btn-cancel" onClick={() => setShowImportModal(false)}>Cancelar</button>
                             <button className="btn-save" onClick={handleImportServicos} disabled={servicosSelecionados.length === 0}>Importar ({servicosSelecionados.length})</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Importar do Orçamento de Engenharia */}
+            {showImportOrcamentoModal && (
+                <div className="modal-overlay" onClick={() => setShowImportOrcamentoModal(false)}>
+                    <div className="modal-content large" onClick={e => e.stopPropagation()}>
+                        <h3>📊 Importar do Orçamento de Engenharia</h3>
+                        <p style={{ color: '#666', marginBottom: '15px' }}>
+                            Importe etapas do Orçamento de Engenharia diretamente para o Cronograma.
+                        </p>
+                        
+                        {etapasOrcamento.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                                <p style={{ fontSize: '1.1rem', marginBottom: '10px' }}>📭 Nenhuma etapa encontrada no Orçamento.</p>
+                                <p style={{ fontSize: '0.9rem' }}>Crie etapas no módulo de Orçamento de Engenharia primeiro.</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Configurações de importação */}
+                                <div className="import-config-section">
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label>📅 Data de Início</label>
+                                            <input 
+                                                type="date" 
+                                                value={configImportacao.data_inicio}
+                                                onChange={(e) => setConfigImportacao({...configImportacao, data_inicio: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>⏱️ Duração Padrão (dias)</label>
+                                            <input 
+                                                type="number" 
+                                                min="1"
+                                                value={configImportacao.duracao_padrao}
+                                                onChange={(e) => setConfigImportacao({...configImportacao, duracao_padrao: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seleção de etapas */}
+                                <div style={{ marginBottom: '10px', marginTop: '15px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={etapasOrcamentoSelecionadas.length === etapasOrcamento.filter(e => !e.ja_importado).length && etapasOrcamento.filter(e => !e.ja_importado).length > 0}
+                                            onChange={toggleSelectAllOrcamento}
+                                        />
+                                        <strong>Selecionar Todas Disponíveis ({etapasOrcamento.filter(e => !e.ja_importado).length})</strong>
+                                    </label>
+                                </div>
+                                
+                                <div className="orcamento-import-list">
+                                    {etapasOrcamento.map(etapa => (
+                                        <label 
+                                            key={etapa.id} 
+                                            className={`orcamento-import-item ${etapa.ja_importado ? 'disabled' : ''} ${etapasOrcamentoSelecionadas.some(e => e.id === etapa.id) ? 'selected' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={etapasOrcamentoSelecionadas.some(e => e.id === etapa.id)}
+                                                onChange={() => toggleEtapaOrcamentoSelecionada(etapa)}
+                                                disabled={etapa.ja_importado}
+                                            />
+                                            <div className="orcamento-item-info">
+                                                <div className="orcamento-item-header">
+                                                    <span className="orcamento-item-codigo">{etapa.codigo}</span>
+                                                    <span className="orcamento-item-nome">{etapa.nome}</span>
+                                                    {etapa.ja_importado && (
+                                                        <span className="orcamento-item-badge imported">✓ Já importado</span>
+                                                    )}
+                                                </div>
+                                                <div className="orcamento-item-details">
+                                                    <span>💰 {formatCurrency(etapa.total)}</span>
+                                                    <span>📦 {etapa.qtd_itens} itens</span>
+                                                    <span>📊 {etapa.percentual_pago}% pago</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                {/* Resumo */}
+                                {etapasOrcamentoSelecionadas.length > 0 && (
+                                    <div className="import-summary">
+                                        <strong>Resumo da Importação:</strong>
+                                        <p>{etapasOrcamentoSelecionadas.length} etapa(s) selecionada(s)</p>
+                                        <p>Total: {formatCurrency(etapasOrcamentoSelecionadas.reduce((acc, e) => acc + e.total, 0))}</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={() => { setShowImportOrcamentoModal(false); setEtapasOrcamentoSelecionadas([]); }}>
+                                Cancelar
+                            </button>
+                            <button 
+                                className="btn-save" 
+                                onClick={handleImportarOrcamento} 
+                                disabled={etapasOrcamentoSelecionadas.length === 0 || importandoOrcamento}
+                            >
+                                {importandoOrcamento ? '⏳ Importando...' : `📥 Importar (${etapasOrcamentoSelecionadas.length})`}
+                            </button>
                         </div>
                     </div>
                 </div>
