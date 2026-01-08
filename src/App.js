@@ -25,6 +25,9 @@ import { BiDashboard } from './BiModule';
 // 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
 
+// 🆕 MÓDULO AGENDA DE DEMANDAS
+import AgendaDemandas from './components/AgendaDemandas';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -530,6 +533,7 @@ const WindowsNavBar = ({
             label: 'Documentos',
             items: [
                 { id: 'diario', label: 'Diário de Obras', icon: '📔', shortcut: 'F6' },
+                { id: 'agenda', label: 'Agenda de Demandas', icon: '📆', shortcut: 'F9' },
                 { id: 'orcamentos', label: 'Solicitações', icon: '📋', shortcut: 'F7', adminOnly: true },
                 { id: 'relatorios', label: 'Relatórios', icon: '📊', shortcut: 'F8' },
             ]
@@ -564,6 +568,7 @@ const WindowsNavBar = ({
         { id: 'boletos', icon: '📄', label: 'Boletos' },
         { id: 'relatorios', icon: '📊', label: 'Relatórios' },
         { id: 'diario', icon: '📔', label: 'Diário' },
+        { id: 'agenda', icon: '📆', label: 'Agenda' },
         { id: 'caixa', icon: '🏦', label: 'Caixa' },
     ];
 
@@ -1233,6 +1238,7 @@ const Sidebar = ({
         { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
         { id: 'orcamentos', icon: '📋', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
         { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
+        { id: 'agenda', icon: '📆', label: 'Agenda de Demandas', shortLabel: 'Agenda' },
         { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
 
@@ -8463,6 +8469,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
+                    {/* === PÁGINA: AGENDA DE DEMANDAS === */}
+                    {currentPage === 'agenda' && (
+                        <AgendaDemandas 
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            onClose={() => setCurrentPage('home')}
+                            embedded={true}
+                        />
+                    )}
+
                     {/* === PÁGINA: CAIXA DE OBRA === */}
                     {currentPage === 'caixa' && (
                         <CaixaObraModal
@@ -11214,14 +11230,14 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
         return 'pendente';
     };
 
-    if (isLoading) return <Modal customWidth="900px" onClose={onClose}><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
-    if (error) return <Modal customWidth="900px" onClose={onClose}><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
+    if (isLoading) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
+    if (error) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
 
     const parcelasPagas = parcelas.filter(p => p.status === 'Pago').length;
     const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
 
     return (
-        <Modal customWidth="900px" onClose={onClose}>
+        <Modal customWidth="900px">
             <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 {/* Header */}
                 <div style={{
@@ -12639,16 +12655,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <div className="parcelas-cards-grid">
                             {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
-                                // CORREÇÃO: proxima_parcela_numero indica qual parcela está pendente
-                                // Se proxima_parcela_numero = 0, entrada ainda não paga = 0 parcelas pagas
-                                // Se proxima_parcela_numero = 1, entrada paga, parcela 1 pendente = 1 parcela paga (entrada)
-                                // Se proxima_parcela_numero = null/undefined, todas pagas
-                                let parcelasPagas;
-                                if (pag.proxima_parcela_numero === null || pag.proxima_parcela_numero === undefined) {
-                                    parcelasPagas = pag.numero_parcelas; // Todas pagas
-                                } else {
-                                    parcelasPagas = pag.proxima_parcela_numero; // Número de parcelas já pagas
-                                }
+                                const parcelasPagas = pag.proxima_parcela_numero ? pag.proxima_parcela_numero - 1 : pag.numero_parcelas;
                                 const progresso = Math.round((parcelasPagas / pag.numero_parcelas) * 100);
                                 
                                 // Cores por periodicidade
