@@ -7502,19 +7502,23 @@ const totalOrcamentosPendentes = useMemo(() => {
 // ===================================
 
 // Modal para Cadastrar Pagamento Futuro (Único)
-const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
+const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId, itensOrcamento = [] }) => {
     const [formData, setFormData] = useState({
         descricao: '',
         valor: '',
         data_vencimento: getTodayString(),
         fornecedor: '',
         pix: '',
-        observacoes: ''
+        observacoes: '',
+        orcamento_item_id: ''
     });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await onSave(formData);
+        await onSave({
+            ...formData,
+            orcamento_item_id: formData.orcamento_item_id || null
+        });
     };
 
     return (
@@ -7571,6 +7575,22 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
                         maxLength="100"
                     />
                 </label>
+                
+                <label>
+                    📦 Vincular a Item do Orçamento:
+                    <select
+                        value={formData.orcamento_item_id || ''}
+                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
+                    >
+                        <option value="">-- Nenhum (Despesa Geral) --</option>
+                        {itensOrcamento.map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
+                        ))}
+                    </select>
+                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
+                    </small>
+                </label>
 
                 <label>
                     Observações:
@@ -7591,19 +7611,23 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId }) => {
 };
 
 // Modal para Editar Pagamento Futuro
-const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
+const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento, itensOrcamento = [] }) => {
     const [formData, setFormData] = useState({
         descricao: pagamento.descricao || '',
         valor: pagamento.valor || '',
         data_vencimento: pagamento.data_vencimento || getTodayString(),
         fornecedor: pagamento.fornecedor || '',
         pix: pagamento.pix || '',
-        observacoes: pagamento.observacoes || ''
+        observacoes: pagamento.observacoes || '',
+        orcamento_item_id: pagamento.orcamento_item_id || ''
     });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await onSave(formData);
+        await onSave({
+            ...formData,
+            orcamento_item_id: formData.orcamento_item_id || null
+        });
     };
 
     return (
@@ -7659,6 +7683,22 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento }) => {
                         placeholder="CPF, telefone, email ou chave aleatória"
                         maxLength="100"
                     />
+                </label>
+                
+                <label>
+                    📦 Vincular a Item do Orçamento:
+                    <select
+                        value={formData.orcamento_item_id || ''}
+                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
+                    >
+                        <option value="">-- Nenhum (Despesa Geral) --</option>
+                        {itensOrcamento.map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
+                        ))}
+                    </select>
+                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
+                    </small>
                 </label>
 
                 <label>
@@ -8798,11 +8838,11 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
 
 
 // Modal para Cadastrar Pagamento Parcelado (com suporte a Boletos)
-const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
+const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcamento = [] }) => {
     const [formData, setFormData] = useState({
         descricao: '',
         fornecedor: '',
-        servico_id: '',
+        orcamento_item_id: '',
         segmento: 'Material',
         valor_total: '',
         numero_parcelas: '1',
@@ -8813,31 +8853,8 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         forma_pagamento: 'PIX'  // PIX, Boleto, Transferência
     });
     
-    const [servicos, setServicos] = useState([]);
-    const [loadingServicos, setLoadingServicos] = useState(true);
     const [valoresIguais, setValoresIguais] = useState(true);
     const [parcelasCustomizadas, setParcelasCustomizadas] = useState([]);
-
-    // Buscar serviços da obra
-    useEffect(() => {
-        const fetchServicos = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/obras/${obraId}/servicos-nomes`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setServicos(data.servicos || []);
-                }
-            } catch (error) {
-                console.error('Erro ao buscar serviços:', error);
-            } finally {
-                setLoadingServicos(false);
-            }
-        };
-        fetchServicos();
-    }, [obraId]);
 
     // Gerar parcelas quando mudar número ou data ou valor
     useEffect(() => {
@@ -8906,6 +8923,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
         // Montar dados para enviar
         const dadosEnviar = {
             ...formData,
+            orcamento_item_id: formData.orcamento_item_id || null,
             parcelas_customizadas: (formData.forma_pagamento === 'Boleto' || !valoresIguais) ? parcelasCustomizadas : []
         };
         
@@ -8936,17 +8954,19 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId }) => {
                 </label>
                 
                 <label>
-                    Vincular ao Serviço (Opcional):
+                    📦 Vincular a Item do Orçamento (Opcional):
                     <select
-                        value={formData.servico_id}
-                        onChange={(e) => setFormData({...formData, servico_id: e.target.value})}
-                        disabled={loadingServicos}
+                        value={formData.orcamento_item_id}
+                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
                     >
-                        <option value="">-- Nenhum serviço --</option>
-                        {(servicos || []).map(servico => (
-                            <option key={servico.id} value={servico.id}>{servico.nome}</option>
+                        <option value="">-- Nenhum (Despesa Geral) --</option>
+                        {(itensOrcamento || []).map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
+                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
+                    </small>
                 </label>
 
                 <label>
@@ -9908,36 +9928,19 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
     );
 };
 
-const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) => {
+const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, itensOrcamento = [] }) => {
     const [parcelas, setParcelas] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [parcelaEditando, setParcelaEditando] = useState(null);
     const [observacaoEditando, setObservacaoEditando] = useState(null);
     const [editandoDadosGerais, setEditandoDadosGerais] = useState(false);
-    const [servicos, setServicos] = useState([]);
     const [dadosGerais, setDadosGerais] = useState({
         descricao: pagamentoParcelado.descricao,
         fornecedor: pagamentoParcelado.fornecedor || '',
-        servico_id: pagamentoParcelado.servico_id || '',
+        orcamento_item_id: pagamentoParcelado.orcamento_item_id || '',
         segmento: pagamentoParcelado.segmento || 'Material'
     });
-
-    // Buscar serviços da obra
-    useEffect(() => {
-        const fetchServicos = async () => {
-            try {
-                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos-nomes`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setServicos(data.servicos || []);
-                }
-            } catch (error) {
-                console.error('Erro ao buscar serviços:', error);
-            }
-        };
-        fetchServicos();
-    }, [obraId]);
 
     useEffect(() => {
         carregarParcelas();
@@ -10185,8 +10188,8 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                 />
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     <select
-                                        value={dadosGerais.servico_id || ''}
-                                        onChange={(e) => setDadosGerais({...dadosGerais, servico_id: e.target.value || null})}
+                                        value={dadosGerais.orcamento_item_id || ''}
+                                        onChange={(e) => setDadosGerais({...dadosGerais, orcamento_item_id: e.target.value || null})}
                                         style={{ 
                                             flex: 1,
                                             minWidth: '200px',
@@ -10197,9 +10200,9 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                             background: 'white'
                                         }}
                                     >
-                                        <option value="">Sem vínculo com serviço (Despesa Extra)</option>
-                                        {servicos.map(s => (
-                                            <option key={s.id} value={s.id}>{s.nome}</option>
+                                        <option value="">Sem vínculo (Despesa Geral)</option>
+                                        {itensOrcamento.map(item => (
+                                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
                                         ))}
                                     </select>
                                     <select
@@ -10254,7 +10257,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                 </h2>
                                 <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
                                     Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
-                                    {pagamentoParcelado.servico_id && (
+                                    {pagamentoParcelado.orcamento_item_id && (
                                         <span style={{ 
                                             marginLeft: '8px',
                                             padding: '2px 8px',
@@ -10264,7 +10267,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave }) =>
                                             fontSize: '12px',
                                             fontWeight: '500'
                                         }}>
-                                            🔗 {servicos.find(s => s.id === pagamentoParcelado.servico_id)?.nome || 'Serviço vinculado'}
+                                            📦 {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
                                         </span>
                                     )}
                                 </p>
@@ -10705,6 +10708,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
+    // NOVO: Itens do orçamento para dropdown de vinculação
+    const [itensOrcamento, setItensOrcamento] = useState([]);
+    
     // NOVO: Estados para Expandir/Recolher seções
     const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
     const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
@@ -10840,11 +10846,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         setIsLoading(true);
         try {
             // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
-            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes] = await Promise.all([
+            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes, itensOrcRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`).catch(e => ({ ok: false, error: e })),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`).catch(e => ({ ok: false, error: e }))
+                fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`).catch(e => ({ ok: false, error: e })),
+                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`).catch(e => ({ ok: false, error: e }))
             ]);
 
             // Processar respostas principais
@@ -10872,6 +10879,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     setPagamentosServicoPendentes(data);
                 } catch (e) {
                     console.error('Erro ao processar pagamentos pendentes:', e);
+                }
+            }
+            
+            // NOVO: Carregar itens do orçamento para dropdown
+            if (itensOrcRes.ok) {
+                try {
+                    const data = await itensOrcRes.json();
+                    setItensOrcamento(data);
+                } catch (e) {
+                    console.error('Erro ao processar itens do orçamento:', e);
                 }
             }
 
@@ -11722,6 +11739,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         onClose={() => setCadastrarFuturoVisible(false)}
                         onSave={handleSavePagamentoFuturo}
                         obraId={obraId}
+                        itensOrcamento={itensOrcamento}
                     />
                 )}
 
@@ -11730,6 +11748,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         onClose={() => setCadastrarParceladoVisible(false)}
                         onSave={handleSavePagamentoParcelado}
                         obraId={obraId}
+                        itensOrcamento={itensOrcamento}
                     />
                 )}
                 
@@ -11741,6 +11760,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         }}
                         onSave={handleEditarPagamentoFuturo}
                         pagamento={pagamentoFuturoSelecionado}
+                        itensOrcamento={itensOrcamento}
                     />
                 )}
                 
@@ -11752,6 +11772,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             setEditarParcelasVisible(false);
                             setPagamentoParceladoSelecionado(null);
                         }}
+                        itensOrcamento={itensOrcamento}
                     />
                 )}
             </>
@@ -11768,6 +11789,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     onClose={() => setCadastrarFuturoVisible(false)}
                     onSave={handleSavePagamentoFuturo}
                     obraId={obraId}
+                    itensOrcamento={itensOrcamento}
                 />
             )}
 
@@ -11776,6 +11798,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     onClose={() => setCadastrarParceladoVisible(false)}
                     onSave={handleSavePagamentoParcelado}
                     obraId={obraId}
+                    itensOrcamento={itensOrcamento}
                 />
             )}
             
@@ -11787,6 +11810,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     }}
                     onSave={handleEditarPagamentoFuturo}
                     pagamento={pagamentoFuturoSelecionado}
+                    itensOrcamento={itensOrcamento}
                 />
             )}
             
@@ -11798,6 +11822,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         setEditarParcelasVisible(false);
                         setPagamentoParceladoSelecionado(null);
                     }}
+                    itensOrcamento={itensOrcamento}
                 />
             )}
         </Modal>
