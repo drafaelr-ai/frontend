@@ -2010,8 +2010,8 @@ const GastosPorSegmentoChart = ({ data }) => {
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     const [editandoItem, setEditandoItem] = useState(null);
-    const [servicos, setServicos] = useState([]);
-    const [loadingServicos, setLoadingServicos] = useState(false);
+    const [itensOrcamento, setItensOrcamento] = useState([]);
+    const [loadingItens, setLoadingItens] = useState(false);
     const ITENS_INICIAIS = 10;
     
     const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
@@ -2021,20 +2021,20 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
     const isMaster = user && user.role === 'master';
     
-    // Buscar serviços quando abrir modal de edição
-    const fetchServicos = async () => {
+    // Buscar itens do orçamento quando abrir modal de edição
+    const fetchItensOrcamento = async () => {
         if (!obraId) return;
-        setLoadingServicos(true);
+        setLoadingItens(true);
         try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`);
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
             if (response.ok) {
                 const data = await response.json();
-                setServicos(data);
+                setItensOrcamento(data);
             }
         } catch (err) {
-            console.error('Erro ao buscar serviços:', err);
+            console.error('Erro ao buscar itens do orçamento:', err);
         } finally {
-            setLoadingServicos(false);
+            setLoadingItens(false);
         }
     };
     
@@ -2042,12 +2042,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const handleEditarItem = (item) => {
         setEditandoItem({
             ...item,
-            servico_id: item.servico_id || ''
+            orcamento_item_id: item.orcamento_item_id || ''
         });
-        fetchServicos();
+        fetchItensOrcamento();
     };
     
-    // Salvar edição (vincular serviço)
+    // Salvar edição (vincular item do orçamento)
     const handleSalvarEdicao = async () => {
         if (!editandoItem) return;
         
@@ -2057,7 +2057,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             let numericId = strId;
             let method = 'PATCH';
             let body = {
-                servico_id: editandoItem.servico_id || null
+                orcamento_item_id: editandoItem.orcamento_item_id || null
             };
             
             // Extrair ID numérico
@@ -2075,7 +2075,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 const boletoId = editandoItem.boleto_id || strId.replace('boleto-', '');
                 endpoint = `${API_URL}/obras/${obraId}/boletos/${boletoId}`;
                 method = 'PUT';
-                body = { vinculado_servico_id: editandoItem.servico_id || null };
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null };
             } else if (editandoItem.tipo_registro === 'parcela_individual') {
                 // CORREÇÃO: Parcela individual - atualizar o PagamentoParcelado pai
                 const pagParceladoId = editandoItem.pagamento_parcelado_id;
@@ -2083,7 +2083,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                     endpoint = `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParceladoId}`;
                     method = 'PUT';
                     body = { 
-                        servico_id: editandoItem.servico_id || null,
+                        orcamento_item_id: editandoItem.orcamento_item_id || null,
                         segmento: editandoItem.tipo === 'Mão de Obra' ? 'Mão de Obra' : 'Material'
                     };
                 } else {
@@ -2414,9 +2414,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         </td>
                                         <td>
                                             <div style={{ fontWeight: '500' }}>{item.descricao}</div>
-                                            {item.servico_nome && (
+                                            {item.orcamento_item_nome && (
                                                 <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                                    Serviço: {item.servico_nome}
+                                                    📦 {item.orcamento_item_nome}
                                                 </div>
                                             )}
                                         </td>
@@ -2592,14 +2592,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                🔗 Vincular a Serviço:
+                                📦 Vincular a Item do Orçamento:
                             </label>
-                            {loadingServicos ? (
-                                <div style={{ color: '#666' }}>Carregando serviços...</div>
+                            {loadingItens ? (
+                                <div style={{ color: '#666' }}>Carregando itens...</div>
                             ) : (
                                 <select
-                                    value={editandoItem.servico_id || ''}
-                                    onChange={(e) => setEditandoItem({...editandoItem, servico_id: e.target.value})}
+                                    value={editandoItem.orcamento_item_id || ''}
+                                    onChange={(e) => setEditandoItem({...editandoItem, orcamento_item_id: e.target.value})}
                                     style={{
                                         width: '100%',
                                         padding: '10px',
@@ -2608,14 +2608,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         fontSize: '1em'
                                     }}
                                 >
-                                    <option value="">-- Nenhum serviço (Geral) --</option>
-                                    {servicos.map(s => (
-                                        <option key={s.id} value={s.id}>{s.nome}</option>
+                                    <option value="">-- Nenhum item (Despesa Geral) --</option>
+                                    {itensOrcamento.map(item => (
+                                        <option key={item.id} value={item.id}>{item.nome_completo}</option>
                                     ))}
                                 </select>
                             )}
                             <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                                💡 Vincular a um serviço faz o valor contar no orçamento do serviço
+                                💡 Vincular a um item faz o valor contar no orçamento
                             </small>
                         </div>
                         
@@ -2692,7 +2692,7 @@ const Modal = ({ children, onClose, customWidth }) => (
 );
 
 // <--- MUDANÇA: Modal de Edição (com valor_total e valor_pago) -->
-const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
+const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) => {
     const [formData, setFormData] = useState({});
     
     useEffect(() => {
@@ -2717,7 +2717,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
              } else {
                  initialData.data_vencimento = initialData.data || ''; // Fallback para data normal
              }
-             initialData.servico_id = initialData.servico_id ? parseInt(initialData.servico_id, 10) : '';
+             initialData.orcamento_item_id = initialData.orcamento_item_id ? parseInt(initialData.orcamento_item_id, 10) : '';
              initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
              initialData.fornecedor = initialData.fornecedor || ''; 
 
@@ -2734,7 +2734,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         if (name === 'valor_total' || name === 'valor_pago') { // <-- MUDANÇA
             finalValue = parseFloat(value) || 0;
         }
-        if (name === 'servico_id') {
+        if (name === 'orcamento_item_id') {
             finalValue = value ? parseInt(value, 10) : ''; 
         }
         if (name === 'prioridade') {
@@ -2747,7 +2747,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
         e.preventDefault(); 
         const dataToSend = {
             ...formData,
-            servico_id: formData.servico_id || null,
+            orcamento_item_id: formData.orcamento_item_id || null,
             prioridade: parseInt(formData.prioridade, 10) || 0,
             fornecedor: formData.fornecedor || null 
         };
@@ -2789,11 +2789,11 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, servicos }) => {
                 </div>
 
                 
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
+                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
+                    <select name="orcamento_item_id" value={formData.orcamento_item_id || ''} onChange={handleChange}>
+                        <option value="">Nenhum (Despesa Geral)</option>
+                        {(itensOrcamento || []).map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
                 </div>
@@ -3434,7 +3434,7 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
 // ----------------------------------------------------
 
 // <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
-const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
+const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString()); // NOVO campo
     const [descricao, setDescricao] = useState('');
@@ -3444,7 +3444,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
     const [tipo, setTipo] = useState('Material');
     // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
     const status = 'Pago';
-    const [servicoId, setServicoId] = useState('');
+    const [orcamentoItemId, setOrcamentoItemId] = useState('');
     const [prioridade, setPrioridade] = useState(0); 
 
     const handleSubmit = (e) => {
@@ -3459,7 +3459,7 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
             tipo,
             status: 'Pago', // MUDANÇA 2: Sempre "Pago"
             prioridade: parseInt(prioridade, 10) || 0,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null,
+            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
             is_gasto_avulso_historico: true // MUDANÇA 2: Flag para backend
         });
     };
@@ -3493,11 +3493,11 @@ const AddLancamentoModal = ({ onClose, onSave, servicos }) => {
                     <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
                 </div>
                 
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
+                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
+                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
+                        <option value="">Nenhum (Despesa Geral)</option>
+                        {(itensOrcamento || []).map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
                 </div>
@@ -3694,7 +3694,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
 };
 
 // MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO E BOLETO
-const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
+const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
@@ -3704,7 +3704,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
     const [valor, setValor] = useState('');
     const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
     const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
-    const [servicoId, setServicoId] = useState('');
+    const [orcamentoItemId, setOrcamentoItemId] = useState('');
     
     // 🆕 NOVOS ESTADOS PARA PARCELAMENTO
     const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
@@ -3770,7 +3770,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
         setNumeroParcelas('');
         setTemEntrada(false);
         setBoletosConfig([]);
-        // Mantém: fornecedor, pix, tipo, servicoId, meioPagamento, tipoFormaPagamento, periodicidade
+        // Mantém: fornecedor, pix, tipo, orcamentoItemId, meioPagamento, tipoFormaPagamento, periodicidade
     };
     
     // 🆕 Mostrar toast temporário
@@ -3806,7 +3806,7 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
             valor: parseFloat(valor) || 0,
             tipo,
             status,
-            servico_id: servicoId ? parseInt(servicoId, 10) : null,
+            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
             tipo_forma_pagamento: tipoFormaPagamento,
             meio_pagamento: meioPagamento
         };
@@ -4278,11 +4278,11 @@ const InserirPagamentoModal = ({ onClose, onSave, servicos, obraId }) => {
                 </div>
                 
                 <div className="form-group">
-                    <label>Vincular ao Serviço (Opcional)</label>
-                    <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
+                    <label>Vincular ao Item do Orçamento (Opcional)</label>
+                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
                         <option value="">Nenhum</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
+                        {(itensOrcamento || []).map(item => (
+                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
                 </div>
@@ -6218,7 +6218,8 @@ function Dashboard() {
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
-    const [servicos, setServicos] = useState([]);
+    const [servicos, setServicos] = useState([]); // Mantido para compatibilidade
+    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -6497,6 +6498,9 @@ const totalOrcamentosPendentes = useMemo(() => {
                 // NOVO: Buscar cronograma de obras para o Gantt
                 fetchCronogramaObras(obraId);
                 
+                // NOVO: Buscar itens do orçamento para dropdown
+                fetchItensOrcamento(obraId);
+                
                 // <--- NOVO: Buscar notas fiscais (opcional) -->
                 // CORREÇÃO: Tentar buscar mas não bloquear se falhar
                 try {
@@ -6506,8 +6510,22 @@ const totalOrcamentosPendentes = useMemo(() => {
                     console.log("Notas fiscais não disponíveis");
                 }
             })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); })
+            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => setIsLoading(false));
+    };
+    
+    // NOVO: Buscar itens do orçamento para dropdown
+    const fetchItensOrcamento = async (obraId) => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
+            if (response.ok) {
+                const data = await response.json();
+                setItensOrcamento(data);
+            }
+        } catch (error) {
+            console.log("Itens do orçamento não disponíveis:", error);
+            setItensOrcamento([]);
+        }
     };
     
     // CORREÇÃO: Processar URL inicial ao montar o componente
@@ -7334,7 +7352,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     setCurrentPage('home');
                                 }
                             }}
-                            servicos={servicos}
+                            itensOrcamento={itensOrcamento}
                             embedded={true}
                         />
                     )}
@@ -7428,11 +7446,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                         lancamento={editingLancamento} 
                         onClose={() => setEditingLancamento(null)} 
                         onSave={handleSaveEdit}
+                        itensOrcamento={itensOrcamento}
                     />}
 
                     {isAddLancamentoModalVisible && <AddLancamentoModal 
                         onClose={() => setAddLancamentoModalVisible(false)} 
-                        onSave={handleSaveLancamento} 
+                        onSave={handleSaveLancamento}
+                        itensOrcamento={itensOrcamento}
                     />}
                 </main>
 
