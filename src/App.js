@@ -6222,7 +6222,11 @@ function Dashboard() {
     const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    // CORREÇÃO: Iniciar loading se tiver obra na URL
+    const [isLoading, setIsLoading] = useState(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        return !!urlParams.get('obra');
+    });
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
@@ -6276,7 +6280,16 @@ function Dashboard() {
     const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
     
     // === NOVO: Estados para Sidebar ===
-    const [currentPage, setCurrentPage] = useState('obras');
+    // CORREÇÃO: Iniciar como null para não piscar na tela de obras
+    const [currentPage, setCurrentPage] = useState(() => {
+        // Ler da URL imediatamente para evitar flash
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageFromUrl = urlParams.get('page');
+        const obraFromUrl = urlParams.get('obra');
+        if (obraFromUrl) return pageFromUrl || 'home';
+        if (pageFromUrl) return pageFromUrl;
+        return 'obras';
+    });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
