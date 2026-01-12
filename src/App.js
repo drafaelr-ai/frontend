@@ -602,10 +602,20 @@ const WindowsNavBar = ({
             setObraSelecionada(null);
             setCurrentPage('obras');
         } else {
-            const obra = obras.find(o => o.id === obraId);
-            if (obra) {
-                setObraSelecionada(obra);
-                setCurrentPage('home');
+            // CORREÇÃO: Usar navigateTo para atualizar URL e chamar fetchObraData
+            if (typeof window.navigateTo === 'function') {
+                window.navigateTo('home', obraId);
+            }
+            // Chamar handleSelectObra se disponível globalmente
+            if (typeof window.handleSelectObra === 'function') {
+                window.handleSelectObra(obraId);
+            } else {
+                // Fallback: só mudar a obra visualmente (dados antigos)
+                const obra = obras.find(o => o.id === obraId);
+                if (obra) {
+                    setObraSelecionada(obra);
+                    setCurrentPage('home');
+                }
             }
         }
     };
@@ -6995,6 +7005,9 @@ const totalOrcamentosPendentes = useMemo(() => {
             setCurrentPage('home');
         }
     };
+    
+    // Expor handleSelectObra globalmente para o Sidebar
+    window.handleSelectObra = handleSelectObra;
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
     // CORREÇÃO: Se estiver carregando obra da URL, mostrar loading
