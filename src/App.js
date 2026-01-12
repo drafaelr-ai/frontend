@@ -6530,7 +6530,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 Promise.allSettled([
                     fetchCronogramaObras(obraId),
                     fetchItensOrcamento(obraId),
-                    fetchNotasFiscais(obraId).catch(() => {})
+                    Promise.resolve().then(() => fetchNotasFiscais(obraId))
                 ]).then(() => {
                     console.log("Dados secundários carregados");
                 });
