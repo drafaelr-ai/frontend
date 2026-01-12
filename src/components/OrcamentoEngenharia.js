@@ -619,6 +619,12 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         salvar_biblioteca: !isEdicao
     });
     
+    // NOVO: Estados para modo de entrada (unitário ou total)
+    const [modoEntradaMO, setModoEntradaMO] = useState('unitario'); // 'unitario' ou 'total'
+    const [modoEntradaMat, setModoEntradaMat] = useState('unitario'); // 'unitario' ou 'total'
+    const [valorTotalMO, setValorTotalMO] = useState('');
+    const [valorTotalMat, setValorTotalMat] = useState('');
+    
     const [salvando, setSalvando] = useState(false);
     const [autocomplete, setAutocomplete] = useState({ show: false, results: { usuario: [], base: [] } });
     const [buscando, setBuscando] = useState(false);
@@ -887,27 +893,121 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     step="0.01"
                                 />
                             </div>
+                            
+                            {/* Mão de Obra */}
                             <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Mão de Obra (R$/{form.unidade})</label>
-                                <input 
-                                    type="number" 
-                                    style={styles.formInput}
-                                    value={form.preco_mao_obra}
-                                    onChange={e => setForm({...form, preco_mao_obra: e.target.value})}
-                                    placeholder="0,00"
-                                    step="0.01"
-                                />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <label style={styles.formLabel}>Mão de Obra</label>
+                                    <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={modoEntradaMO === 'unitario'} 
+                                                onChange={() => setModoEntradaMO('unitario')}
+                                                style={{ margin: 0 }}
+                                            />
+                                            Por {form.unidade}
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={modoEntradaMO === 'total'} 
+                                                onChange={() => setModoEntradaMO('total')}
+                                                style={{ margin: 0 }}
+                                            />
+                                            Valor Total
+                                        </label>
+                                    </div>
+                                </div>
+                                {modoEntradaMO === 'unitario' ? (
+                                    <input 
+                                        type="number" 
+                                        style={styles.formInput}
+                                        value={form.preco_mao_obra}
+                                        onChange={e => setForm({...form, preco_mao_obra: e.target.value})}
+                                        placeholder={`R$ por ${form.unidade}`}
+                                        step="0.01"
+                                    />
+                                ) : (
+                                    <input 
+                                        type="number" 
+                                        style={{...styles.formInput, backgroundColor: '#fef3c7'}}
+                                        value={valorTotalMO}
+                                        onChange={e => {
+                                            setValorTotalMO(e.target.value);
+                                            const qtd = parseFloat(form.quantidade) || 0;
+                                            if (qtd > 0) {
+                                                const unitario = (parseFloat(e.target.value) || 0) / qtd;
+                                                setForm({...form, preco_mao_obra: unitario.toFixed(2)});
+                                            }
+                                        }}
+                                        placeholder="Valor total da MO"
+                                        step="0.01"
+                                    />
+                                )}
+                                {modoEntradaMO === 'total' && form.preco_mao_obra && (
+                                    <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                        = R$ {parseFloat(form.preco_mao_obra).toFixed(2)}/{form.unidade}
+                                    </div>
+                                )}
                             </div>
+                            
+                            {/* Material */}
                             <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Material (R$/{form.unidade})</label>
-                                <input 
-                                    type="number" 
-                                    style={styles.formInput}
-                                    value={form.preco_material}
-                                    onChange={e => setForm({...form, preco_material: e.target.value})}
-                                    placeholder="0,00"
-                                    step="0.01"
-                                />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <label style={styles.formLabel}>Material</label>
+                                    <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={modoEntradaMat === 'unitario'} 
+                                                onChange={() => setModoEntradaMat('unitario')}
+                                                style={{ margin: 0 }}
+                                            />
+                                            Por {form.unidade}
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                                            <input 
+                                                type="radio" 
+                                                checked={modoEntradaMat === 'total'} 
+                                                onChange={() => setModoEntradaMat('total')}
+                                                style={{ margin: 0 }}
+                                            />
+                                            Valor Total
+                                        </label>
+                                    </div>
+                                </div>
+                                {modoEntradaMat === 'unitario' ? (
+                                    <input 
+                                        type="number" 
+                                        style={styles.formInput}
+                                        value={form.preco_material}
+                                        onChange={e => setForm({...form, preco_material: e.target.value})}
+                                        placeholder={`R$ por ${form.unidade}`}
+                                        step="0.01"
+                                    />
+                                ) : (
+                                    <input 
+                                        type="number" 
+                                        style={{...styles.formInput, backgroundColor: '#fef3c7'}}
+                                        value={valorTotalMat}
+                                        onChange={e => {
+                                            setValorTotalMat(e.target.value);
+                                            const qtd = parseFloat(form.quantidade) || 0;
+                                            if (qtd > 0) {
+                                                const unitario = (parseFloat(e.target.value) || 0) / qtd;
+                                                setForm({...form, preco_material: unitario.toFixed(2)});
+                                            }
+                                        }}
+                                        placeholder="Valor total do material"
+                                        step="0.01"
+                                    />
+                                )}
+                                {modoEntradaMat === 'total' && form.preco_material && (
+                                    <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                        = R$ {parseFloat(form.preco_material).toFixed(2)}/{form.unidade}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
