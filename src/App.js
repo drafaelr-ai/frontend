@@ -7452,6 +7452,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {currentPage === 'agenda' && (
                         <AgendaDemandas 
                             obraId={obraSelecionada.id}
+                            apiUrl={API_URL}
                             obraNome={obraSelecionada.nome}
                             onClose={() => setCurrentPage('home')}
                             embedded={true}
