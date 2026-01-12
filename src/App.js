@@ -6222,11 +6222,16 @@ function Dashboard() {
     const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
+    
+    // CORREÇÃO: Verificar URL uma única vez no início
+    const urlParamsInicial = new URLSearchParams(window.location.search);
+    const obraIdDaUrl = urlParamsInicial.get('obra');
+    const temObraNaUrl = !!obraIdDaUrl;
+    
     // CORREÇÃO: Iniciar loading se tiver obra na URL
-    const [isLoading, setIsLoading] = useState(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        return !!urlParams.get('obra');
-    });
+    const [isLoading, setIsLoading] = useState(temObraNaUrl);
+    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para não causar re-render)
+    const [carregandoObraDaUrl, setCarregandoObraDaUrl] = useState(temObraNaUrl);
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
@@ -6524,7 +6529,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 }
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
-            .finally(() => setIsLoading(false));
+            .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
     // NOVO: Buscar itens do orçamento para dropdown
@@ -6557,9 +6562,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                 console.log("[URL INIT] Carregando obra:", obraId);
                 fetchObraData(obraId);
                 setCurrentPage(pageFromUrl || 'home');
+            } else {
+                setCarregandoObraDaUrl(false);
             }
-        } else if (pageFromUrl) {
-            setCurrentPage(pageFromUrl);
+        } else {
+            setCarregandoObraDaUrl(false);
+            if (pageFromUrl) {
+                setCurrentPage(pageFromUrl);
+            }
         }
         
         // Atualizar history state
@@ -6987,6 +6997,33 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
+    // CORREÇÃO: Se estiver carregando obra da URL, mostrar loading
+    if (carregandoObraDaUrl) {
+        return (
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh',
+                background: 'var(--cor-fundo, #f5f5f5)'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div className="loading-spinner" style={{
+                        width: '50px',
+                        height: '50px',
+                        border: '4px solid #e0e0e0',
+                        borderTop: '4px solid var(--cor-primaria, #6c5ce7)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 15px'
+                    }} />
+                    <p style={{ color: '#666' }}>Carregando...</p>
+                </div>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
+
     if (!obraSelecionada) {
         // 🆕 Se estiver na página de BI, mostrar dashboard
         if (currentPage === 'bi') {
