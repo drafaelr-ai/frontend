@@ -11657,8 +11657,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <div className="parcelas-cards-grid">
                             {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
-                                const parcelasPagas = pag.proxima_parcela_numero ? pag.proxima_parcela_numero - 1 : pag.numero_parcelas;
-                                const progresso = Math.round((parcelasPagas / pag.numero_parcelas) * 100);
+                                // CORREÇÃO: Usar parcelas_pagas do backend, não calcular por proxima_parcela_numero
+                                const parcelasPagas = pag.parcelas_pagas || 0;
+                                const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
                                 
                                 // Cores por periodicidade
                                 const cores = {
