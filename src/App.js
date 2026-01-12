@@ -6525,15 +6525,16 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // OTIMIZAÇÃO: Carregar dados secundários em paralelo (não bloqueia)
-                // Usar Promise.allSettled para não falhar se algum der erro
-                Promise.allSettled([
-                    fetchCronogramaObras(obraId),
-                    fetchItensOrcamento(obraId),
-                    Promise.resolve().then(() => fetchNotasFiscais(obraId))
-                ]).then(() => {
-                    console.log("Dados secundários carregados");
-                });
+                // Carregar dados secundários (não bloqueia a tela principal)
+                fetchCronogramaObras(obraId);
+                fetchItensOrcamento(obraId);
+                
+                // Notas fiscais - tentar carregar mas não falhar se não existir
+                try {
+                    fetchNotasFiscais(obraId);
+                } catch (error) {
+                    console.log("Notas fiscais não disponíveis");
+                }
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
