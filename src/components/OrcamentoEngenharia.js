@@ -674,15 +674,24 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         setBuscando(false);
     }, [apiUrl]);
 
-    // Debounce para autocomplete
+    // Debounce para autocomplete - CORREÇÃO: não mostrar em modo edição inicial
+    const [descricaoEditada, setDescricaoEditada] = useState(false);
+    
     useEffect(() => {
+        // Só buscar autocomplete se:
+        // 1. Não está em modo edição OU
+        // 2. Está em modo edição mas o usuário já editou a descrição
+        if (isEdicao && !descricaoEditada) {
+            return; // Não buscar autocomplete se está editando e não mudou a descrição
+        }
+        
         const timer = setTimeout(() => {
             if (form.descricao.length >= 2) {
                 buscarAutocomplete(form.descricao);
             }
         }, 300);
         return () => clearTimeout(timer);
-    }, [form.descricao, buscarAutocomplete]);
+    }, [form.descricao, buscarAutocomplete, isEdicao, descricaoEditada]);
 
     // Selecionar item do autocomplete
     const selecionarAutocomplete = (servico) => {
@@ -798,9 +807,17 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 type="text" 
                                 style={styles.formInput}
                                 value={form.descricao}
-                                onChange={e => setForm({...form, descricao: e.target.value})}
+                                onChange={e => {
+                                    setForm({...form, descricao: e.target.value});
+                                    setDescricaoEditada(true); // Marcar que usuário está editando
+                                }}
                                 placeholder="Digite para buscar ou criar..."
-                                onFocus={() => form.descricao.length >= 2 && buscarAutocomplete(form.descricao)}
+                                onFocus={() => {
+                                    // Só mostrar autocomplete no foco se NÃO está em modo edição
+                                    if (!isEdicao && form.descricao.length >= 2) {
+                                        buscarAutocomplete(form.descricao);
+                                    }
+                                }}
                                 onBlur={() => setTimeout(() => setAutocomplete(prev => ({...prev, show: false})), 200)}
                             />
                             {buscando && <span style={{ position: 'absolute', right: 12, top: 12, fontSize: '12px', color: '#9ca3af' }}>Buscando...</span>}
