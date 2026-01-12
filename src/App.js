@@ -10001,6 +10001,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
     const [dadosGerais, setDadosGerais] = useState({
         descricao: pagamentoParcelado.descricao,
         fornecedor: pagamentoParcelado.fornecedor || '',
+        pix: pagamentoParcelado.pix || '',
         orcamento_item_id: pagamentoParcelado.orcamento_item_id || '',
         segmento: pagamentoParcelado.segmento || 'Material'
     });
@@ -10249,6 +10250,19 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                     }}
                                     placeholder="Fornecedor"
                                 />
+                                <input
+                                    type="text"
+                                    value={dadosGerais.pix}
+                                    onChange={(e) => setDadosGerais({...dadosGerais, pix: e.target.value})}
+                                    style={{ 
+                                        fontSize: '14px', 
+                                        padding: '6px 12px', 
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--cor-borda)',
+                                        background: 'white'
+                                    }}
+                                    placeholder="Chave PIX (CPF, CNPJ, E-mail, Telefone ou Aleatória)"
+                                />
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     <select
                                         value={dadosGerais.orcamento_item_id || ''}
@@ -10320,6 +10334,11 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                 </h2>
                                 <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
                                     Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
+                                    {pagamentoParcelado.pix && (
+                                        <span style={{ marginLeft: '8px' }}>
+                                            • PIX: {pagamentoParcelado.pix}
+                                        </span>
+                                    )}
                                     {pagamentoParcelado.orcamento_item_id && (
                                         <span style={{ 
                                             marginLeft: '8px',
