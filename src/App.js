@@ -6507,6 +6507,8 @@ const totalOrcamentosPendentes = useMemo(() => {
     const fetchObraData = (obraId) => {
         setIsLoading(true);
         console.log(`Buscando dados da obra ID: ${obraId}`);
+        
+        // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
@@ -6523,20 +6525,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // NOVO: Buscar cronograma de obras para o Gantt
-                fetchCronogramaObras(obraId);
-                
-                // NOVO: Buscar itens do orçamento para dropdown
-                fetchItensOrcamento(obraId);
-                
-                // <--- NOVO: Buscar notas fiscais (opcional) -->
-                // CORREÇÃO: Tentar buscar mas não bloquear se falhar
-                try {
-                    fetchNotasFiscais(obraId);
-                } catch (error) {
-                    // Ignorar erro silenciosamente - notas fiscais são opcionais
-                    console.log("Notas fiscais não disponíveis");
-                }
+                // OTIMIZAÇÃO: Carregar dados secundários em paralelo (não bloqueia)
+                // Usar Promise.allSettled para não falhar se algum der erro
+                Promise.allSettled([
+                    fetchCronogramaObras(obraId),
+                    fetchItensOrcamento(obraId),
+                    fetchNotasFiscais(obraId).catch(() => {})
+                ]).then(() => {
+                    console.log("Dados secundários carregados");
+                });
             })
             .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
