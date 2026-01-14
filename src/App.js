@@ -292,8 +292,8 @@ const NotificacoesDropdown = ({ user }) => {
                         top: '100%',
                         right: 0,
                         marginTop: '10px',
-                        width: '320px',
-                        maxHeight: '400px',
+                        width: '380px',
+                        maxHeight: '450px',
                         backgroundColor: 'white',
                         borderRadius: '12px',
                         boxShadow: '0 5px 40px rgba(0,0,0,0.25)',
@@ -304,44 +304,52 @@ const NotificacoesDropdown = ({ user }) => {
                     }}>
                         {/* Header */}
                         <div style={{
-                            padding: '15px',
+                            padding: '12px 15px',
                             borderBottom: '1px solid #e5e7eb',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
                             backgroundColor: '#f8fafc'
                         }}>
-                            <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                            {/* Título */}
+                            <div style={{ 
+                                fontWeight: '600', 
+                                color: '#1e293b',
+                                marginBottom: '10px',
+                                fontSize: '1em'
+                            }}>
                                 🔔 Notificações
-                            </span>
+                            </div>
+                            {/* Botões de ação */}
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {count > 0 && (
                                     <button
                                         onClick={marcarTodasLidas}
                                         style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            color: '#3b82f6',
+                                            background: '#e0f2fe',
+                                            border: '1px solid #7dd3fc',
+                                            borderRadius: '4px',
+                                            color: '#0369a1',
                                             cursor: 'pointer',
-                                            fontSize: '0.8em'
+                                            fontSize: '0.75em',
+                                            padding: '4px 8px'
                                         }}
                                         title="Marcar todas como lidas"
                                     >
-                                        ✓ Todas
+                                        ✓ Marcar lidas
                                     </button>
                                 )}
                                 <button
                                     onClick={limparLidas}
                                     style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#6b7280',
+                                        background: '#f3f4f6',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '4px',
+                                        color: '#4b5563',
                                         cursor: 'pointer',
-                                        fontSize: '0.8em'
+                                        fontSize: '0.75em',
+                                        padding: '4px 8px'
                                     }}
                                     title="Limpar notificações lidas"
                                 >
-                                    🗑️ Lidas
+                                    🗑️ Limpar lidas
                                 </button>
                                 <button
                                     onClick={limparTodas}
@@ -351,13 +359,13 @@ const NotificacoesDropdown = ({ user }) => {
                                         borderRadius: '4px',
                                         color: '#dc2626',
                                         cursor: 'pointer',
-                                        fontSize: '0.8em',
+                                        fontSize: '0.75em',
                                         padding: '4px 8px',
-                                        fontWeight: '500'
+                                        fontWeight: '600'
                                     }}
                                     title="Limpar TODAS as notificações"
                                 >
-                                    🗑️ Todas
+                                    🗑️ Limpar TODAS
                                 </button>
                             </div>
                         </div>
