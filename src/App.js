@@ -9286,6 +9286,36 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
     const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
     const [reanexandoId, setReanexandoId] = useState(null); // ID da movimentação sendo editada
+    const [deletandoId, setDeletandoId] = useState(null); // ID da movimentação sendo deletada
+
+    // Função para deletar movimentação
+    const handleDeletarMovimentacao = async (movId, descricao) => {
+        if (!window.confirm(`Tem certeza que deseja apagar a movimentação "${descricao}"?\n\nEssa ação não pode ser desfeita e o saldo será ajustado automaticamente.`)) {
+            return;
+        }
+        
+        try {
+            setDeletandoId(movId);
+            
+            const response = await fetchWithAuth(
+                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
+                { method: 'DELETE' }
+            );
+            
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.erro || 'Erro ao deletar movimentação');
+            }
+            
+            alert('✅ Movimentação apagada com sucesso!');
+            carregarDados(); // Recarregar dados para atualizar saldo
+        } catch (err) {
+            console.error('Erro ao deletar movimentação:', err);
+            alert('Erro ao apagar movimentação: ' + err.message);
+        } finally {
+            setDeletandoId(null);
+        }
+    };
 
     // Função para reanexar comprovante
     const handleReanexarComprovante = async (movId, file) => {
@@ -9655,38 +9685,60 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                         </div>
                                     )}
                                     
-                                    {/* Botão para reanexar comprovante */}
-                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                        <label 
-                                            style={{ 
-                                                cursor: 'pointer',
-                                                padding: '5px 10px',
-                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
+                                    {/* Botão para reanexar comprovante e Apagar */}
+                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <label 
+                                                style={{ 
+                                                    cursor: 'pointer',
+                                                    padding: '5px 10px',
+                                                    backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
+                                                    color: 'white',
+                                                    borderRadius: '5px',
+                                                    fontSize: '0.85em',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px'
+                                                }}
+                                            >
+                                                {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        if (e.target.files[0]) {
+                                                            handleReanexarComprovante(mov.id, e.target.files[0]);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                            {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
+                                                <span style={{ fontSize: '0.75em', color: '#999' }}>
+                                                    ⚠️ Precisa reanexar
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Botão Apagar */}
+                                        <button
+                                            onClick={() => handleDeletarMovimentacao(mov.id, mov.descricao)}
+                                            disabled={deletandoId === mov.id}
+                                            style={{
+                                                padding: '5px 12px',
+                                                backgroundColor: deletandoId === mov.id ? '#ccc' : '#dc2626',
                                                 color: 'white',
+                                                border: 'none',
                                                 borderRadius: '5px',
                                                 fontSize: '0.85em',
-                                                display: 'inline-flex',
+                                                cursor: deletandoId === mov.id ? 'not-allowed' : 'pointer',
+                                                display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '5px'
                                             }}
                                         >
-                                            {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                style={{ display: 'none' }}
-                                                onChange={(e) => {
-                                                    if (e.target.files[0]) {
-                                                        handleReanexarComprovante(mov.id, e.target.files[0]);
-                                                    }
-                                                }}
-                                            />
-                                        </label>
-                                        {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                            <span style={{ fontSize: '0.75em', color: '#999' }}>
-                                                ⚠️ Precisa reanexar
-                                            </span>
-                                        )}
+                                            {deletandoId === mov.id ? '⏳ Apagando...' : '🗑️ Apagar'}
+                                        </button>
                                     </div>
                                 </div>
                             ))}
