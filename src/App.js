@@ -314,7 +314,7 @@ const NotificacoesDropdown = ({ user }) => {
                             <span style={{ fontWeight: '600', color: '#1e293b' }}>
                                 🔔 Notificações
                             </span>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {count > 0 && (
                                     <button
                                         onClick={marcarTodasLidas}
@@ -346,11 +346,14 @@ const NotificacoesDropdown = ({ user }) => {
                                 <button
                                     onClick={limparTodas}
                                     style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#ef4444',
+                                        background: '#fee2e2',
+                                        border: '1px solid #fca5a5',
+                                        borderRadius: '4px',
+                                        color: '#dc2626',
                                         cursor: 'pointer',
-                                        fontSize: '0.8em'
+                                        fontSize: '0.8em',
+                                        padding: '4px 8px',
+                                        fontWeight: '500'
                                     }}
                                     title="Limpar TODAS as notificações"
                                 >
@@ -6594,6 +6597,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     const fetchCronogramaObras = async (obraId) => {
         try {
             // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
+            // As etapas já vêm incluídas na resposta do backend via to_dict()
             const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
             if (!response.ok) {
                 console.log("Erro ao buscar cronogramas:", response.status);
@@ -6610,35 +6614,21 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return;
             }
             
-            // Para cada cronograma, buscar as etapas
-            const cronogramasComEtapas = await Promise.all(
-                cronogramasData.map(async (cron) => {
-                    try {
-                        const etapasResp = await fetchWithAuth(`${API_URL}/cronograma/${cron.id}/etapas`);
-                        let etapas = [];
-                        if (etapasResp.ok) {
-                            etapas = await etapasResp.json();
-                        }
-                        return {
-                            servico_id: cron.servico_id,
-                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
-                            cronograma_id: cron.id,
-                            etapas: Array.isArray(etapas) ? etapas : []
-                        };
-                    } catch (e) {
-                        console.log(`Erro ao buscar etapas do cronograma ${cron.id}:`, e);
-                        return {
-                            servico_id: cron.servico_id,
-                            servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
-                            cronograma_id: cron.id,
-                            etapas: []
-                        };
-                    }
-                })
-            );
+            // As etapas já vêm na resposta do backend, não precisa buscar separadamente
+            const cronogramasFormatados = cronogramasData.map((cron) => ({
+                servico_id: cron.servico_id,
+                servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
+                cronograma_id: cron.id,
+                // Usar diretamente as etapas que já vieram na resposta
+                etapas: Array.isArray(cron.etapas) ? cron.etapas : [],
+                // Incluir dados adicionais do cronograma para o Gantt
+                data_inicio: cron.data_inicio,
+                data_fim_prevista: cron.data_fim_prevista,
+                percentual_conclusao: cron.percentual_conclusao || 0
+            }));
             
-            console.log("Cronogramas de obras carregados:", cronogramasComEtapas);
-            setCronogramaObras(cronogramasComEtapas);
+            console.log("Cronogramas de obras carregados:", cronogramasFormatados);
+            setCronogramaObras(cronogramasFormatados);
         } catch (error) {
             console.log("Erro ao buscar cronograma de obras:", error);
             setCronogramaObras([]);

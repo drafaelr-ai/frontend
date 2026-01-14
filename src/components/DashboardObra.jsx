@@ -170,9 +170,11 @@ const GanttChart = ({ cronograma }) => {
         const etapas = [];
         
         cronograma.forEach((servico, servicoIdx) => {
-            // Adicionar linha de cabeçalho do serviço
-            if (servico.etapas && servico.etapas.length > 0) {
-                // Calcular datas min/max do serviço
+            // Verificar se o serviço tem etapas
+            const temEtapas = servico.etapas && servico.etapas.length > 0;
+            
+            if (temEtapas) {
+                // CASO 1: Serviço com etapas - processar normalmente
                 let servicoInicio = null;
                 let servicoFim = null;
                 let servicoPercentual = 0;
@@ -237,6 +239,21 @@ const GanttChart = ({ cronograma }) => {
                             });
                         });
                     }
+                });
+            } else {
+                // CASO 2: Serviço SEM etapas - usar dados do próprio cronograma
+                // Isso mostra o serviço no Gantt mesmo quando não tem etapas criadas
+                etapas.push({
+                    id: `servico-${servico.cronograma_id || servicoIdx}`,
+                    nome: servico.servico_nome || `Serviço ${servicoIdx + 1}`,
+                    nivel: -1,
+                    numero: `#${servicoIdx + 1}`,
+                    dataInicio: servico.data_inicio || null,
+                    dataFim: servico.data_fim_prevista || servico.data_fim || null,
+                    percentual: servico.percentual_conclusao || 0,
+                    servico: servico.servico_nome,
+                    isServico: true,
+                    isEtapaPai: false
                 });
             }
         });
