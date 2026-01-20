@@ -10051,7 +10051,8 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
         descricao: pagamentoParcelado.descricao,
         fornecedor: pagamentoParcelado.fornecedor || '',
         pix: pagamentoParcelado.pix || '',
-        orcamento_item_id: pagamentoParcelado.orcamento_item_id || '',
+        // CORREÇÃO: Converter para string para comparação correta no select
+        orcamento_item_id: pagamentoParcelado.orcamento_item_id ? String(pagamentoParcelado.orcamento_item_id) : '',
         segmento: pagamentoParcelado.segmento || 'Material'
     });
 
@@ -10328,7 +10329,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                     >
                                         <option value="">Sem vínculo (Despesa Geral)</option>
                                         {itensOrcamento.map(item => (
-                                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
+                                            <option key={item.id} value={String(item.id)}>{item.nome_completo}</option>
                                         ))}
                                     </select>
                                     <select
