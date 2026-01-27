@@ -1053,27 +1053,16 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     />
                                 </div>
                             </div>
-                            <div style={styles.formGroup}>
-                                <label style={styles.formLabel}>Rateio Estimado (para relatórios)</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontSize: '13px' }}>MO:</span>
-                                    <input 
-                                        type="range" 
-                                        min="0" 
-                                        max="100" 
-                                        value={form.rateio_mo}
-                                        onChange={e => setForm({
-                                            ...form, 
-                                            rateio_mo: parseInt(e.target.value),
-                                            rateio_mat: 100 - parseInt(e.target.value)
-                                        })}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <span style={{ fontSize: '13px', minWidth: '80px' }}>
-                                        {form.rateio_mo}% / {form.rateio_mat}%
-                                    </span>
-                                    <span style={{ fontSize: '13px' }}>:Mat</span>
-                                </div>
+                            {/* Composto: Não mostra rateio - valor vai direto para "Serviço" */}
+                            <div style={{ 
+                                padding: '8px 12px', 
+                                backgroundColor: '#fef3c7', 
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                color: '#92400e',
+                                marginBottom: '8px'
+                            }}>
+                                💡 Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)
                             </div>
                         </>
                     )}
@@ -2793,6 +2782,18 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         Pago: {formatCurrency(resumoComBdi.total_pago_mat)}
                     </div>
                 </div>
+                {/* NOVO: Card de Serviço (itens compostos) */}
+                {(resumoComBdi.total_servico || 0) > 0 && (
+                    <div style={styles.summaryCard}>
+                        <div style={styles.summaryLabel}>Serviço</div>
+                        <div style={{ ...styles.summaryValue, color: '#8b5cf6', fontSize: '20px' }}>
+                            {formatCurrency(resumoComBdi.total_servico || 0)}
+                        </div>
+                        <div style={styles.summarySubtext}>
+                            Pago: {formatCurrency(resumoComBdi.total_pago_servico || 0)}
+                        </div>
+                    </div>
+                )}
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>BDI ({bdi}%)</div>
                     <div style={{ ...styles.summaryValue, color: '#f59e0b', fontSize: '20px' }}>
@@ -2963,18 +2964,39 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                     {formatNumber(item.quantidade, item.unidade === 'vb' || item.unidade === 'un' ? 0 : 2)}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    <div style={{ color: '#4f46e5' }}>{formatCurrency(item.total_mao_obra)}</div>
-                                                    {item.valor_pago_mo > 0 && (
-                                                        <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mo)}</div>
+                                                    {item.tipo_composicao === 'composto' ? (
+                                                        <div style={{ color: '#9ca3af' }}>-</div>
+                                                    ) : (
+                                                        <>
+                                                            <div style={{ color: '#4f46e5' }}>{formatCurrency(item.total_mao_obra)}</div>
+                                                            {item.valor_pago_mo > 0 && (
+                                                                <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mo)}</div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    <div style={{ color: '#10b981' }}>{formatCurrency(item.total_material)}</div>
-                                                    {item.valor_pago_mat > 0 && (
-                                                        <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mat)}</div>
+                                                    {item.tipo_composicao === 'composto' ? (
+                                                        <div style={{ color: '#9ca3af' }}>-</div>
+                                                    ) : (
+                                                        <>
+                                                            <div style={{ color: '#10b981' }}>{formatCurrency(item.total_material)}</div>
+                                                            {item.valor_pago_mat > 0 && (
+                                                                <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mat)}</div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </td>
-                                                <td style={{ ...styles.td, ...styles.tdTotal }}>{formatCurrency(item.total)}</td>
+                                                <td style={{ ...styles.td, ...styles.tdTotal }}>
+                                                    {item.tipo_composicao === 'composto' ? (
+                                                        <div style={{ color: '#8b5cf6', fontWeight: '600' }}>
+                                                            {formatCurrency(item.total)}
+                                                            <div style={{ fontSize: '9px', color: '#a78bfa' }}>serviço</div>
+                                                        </div>
+                                                    ) : (
+                                                        formatCurrency(item.total)
+                                                    )}
+                                                </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero, color: '#16a34a', fontWeight: '600' }}>
                                                     {formatCurrency(item.total_pago)}
                                                 </td>
