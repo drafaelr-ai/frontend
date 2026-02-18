@@ -1859,7 +1859,7 @@ const AuthContext = createContext(null);
 const useAuth = () => useContext(AuthContext);
 
 // --- COMPONENTE DE LOGIN ---
-const LoginScreen = () => {
+const LoginScreen = ({ onBack }) => {
     const { login } = useAuth(); 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -1901,6 +1901,34 @@ const LoginScreen = () => {
             <div className="floating-shape circle-1"></div>
             <div className="floating-shape square-1"></div>
             <div className="floating-shape triangle-1"></div>
+            
+            {/* Botão Voltar */}
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    style={{
+                        position: 'absolute',
+                        top: '30px',
+                        left: '30px',
+                        background: 'rgba(255,255,255,0.2)',
+                        border: 'none',
+                        color: '#fff',
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease',
+                        zIndex: 10
+                    }}
+                    onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
+                    onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+                >
+                    ← Voltar
+                </button>
+            )}
             
             {/* Card de login */}
             <div className="login-card">
@@ -11964,27 +11992,386 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
+// --- TELA DE SELEÇÃO DE MÓDULO ---
+const ModuleSelectorScreen = ({ onSelectModule }) => {
+    const [hoveredModule, setHoveredModule] = useState(null);
+    
+    const modules = [
+        {
+            id: 'obras',
+            icon: '🏗️',
+            title: 'Obras',
+            subtitle: 'Gestão de Construções',
+            description: 'Gerencie obras, orçamentos, cronogramas, pagamentos e equipes.',
+            color: '#6366f1',
+            gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+        },
+        {
+            id: 'admin',
+            icon: '🏢',
+            title: 'Administração',
+            subtitle: 'Gestão Patrimonial',
+            description: 'Controle custos de imóveis, aluguéis, despesas e receitas.',
+            color: '#10b981',
+            gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+        }
+    ];
+    
+    return (
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+            {/* Logo */}
+            <div style={{
+                marginBottom: '40px',
+                textAlign: 'center'
+            }}>
+                <h1 style={{
+                    fontSize: '48px',
+                    fontWeight: '700',
+                    color: '#fff',
+                    margin: 0,
+                    letterSpacing: '-1px',
+                    textShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                }}>
+                    Obraly
+                </h1>
+                <p style={{
+                    fontSize: '16px',
+                    color: 'rgba(255,255,255,0.7)',
+                    marginTop: '8px'
+                }}>
+                    Selecione o módulo para continuar
+                </p>
+            </div>
+            
+            {/* Cards de Módulos */}
+            <div style={{
+                display: 'flex',
+                gap: '30px',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                maxWidth: '800px'
+            }}>
+                {modules.map(module => (
+                    <div
+                        key={module.id}
+                        onClick={() => onSelectModule(module.id)}
+                        onMouseEnter={() => setHoveredModule(module.id)}
+                        onMouseLeave={() => setHoveredModule(null)}
+                        style={{
+                            width: '320px',
+                            padding: '40px 30px',
+                            borderRadius: '24px',
+                            background: hoveredModule === module.id 
+                                ? 'rgba(255,255,255,0.15)' 
+                                : 'rgba(255,255,255,0.08)',
+                            backdropFilter: 'blur(20px)',
+                            border: hoveredModule === module.id 
+                                ? `2px solid ${module.color}` 
+                                : '2px solid rgba(255,255,255,0.1)',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            transform: hoveredModule === module.id ? 'translateY(-8px) scale(1.02)' : 'translateY(0)',
+                            boxShadow: hoveredModule === module.id 
+                                ? `0 20px 40px rgba(0,0,0,0.4), 0 0 60px ${module.color}30`
+                                : '0 10px 30px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {/* Ícone */}
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '20px',
+                            background: module.gradient,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '40px',
+                            marginBottom: '24px',
+                            boxShadow: `0 10px 30px ${module.color}40`
+                        }}>
+                            {module.icon}
+                        </div>
+                        
+                        {/* Título */}
+                        <h2 style={{
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            color: '#fff',
+                            margin: '0 0 4px 0'
+                        }}>
+                            {module.title}
+                        </h2>
+                        
+                        {/* Subtítulo */}
+                        <p style={{
+                            fontSize: '14px',
+                            color: module.color,
+                            fontWeight: '600',
+                            margin: '0 0 16px 0',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}>
+                            {module.subtitle}
+                        </p>
+                        
+                        {/* Descrição */}
+                        <p style={{
+                            fontSize: '14px',
+                            color: 'rgba(255,255,255,0.6)',
+                            margin: 0,
+                            lineHeight: '1.6'
+                        }}>
+                            {module.description}
+                        </p>
+                        
+                        {/* Botão */}
+                        <div style={{
+                            marginTop: '24px',
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            background: hoveredModule === module.id ? module.gradient : 'rgba(255,255,255,0.1)',
+                            color: '#fff',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            textAlign: 'center',
+                            transition: 'all 0.3s ease'
+                        }}>
+                            {hoveredModule === module.id ? 'Entrar →' : 'Selecionar'}
+                        </div>
+                    </div>
+                ))}
+            </div>
+            
+            {/* Footer */}
+            <p style={{
+                marginTop: '50px',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.4)'
+            }}>
+                © 2026 Obraly - Sistema de Gestão
+            </p>
+        </div>
+    );
+};
+
+// --- TELA DE LOGIN ADMIN (Placeholder) ---
+const AdminLoginScreen = ({ onBack }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    
+    return (
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>
+            {/* Botão Voltar */}
+            <button
+                onClick={onBack}
+                style={{
+                    position: 'absolute',
+                    top: '30px',
+                    left: '30px',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    color: '#fff',
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
+                onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+            >
+                ← Voltar
+            </button>
+            
+            {/* Card de Login */}
+            <div style={{
+                width: '100%',
+                maxWidth: '400px',
+                padding: '40px',
+                borderRadius: '24px',
+                background: 'rgba(255,255,255,0.95)',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.3)'
+            }}>
+                {/* Header */}
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '18px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '32px',
+                        margin: '0 auto 16px',
+                        boxShadow: '0 10px 30px rgba(16,185,129,0.3)'
+                    }}>
+                        🏢
+                    </div>
+                    <h1 style={{
+                        fontSize: '28px',
+                        fontWeight: '700',
+                        color: '#1f2937',
+                        margin: '0 0 4px 0'
+                    }}>
+                        Administração
+                    </h1>
+                    <p style={{
+                        fontSize: '14px',
+                        color: '#6b7280',
+                        margin: 0
+                    }}>
+                        Gestão Patrimonial
+                    </p>
+                </div>
+                
+                {/* Mensagem de desenvolvimento */}
+                <div style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: '#fef3c7',
+                    border: '1px solid #fcd34d',
+                    marginBottom: '24px',
+                    textAlign: 'center'
+                }}>
+                    <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: '#92400e'
+                    }}>
+                        🚧 Módulo em desenvolvimento
+                    </p>
+                    <p style={{
+                        margin: '8px 0 0',
+                        fontSize: '12px',
+                        color: '#a16207'
+                    }}>
+                        Em breve disponível
+                    </p>
+                </div>
+                
+                {/* Form (desabilitado por enquanto) */}
+                <form onSubmit={(e) => e.preventDefault()}>
+                    <div style={{ marginBottom: '16px' }}>
+                        <input
+                            type="text"
+                            placeholder="Usuário"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            disabled
+                            style={{
+                                width: '100%',
+                                padding: '14px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #e5e7eb',
+                                fontSize: '15px',
+                                outline: 'none',
+                                background: '#f3f4f6',
+                                color: '#9ca3af',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '24px' }}>
+                        <input
+                            type="password"
+                            placeholder="Senha"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled
+                            style={{
+                                width: '100%',
+                                padding: '14px 16px',
+                                borderRadius: '12px',
+                                border: '2px solid #e5e7eb',
+                                fontSize: '15px',
+                                outline: 'none',
+                                background: '#f3f4f6',
+                                color: '#9ca3af',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: '#d1d5db',
+                            color: '#9ca3af',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'not-allowed'
+                        }}
+                    >
+                        Em breve
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 function App() {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
-    const [isLoading, setIsLoading] = useState(true); 
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedModule, setSelectedModule] = useState(null); // null = seletor, 'obras' ou 'admin'
 
     useEffect(() => {
         try {
             const savedToken = localStorage.getItem('token');
             const savedUser = localStorage.getItem('user');
+            const savedModule = localStorage.getItem('selectedModule');
 
             if (savedToken && savedUser) {
                 setToken(savedToken);
                 setUser(JSON.parse(savedUser));
+                setSelectedModule(savedModule || 'obras');
             }
         } catch (error) {
             console.error("Falha ao carregar dados de autenticação:", error);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            localStorage.removeItem('selectedModule');
         }
         setIsLoading(false); 
     }, []);
+
+    const handleSelectModule = (moduleId) => {
+        setSelectedModule(moduleId);
+        localStorage.setItem('selectedModule', moduleId);
+    };
+
+    const handleBackToSelector = () => {
+        setSelectedModule(null);
+        localStorage.removeItem('selectedModule');
+    };
 
     const login = (data) => {
         setToken(data.access_token);
@@ -11996,17 +12383,30 @@ function App() {
     const logout = () => {
         setToken(null);
         setUser(null);
+        setSelectedModule(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('selectedModule');
     };
 
     if (isLoading) {
         return <div className="loading-screen">Carregando...</div>;
     }
 
+    // Se não há módulo selecionado e não está logado, mostrar seletor
+    if (!selectedModule && !user) {
+        return <ModuleSelectorScreen onSelectModule={handleSelectModule} />;
+    }
+
+    // Se selecionou Admin
+    if (selectedModule === 'admin' && !user) {
+        return <AdminLoginScreen onBack={handleBackToSelector} />;
+    }
+
+    // Se selecionou Obras ou já está logado
     return (
-        <AuthContext.Provider value={{ user, token, login, logout }}>
-            {user ? <Dashboard /> : <LoginScreen />}
+        <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+            {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
         </AuthContext.Provider>
     );
 }
