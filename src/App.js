@@ -28,6 +28,9 @@ import OrcamentoEngenharia from './components/OrcamentoEngenharia';
 // 🆕 MÓDULO AGENDA DE DEMANDAS
 import AgendaDemandas from './components/AgendaDemandas';
 
+// 🆕 MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
+import AppAdmin from './AppAdmin';
+
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -12163,180 +12166,6 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
     );
 };
 
-// --- TELA DE LOGIN ADMIN (Placeholder) ---
-const AdminLoginScreen = ({ onBack }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    
-    return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        }}>
-            {/* Botão Voltar */}
-            <button
-                onClick={onBack}
-                style={{
-                    position: 'absolute',
-                    top: '30px',
-                    left: '30px',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '10px 20px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease'
-                }}
-                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
-            >
-                ← Voltar
-            </button>
-            
-            {/* Card de Login */}
-            <div style={{
-                width: '100%',
-                maxWidth: '400px',
-                padding: '40px',
-                borderRadius: '24px',
-                background: 'rgba(255,255,255,0.95)',
-                boxShadow: '0 25px 50px rgba(0,0,0,0.3)'
-            }}>
-                {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                    <div style={{
-                        width: '70px',
-                        height: '70px',
-                        borderRadius: '18px',
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '32px',
-                        margin: '0 auto 16px',
-                        boxShadow: '0 10px 30px rgba(16,185,129,0.3)'
-                    }}>
-                        🏢
-                    </div>
-                    <h1 style={{
-                        fontSize: '28px',
-                        fontWeight: '700',
-                        color: '#1f2937',
-                        margin: '0 0 4px 0'
-                    }}>
-                        Administração
-                    </h1>
-                    <p style={{
-                        fontSize: '14px',
-                        color: '#6b7280',
-                        margin: 0
-                    }}>
-                        Gestão Patrimonial
-                    </p>
-                </div>
-                
-                {/* Mensagem de desenvolvimento */}
-                <div style={{
-                    padding: '16px',
-                    borderRadius: '12px',
-                    background: '#fef3c7',
-                    border: '1px solid #fcd34d',
-                    marginBottom: '24px',
-                    textAlign: 'center'
-                }}>
-                    <p style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        color: '#92400e'
-                    }}>
-                        🚧 Módulo em desenvolvimento
-                    </p>
-                    <p style={{
-                        margin: '8px 0 0',
-                        fontSize: '12px',
-                        color: '#a16207'
-                    }}>
-                        Em breve disponível
-                    </p>
-                </div>
-                
-                {/* Form (desabilitado por enquanto) */}
-                <form onSubmit={(e) => e.preventDefault()}>
-                    <div style={{ marginBottom: '16px' }}>
-                        <input
-                            type="text"
-                            placeholder="Usuário"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            disabled
-                            style={{
-                                width: '100%',
-                                padding: '14px 16px',
-                                borderRadius: '12px',
-                                border: '2px solid #e5e7eb',
-                                fontSize: '15px',
-                                outline: 'none',
-                                background: '#f3f4f6',
-                                color: '#9ca3af',
-                                boxSizing: 'border-box'
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '24px' }}>
-                        <input
-                            type="password"
-                            placeholder="Senha"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled
-                            style={{
-                                width: '100%',
-                                padding: '14px 16px',
-                                borderRadius: '12px',
-                                border: '2px solid #e5e7eb',
-                                fontSize: '15px',
-                                outline: 'none',
-                                background: '#f3f4f6',
-                                color: '#9ca3af',
-                                boxSizing: 'border-box'
-                            }}
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled
-                        style={{
-                            width: '100%',
-                            padding: '14px',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: '#d1d5db',
-                            color: '#9ca3af',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            cursor: 'not-allowed'
-                        }}
-                    >
-                        Em breve
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 function App() {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
@@ -12399,8 +12228,8 @@ function App() {
     }
 
     // Se selecionou Admin
-    if (selectedModule === 'admin' && !user) {
-        return <AdminLoginScreen onBack={handleBackToSelector} />;
+    if (selectedModule === 'admin') {
+        return <AppAdmin onBack={handleBackToSelector} />;
     }
 
     // Se selecionou Obras ou já está logado
