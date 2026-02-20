@@ -488,6 +488,53 @@ const styles = {
         fontSize: '10px',
         color: '#16a34a',
         fontWeight: '500'
+    },
+    // Célula com Progresso (MO e Material)
+    celulaComProgresso: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        position: 'relative',
+        cursor: 'pointer',
+        padding: '4px'
+    },
+    miniProgressBar: {
+        width: '100%',
+        height: '6px',
+        backgroundColor: '#e2e8f0',
+        borderRadius: '3px',
+        overflow: 'hidden'
+    },
+    miniProgressFill: {
+        height: '100%',
+        borderRadius: '3px',
+        transition: 'width 0.3s ease'
+    },
+    hoverTooltip: {
+        position: 'absolute',
+        bottom: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        marginBottom: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '2px',
+        padding: '8px 12px',
+        backgroundColor: '#1e293b',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        zIndex: 100,
+        whiteSpace: 'nowrap'
+    },
+    hoverPercentual: {
+        fontSize: '14px',
+        fontWeight: '700'
+    },
+    hoverValor: {
+        fontSize: '11px',
+        color: '#94a3b8'
     }
 };
 
@@ -508,6 +555,56 @@ const formatNumber = (value, decimals = 2) => {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
     }).format(value || 0);
+};
+
+// =====================================================
+// COMPONENTE: CÉLULA COM PROGRESSO (MO e Material)
+// =====================================================
+
+const CelulaComProgresso = ({ valorTotal, valorPago, cor, corTexto }) => {
+    const [hover, setHover] = React.useState(false);
+    
+    // Calcular percentual
+    const percentual = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0;
+    const corBarra = percentual >= 100 ? '#10b981' : cor;
+    
+    if (!valorTotal || valorTotal === 0) {
+        return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
+    }
+    
+    return (
+        <div 
+            style={styles.celulaComProgresso}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+        >
+            {/* Valor Total */}
+            <div style={{ color: corTexto, fontWeight: '500', fontSize: '13px' }}>
+                {formatCurrency(valorTotal)}
+            </div>
+            
+            {/* Barra de Progresso */}
+            <div style={styles.miniProgressBar}>
+                <div style={{
+                    ...styles.miniProgressFill,
+                    width: `${Math.min(percentual, 100)}%`,
+                    backgroundColor: corBarra
+                }} />
+            </div>
+            
+            {/* Tooltip no Hover */}
+            {hover && (
+                <div style={styles.hoverTooltip}>
+                    <span style={{ ...styles.hoverPercentual, color: corBarra }}>
+                        {percentual}%
+                    </span>
+                    <span style={styles.hoverValor}>
+                        {formatCurrency(valorPago)}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
 };
 
 // =====================================================
@@ -2967,24 +3064,24 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                     {item.tipo_composicao === 'composto' ? (
                                                         <div style={{ color: '#9ca3af' }}>-</div>
                                                     ) : (
-                                                        <>
-                                                            <div style={{ color: '#4f46e5' }}>{formatCurrency(item.total_mao_obra)}</div>
-                                                            {item.valor_pago_mo > 0 && (
-                                                                <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mo)}</div>
-                                                            )}
-                                                        </>
+                                                        <CelulaComProgresso 
+                                                            valorTotal={item.total_mao_obra}
+                                                            valorPago={item.valor_pago_mo || 0}
+                                                            cor="#6366f1"
+                                                            corTexto="#4f46e5"
+                                                        />
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
                                                     {item.tipo_composicao === 'composto' ? (
                                                         <div style={{ color: '#9ca3af' }}>-</div>
                                                     ) : (
-                                                        <>
-                                                            <div style={{ color: '#10b981' }}>{formatCurrency(item.total_material)}</div>
-                                                            {item.valor_pago_mat > 0 && (
-                                                                <div style={styles.valorPago}>✓ {formatCurrency(item.valor_pago_mat)}</div>
-                                                            )}
-                                                        </>
+                                                        <CelulaComProgresso 
+                                                            valorTotal={item.total_material}
+                                                            valorPago={item.valor_pago_mat || 0}
+                                                            cor="#f59e0b"
+                                                            corTexto="#10b981"
+                                                        />
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdTotal }}>

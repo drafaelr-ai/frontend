@@ -2064,10 +2064,46 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const [editandoItem, setEditandoItem] = useState(null);
     const [itensOrcamento, setItensOrcamento] = useState([]);
     const [loadingItens, setLoadingItens] = useState(false);
+    const [busca, setBusca] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState('todos'); // todos, mao_de_obra, material, equipamento
+    const [filtroFornecedor, setFiltroFornecedor] = useState('');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const ITENS_INICIAIS = 10;
     
-    const pagamentosExibidos = mostrarTodos ? itemsPagos : itemsPagos.slice(0, ITENS_INICIAIS);
-    const totalPago = itemsPagos.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
+    // Filtrar pagamentos baseado na busca e filtros
+    const pagamentosFiltrados = useMemo(() => {
+        return itemsPagos.filter(item => {
+            // Filtro de busca por texto
+            const termoBusca = busca.toLowerCase();
+            const matchBusca = !busca || 
+                (item.descricao && item.descricao.toLowerCase().includes(termoBusca)) ||
+                (item.fornecedor && item.fornecedor.toLowerCase().includes(termoBusca)) ||
+                (item.servico_nome && item.servico_nome.toLowerCase().includes(termoBusca)) ||
+                (item.orcamento_item_nome && item.orcamento_item_nome.toLowerCase().includes(termoBusca));
+            
+            // Filtro por tipo
+            const tipoItem = (item.tipo || item.tipo_pagamento || '').toLowerCase();
+            const matchTipo = filtroTipo === 'todos' || 
+                (filtroTipo === 'mao_de_obra' && (tipoItem.includes('mão') || tipoItem.includes('mao') || tipoItem === 'mao_de_obra')) ||
+                (filtroTipo === 'material' && tipoItem.includes('material')) ||
+                (filtroTipo === 'equipamento' && (tipoItem.includes('equipamento') || tipoItem.includes('despesa')));
+            
+            // Filtro por fornecedor
+            const matchFornecedor = !filtroFornecedor || 
+                (item.fornecedor && item.fornecedor.toLowerCase().includes(filtroFornecedor.toLowerCase()));
+            
+            return matchBusca && matchTipo && matchFornecedor;
+        });
+    }, [itemsPagos, busca, filtroTipo, filtroFornecedor]);
+    
+    // Lista de fornecedores únicos para o filtro
+    const fornecedoresUnicos = useMemo(() => {
+        const fornecedores = [...new Set(itemsPagos.map(item => item.fornecedor).filter(Boolean))];
+        return fornecedores.sort();
+    }, [itemsPagos]);
+    
+    const pagamentosExibidos = mostrarTodos ? pagamentosFiltrados : pagamentosFiltrados.slice(0, ITENS_INICIAIS);
+    const totalPago = pagamentosFiltrados.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
     const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
     
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
@@ -2409,6 +2445,275 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 </div>
             )}
             
+            {/* Barra de Busca e Filtros */}
+            {itemsPagos.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                    {/* Linha principal: Busca + Botão Filtros */}
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: '12px', 
+                        alignItems: 'center',
+                        flexWrap: 'wrap'
+                    }}>
+                        {/* Campo de Busca Rápida */}
+                        <div style={{ 
+                            flex: '1', 
+                            minWidth: '250px',
+                            position: 'relative'
+                        }}>
+                            <span style={{
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                fontSize: '16px',
+                                color: '#9ca3af'
+                            }}>🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Buscar por descrição, fornecedor ou serviço..."
+                                value={busca}
+                                onChange={(e) => setBusca(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px 10px 40px',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {busca && (
+                                <button
+                                    onClick={() => setBusca('')}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '10px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '16px',
+                                        color: '#9ca3af',
+                                        padding: '4px'
+                                    }}
+                                    title="Limpar busca"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                        
+                        {/* Botão Filtros */}
+                        <button
+                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                            style={{
+                                padding: '10px 16px',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '8px',
+                                backgroundColor: mostrarFiltros ? '#eff6ff' : '#fff',
+                                borderColor: mostrarFiltros ? '#3b82f6' : '#e2e8f0',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: mostrarFiltros ? '#3b82f6' : '#64748b',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <span>🎛️</span>
+                            Filtros
+                            {(filtroTipo !== 'todos' || filtroFornecedor) && (
+                                <span style={{
+                                    backgroundColor: '#3b82f6',
+                                    color: '#fff',
+                                    borderRadius: '50%',
+                                    width: '18px',
+                                    height: '18px',
+                                    fontSize: '11px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {(filtroTipo !== 'todos' ? 1 : 0) + (filtroFornecedor ? 1 : 0)}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                    
+                    {/* Painel de Filtros Expandido */}
+                    {mostrarFiltros && (
+                        <div style={{
+                            marginTop: '12px',
+                            padding: '16px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                gap: '16px',
+                                marginBottom: '12px'
+                            }}>
+                                {/* Filtro por Palavra-chave */}
+                                <div>
+                                    <label style={{ 
+                                        display: 'block', 
+                                        fontSize: '12px', 
+                                        fontWeight: '600',
+                                        color: '#64748b',
+                                        marginBottom: '6px'
+                                    }}>
+                                        🔤 Palavra-chave
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: cimento, pintura..."
+                                        value={busca}
+                                        onChange={(e) => setBusca(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
+                                
+                                {/* Filtro por Tipo */}
+                                <div>
+                                    <label style={{ 
+                                        display: 'block', 
+                                        fontSize: '12px', 
+                                        fontWeight: '600',
+                                        color: '#64748b',
+                                        marginBottom: '6px'
+                                    }}>
+                                        📦 Tipo
+                                    </label>
+                                    <select
+                                        value={filtroTipo}
+                                        onChange={(e) => setFiltroTipo(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            backgroundColor: '#fff',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="todos">Todos os tipos</option>
+                                        <option value="mao_de_obra">🔵 Mão de Obra</option>
+                                        <option value="material">🟢 Material</option>
+                                        <option value="equipamento">🟠 Equipamento</option>
+                                    </select>
+                                </div>
+                                
+                                {/* Filtro por Fornecedor */}
+                                <div>
+                                    <label style={{ 
+                                        display: 'block', 
+                                        fontSize: '12px', 
+                                        fontWeight: '600',
+                                        color: '#64748b',
+                                        marginBottom: '6px'
+                                    }}>
+                                        🏢 Fornecedor
+                                    </label>
+                                    <select
+                                        value={filtroFornecedor}
+                                        onChange={(e) => setFiltroFornecedor(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            backgroundColor: '#fff',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="">Todos os fornecedores</option>
+                                        {fornecedoresUnicos.map(fornecedor => (
+                                            <option key={fornecedor} value={fornecedor}>
+                                                {fornecedor}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            {/* Botão Limpar Filtros */}
+                            {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
+                                <div style={{ 
+                                    borderTop: '1px solid #e2e8f0', 
+                                    paddingTop: '12px',
+                                    display: 'flex',
+                                    justifyContent: 'flex-end'
+                                }}>
+                                    <button
+                                        onClick={() => {
+                                            setBusca('');
+                                            setFiltroTipo('todos');
+                                            setFiltroFornecedor('');
+                                        }}
+                                        style={{
+                                            padding: '8px 16px',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            backgroundColor: '#fee2e2',
+                                            color: '#dc2626',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                            fontWeight: '500',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        ✕ Limpar todos os filtros
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
+                    {/* Indicador de resultados filtrados */}
+                    {(busca || filtroTipo !== 'todos' || filtroFornecedor) && (
+                        <div style={{
+                            marginTop: '12px',
+                            padding: '8px 12px',
+                            backgroundColor: '#eff6ff',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            color: '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <span>📋</span>
+                            Exibindo <strong>{pagamentosFiltrados.length}</strong> de <strong>{itemsPagos.length}</strong> pagamentos
+                            {busca && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Busca: "{busca}"</span>}
+                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'Mão de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
+                            {filtroFornecedor && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Fornecedor: {filtroFornecedor}</span>}
+                        </div>
+                    )}
+                </div>
+            )}
+            
             {itemsPagos.length === 0 ? (
                 <div style={{ 
                     textAlign: 'center', 
@@ -2561,7 +2866,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         </table>
                     </div>
                     
-                    {itemsPagos.length > ITENS_INICIAIS && (
+                    {pagamentosFiltrados.length > ITENS_INICIAIS && (
                         <div style={{ textAlign: 'center', marginTop: '15px' }}>
                             <button 
                                 onClick={() => setMostrarTodos(!mostrarTodos)}
@@ -2569,7 +2874,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             >
                                 {mostrarTodos 
                                     ? '↑ Mostrar menos' 
-                                    : `Ver todos os ${itemsPagos.length} pagamentos →`
+                                    : `Ver todos os ${pagamentosFiltrados.length} pagamentos →`
                                 }
                             </button>
                         </div>
