@@ -567,37 +567,9 @@ const CelulaComProgresso = ({ valorTotal, valorPago, cor, corTexto }) => {
     // Calcular percentual
     const percentual = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0;
     const corBarra = percentual >= 100 ? '#10b981' : cor;
-
-    // Se não tem orçamento previsto mas tem gasto: mostrar como "extra"
+    
     if (!valorTotal || valorTotal === 0) {
-        if (!valorPago || valorPago === 0) {
-            return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
-        }
-        // Tem gasto mas não tinha orçamento previsto → mostrar em vermelho como alerta
-        return (
-            <div
-                style={styles.celulaComProgresso}
-                onMouseEnter={() => setHover(true)}
-                onMouseLeave={() => setHover(false)}
-            >
-                <div style={{ color: '#dc2626', fontWeight: '600', fontSize: '13px' }}>
-                    {formatCurrency(valorPago)}
-                </div>
-                <div style={{ fontSize: '9px', color: '#dc2626', textAlign: 'center' }}>
-                    sem previsão
-                </div>
-                {hover && (
-                    <div style={styles.hoverTooltip}>
-                        <span style={{ ...styles.hoverPercentual, color: '#dc2626' }}>
-                            ∞%
-                        </span>
-                        <span style={styles.hoverValor}>
-                            Gasto sem orçamento previsto
-                        </span>
-                    </div>
-                )}
-            </div>
-        );
+        return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
     }
     
     return (
@@ -2940,7 +2912,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         {formatCurrency(resumoComBdi.total_geral)}
                     </div>
                     <div style={{ ...styles.summarySubtext, color: '#64748b' }}>
-                        {resumoComBdi.total_etapas || 0} etapas • {resumoComBdi.total_itens || 0} itens
+                        {dados.etapas.length || 0} etapas • {resumoComBdi.total_itens || 0} itens
                     </div>
                 </div>
             </div>

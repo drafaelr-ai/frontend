@@ -2128,9 +2128,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     
     // Abrir modal de edição
     const handleEditarItem = (item) => {
+        // Normalizar o tipo para 'Mão de Obra' ou 'Material'
+        let tipoNorm = item.tipo || item.segmento || item.tipo_pagamento || 'Material';
+        if (tipoNorm === 'mao_de_obra' || tipoNorm === 'mao_obra') tipoNorm = 'Mão de Obra';
+        if (tipoNorm === 'material') tipoNorm = 'Material';
         setEditandoItem({
             ...item,
-            orcamento_item_id: item.orcamento_item_id || ''
+            orcamento_item_id: item.orcamento_item_id || '',
+            tipo_edit: tipoNorm
         });
         fetchItensOrcamento();
     };
@@ -2149,36 +2154,43 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             };
             
             // Extrair ID numérico
+            const tipoEdit = editandoItem.tipo_edit || 'Material';
+            const tipoMaoDeObra = tipoEdit === 'Mão de Obra';
+
             if (strId.startsWith('lanc-')) {
                 numericId = strId.replace('lanc-', '');
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo: tipoEdit };
             } else if (strId.startsWith('serv-pag-')) {
                 numericId = strId.replace('serv-pag-', '');
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo_pagamento: tipoMaoDeObra ? 'mao_de_obra' : 'material' };
             } else if (editandoItem.tipo_registro === 'lancamento') {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo: tipoEdit };
             } else if (editandoItem.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo_pagamento: tipoMaoDeObra ? 'mao_de_obra' : 'material' };
             } else if (editandoItem.tipo_registro === 'boleto') {
                 const boletoId = editandoItem.boleto_id || strId.replace('boleto-', '');
                 endpoint = `${API_URL}/obras/${obraId}/boletos/${boletoId}`;
                 method = 'PUT';
                 body = { orcamento_item_id: editandoItem.orcamento_item_id || null };
             } else if (editandoItem.tipo_registro === 'parcela_individual') {
-                // CORREÇÃO: Parcela individual - atualizar o PagamentoParcelado pai
                 const pagParceladoId = editandoItem.pagamento_parcelado_id;
                 if (pagParceladoId) {
                     endpoint = `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagParceladoId}`;
                     method = 'PUT';
                     body = { 
                         orcamento_item_id: editandoItem.orcamento_item_id || null,
-                        segmento: editandoItem.tipo === 'Mão de Obra' ? 'Mão de Obra' : 'Material'
+                        segmento: tipoEdit
                     };
                 } else {
                     throw new Error('ID do pagamento parcelado não encontrado');
                 }
             } else {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo: tipoEdit };
             }
             
             const response = await fetchWithAuth(endpoint, {
@@ -2944,6 +2956,35 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Valor:</label>
                             <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px', color: '#2e7d32' }}>
                                 {formatCurrency(editandoItem.valor_pago || editandoItem.valor_total || 0)}
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
+                                🏷️ Tipo:
+                            </label>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                {['Mão de Obra', 'Material'].map(opcao => (
+                                    <button
+                                        key={opcao}
+                                        onClick={() => setEditandoItem({...editandoItem, tipo_edit: opcao})}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: '2px solid',
+                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
+                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
+                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
+                                            fontWeight: editandoItem.tipo_edit === opcao ? '700' : '400',
+                                            cursor: 'pointer',
+                                            fontSize: '0.9em',
+                                            transition: 'all 0.15s'
+                                        }}
+                                    >
+                                        {opcao === 'Mão de Obra' ? '👷 Mão de Obra' : '📦 Material'}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                         
