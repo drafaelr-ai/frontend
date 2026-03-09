@@ -438,6 +438,323 @@ const Dashboard = () => {
 };
 
 // ===================================================================================
+// COMPONENTE: MODAL LANÇAMENTOS DO IMÓVEL
+// ===================================================================================
+
+const LancamentosImovelModal = ({ imovel, token, onClose }) => {
+    const hoje = new Date();
+    const [mes, setMes] = useState(hoje.getMonth() + 1);
+    const [ano, setAno] = useState(hoje.getFullYear());
+    const [tipo, setTipo] = useState('');
+    const [lancamentos, setLancamentos] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [editandoLanc, setEditandoLanc] = useState(null);
+    const [categorias, setCategorias] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API_URL_ADMIN}/categorias`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json()).then(d => setCategorias(Array.isArray(d) ? d : [])).catch(() => {});
+    }, [token]);
+
+    const carregar = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams({ imovel_id: imovel.id, mes, ano });
+            if (tipo) params.append('tipo', tipo);
+            const r = await fetch(`${API_URL_ADMIN}/lancamentos?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+            const d = await r.json();
+            setLancamentos(Array.isArray(d) ? d : []);
+        } catch (e) { console.error(e); } finally { setLoading(false); }
+    };
+
+    useEffect(() => { carregar(); }, [mes, ano, tipo]);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Remover este lançamento?')) return;
+        await fetch(`${API_URL_ADMIN}/lancamentos/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        carregar();
+    };
+
+    const isProprio = imovel.status === 'proprio';
+    const totalDespesas = lancamentos.filter(l => l.tipo === 'despesa' && l.status !== 'cancelado').reduce((a, l) => a + l.valor, 0);
+    const totalReceitas = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((a, l) => a + l.valor, 0);
+    const saldo = totalReceitas - totalDespesas;
+
+    const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const anos = [hoje.getFullYear() - 1, hoje.getFullYear(), hoje.getFullYear() + 1];
+
+    return (
+        <>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:1050, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
+             onClick={e => e.target === e.currentTarget && onClose()}>
+            <div style={{ background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'960px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
+                {/* Header */}
+                <div style={{ padding:'18px 24px', background:'#1e293b', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <div>
+                        <h2 style={{ margin:0, color:'#fff', fontSize:'17px', fontWeight:700 }}>📋 Lançamentos — {imovel.nome}</h2>
+                        <p style={{ margin:'2px 0 0', color:'#94a3b8', fontSize:'13px' }}>{imovel.status === 'proprio' ? '🏠 Imóvel próprio' : imovel.status}</p>
+                    </div>
+                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', borderRadius:'8px', width:'34px', height:'34px', cursor:'pointer', fontSize:'18px' }}>×</button>
+                </div>
+                {/* Filtros */}
+                <div style={{ padding:'12px 24px', background:'#f8fafc', borderBottom:'1px solid #e5e7eb', display:'flex', gap:'10px', flexWrap:'wrap' }}>
+                    <select value={mes} onChange={e => setMes(Number(e.target.value))} style={styles.select}>
+                        {mesesNomes.map((m,i) => <option key={i+1} value={i+1}>{m}</option>)}
+                    </select>
+                    <select value={ano} onChange={e => setAno(Number(e.target.value))} style={styles.select}>
+                        {anos.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                    <select value={tipo} onChange={e => setTipo(e.target.value)} style={styles.select}>
+                        <option value=''>Todos</option>
+                        <option value='despesa'>Despesas</option>
+                        <option value='receita'>Receitas</option>
+                    </select>
+                </div>
+                {/* Resumo */}
+                <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid #e5e7eb', display:'flex', gap:'24px', alignItems:'center' }}>
+                    <div><span style={{ fontSize:'12px', color:'#64748b' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'#64748b' }}>Receitas </span><strong style={{ color:'#22c55e' }}>{formatCurrency(totalReceitas)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'#64748b' }}>Saldo </span><strong style={{ color: saldo >= 0 ? '#22c55e' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
+                    {isProprio && <span style={{ fontSize:'12px', color:'#94a3b8', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
+                    <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'#64748b' }}>{lancamentos.length} lançamentos</span></div>
+                </div>
+                {/* Tabela */}
+                <div style={{ overflow:'auto', flex:1 }}>
+                    {loading ? <div style={{ textAlign:'center', padding:'40px', color:'#64748b' }}>Carregando…</div> :
+                     lancamentos.length === 0 ? <div style={{ textAlign:'center', padding:'40px', color:'#64748b' }}>Nenhum lançamento neste período.</div> : (
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    {['Data','Categoria','Descrição','Tipo','Status','Valor','Comprovante',''].map(h =>
+                                        <th key={h} style={styles.th}>{h}</th>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {lancamentos.map(l => (
+                                    <tr key={l.id} style={styles.tr}>
+                                        <td style={styles.td}>{formatDate(l.data_lancamento)}</td>
+                                        <td style={styles.td}>{l.categoria_icone} {l.categoria_nome}</td>
+                                        <td style={{ ...styles.td, maxWidth:'240px' }}>
+                                            {l.descricao}
+                                            {l.observacoes && <div style={{ fontSize:'11px', color:'#94a3b8' }}>{l.observacoes}</div>}
+                                        </td>
+                                        <td style={styles.td}>
+                                            <span style={{ ...styles.badge, background: l.tipo==='despesa'?'#fee2e2':'#dcfce7', color: l.tipo==='despesa'?'#b91c1c':'#15803d' }}>
+                                                {l.tipo === 'despesa' ? 'Despesa' : 'Receita'}
+                                            </span>
+                                        </td>
+                                        <td style={styles.td}>
+                                            <span style={{ ...styles.badge, background: l.status==='pago'?'#dcfce7':l.status==='cancelado'?'#f1f5f9':'#fef3c7', color: l.status==='pago'?'#166534':l.status==='cancelado'?'#94a3b8':'#92400e' }}>
+                                                {l.status==='pago'?'✓ Pago':l.status==='cancelado'?'Cancelado':'⏳ Pendente'}
+                                            </span>
+                                        </td>
+                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'#ef4444':'#22c55e', fontWeight:700 }}>
+                                            {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
+                                        </td>
+                                        <td style={{ ...styles.td, textAlign:'center' }}>
+                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }}>📎</a> : <span style={{ color:'#d1d5db' }}>—</span>}
+                                        </td>
+                                        <td style={styles.td}>
+                                            <div style={{ display:'flex', gap:'6px' }}>
+                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}>✏️ Editar</button>
+                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'#dc2626', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }}>🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
+        </div>
+        {editandoLanc && (
+            <EditarLancamentoModal
+                lancamento={editandoLanc}
+                token={token}
+                categorias={categorias}
+                onClose={() => setEditandoLanc(null)}
+                onSalvo={() => { setEditandoLanc(null); carregar(); }}
+            />
+        )}
+        </>
+    );
+};
+
+// ===================================================================================
+// COMPONENTE: MODAL EDITAR LANÇAMENTO
+// ===================================================================================
+
+const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo }) => {
+    const [form, setForm] = useState({
+        descricao: lancamento.descricao || '',
+        valor: lancamento.valor || '',
+        tipo: lancamento.tipo || 'despesa',
+        status: lancamento.status || 'pendente',
+        data_lancamento: lancamento.data_lancamento || '',
+        data_vencimento: lancamento.data_vencimento || '',
+        data_pagamento: lancamento.data_pagamento || '',
+        categoria_id: lancamento.categoria_id || '',
+        observacoes: lancamento.observacoes || '',
+    });
+    const [comprovantePreview, setComprovantePreview] = useState(lancamento.comprovante_url || null);
+    const [comprovanteBase64, setComprovanteBase64] = useState(undefined);
+    const [salvando, setSalvando] = useState(false);
+    const [erro, setErro] = useState('');
+    const fileRef = React.useRef();
+
+    const categoriasFiltradas = categorias.filter(c => c.tipo === form.tipo);
+
+    const handleFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { setErro('Arquivo muito grande. Máximo 5MB.'); return; }
+        const reader = new FileReader();
+        reader.onload = () => { setComprovanteBase64(reader.result); setComprovantePreview(reader.result); };
+        reader.readAsDataURL(file);
+    };
+
+    const removerComprovante = () => { setComprovanteBase64(null); setComprovantePreview(null); if (fileRef.current) fileRef.current.value = ''; };
+
+    const handleSalvar = async () => {
+        if (!form.descricao.trim()) { setErro('Descrição é obrigatória.'); return; }
+        if (!form.valor || Number(form.valor) <= 0) { setErro('Valor inválido.'); return; }
+        if (!form.categoria_id) { setErro('Selecione uma categoria.'); return; }
+        setSalvando(true); setErro('');
+        try {
+            const payload = {
+                descricao: form.descricao.trim(),
+                valor: Number(form.valor),
+                tipo: form.tipo,
+                status: form.status,
+                categoria_id: Number(form.categoria_id),
+                observacoes: form.observacoes || null,
+                data_lancamento: form.data_lancamento || undefined,
+                data_vencimento: form.data_vencimento || undefined,
+                data_pagamento: form.data_pagamento || undefined,
+            };
+            if (comprovanteBase64 !== undefined) payload.comprovante_base64 = comprovanteBase64;
+            const resp = await fetch(`${API_URL_ADMIN}/lancamentos/${lancamento.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            if (!resp.ok) { setErro(data.erro || 'Erro ao salvar.'); return; }
+            onSalvo(data);
+        } catch (e) { setErro('Erro de conexão.'); } finally { setSalvando(false); }
+    };
+
+    return (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1100, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
+             onClick={e => e.target === e.currentTarget && onClose()}>
+            <div style={{ background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'540px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
+                <div style={{ padding:'16px 24px', background:'#1e293b', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <h3 style={{ margin:0, color:'#fff', fontSize:'16px', fontWeight:700 }}>✏️ Editar Lançamento #{lancamento.id}</h3>
+                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', borderRadius:'8px', width:'32px', height:'32px', cursor:'pointer', fontSize:'16px' }}>×</button>
+                </div>
+                <div style={{ overflow:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:'14px' }}>
+                    {/* Tipo */}
+                    <div style={{ display:'flex', gap:'10px' }}>
+                        {['despesa','receita'].map(t => (
+                            <button key={t} type='button' onClick={() => setForm(f => ({ ...f, tipo:t, categoria_id:'' }))}
+                                style={{ flex:1, padding:'10px', borderRadius:'10px', border:'2px solid', cursor:'pointer', fontWeight:700, fontSize:'14px',
+                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'#22c55e') : '#e5e7eb',
+                                    background: form.tipo===t ? (t==='despesa'?'#fee2e2':'#dcfce7') : '#fff',
+                                    color: form.tipo===t ? (t==='despesa'?'#b91c1c':'#15803d') : '#94a3b8' }}>
+                                {t==='despesa'?'📤 Despesa':'📥 Receita'}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Descrição */}
+                    <div>
+                        <label style={styles.label}>Descrição *</label>
+                        <input value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao:e.target.value }))} style={styles.input} placeholder='Ex: Manutenção da piscina' />
+                    </div>
+                    {/* Valor + Categoria */}
+                    <div style={styles.formRow}>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Valor (R$) *</label>
+                            <input type='number' step='0.01' min='0' value={form.valor} onChange={e => setForm(f => ({ ...f, valor:e.target.value }))} style={styles.input} placeholder='0,00' />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Categoria *</label>
+                            <select value={form.categoria_id} onChange={e => setForm(f => ({ ...f, categoria_id:e.target.value }))} style={styles.select}>
+                                <option value=''>Selecione…</option>
+                                {categoriasFiltradas.map(c => <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    {/* Datas */}
+                    <div style={styles.formRow}>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Data do Lançamento</label>
+                            <input type='date' value={form.data_lancamento||''} onChange={e => setForm(f => ({ ...f, data_lancamento:e.target.value }))} style={styles.input} />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Data de Vencimento</label>
+                            <input type='date' value={form.data_vencimento||''} onChange={e => setForm(f => ({ ...f, data_vencimento:e.target.value }))} style={styles.input} />
+                        </div>
+                    </div>
+                    {/* Status + Data pagamento */}
+                    <div style={styles.formRow}>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Status</label>
+                            <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))} style={styles.select}>
+                                <option value='pendente'>⏳ Pendente</option>
+                                <option value='pago'>✓ Pago</option>
+                                <option value='cancelado'>✗ Cancelado</option>
+                            </select>
+                        </div>
+                        {form.status === 'pago' && (
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Data do Pagamento</label>
+                                <input type='date' value={form.data_pagamento||''} onChange={e => setForm(f => ({ ...f, data_pagamento:e.target.value }))} style={styles.input} />
+                            </div>
+                        )}
+                    </div>
+                    {/* Observações */}
+                    <div>
+                        <label style={styles.label}>Observações</label>
+                        <textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes:e.target.value }))} rows={2} style={{ ...styles.input, resize:'vertical' }} placeholder='Informações adicionais…' />
+                    </div>
+                    {/* Comprovante */}
+                    <div>
+                        <label style={styles.label}>Comprovante</label>
+                        {comprovantePreview ? (
+                            <div style={{ border:'1px solid #e5e7eb', borderRadius:'10px', padding:'12px', display:'flex', alignItems:'center', gap:'12px', background:'#f8fafc' }}>
+                                {comprovantePreview.startsWith('data:image') ? (
+                                    <img src={comprovantePreview} alt='Comprovante' style={{ width:'60px', height:'60px', objectFit:'cover', borderRadius:'6px' }} />
+                                ) : <div style={{ fontSize:'28px' }}>📄</div>}
+                                <div style={{ flex:1, fontSize:'13px', color:'#475569' }}>
+                                    {comprovanteBase64 !== undefined && comprovanteBase64 !== null ? '✅ Novo comprovante selecionado' : '📎 Comprovante atual'}
+                                </div>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'5px 10px', borderRadius:'6px' }}>🔄 Trocar</button>
+                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'#dc2626', background:'#fff0f0', padding:'5px 10px', borderRadius:'6px' }}>🗑️ Remover</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button type='button' onClick={() => fileRef.current?.click()} style={{ width:'100%', padding:'14px', borderRadius:'10px', border:'2px dashed #cbd5e1', background:'#f8fafc', color:'#64748b', cursor:'pointer', fontSize:'14px' }}>
+                                📎 Clique para anexar comprovante (imagem ou PDF)
+                            </button>
+                        )}
+                        <input ref={fileRef} type='file' accept='image/*,application/pdf' style={{ display:'none' }} onChange={handleFile} />
+                    </div>
+                    {erro && <div style={{ padding:'10px 14px', borderRadius:'8px', background:'#fee2e2', color:'#b91c1c', fontSize:'13px' }}>⚠️ {erro}</div>}
+                </div>
+                <div style={{ padding:'14px 24px', borderTop:'1px solid #e5e7eb', display:'flex', justifyContent:'flex-end', gap:'10px', background:'#f8fafc', borderRadius:'0 0 16px 16px' }}>
+                    <button type='button' onClick={onClose} style={{ ...styles.cancelButton }}>Cancelar</button>
+                    <button type='button' onClick={handleSalvar} disabled={salvando} style={{ ...styles.primaryButton, opacity: salvando ? 0.7 : 1 }}>
+                        {salvando ? '⏳ Salvando…' : '✅ Salvar Alterações'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ===================================================================================
 // COMPONENTE: LISTA DE IMÓVEIS
 // ===================================================================================
 
@@ -447,6 +764,7 @@ const Imoveis = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editando, setEditando] = useState(null);
+    const [imovelLancamentos, setImovelLancamentos] = useState(null); // Para o modal de lançamentos
     const [form, setForm] = useState({
         nome: '',
         tipo: 'apartamento',
@@ -628,24 +946,39 @@ const Imoveis = () => {
                                         {formatCurrency(imovel.total_despesas || 0)}
                                     </span>
                                 </div>
-                                <div style={styles.imovelStat}>
-                                    <span style={styles.statLabel}>Receitas</span>
-                                    <span style={{ ...styles.statValue, color: '#16a34a' }}>
-                                        {formatCurrency(imovel.total_receitas || 0)}
-                                    </span>
-                                </div>
-                                <div style={styles.imovelStat}>
-                                    <span style={styles.statLabel}>Saldo</span>
-                                    <span style={{ 
-                                        ...styles.statValue, 
-                                        color: (imovel.saldo || 0) >= 0 ? '#16a34a' : '#dc2626' 
-                                    }}>
-                                        {formatCurrency(imovel.saldo || 0)}
-                                    </span>
-                                </div>
+                                {imovel.status !== 'proprio' && (
+                                    <div style={styles.imovelStat}>
+                                        <span style={styles.statLabel}>Receitas</span>
+                                        <span style={{ ...styles.statValue, color: '#16a34a' }}>
+                                            {formatCurrency(imovel.total_receitas || 0)}
+                                        </span>
+                                    </div>
+                                )}
+                                {imovel.status !== 'proprio' && (
+                                    <div style={styles.imovelStat}>
+                                        <span style={styles.statLabel}>Saldo</span>
+                                        <span style={{ 
+                                            ...styles.statValue, 
+                                            color: (imovel.saldo || 0) >= 0 ? '#16a34a' : '#dc2626' 
+                                        }}>
+                                            {formatCurrency(imovel.saldo || 0)}
+                                        </span>
+                                    </div>
+                                )}
+                                {imovel.status === 'proprio' && (
+                                    <div style={{ ...styles.imovelStat, gridColumn: '2 / span 2' }}>
+                                        <span style={{ ...styles.statLabel, fontStyle: 'italic', color: '#94a3b8' }}>sem receita de aluguel</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div style={styles.imovelActions}>
+                                <button 
+                                    onClick={() => setImovelLancamentos(imovel)} 
+                                    style={{ ...styles.actionButton, color: '#0369a1', background: '#f0f9ff' }}
+                                >
+                                    📋 Lançamentos
+                                </button>
                                 <button 
                                     onClick={() => openModal(imovel)} 
                                     style={styles.actionButton}
@@ -671,6 +1004,15 @@ const Imoveis = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal Lançamentos do Imóvel */}
+            {imovelLancamentos && (
+                <LancamentosImovelModal
+                    imovel={imovelLancamentos}
+                    token={token}
+                    onClose={() => setImovelLancamentos(null)}
+                />
+            )}
 
             {/* Modal */}
             {showModal && (
@@ -989,6 +1331,7 @@ const Lancamentos = () => {
     };
 
     const [showComprovante, setShowComprovante] = useState(null);
+    const [editandoLanc, setEditandoLanc] = useState(null);
 
     const handleDelete = async (id) => {
         if (!window.confirm('Tem certeza que deseja remover este lançamento?')) return;
@@ -1130,6 +1473,13 @@ const Lancamentos = () => {
                                                     📎
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={() => setEditandoLanc(lanc)}
+                                                style={{ ...styles.smallButton, color: '#2563eb' }}
+                                                title="Editar lançamento"
+                                            >
+                                                ✏️
+                                            </button>
                                             <button
                                                 onClick={() => handleDelete(lanc.id)}
                                                 style={{ ...styles.smallButton, color: '#dc2626' }}
@@ -1291,6 +1641,17 @@ const Lancamentos = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal Editar Lançamento */}
+            {editandoLanc && (
+                <EditarLancamentoModal
+                    lancamento={editandoLanc}
+                    token={token}
+                    categorias={categorias}
+                    onClose={() => setEditandoLanc(null)}
+                    onSalvo={() => { setEditandoLanc(null); fetchDados(); }}
+                />
             )}
 
             {/* Modal Novo Lançamento */}
