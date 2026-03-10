@@ -1729,19 +1729,54 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 <input type="date" value={editingServico.data_fim_real || ''} onChange={(e) => setEditingServico({...editingServico, data_fim_real: e.target.value})} />
                             </div>
                         </div>
+
+                        <div className="form-group">
+                            <label>Tipo de Medição</label>
+                            <select
+                                value={editingServico.tipo_medicao || 'empreitada'}
+                                onChange={(e) => setEditingServico({...editingServico, tipo_medicao: e.target.value})}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
+                            >
+                                <option value="etapas">📋 Por Etapas</option>
+                                <option value="empreitada">🔧 Empreitada (% manual)</option>
+                                <option value="area">📐 Por Área</option>
+                            </select>
+                        </div>
                         
                         {/* Progresso por tipo */}
                         {editingServico.tipo_medicao === 'area' && (
                             <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Área Executada</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Medição por Área</label>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '10px', marginBottom: '12px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '12px', color: '#555' }}>Área Total</label>
+                                        <input type="number" min="0" step="0.1"
+                                            value={editingServico.area_total || ''}
+                                            onChange={(e) => setEditingServico({...editingServico, area_total: parseFloat(e.target.value) || 0})}
+                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #90caf9' }}
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '12px', color: '#555' }}>Unidade</label>
+                                        <select value={editingServico.unidade_medida || 'm²'}
+                                            onChange={(e) => setEditingServico({...editingServico, unidade_medida: e.target.value})}
+                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #90caf9' }}>
+                                            <option value="m²">m²</option>
+                                            <option value="m³">m³</option>
+                                            <option value="m">m</option>
+                                            <option value="un">un</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <label style={{ fontSize: '12px', color: '#555' }}>Área Executada</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
                                     <input type="range" min="0" max={editingServico.area_total || 100} step="0.1" value={editingServico.area_executada || 0} 
                                         onChange={(e) => {
                                             const areaExec = parseFloat(e.target.value) || 0;
                                             const areaTotal = editingServico.area_total || 1;
                                             setEditingServico({...editingServico, area_executada: areaExec, percentual_conclusao: Math.min(100, (areaExec / areaTotal) * 100)});
                                         }} style={{ flex: 1 }} />
-                                    <span>{(editingServico.area_executada || 0).toFixed(1)} / {editingServico.area_total} {editingServico.unidade_medida}</span>
+                                    <span style={{ minWidth: '120px', textAlign: 'right' }}>{(editingServico.area_executada || 0).toFixed(1)} / {editingServico.area_total || 0} {editingServico.unidade_medida}</span>
                                 </div>
                             </div>
                         )}
