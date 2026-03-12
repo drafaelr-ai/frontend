@@ -35,7 +35,7 @@ import AppAdmin from './AppAdmin';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- CONFIGURAÇÃO INICIAL ---
-const API_URL = 'https://backend-production-78c9.up.railway.app';
+const API_URL = 'https://obraly-api.fly.dev';
 
 // Helper para exibir a prioridade
 const PrioridadeBadge = ({ prioridade }) => {

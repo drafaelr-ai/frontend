@@ -11,7 +11,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 // CONFIGURAÇÃO
 // ===================================================================================
 
-const API_URL_ADMIN = 'https://backend-production-fca0.up.railway.app';
+const API_URL_ADMIN = 'https://obraly-admin-api.fly.dev';
 
 // ===================================================================================
 // CONTEXTO DE AUTENTICAÇÃO
