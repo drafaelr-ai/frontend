@@ -569,7 +569,18 @@ const CelulaComProgresso = ({ valorTotal, valorPago, cor, corTexto }) => {
     const corBarra = percentual >= 100 ? '#10b981' : cor;
     
     if (!valorTotal || valorTotal === 0) {
-        return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
+        if (!valorPago || valorPago === 0) {
+            return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
+        }
+        // Tem pagamento mas sem orçamento — mostra o pago em destaque
+        return (
+            <div style={{ textAlign: 'center' }}>
+                <div style={{ color: '#dc2626', fontWeight: '600', fontSize: '13px' }}>
+                    {formatCurrency(valorPago)}
+                </div>
+                <div style={{ fontSize: '9px', color: '#dc2626', opacity: 0.7 }}>s/ orçamento</div>
+            </div>
+        );
     }
     
     return (
