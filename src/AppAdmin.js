@@ -1163,6 +1163,262 @@ const Imoveis = () => {
 // COMPONENTE: LANÇAMENTOS
 // ===================================================================================
 
+// ===================================================================================
+// COMPONENTE: MODAL RELATÓRIO DE LANÇAMENTOS
+// ===================================================================================
+
+const RelatorioLancamentosModal = ({ lancamentos, imoveis, filtros, onClose }) => {
+    const mesesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+    const imovelNome = filtros.imovel_id
+        ? (imoveis.find(i => String(i.id) === String(filtros.imovel_id))?.nome || 'Imóvel')
+        : 'Todos os imóveis';
+
+    const periodoLabel = `${mesesNomes[filtros.mes - 1]} de ${filtros.ano}`;
+    const tipoLabel = filtros.tipo === 'despesa' ? 'Despesas' : filtros.tipo === 'receita' ? 'Receitas' : 'Despesas e Receitas';
+
+    // Separar por status
+    const pendentes = lancamentos.filter(l => l.status === 'pendente');
+    const pagos    = lancamentos.filter(l => l.status === 'pago');
+    const totalDespesas  = lancamentos.filter(l => l.tipo === 'despesa' && l.status !== 'cancelado').reduce((a,l) => a + l.valor, 0);
+    const totalReceitas  = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((a,l) => a + l.valor, 0);
+    const totalPendente  = pendentes.reduce((a,l) => a + l.valor, 0);
+    const saldo          = totalReceitas - totalDespesas;
+
+    // Agrupar pendentes por imóvel para relatório
+    const pendentesPorImovel = pendentes.reduce((acc, l) => {
+        const nome = l.imovel_nome || 'Sem imóvel';
+        if (!acc[nome]) acc[nome] = [];
+        acc[nome].push(l);
+        return acc;
+    }, {});
+
+    // === GERAÇÃO DE TEXTO PARA COMPARTILHAMENTO ===
+    const gerarTexto = () => {
+        const linhas = [];
+        linhas.push(`📋 *RELATÓRIO PATRIMONIAL - OBRALY*`);
+        linhas.push(`🏠 ${imovelNome} | ${periodoLabel}`);
+        linhas.push(`─────────────────────────`);
+        linhas.push(`💸 Total Despesas: ${formatCurrency(totalDespesas)}`);
+        linhas.push(`💚 Total Receitas: ${formatCurrency(totalReceitas)}`);
+        linhas.push(`${saldo >= 0 ? '✅' : '🔴'} Saldo: ${formatCurrency(saldo)}`);
+        linhas.push(`⏳ A Pagar (pendente): ${formatCurrency(totalPendente)}`);
+        linhas.push(`─────────────────────────`);
+
+        if (pendentes.length > 0) {
+            linhas.push(`\n📌 *LANÇAMENTOS PENDENTES (${pendentes.length})*`);
+            Object.entries(pendentesPorImovel).forEach(([imovel, items]) => {
+                linhas.push(`\n🏠 ${imovel}`);
+                items.forEach(l => {
+                    const venc = l.data_vencimento ? ` | Vence: ${formatDate(l.data_vencimento)}` : '';
+                    linhas.push(`  ${l.categoria_icone} ${l.descricao} — ${formatCurrency(l.valor)}${venc}`);
+                });
+            });
+        }
+
+        if (pagos.length > 0) {
+            linhas.push(`\n✅ *PAGOS NO PERÍODO (${pagos.length})*`);
+            pagos.forEach(l => {
+                linhas.push(`  ${l.categoria_icone} ${l.descricao} — ${formatCurrency(l.valor)}`);
+            });
+        }
+
+        linhas.push(`\n_Gerado pelo Obraly Administração_`);
+        return linhas.join('\n');
+    };
+
+    const compartilharWhatsApp = () => {
+        const texto = gerarTexto();
+        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    };
+
+    const compartilharEmail = () => {
+        const assunto = `Relatório Patrimonial - ${imovelNome} - ${periodoLabel}`;
+        const corpo = gerarTexto().replace(/\*/g, '').replace(/_/g, '');
+        const url = `mailto:?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+        window.location.href = url;
+    };
+
+    const imprimir = () => {
+        const printContent = document.getElementById('relatorio-print-area').innerHTML;
+        const w = window.open('', '_blank');
+        w.document.write(`
+            <html><head><title>Relatório Patrimonial - ${imovelNome}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 24px; color: #1e293b; }
+                h1 { font-size: 20px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }
+                h2 { font-size: 15px; color: #475569; margin: 20px 0 8px; }
+                .kpis { display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+                .kpi { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 20px; min-width: 140px; }
+                .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+                .kpi-value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+                table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+                th { background: #f8fafc; padding: 8px 12px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e5e7eb; }
+                td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+                .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+                .pendente { background: #fef3c7; color: #92400e; }
+                .pago { background: #dcfce7; color: #166534; }
+                .despesa { color: #dc2626; font-weight: 700; }
+                .receita { color: #16a34a; font-weight: 700; }
+                .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #94a3b8; text-align: right; }
+                @media print { button { display: none; } }
+            </style></head><body>
+            ${printContent}
+            <div class="footer">Gerado em ${new Date().toLocaleDateString('pt-BR')} pelo Obraly Administração</div>
+            </body></html>
+        `);
+        w.document.close();
+        setTimeout(() => { w.print(); }, 400);
+    };
+
+    return (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:1200, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
+             onClick={e => e.target === e.currentTarget && onClose()}>
+            <div style={{ background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'820px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
+
+                {/* Header */}
+                <div style={{ padding:'18px 24px', background:'#1e293b', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <div>
+                        <h2 style={{ margin:0, color:'#fff', fontSize:'17px', fontWeight:700 }}>📊 Relatório de Lançamentos</h2>
+                        <p style={{ margin:'2px 0 0', color:'#94a3b8', fontSize:'13px' }}>{imovelNome} · {periodoLabel} · {tipoLabel}</p>
+                    </div>
+                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', borderRadius:'8px', width:'34px', height:'34px', cursor:'pointer', fontSize:'18px' }}>×</button>
+                </div>
+
+                {/* Botões de compartilhamento */}
+                <div style={{ padding:'14px 24px', background:'#f8fafc', borderBottom:'1px solid #e5e7eb', display:'flex', gap:'10px', flexWrap:'wrap' }}>
+                    <button onClick={compartilharWhatsApp}
+                        style={{ display:'flex', alignItems:'center', gap:'8px', padding:'9px 18px', borderRadius:'10px', border:'none', background:'#25D366', color:'#fff', fontWeight:700, fontSize:'14px', cursor:'pointer' }}>
+                        <span style={{ fontSize:'18px' }}>💬</span> Compartilhar WhatsApp
+                    </button>
+                    <button onClick={compartilharEmail}
+                        style={{ display:'flex', alignItems:'center', gap:'8px', padding:'9px 18px', borderRadius:'10px', border:'none', background:'#3b82f6', color:'#fff', fontWeight:700, fontSize:'14px', cursor:'pointer' }}>
+                        <span style={{ fontSize:'18px' }}>📧</span> Enviar por Email
+                    </button>
+                    <button onClick={imprimir}
+                        style={{ display:'flex', alignItems:'center', gap:'8px', padding:'9px 18px', borderRadius:'10px', border:'1px solid #e5e7eb', background:'#fff', color:'#1e293b', fontWeight:700, fontSize:'14px', cursor:'pointer' }}>
+                        <span style={{ fontSize:'18px' }}>🖨️</span> Imprimir / PDF
+                    </button>
+                </div>
+
+                {/* Conteúdo do relatório */}
+                <div style={{ overflow:'auto', padding:'24px', flex:1 }}>
+                    <div id="relatorio-print-area">
+                        <h1 style={{ margin:'0 0 4px', fontSize:'20px', fontWeight:800, color:'#1e293b' }}>
+                            📋 Relatório Patrimonial
+                        </h1>
+                        <p style={{ margin:'0 0 20px', color:'#64748b', fontSize:'14px' }}>
+                            {imovelNome} · {periodoLabel} · Gerado em {new Date().toLocaleDateString('pt-BR')}
+                        </p>
+
+                        {/* KPIs */}
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:'12px', marginBottom:'24px' }}>
+                            {[
+                                { label:'Despesas', value: formatCurrency(totalDespesas), color:'#dc2626', bg:'#fee2e2' },
+                                { label:'Receitas', value: formatCurrency(totalReceitas), color:'#16a34a', bg:'#dcfce7' },
+                                { label:'Saldo', value: formatCurrency(saldo), color: saldo >= 0 ? '#16a34a' : '#dc2626', bg: saldo >= 0 ? '#dcfce7' : '#fee2e2' },
+                                { label:'A Pagar', value: formatCurrency(totalPendente), color:'#d97706', bg:'#fef3c7' },
+                                { label:'Lançamentos', value: lancamentos.length, color:'#1e293b', bg:'#f1f5f9' },
+                                { label:'Pendentes', value: pendentes.length, color:'#d97706', bg:'#fef3c7' },
+                            ].map(k => (
+                                <div key={k.label} style={{ background:k.bg, borderRadius:'10px', padding:'14px 16px' }}>
+                                    <div style={{ fontSize:'11px', color:'#64748b', fontWeight:600, textTransform:'uppercase', marginBottom:'4px' }}>{k.label}</div>
+                                    <div style={{ fontSize:'17px', fontWeight:800, color:k.color }}>{k.value}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Seção: Pendentes */}
+                        {pendentes.length > 0 && (
+                            <div style={{ marginBottom:'24px' }}>
+                                <h2 style={{ fontSize:'15px', fontWeight:700, color:'#92400e', background:'#fef3c7', padding:'8px 14px', borderRadius:'8px', margin:'0 0 10px', display:'flex', alignItems:'center', gap:'8px' }}>
+                                    ⏳ Pendentes — a pagar ({pendentes.length}) · {formatCurrency(totalPendente)}
+                                </h2>
+                                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
+                                    <thead>
+                                        <tr style={{ background:'#f8fafc', borderBottom:'2px solid #e5e7eb' }}>
+                                            {['Imóvel','Categoria','Descrição','Vencimento','Valor'].map(h =>
+                                                <th key={h} style={{ padding:'8px 12px', textAlign:'left', color:'#475569', fontWeight:600 }}>{h}</th>
+                                            )}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pendentes.map(l => (
+                                            <tr key={l.id} style={{ borderBottom:'1px solid #f1f5f9' }}>
+                                                <td style={{ padding:'8px 12px', color:'#64748b', fontSize:'12px' }}>{l.imovel_nome}</td>
+                                                <td style={{ padding:'8px 12px' }}>{l.categoria_icone} {l.categoria_nome}</td>
+                                                <td style={{ padding:'8px 12px', fontWeight:500 }}>{l.descricao}</td>
+                                                <td style={{ padding:'8px 12px', color: l.data_vencimento && new Date(l.data_vencimento) < new Date() ? '#dc2626' : '#64748b', fontWeight:500 }}>
+                                                    {l.data_vencimento ? formatDate(l.data_vencimento) : '—'}
+                                                    {l.data_vencimento && new Date(l.data_vencimento + 'T00:00:00') < new Date() && (
+                                                        <span style={{ marginLeft:'6px', fontSize:'11px', background:'#fee2e2', color:'#dc2626', padding:'1px 6px', borderRadius:'999px', fontWeight:700 }}>VENCIDO</span>
+                                                    )}
+                                                </td>
+                                                <td style={{ padding:'8px 12px', fontWeight:700, color: l.tipo==='despesa'?'#dc2626':'#16a34a', textAlign:'right' }}>
+                                                    {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Seção: Pagos */}
+                        {pagos.length > 0 && (
+                            <div>
+                                <h2 style={{ fontSize:'15px', fontWeight:700, color:'#166534', background:'#dcfce7', padding:'8px 14px', borderRadius:'8px', margin:'0 0 10px', display:'flex', alignItems:'center', gap:'8px' }}>
+                                    ✅ Pagos no período ({pagos.length})
+                                </h2>
+                                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'13px' }}>
+                                    <thead>
+                                        <tr style={{ background:'#f8fafc', borderBottom:'2px solid #e5e7eb' }}>
+                                            {['Imóvel','Categoria','Descrição','Pagamento','Valor'].map(h =>
+                                                <th key={h} style={{ padding:'8px 12px', textAlign:'left', color:'#475569', fontWeight:600 }}>{h}</th>
+                                            )}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pagos.map(l => (
+                                            <tr key={l.id} style={{ borderBottom:'1px solid #f1f5f9' }}>
+                                                <td style={{ padding:'8px 12px', color:'#64748b', fontSize:'12px' }}>{l.imovel_nome}</td>
+                                                <td style={{ padding:'8px 12px' }}>{l.categoria_icone} {l.categoria_nome}</td>
+                                                <td style={{ padding:'8px 12px', fontWeight:500 }}>{l.descricao}</td>
+                                                <td style={{ padding:'8px 12px', color:'#64748b' }}>{l.data_pagamento ? formatDate(l.data_pagamento) : '—'}</td>
+                                                <td style={{ padding:'8px 12px', fontWeight:700, color: l.tipo==='despesa'?'#dc2626':'#16a34a', textAlign:'right' }}>
+                                                    {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {lancamentos.length === 0 && (
+                            <div style={{ textAlign:'center', padding:'40px', color:'#94a3b8' }}>
+                                Nenhum lançamento encontrado no período selecionado.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{ padding:'14px 24px', borderTop:'1px solid #e5e7eb', background:'#f8fafc', borderRadius:'0 0 16px 16px', display:'flex', justifyContent:'flex-end' }}>
+                    <button onClick={onClose} style={{ padding:'9px 20px', borderRadius:'8px', border:'1px solid #e5e7eb', background:'#fff', color:'#475569', fontWeight:600, cursor:'pointer', fontSize:'14px' }}>
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ===================================================================================
+// COMPONENTE: LANÇAMENTOS
+// ===================================================================================
+
 const Lancamentos = () => {
     const { token } = useAuthAdmin();
     const [lancamentos, setLancamentos] = useState([]);
@@ -1170,6 +1426,7 @@ const Lancamentos = () => {
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showRelatorio, setShowRelatorio] = useState(false);
     const [filtros, setFiltros] = useState({
         imovel_id: '',
         tipo: '',
@@ -1363,9 +1620,15 @@ const Lancamentos = () => {
             {/* Header */}
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>💰 Lançamentos</h1>
-                <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
-                    + Novo Lançamento
-                </button>
+                <div style={{ display:'flex', gap:'10px' }}>
+                    <button onClick={() => setShowRelatorio(true)}
+                        style={{ ...styles.primaryButton, background:'#475569', display:'flex', alignItems:'center', gap:'6px' }}>
+                        📊 Gerar Relatório
+                    </button>
+                    <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
+                        + Novo Lançamento
+                    </button>
+                </div>
             </div>
 
             {/* Filtros */}
@@ -1641,6 +1904,16 @@ const Lancamentos = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal Relatório */}
+            {showRelatorio && (
+                <RelatorioLancamentosModal
+                    lancamentos={lancamentos}
+                    imoveis={imoveis}
+                    filtros={filtros}
+                    onClose={() => setShowRelatorio(false)}
+                />
             )}
 
             {/* Modal Editar Lançamento */}
