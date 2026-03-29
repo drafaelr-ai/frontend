@@ -7981,6 +7981,7 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId, itensOrcamento
         data_vencimento: getTodayString(),
         fornecedor: '',
         pix: '',
+        codigo_barras: '',
         observacoes: '',
         orcamento_item_id: ''
     });
@@ -8047,6 +8048,17 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId, itensOrcamento
                         maxLength="100"
                     />
                 </label>
+
+                <label>
+                    Código de Barras / Linha Digitável:
+                    <input
+                        type="text"
+                        value={formData.codigo_barras}
+                        onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
+                        placeholder="Ex: 34191.09008 12345.678901..."
+                        maxLength="100"
+                    />
+                </label>
                 
                 <label>
                     📦 Vincular a Item do Orçamento:
@@ -8090,6 +8102,7 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento, itensOrcamento
         data_vencimento: pagamento.data_vencimento || getTodayString(),
         fornecedor: pagamento.fornecedor || '',
         pix: pagamento.pix || '',
+        codigo_barras: pagamento.codigo_barras || '',
         observacoes: pagamento.observacoes || '',
         orcamento_item_id: pagamento.orcamento_item_id || ''
     });
@@ -8153,6 +8166,17 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento, itensOrcamento
                         value={formData.pix}
                         onChange={(e) => setFormData({...formData, pix: e.target.value})}
                         placeholder="CPF, telefone, email ou chave aleatória"
+                        maxLength="100"
+                    />
+                </label>
+
+                <label>
+                    Código de Barras / Linha Digitável:
+                    <input
+                        type="text"
+                        value={formData.codigo_barras || ""}
+                        onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
+                        placeholder="Ex: 34191.09008 12345.678901..."
                         maxLength="100"
                     />
                 </label>
@@ -11867,7 +11891,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 linhas.push(`\n🚨 *VENCIDOS (${vencidos.length}) — ${formatVal(totalVencido)}*`);
                                 vencidos.forEach(p => {
                                     linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
-                                    if (p.pix_chave) linhas.push(`    🔑 PIX: ${p.pix_chave}`);
+                                    if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
                                     if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
                                 });
                             }
@@ -11876,7 +11900,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 linhas.push(`\n⏰ *A VENCER (${aVencer.length}) — ${formatVal(totalAVencer)}*`);
                                 aVencer.slice(0, 10).forEach(p => {
                                     linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
-                                    if (p.pix_chave) linhas.push(`    🔑 PIX: ${p.pix_chave}`);
+                                    if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
                                     if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
                                 });
                                 if (aVencer.length > 10) linhas.push(`  ... e mais ${aVencer.length - 10} itens`);
