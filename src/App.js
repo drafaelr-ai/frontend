@@ -6091,7 +6091,42 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
                 </p>
             )}
 
-            <div style={{ marginTop: '25px', textAlign: 'center' }}>
+            {/* Botão compartilhar WhatsApp */}
+            <div style={{ marginTop: '20px' }}>
+                <button
+                    onClick={() => {
+                        const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        const linhas = [];
+                        linhas.push(`📋 *RELATÓRIO DE OBRA - OBRALY*`);
+                        linhas.push(`🏗️ Obra: *${obraNome}*`);
+                        linhas.push(`📅 Data: ${new Date().toLocaleDateString('pt-BR')}`);
+                        linhas.push(`─────────────────────────`);
+                        linhas.push(`\nAcesse o relatório completo na plataforma Obraly.`);
+                        linhas.push(`\n_Gerado pelo Obraly_`);
+                        const texto = linhas.join('\n');
+                        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+                    }}
+                    style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: '#25D366',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    💬 Compartilhar via WhatsApp
+                </button>
+            </div>
+
+            <div style={{ marginTop: '15px', textAlign: 'center' }}>
                 <button onClick={onClose} className="cancel-btn" disabled={isDownloading}>
                     Fechar
                 </button>
@@ -11790,6 +11825,84 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         title="Gerar relatório PDF do cronograma financeiro"
                     >
                         📄 Gerar PDF
+                    </button>
+                )}
+
+                {/* Botão WhatsApp - apenas no modo completo */}
+                {!simplified && (
+                    <button
+                        onClick={() => {
+                            const hoje = new Date();
+                            const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+
+                            // Coletar todos os pagamentos futuros pendentes
+                            const pendentes = pagamentosFuturos.filter(p => p.status === 'Previsto');
+                            const vencidos = pendentes.filter(p => p.data_vencimento && new Date(p.data_vencimento + 'T00:00:00') < hoje);
+                            const aVencer = pendentes.filter(p => {
+                                if (!p.data_vencimento) return false;
+                                const d = new Date(p.data_vencimento + 'T00:00:00');
+                                return d >= hoje;
+                            });
+
+                            // Parcelas pendentes
+                            const parcelasPendentes = pagamentosParcelados.flatMap(pp =>
+                                (pp.parcelas || []).filter(parc => parc.status === 'Previsto').map(parc => ({
+                                    ...parc,
+                                    descricao: `${pp.descricao} (parcela ${parc.numero_parcela}/${pp.qtd_parcelas})`
+                                }))
+                            );
+
+                            const totalVencido = vencidos.reduce((a, p) => a + (p.valor || 0), 0);
+                            const totalAVencer = aVencer.reduce((a, p) => a + (p.valor || 0), 0);
+                            const totalParcelas = parcelasPendentes.reduce((a, p) => a + (p.valor || 0), 0);
+
+                            const linhas = [];
+                            linhas.push(`📋 *CRONOGRAMA FINANCEIRO - OBRALY*`);
+                            linhas.push(`🏗️ Obra: *${obraNome}*`);
+                            linhas.push(`📅 Gerado em: ${hoje.toLocaleDateString('pt-BR')}`);
+                            linhas.push(`─────────────────────────`);
+
+                            if (vencidos.length > 0) {
+                                linhas.push(`\n🚨 *VENCIDOS (${vencidos.length}) — ${formatVal(totalVencido)}*`);
+                                vencidos.forEach(p => {
+                                    linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                                    if (p.pix_chave) linhas.push(`    🔑 PIX: ${p.pix_chave}`);
+                                    if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
+                                });
+                            }
+
+                            if (aVencer.length > 0) {
+                                linhas.push(`\n⏰ *A VENCER (${aVencer.length}) — ${formatVal(totalAVencer)}*`);
+                                aVencer.slice(0, 10).forEach(p => {
+                                    linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                                    if (p.pix_chave) linhas.push(`    🔑 PIX: ${p.pix_chave}`);
+                                    if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
+                                });
+                                if (aVencer.length > 10) linhas.push(`  ... e mais ${aVencer.length - 10} itens`);
+                            }
+
+                            if (parcelasPendentes.length > 0) {
+                                linhas.push(`\n📦 *PARCELAS PENDENTES (${parcelasPendentes.length}) — ${formatVal(totalParcelas)}*`);
+                                parcelasPendentes.slice(0, 8).forEach(p => {
+                                    linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                                });
+                                if (parcelasPendentes.length > 8) linhas.push(`  ... e mais ${parcelasPendentes.length - 8} parcelas`);
+                            }
+
+                            const totalGeral = totalVencido + totalAVencer + totalParcelas;
+                            linhas.push(`\n─────────────────────────`);
+                            linhas.push(`💰 *TOTAL PENDENTE: ${formatVal(totalGeral)}*`);
+                            linhas.push(`_Gerado pelo Obraly_`);
+
+                            const texto = linhas.join('\n');
+                            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+                        }}
+                        className="export-btn"
+                        style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
+                        title="Compartilhar cronograma pelo WhatsApp"
+                    >
+                        💬 WhatsApp
                     </button>
                 )}
                     
