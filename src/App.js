@@ -2542,7 +2542,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         >
                             <span>🎛️</span>
                             Filtros
-                            {(filtroTipo !== 'todos' || filtroFornecedor) && (
+                            {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
                                 <span style={{
                                     backgroundColor: '#3b82f6',
                                     color: '#fff',
@@ -2554,7 +2554,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     alignItems: 'center',
                                     justifyContent: 'center'
                                 }}>
-                                    {(filtroTipo !== 'todos' ? 1 : 0) + (filtroFornecedor ? 1 : 0)}
+                                    {(filtroTipo !== 'todos' ? 1 : 0) + (filtroFornecedor ? 1 : 0) + (busca ? 1 : 0)}
                                 </span>
                             )}
                         </button>
@@ -2575,33 +2575,6 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 gap: '16px',
                                 marginBottom: '12px'
                             }}>
-                                {/* Filtro por Palavra-chave */}
-                                <div>
-                                    <label style={{ 
-                                        display: 'block', 
-                                        fontSize: '12px', 
-                                        fontWeight: '600',
-                                        color: '#64748b',
-                                        marginBottom: '6px'
-                                    }}>
-                                        🔤 Palavra-chave
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: cimento, pintura..."
-                                        value={busca}
-                                        onChange={(e) => setBusca(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '8px 12px',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    />
-                                </div>
-                                
                                 {/* Filtro por Tipo */}
                                 <div>
                                     <label style={{ 
@@ -3016,6 +2989,46 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 💡 Vincular a um item faz o valor contar no orçamento
                             </small>
                         </div>
+
+                        {/* Comprovante de pagamento */}
+                        {editandoItem.comprovante_url && (
+                            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                                <label style={{ fontWeight: '600', color: '#166534', fontSize: '0.9em', display: 'block', marginBottom: '10px' }}>
+                                    📎 Comprovante de Pagamento
+                                </label>
+                                {editandoItem.comprovante_url.startsWith('data:image') ? (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <img
+                                            src={editandoItem.comprovante_url}
+                                            alt="Comprovante"
+                                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain', cursor: 'pointer' }}
+                                            onClick={() => window.open(editandoItem.comprovante_url, '_blank')}
+                                            title="Clique para ampliar"
+                                        />
+                                        <div style={{ marginTop: '8px' }}>
+                                            <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
+                                                style={{ fontSize: '12px', color: '#166534', textDecoration: 'none', fontWeight: '600' }}>
+                                                🔍 Ampliar imagem
+                                            </a>
+                                        </div>
+                                    </div>
+                                ) : editandoItem.comprovante_url.startsWith('data:application/pdf') ? (
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>📄</div>
+                                        <a href={editandoItem.comprovante_url}
+                                            download={`comprovante_${editandoItem.descricao || 'pagamento'}.pdf`}
+                                            style={{ padding: '8px 16px', background: '#166534', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: '600' }}>
+                                            📥 Baixar PDF
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
+                                        style={{ color: '#166534', fontWeight: '600', fontSize: '13px' }}>
+                                        📎 Ver comprovante
+                                    </a>
+                                )}
+                            </div>
+                        )}
                         
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                             <button
