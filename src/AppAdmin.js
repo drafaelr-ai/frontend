@@ -130,6 +130,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout }) => {
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'imoveis', icon: '🏠', label: 'Imóveis' },
         { id: 'lancamentos', icon: '💰', label: 'Lançamentos' },
+        { id: 'boletos', icon: '📄', label: 'Boletos' },
         { id: 'relatorios', icon: '📈', label: 'Relatórios' },
     ];
     
@@ -596,8 +597,6 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
         data_pagamento: lancamento.data_pagamento || '',
         categoria_id: lancamento.categoria_id || '',
         observacoes: lancamento.observacoes || '',
-        pix_chave: lancamento.pix_chave || '',
-        codigo_barras: lancamento.codigo_barras || '',
     });
     const [comprovantePreview, setComprovantePreview] = useState(lancamento.comprovante_url || null);
     const [comprovanteBase64, setComprovanteBase64] = useState(undefined);
@@ -631,8 +630,6 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                 status: form.status,
                 categoria_id: Number(form.categoria_id),
                 observacoes: form.observacoes || null,
-                pix_chave: form.pix_chave || null,
-                codigo_barras: form.codigo_barras || null,
                 data_lancamento: form.data_lancamento || undefined,
                 data_vencimento: form.data_vencimento || undefined,
                 data_pagamento: form.data_pagamento || undefined,
@@ -721,18 +718,6 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                     <div>
                         <label style={styles.label}>Observações</label>
                         <textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes:e.target.value }))} rows={2} style={{ ...styles.input, resize:'vertical' }} placeholder='Informações adicionais…' />
-                    </div>
-                    {/* Dados de Pagamento */}
-                    <div style={{ padding:'14px', borderRadius:'10px', background:'#f0fdf4', border:'1px solid #bbf7d0' }}>
-                        <div style={{ fontSize:'13px', fontWeight:700, color:'#166534', marginBottom:'10px' }}>💳 Dados para Pagamento (opcional)</div>
-                        <div>
-                            <label style={styles.label}>Chave PIX</label>
-                            <input value={form.pix_chave} onChange={e => setForm(f => ({ ...f, pix_chave:e.target.value }))} style={styles.input} placeholder='CPF, CNPJ, email, telefone ou chave aleatória' />
-                        </div>
-                        <div style={{ marginTop:'10px' }}>
-                            <label style={styles.label}>Código de Barras / Linha Digitável</label>
-                            <input value={form.codigo_barras} onChange={e => setForm(f => ({ ...f, codigo_barras:e.target.value }))} style={styles.input} placeholder='Ex: 34191.09008 12345.678901...' />
-                        </div>
                     </div>
                     {/* Comprovante */}
                     <div>
@@ -1176,201 +1161,6 @@ const Imoveis = () => {
 };
 
 // ===================================================================================
-// COMPONENTE: MODAL RELATÓRIO DE LANÇAMENTOS
-// ===================================================================================
-
-const RelatorioLancamentosModal = ({ lancamentos, imoveis, filtros, onClose }) => {
-    const mesesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const imovelNome = filtros.imovel_id ? (imoveis.find(i => String(i.id) === String(filtros.imovel_id))?.nome || 'Imóvel') : 'Todos os imóveis';
-    const periodoLabel = `${mesesNomes[filtros.mes - 1]} de ${filtros.ano}`;
-    const tipoLabel = filtros.tipo === 'despesa' ? 'Despesas' : filtros.tipo === 'receita' ? 'Receitas' : 'Despesas e Receitas';
-
-    const pendentes = lancamentos.filter(l => l.status === 'pendente');
-    const pagos = lancamentos.filter(l => l.status === 'pago');
-    const totalDespesas = lancamentos.filter(l => l.tipo === 'despesa' && l.status !== 'cancelado').reduce((a,l) => a + l.valor, 0);
-    const totalReceitas = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((a,l) => a + l.valor, 0);
-    const totalPendente = pendentes.reduce((a,l) => a + l.valor, 0);
-    const saldo = totalReceitas - totalDespesas;
-
-    const pendentesPorImovel = pendentes.reduce((acc, l) => {
-        const nome = l.imovel_nome || 'Sem imóvel';
-        if (!acc[nome]) acc[nome] = [];
-        acc[nome].push(l);
-        return acc;
-    }, {});
-
-    const gerarTexto = () => {
-        const linhas = [];
-        linhas.push(`📋 *RELATÓRIO PATRIMONIAL - OBRALY*`);
-        linhas.push(`🏠 ${imovelNome} | ${periodoLabel}`);
-        linhas.push(`─────────────────────────`);
-        linhas.push(`💸 Total Despesas: ${formatCurrency(totalDespesas)}`);
-        linhas.push(`💚 Total Receitas: ${formatCurrency(totalReceitas)}`);
-        linhas.push(`${saldo >= 0 ? '✅' : '🔴'} Saldo: ${formatCurrency(saldo)}`);
-        linhas.push(`⏳ A Pagar (pendente): ${formatCurrency(totalPendente)}`);
-        linhas.push(`─────────────────────────`);
-        if (pendentes.length > 0) {
-            linhas.push(`\n📌 *LANÇAMENTOS PENDENTES (${pendentes.length})*`);
-            Object.entries(pendentesPorImovel).forEach(([imovel, items]) => {
-                linhas.push(`\n🏠 ${imovel}`);
-                items.forEach(l => {
-                    const venc = l.data_vencimento ? ` | Vence: ${formatDate(l.data_vencimento)}` : '';
-                    linhas.push(`  ${l.categoria_icone} ${l.descricao} — ${formatCurrency(l.valor)}${venc}`);
-                    if (l.pix_chave) linhas.push(`  🔑 PIX: ${l.pix_chave}`);
-                    if (l.codigo_barras) linhas.push(`  📋 Cód. Barras: ${l.codigo_barras}`);
-                });
-            });
-        }
-        if (pagos.length > 0) {
-            linhas.push(`\n✅ *PAGOS NO PERÍODO (${pagos.length})*`);
-            pagos.forEach(l => linhas.push(`  ${l.categoria_icone} ${l.descricao} — ${formatCurrency(l.valor)}`));
-        }
-        linhas.push(`\n_Gerado pelo Obraly Administração_`);
-        return linhas.join('\n');
-    };
-
-    const compartilharWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(gerarTexto())}`, '_blank');
-    const compartilharEmail = () => {
-        const assunto = `Relatório Patrimonial - ${imovelNome} - ${periodoLabel}`;
-        window.location.href = `mailto:?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(gerarTexto().replace(/\*/g,'').replace(/_/g,''))}`;
-    };
-    const imprimir = () => {
-        const w = window.open('', '_blank');
-        w.document.write(`<html><head><title>Relatório Patrimonial</title>
-        <style>body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}h1{font-size:20px;border-bottom:2px solid #1e293b;padding-bottom:8px}h2{font-size:15px;color:#475569;margin:20px 0 8px}.kpis{display:flex;gap:16px;margin:16px 0;flex-wrap:wrap}.kpi{border:1px solid #e5e7eb;border-radius:8px;padding:12px 20px;min-width:140px}.kpi-label{font-size:11px;color:#64748b;text-transform:uppercase}.kpi-value{font-size:18px;font-weight:700;margin-top:4px}table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}th{background:#f8fafc;padding:8px 12px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e5e7eb}td{padding:8px 12px;border-bottom:1px solid #f1f5f9}.pix-info{font-size:11px;color:#166534;background:#f0fdf4;padding:3px 8px;border-radius:4px;margin-top:3px}.footer{margin-top:32px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#94a3b8;text-align:right}</style>
-        </head><body>${document.getElementById('relatorio-print-area').innerHTML}
-        <div class="footer">Gerado em ${new Date().toLocaleDateString('pt-BR')} pelo Obraly Administração</div>
-        </body></html>`);
-        w.document.close();
-        setTimeout(() => w.print(), 400);
-    };
-
-    return (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1200,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}
-             onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'820px',maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 64px rgba(0,0,0,0.35)'}}>
-                {/* Header */}
-                <div style={{padding:'18px 24px',background:'#1e293b',borderRadius:'16px 16px 0 0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div>
-                        <h2 style={{margin:0,color:'#fff',fontSize:'17px',fontWeight:700}}>📊 Relatório de Lançamentos</h2>
-                        <p style={{margin:'2px 0 0',color:'#94a3b8',fontSize:'13px'}}>{imovelNome} · {periodoLabel} · {tipoLabel}</p>
-                    </div>
-                    <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',borderRadius:'8px',width:'34px',height:'34px',cursor:'pointer',fontSize:'18px'}}>×</button>
-                </div>
-                {/* Botões */}
-                <div style={{padding:'14px 24px',background:'#f8fafc',borderBottom:'1px solid #e5e7eb',display:'flex',gap:'10px',flexWrap:'wrap'}}>
-                    <button onClick={compartilharWhatsApp} style={{display:'flex',alignItems:'center',gap:'8px',padding:'9px 18px',borderRadius:'10px',border:'none',background:'#25D366',color:'#fff',fontWeight:700,fontSize:'14px',cursor:'pointer'}}>
-                        <span style={{fontSize:'18px'}}>💬</span> WhatsApp
-                    </button>
-                    <button onClick={compartilharEmail} style={{display:'flex',alignItems:'center',gap:'8px',padding:'9px 18px',borderRadius:'10px',border:'none',background:'#3b82f6',color:'#fff',fontWeight:700,fontSize:'14px',cursor:'pointer'}}>
-                        <span style={{fontSize:'18px'}}>📧</span> Email
-                    </button>
-                    <button onClick={imprimir} style={{display:'flex',alignItems:'center',gap:'8px',padding:'9px 18px',borderRadius:'10px',border:'1px solid #e5e7eb',background:'#fff',color:'#1e293b',fontWeight:700,fontSize:'14px',cursor:'pointer'}}>
-                        <span style={{fontSize:'18px'}}>🖨️</span> Imprimir / PDF
-                    </button>
-                </div>
-                {/* Conteúdo */}
-                <div style={{overflow:'auto',padding:'24px',flex:1}}>
-                    <div id="relatorio-print-area">
-                        <h1 style={{margin:'0 0 4px',fontSize:'20px',fontWeight:800,color:'#1e293b'}}>📋 Relatório Patrimonial</h1>
-                        <p style={{margin:'0 0 20px',color:'#64748b',fontSize:'14px'}}>{imovelNome} · {periodoLabel} · Gerado em {new Date().toLocaleDateString('pt-BR')}</p>
-                        {/* KPIs */}
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))',gap:'12px',marginBottom:'24px'}}>
-                            {[
-                                {label:'Despesas',value:formatCurrency(totalDespesas),color:'#dc2626',bg:'#fee2e2'},
-                                {label:'Receitas',value:formatCurrency(totalReceitas),color:'#16a34a',bg:'#dcfce7'},
-                                {label:'Saldo',value:formatCurrency(saldo),color:saldo>=0?'#16a34a':'#dc2626',bg:saldo>=0?'#dcfce7':'#fee2e2'},
-                                {label:'A Pagar',value:formatCurrency(totalPendente),color:'#d97706',bg:'#fef3c7'},
-                                {label:'Pendentes',value:pendentes.length,color:'#d97706',bg:'#fef3c7'},
-                            ].map(k => (
-                                <div key={k.label} style={{background:k.bg,borderRadius:'10px',padding:'14px 16px'}}>
-                                    <div style={{fontSize:'11px',color:'#64748b',fontWeight:600,textTransform:'uppercase',marginBottom:'4px'}}>{k.label}</div>
-                                    <div style={{fontSize:'17px',fontWeight:800,color:k.color}}>{k.value}</div>
-                                </div>
-                            ))}
-                        </div>
-                        {/* Pendentes */}
-                        {pendentes.length > 0 && (
-                            <div style={{marginBottom:'24px'}}>
-                                <h2 style={{fontSize:'15px',fontWeight:700,color:'#92400e',background:'#fef3c7',padding:'8px 14px',borderRadius:'8px',margin:'0 0 10px'}}>
-                                    ⏳ Pendentes — a pagar ({pendentes.length}) · {formatCurrency(totalPendente)}
-                                </h2>
-                                <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
-                                    <thead>
-                                        <tr style={{background:'#f8fafc',borderBottom:'2px solid #e5e7eb'}}>
-                                            {['Imóvel','Categoria','Descrição','Vencimento','Pagamento','Valor'].map(h =>
-                                                <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#475569',fontWeight:600}}>{h}</th>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pendentes.map(l => (
-                                            <tr key={l.id} style={{borderBottom:'1px solid #f1f5f9'}}>
-                                                <td style={{padding:'8px 12px',color:'#64748b',fontSize:'12px'}}>{l.imovel_nome}</td>
-                                                <td style={{padding:'8px 12px'}}>{l.categoria_icone} {l.categoria_nome}</td>
-                                                <td style={{padding:'8px 12px',fontWeight:500}}>
-                                                    {l.descricao}
-                                                    {l.pix_chave && <div style={{fontSize:'11px',color:'#166534',background:'#f0fdf4',padding:'2px 6px',borderRadius:'4px',marginTop:'3px'}}>🔑 PIX: {l.pix_chave}</div>}
-                                                    {l.codigo_barras && <div style={{fontSize:'11px',color:'#1d4ed8',background:'#eff6ff',padding:'2px 6px',borderRadius:'4px',marginTop:'3px'}}>📋 {l.codigo_barras}</div>}
-                                                </td>
-                                                <td style={{padding:'8px 12px',color:l.data_vencimento && new Date(l.data_vencimento+'T00:00:00')<new Date()?'#dc2626':'#64748b',fontWeight:500}}>
-                                                    {l.data_vencimento ? formatDate(l.data_vencimento) : '—'}
-                                                    {l.data_vencimento && new Date(l.data_vencimento+'T00:00:00') < new Date() && <span style={{marginLeft:'6px',fontSize:'11px',background:'#fee2e2',color:'#dc2626',padding:'1px 6px',borderRadius:'999px',fontWeight:700}}>VENCIDO</span>}
-                                                </td>
-                                                <td style={{padding:'8px 12px',fontSize:'12px'}}>
-                                                    {l.pix_chave ? '🔑 PIX' : l.codigo_barras ? '📋 Boleto' : '—'}
-                                                </td>
-                                                <td style={{padding:'8px 12px',fontWeight:700,color:l.tipo==='despesa'?'#dc2626':'#16a34a',textAlign:'right'}}>
-                                                    {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        {/* Pagos */}
-                        {pagos.length > 0 && (
-                            <div>
-                                <h2 style={{fontSize:'15px',fontWeight:700,color:'#166534',background:'#dcfce7',padding:'8px 14px',borderRadius:'8px',margin:'0 0 10px'}}>
-                                    ✅ Pagos no período ({pagos.length})
-                                </h2>
-                                <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
-                                    <thead>
-                                        <tr style={{background:'#f8fafc',borderBottom:'2px solid #e5e7eb'}}>
-                                            {['Imóvel','Categoria','Descrição','Pagamento','Valor'].map(h =>
-                                                <th key={h} style={{padding:'8px 12px',textAlign:'left',color:'#475569',fontWeight:600}}>{h}</th>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pagos.map(l => (
-                                            <tr key={l.id} style={{borderBottom:'1px solid #f1f5f9'}}>
-                                                <td style={{padding:'8px 12px',color:'#64748b',fontSize:'12px'}}>{l.imovel_nome}</td>
-                                                <td style={{padding:'8px 12px'}}>{l.categoria_icone} {l.categoria_nome}</td>
-                                                <td style={{padding:'8px 12px',fontWeight:500}}>{l.descricao}</td>
-                                                <td style={{padding:'8px 12px',color:'#64748b'}}>{l.data_pagamento ? formatDate(l.data_pagamento) : '—'}</td>
-                                                <td style={{padding:'8px 12px',fontWeight:700,color:l.tipo==='despesa'?'#dc2626':'#16a34a',textAlign:'right'}}>
-                                                    {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        {lancamentos.length === 0 && <div style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>Nenhum lançamento encontrado no período.</div>}
-                    </div>
-                </div>
-                <div style={{padding:'14px 24px',borderTop:'1px solid #e5e7eb',background:'#f8fafc',borderRadius:'0 0 16px 16px',display:'flex',justifyContent:'flex-end'}}>
-                    <button onClick={onClose} style={{padding:'9px 20px',borderRadius:'8px',border:'1px solid #e5e7eb',background:'#fff',color:'#475569',fontWeight:600,cursor:'pointer',fontSize:'14px'}}>Fechar</button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ===================================================================================
 // COMPONENTE: LANÇAMENTOS
 // ===================================================================================
 
@@ -1378,7 +1168,6 @@ const Lancamentos = () => {
     const { token } = useAuthAdmin();
     const [lancamentos, setLancamentos] = useState([]);
     const [imoveis, setImoveis] = useState([]);
-    const [showRelatorio, setShowRelatorio] = useState(false);
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -1401,9 +1190,7 @@ const Lancamentos = () => {
         recorrente: false,
         recorrencia_meses: '1',
         qtd_parcelas: '12',
-        observacoes: '',
-        pix_chave: '',
-        codigo_barras: ''
+        observacoes: ''
     });
 
     useEffect(() => {
@@ -1577,15 +1364,9 @@ const Lancamentos = () => {
             {/* Header */}
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>💰 Lançamentos</h1>
-                <div style={{ display:'flex', gap:'10px' }}>
-                    <button onClick={() => setShowRelatorio(true)}
-                        style={{ ...styles.primaryButton, background:'#475569', display:'flex', alignItems:'center', gap:'6px' }}>
-                        📊 Gerar Relatório
-                    </button>
-                    <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
-                        + Novo Lançamento
-                    </button>
-                </div>
+                <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
+                    + Novo Lançamento
+                </button>
             </div>
 
             {/* Filtros */}
@@ -1723,16 +1504,6 @@ const Lancamentos = () => {
                     </div>
                 )}
             </div>
-
-            {/* Modal Relatório */}
-            {showRelatorio && (
-                <RelatorioLancamentosModal
-                    lancamentos={lancamentos}
-                    imoveis={imoveis}
-                    filtros={filtros}
-                    onClose={() => setShowRelatorio(false)}
-                />
-            )}
 
             {/* Modal Registrar Pagamento */}
             {showModalPagar && lancamentoPagar && (
@@ -2095,31 +1866,6 @@ const Lancamentos = () => {
                                 )}
                             </div>
 
-                            {/* Dados de Pagamento PIX/Boleto */}
-                            <div style={{ padding:'14px', borderRadius:'10px', background:'#f0fdf4', border:'1px solid #bbf7d0', marginBottom:'4px' }}>
-                                <div style={{ fontSize:'13px', fontWeight:700, color:'#166534', marginBottom:'10px' }}>💳 Dados para Pagamento (opcional)</div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Chave PIX</label>
-                                    <input
-                                        type="text"
-                                        value={form.pix_chave}
-                                        onChange={e => setForm({ ...form, pix_chave: e.target.value })}
-                                        style={styles.input}
-                                        placeholder="CPF, CNPJ, email, telefone ou chave aleatória"
-                                    />
-                                </div>
-                                <div style={{ ...styles.formGroup, marginTop:'10px' }}>
-                                    <label style={styles.label}>Código de Barras / Linha Digitável</label>
-                                    <input
-                                        type="text"
-                                        value={form.codigo_barras}
-                                        onChange={e => setForm({ ...form, codigo_barras: e.target.value })}
-                                        style={styles.input}
-                                        placeholder="Ex: 34191.09008 12345.678901..."
-                                    />
-                                </div>
-                            </div>
-
                             <div style={styles.modalFooter}>
                                 <button type="button" onClick={() => setShowModal(false)} style={styles.cancelButton}>
                                     Cancelar
@@ -2139,6 +1885,372 @@ const Lancamentos = () => {
 // ===================================================================================
 // COMPONENTE: RELATÓRIOS (Placeholder)
 // ===================================================================================
+
+// ===================================================================================
+// COMPONENTE: GESTÃO DE BOLETOS
+// ===================================================================================
+
+const GestaoBoletos = () => {
+    const { token } = useAuthAdmin();
+    const [imoveis, setImoveis] = useState([]);
+    const [imovelSelecionado, setImovelSelecionado] = useState('');
+    const [boletos, setBoletos] = useState([]);
+    const [resumo, setResumo] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [filtroStatus, setFiltroStatus] = useState('todos');
+    const [modalCadastro, setModalCadastro] = useState(false);
+    const [modalPreview, setModalPreview] = useState(null);
+
+    useEffect(() => {
+        fetch(`${API_URL_ADMIN}/imoveis`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json()).then(d => { setImoveis(Array.isArray(d) ? d : []); })
+            .catch(console.error);
+    }, [token]);
+
+    const fetchBoletos = async (imovelId = imovelSelecionado) => {
+        if (!imovelId) return;
+        setLoading(true);
+        try {
+            const url = filtroStatus === 'todos'
+                ? `${API_URL_ADMIN}/imoveis/${imovelId}/boletos`
+                : `${API_URL_ADMIN}/imoveis/${imovelId}/boletos?status=${filtroStatus}`;
+            const [bRes, rRes] = await Promise.all([
+                fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/resumo`, { headers: { Authorization: `Bearer ${token}` } }),
+            ]);
+            if (bRes.ok) setBoletos(await bRes.json());
+            if (rRes.ok) setResumo(await rRes.json());
+        } catch (e) { console.error(e); } finally { setLoading(false); }
+    };
+
+    useEffect(() => { if (imovelSelecionado) fetchBoletos(); }, [imovelSelecionado, filtroStatus]);
+
+    const marcarPago = async (boletoId) => {
+        if (!window.confirm('Confirma que este boleto foi pago?')) return;
+        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/pagar`, {
+            method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
+        });
+        if (r.ok) { fetchBoletos(); alert('✅ Boleto marcado como pago!'); }
+    };
+
+    const deletarBoleto = async (boletoId) => {
+        if (!window.confirm('Excluir este boleto?')) return;
+        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+        });
+        if (r.ok) fetchBoletos();
+    };
+
+    const verPreview = async (boletoId) => {
+        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/arquivo`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (r.ok) setModalPreview(await r.json());
+        else alert('Boleto não possui arquivo anexado');
+    };
+
+    const copiarCodigo = (codigo) => { navigator.clipboard.writeText(codigo); alert('Código copiado!'); };
+
+    const boletosVencidos = boletos.filter(b => b.urgencia === 'vencido');
+    const boletosUrgentes = boletos.filter(b => b.urgencia === 'urgente' || b.urgencia === 'hoje');
+    const boletosProximos = boletos.filter(b => b.urgencia === 'atencao');
+    const boletosNormais = boletos.filter(b => b.urgencia === 'normal');
+    const boletosPagos = boletos.filter(b => b.urgencia === 'pago');
+
+    const renderCard = (boleto, urgencia = 'normal') => {
+        const cores = {
+            vencido: { bg: '#ffebee', border: '#ef5350', badge: '#d32f2f' },
+            urgente: { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
+            hoje:    { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
+            atencao: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
+            normal:  { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
+            pago:    { bg: '#e8f5e9', border: '#4caf50', badge: '#388e3c' },
+        };
+        const cor = cores[urgencia] || cores.normal;
+        const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formatDate = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '-';
+
+        return (
+            <div key={boleto.id} style={{ background: cor.bg, border: `2px solid ${cor.border}`, borderRadius: '10px', padding: '16px', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                    <div>
+                        <h4 style={{ margin: '0 0 4px', color: '#333' }}>🏢 {boleto.descricao}</h4>
+                        {boleto.beneficiario && <span style={{ fontSize: '0.85em', color: '#666' }}>Beneficiário: {boleto.beneficiario}</span>}
+                    </div>
+                    <span style={{ background: cor.badge, color: 'white', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8em', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                        {boleto.status === 'Pago' ? '✅ Pago' :
+                         boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
+                         boleto.dias_para_vencer === 0 ? '🚨 Vence HOJE' :
+                         `${boleto.dias_para_vencer}d para vencer`}
+                    </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
+                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span><div style={{ fontWeight: 'bold', color: '#1976d2', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
+                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span><div style={{ fontWeight: 'bold', color: '#388e3c' }}>{formatDate(boleto.data_pagamento)}</div></div>}
+                </div>
+
+                {boleto.codigo_barras && (
+                    <div style={{ background: 'white', padding: '10px', borderRadius: '5px', marginBottom: '10px', fontFamily: 'monospace', fontSize: '0.85em', wordBreak: 'break-all' }}>
+                        <span style={{ fontSize: '0.75em', color: '#666', display: 'block', marginBottom: '4px' }}>Código de Barras:</span>
+                        {boleto.codigo_barras}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>📋 Copiar Código</button>}
+                    {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>👁️ Ver PDF</button>}
+                    {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>✅ Marcar Pago</button>}
+                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>🗑️</button>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div style={styles.content}>
+            <div style={styles.pageHeader}>
+                <h1 style={styles.pageTitle}>📄 Boletos</h1>
+                <button onClick={() => imovelSelecionado ? setModalCadastro(true) : alert('Selecione um imóvel primeiro')} style={styles.primaryButton}>
+                    + Novo Boleto
+                </button>
+            </div>
+
+            {/* Seletor de imóvel */}
+            <div style={{ marginBottom: '20px' }}>
+                <select value={imovelSelecionado} onChange={e => setImovelSelecionado(e.target.value)} style={{ ...styles.select, minWidth: '260px' }}>
+                    <option value="">Selecione um imóvel...</option>
+                    {imoveis.map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
+                </select>
+            </div>
+
+            {!imovelSelecionado ? (
+                <div style={styles.emptyState}><div style={styles.emptyIcon}>📄</div><p>Selecione um imóvel para ver os boletos</p></div>
+            ) : (
+                <>
+                    {/* Resumo */}
+                    {resumo && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
+                            {[
+                                { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: '#ffebee', color: '#d32f2f' },
+                                { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: '#fff3e0', color: '#f57c00' },
+                                { label: 'Pagos', val: resumo.total_pago, qtd: resumo.quantidade_pago, bg: '#e8f5e9', color: '#388e3c' },
+                            ].map(k => (
+                                <div key={k.label} style={{ background: k.bg, padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.85em', color: k.color }}>{k.label}</div>
+                                    <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: k.color }}>{(k.val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                                    <div style={{ fontSize: '0.8em', color: '#666' }}>{k.qtd} boletos</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Filtro */}
+                    <div style={{ marginBottom: '20px' }}>
+                        <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} style={{ ...styles.select }}>
+                            <option value="todos">Todos os boletos</option>
+                            <option value="Pendente">Pendentes</option>
+                            <option value="Vencido">Vencidos</option>
+                            <option value="Pago">Pagos</option>
+                        </select>
+                    </div>
+
+                    {loading ? <div style={styles.loading}>Carregando...</div> : boletos.length === 0 ? (
+                        <div style={styles.emptyState}><div style={styles.emptyIcon}>📄</div><p>Nenhum boleto encontrado</p><button onClick={() => setModalCadastro(true)} style={styles.primaryButton}>+ Cadastrar primeiro boleto</button></div>
+                    ) : (
+                        <>
+                            {boletosVencidos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#d32f2f' }}>❌ VENCIDOS ({boletosVencidos.length})</h3>{boletosVencidos.map(b => renderCard(b, 'vencido'))}</div>}
+                            {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#f57c00' }}>🚨 URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
+                            {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#ffa000' }}>⚠️ Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
+                            {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#666' }}>📄 Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
+                            {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#388e3c' }}>✅ Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
+                        </>
+                    )}
+                </>
+            )}
+
+            {/* Modal Cadastro */}
+            {modalCadastro && (
+                <CadastrarBoletoAdminModal
+                    imovelId={imovelSelecionado}
+                    token={token}
+                    onClose={() => setModalCadastro(false)}
+                    onSave={() => { setModalCadastro(false); fetchBoletos(); }}
+                />
+            )}
+
+            {/* Modal Preview PDF */}
+            {modalPreview && (
+                <div style={styles.modalOverlay} onClick={() => setModalPreview(null)}>
+                    <div style={{ ...styles.modal, maxWidth: '700px' }} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={styles.modalTitle}>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
+                            <button onClick={() => setModalPreview(null)} style={styles.closeButton}>×</button>
+                        </div>
+                        <div style={{ padding: '24px', textAlign: 'center' }}>
+                            {modalPreview.arquivo_base64 && (
+                                <iframe
+                                    src={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                                    style={{ width: '100%', height: '500px', border: 'none', borderRadius: '8px' }}
+                                    title="Boleto PDF"
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// ===================================================================================
+// COMPONENTE: MODAL CADASTRAR BOLETO (ADMIN)
+// ===================================================================================
+
+const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
+    const [form, setForm] = useState({ descricao: '', beneficiario: '', valor: '', data_vencimento: getTodayString(), codigo_barras: '' });
+    const [arquivo, setArquivo] = useState(null);
+    const [arquivoBase64, setArquivoBase64] = useState(null);
+    const [extraindo, setExtraindo] = useState(false);
+    const [salvando, setSalvando] = useState(false);
+    const [multiplos, setMultiplos] = useState(null);
+    const [salvandoTodos, setSalvandoTodos] = useState(false);
+
+    const handleFile = async (e) => {
+        const file = e.target.files[0];
+        if (!file || file.type !== 'application/pdf') { alert('Selecione um arquivo PDF'); return; }
+        setArquivo(file);
+        setMultiplos(null);
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            const base64 = ev.target.result.split(',')[1];
+            setArquivoBase64(base64);
+            setExtraindo(true);
+            try {
+                const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/extrair-pdf`, {
+                    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ arquivo_base64: base64 })
+                });
+                if (r.ok) {
+                    const dados = await r.json();
+                    if (dados.sucesso) {
+                        if (dados.multiplos && dados.quantidade > 1) {
+                            setMultiplos(dados.boletos);
+                            alert(`📄 ${dados.quantidade} boletos encontrados! Você pode cadastrar todos de uma vez.`);
+                        } else {
+                            const campos = [];
+                            if (dados.codigo_barras) { setForm(f => ({ ...f, codigo_barras: dados.codigo_barras })); campos.push('Código de barras'); }
+                            if (dados.valor) { setForm(f => ({ ...f, valor: dados.valor.toString() })); campos.push('Valor'); }
+                            if (dados.data_vencimento) { setForm(f => ({ ...f, data_vencimento: dados.data_vencimento })); campos.push('Vencimento'); }
+                            if (dados.beneficiario) { setForm(f => ({ ...f, beneficiario: dados.beneficiario })); campos.push('Beneficiário'); }
+                            if (campos.length) alert(`✅ Extraídos: ${campos.join(', ')}. Confira e complete.`);
+                            else alert('⚠️ Não foi possível extrair dados. Preencha manualmente.');
+                        }
+                    } else { alert('⚠️ Não foi possível extrair dados. Preencha manualmente.'); }
+                }
+            } catch (e) { console.error(e); } finally { setExtraindo(false); }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const cadastrarTodos = async () => {
+        if (salvandoTodos || !multiplos) return;
+        const descBase = prompt('Descrição base para os boletos:', 'Boleto');
+        if (!descBase) return;
+        setSalvandoTodos(true);
+        let sucessos = 0, erros = 0;
+        for (let i = 0; i < multiplos.length; i++) {
+            const b = multiplos[i];
+            const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
+                method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ descricao: `${descBase} - Parcela ${i + 1}/${multiplos.length}`, beneficiario: b.beneficiario || '', codigo_barras: b.codigo_barras || '', valor: b.valor || 0, data_vencimento: b.data_vencimento, arquivo_nome: arquivo?.name, arquivo_base64: arquivoBase64 })
+            });
+            if (r.ok) sucessos++; else if ((await r.json()).duplicado) {} else erros++;
+        }
+        alert(`✅ ${sucessos} boletos cadastrados!${erros > 0 ? ` ⚠️ ${erros} falharam.` : ''}`);
+        setSalvandoTodos(false);
+        setMultiplos(null);
+        onSave();
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.descricao || !form.valor || !form.data_vencimento) { alert('Preencha os campos obrigatórios'); return; }
+        setSalvando(true);
+        try {
+            const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
+                method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...form, valor: parseFloat(form.valor), arquivo_nome: arquivo?.name || null, arquivo_base64: arquivoBase64 })
+            });
+            if (r.ok) { alert('✅ Boleto cadastrado!'); onSave(); }
+            else { const err = await r.json(); alert(`Erro: ${err.erro}`); }
+        } catch (e) { alert('Erro ao salvar'); } finally { setSalvando(false); }
+    };
+
+    return (
+        <div style={styles.modalOverlay} onClick={onClose}>
+            <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                <div style={styles.modalHeader}>
+                    <h2 style={styles.modalTitle}>📄 Novo Boleto</h2>
+                    <button onClick={onClose} style={styles.closeButton}>×</button>
+                </div>
+                <form onSubmit={handleSubmit} style={styles.modalBody}>
+                    {/* Upload PDF */}
+                    <div style={styles.formGroup}>
+                        <label style={styles.label}>📎 Anexar PDF do Boleto (extração automática)</label>
+                        <input type="file" accept="application/pdf" onChange={handleFile} style={{ width: '100%', padding: '8px 0' }} />
+                        {extraindo && <p style={{ color: '#1976d2', fontSize: '0.9em' }}>⏳ Extraindo dados do PDF...</p>}
+                    </div>
+
+                    {/* Múltiplos boletos */}
+                    {multiplos && (
+                        <div style={{ padding: '14px', background: '#e3f2fd', borderRadius: '10px', marginBottom: '16px' }}>
+                            <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}>📄 {multiplos.length} boletos encontrados no PDF</p>
+                            <button type="button" onClick={cadastrarTodos} disabled={salvandoTodos}
+                                style={{ padding: '10px 20px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar todos (${multiplos.length})`}
+                            </button>
+                            <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: '#757575', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                                Cadastrar um por um
+                            </button>
+                        </div>
+                    )}
+
+                    <div style={styles.formGroup}>
+                        <label style={styles.label}>Descrição *</label>
+                        <input type="text" value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} style={styles.input} placeholder="Ex: Condomínio Fevereiro" required />
+                    </div>
+                    <div style={styles.formGroup}>
+                        <label style={styles.label}>Beneficiário</label>
+                        <input type="text" value={form.beneficiario} onChange={e => setForm({ ...form, beneficiario: e.target.value })} style={styles.input} placeholder="Nome do beneficiário" />
+                    </div>
+                    <div style={styles.formRow}>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Valor (R$) *</label>
+                            <input type="number" step="0.01" min="0" value={form.valor} onChange={e => setForm({ ...form, valor: e.target.value })} style={styles.input} placeholder="0,00" required />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label style={styles.label}>Vencimento *</label>
+                            <input type="date" value={form.data_vencimento} onChange={e => setForm({ ...form, data_vencimento: e.target.value })} style={styles.input} required />
+                        </div>
+                    </div>
+                    <div style={styles.formGroup}>
+                        <label style={styles.label}>Código de Barras</label>
+                        <input type="text" value={form.codigo_barras} onChange={e => setForm({ ...form, codigo_barras: e.target.value })} style={styles.input} placeholder="Ex: 34191.09008 12345.678901..." />
+                    </div>
+                    <div style={styles.modalFooter}>
+                        <button type="button" onClick={onClose} style={styles.cancelButton}>Cancelar</button>
+                        <button type="submit" disabled={salvando} style={styles.primaryButton}>{salvando ? '⏳ Salvando...' : '✅ Cadastrar Boleto'}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 
 const Relatorios = () => {
     return (
@@ -2501,6 +2613,7 @@ const DashboardAdmin = () => {
             case 'dashboard': return <Dashboard />;
             case 'imoveis': return <Imoveis />;
             case 'lancamentos': return <Lancamentos />;
+            case 'boletos': return <GestaoBoletos />;
             case 'relatorios': return <Relatorios />;
             case 'usuarios': return <Usuarios />;
             default: return <Dashboard />;
