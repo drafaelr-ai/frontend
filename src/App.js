@@ -12576,6 +12576,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         itensOrcamento={itensOrcamento}
                     />
                 )}
+
+                {showWhatsAppModal && (
+                    <ModalWhatsAppCronograma
+                        obraNome={obraNome}
+                        pagamentosFuturos={pagamentosFuturos}
+                        pagamentosParcelados={pagamentosParcelados}
+                        onClose={() => setShowWhatsAppModal(false)}
+                    />
+                )}
             </>
         );
     }
