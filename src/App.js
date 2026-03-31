@@ -11309,11 +11309,11 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 .map(parc => ({
                     key: `parcela-${parc.id}`,
                     tipo: '📦 Parcela',
-                    descricao: `${pp.descricao} (${parc.numero_parcela}/${pp.qtd_parcelas})`,
-                    valor: parc.valor,
+                    descricao: `${pp.descricao} (${parc.numero_parcela || '?'}/${pp.numero_parcelas || pp.qtd_parcelas || '?'})`,
+                    valor: parc.valor_parcela || parc.valor || 0,
                     data_vencimento: parc.data_vencimento,
                     pix: pp.pix,
-                    codigo_barras: pp.codigo_barras,
+                    codigo_barras: parc.codigo_barras || pp.codigo_barras,
                     vencido: parc.data_vencimento && new Date(parc.data_vencimento + 'T00:00:00') < hoje,
                 }))
         ),
