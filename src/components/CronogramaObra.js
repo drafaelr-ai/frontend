@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './CronogramaObra.css';
 
-const API_URL = 'https://backend-production-78c9.up.railway.app';
+const API_URL = 'https://obraly-api.fly.dev';
 
 // Helper para formatar datas
 const formatDate = (dateStr) => {
