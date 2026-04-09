@@ -11310,7 +11310,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 [0];
             if (!proxima) return null;
             const totalParcelas = pp.numero_parcelas || pp.qtd_parcelas || '?';
-            const numDisplay = proxima.numero_parcela != null ? proxima.numero_parcela + 1 : '?';
+            const numDisplay = proxima.numero_parcela === 0 ? 'Entrada' : (proxima.numero_parcela || '?');
             return {
                 key: `parcela-${proxima.id}`,
                 tipo: '📦 Parcela',
