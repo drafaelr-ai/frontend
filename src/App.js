@@ -7033,7 +7033,6 @@ const totalOrcamentosPendentes = useMemo(() => {
             // As etapas já vêm incluídas na resposta do backend via to_dict()
             const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
             if (!response.ok) {
-                console.log("Erro ao buscar cronogramas:", response.status);
                 setCronogramaObras([]);
                 return;
             }
@@ -7042,7 +7041,6 @@ const totalOrcamentosPendentes = useMemo(() => {
             console.log("Cronogramas da obra (raw):", cronogramasData);
             
             if (!Array.isArray(cronogramasData) || cronogramasData.length === 0) {
-                console.log("Nenhum cronograma encontrado");
                 setCronogramaObras([]);
                 return;
             }
@@ -7063,7 +7061,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             console.log("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
-            console.log("Erro ao buscar cronograma de obras:", error);
+            // Silencioso — cronograma de obras é feature secundária
             setCronogramaObras([]);
         }
     };
@@ -10550,6 +10548,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             // Toast de sucesso
             showToast('✅ Parcela atualizada com sucesso!');
             
+            // Notificar pai para atualizar cards (mas sem fechar o modal)
             if (onSave) onSave();
         } catch (err) {
             alert(`Erro: ${err.message}`);
@@ -11303,20 +11302,26 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 codigo_barras: p.codigo_barras,
                 vencido: new Date(p.data_vencimento + 'T00:00:00') < hoje,
             })),
-        ...pagamentosParcelados.flatMap(pp =>
-            (pp.parcelas || [])
+        ...pagamentosParcelados.map(pp => {
+            // Pegar apenas a PRÓXIMA parcela pendente (não todas)
+            const proxima = (pp.parcelas || [])
                 .filter(parc => parc.status === 'Previsto')
-                .map(parc => ({
-                    key: `parcela-${parc.id}`,
-                    tipo: '📦 Parcela',
-                    descricao: `${pp.descricao} (${parc.numero_parcela || '?'}/${pp.numero_parcelas || pp.qtd_parcelas || '?'})`,
-                    valor: parc.valor_parcela || parc.valor || 0,
-                    data_vencimento: parc.data_vencimento,
-                    pix: pp.pix,
-                    codigo_barras: parc.codigo_barras || pp.codigo_barras,
-                    vencido: parc.data_vencimento && new Date(parc.data_vencimento + 'T00:00:00') < hoje,
-                }))
-        ),
+                .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
+                [0];
+            if (!proxima) return null;
+            const totalParcelas = pp.numero_parcelas || pp.qtd_parcelas || '?';
+            const numDisplay = proxima.numero_parcela != null ? proxima.numero_parcela + 1 : '?';
+            return {
+                key: `parcela-${proxima.id}`,
+                tipo: '📦 Parcela',
+                descricao: `${pp.descricao} (${numDisplay}/${totalParcelas})`,
+                valor: proxima.valor_parcela || proxima.valor || 0,
+                data_vencimento: proxima.data_vencimento,
+                pix: pp.pix,
+                codigo_barras: proxima.codigo_barras || pp.codigo_barras,
+                vencido: proxima.data_vencimento && new Date(proxima.data_vencimento + 'T00:00:00') < hoje,
+            };
+        }).filter(Boolean),
     ].sort((a, b) => {
         // Vencidos primeiro, depois por data
         if (a.vencido !== b.vencido) return a.vencido ? -1 : 1;
@@ -11708,7 +11713,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     );
                     
                     // Atualiza com parcelas quando disponíveis
-                    setPagamentosParcelados(parceladosComParcelas);
+                    const parceladosComCamposCalculados = parceladosComParcelas.map(pag => {
+                        const parcelas = pag.parcelas || [];
+                        const proxima = parcelas.find(p => p.status !== 'Pago');
+                        return {
+                            ...pag,
+                            proxima_parcela_numero: proxima ? proxima.numero_parcela : null,
+                            proxima_parcela_vencimento: proxima ? proxima.data_vencimento : null,
+                            valor_proxima_parcela: proxima ? proxima.valor_parcela : null,
+                        };
+                    });
+                    setPagamentosParcelados(parceladosComCamposCalculados);
                 } catch (e) {
                     console.error('Erro ao processar parcelados:', e);
                     setIsLoading(false);
@@ -12573,6 +12588,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             setEditarParcelasVisible(false);
                             setPagamentoParceladoSelecionado(null);
                         }}
+                        onSave={() => {
+                            setEditarParcelasVisible(false);
+                            setPagamentoParceladoSelecionado(null);
+                            // Recarregar dados para atualizar cards com novos valores de parcela
+                            fetchData();
+                        }}
                         itensOrcamento={itensOrcamento}
                     />
                 )}
@@ -12631,6 +12652,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     onClose={() => {
                         setEditarParcelasVisible(false);
                         setPagamentoParceladoSelecionado(null);
+                    }}
+                    onSave={() => {
+                        setEditarParcelasVisible(false);
+                        setPagamentoParceladoSelecionado(null);
+                        fetchData();
                     }}
                     itensOrcamento={itensOrcamento}
                 />
