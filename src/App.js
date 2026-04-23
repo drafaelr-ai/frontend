@@ -11302,7 +11302,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 codigo_barras: p.codigo_barras,
                 vencido: new Date(p.data_vencimento + 'T00:00:00') < hoje,
             })),
-        ...pagamentosParcelados.map(pp => {
+        ...pagamentosParcelados.filter(pp => pp.status !== 'Concluído').map(pp => {
             // Pegar apenas a PRÓXIMA parcela pendente (não todas)
             const proxima = (pp.parcelas || [])
                 .filter(parc => parc.status === 'Previsto')
