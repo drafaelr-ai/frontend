@@ -353,8 +353,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Alertas de Vencimento */}
-            {modo === 'mes' && (dados?.alertas?.vencidos?.length > 0 || dados?.alertas?.a_vencer?.length > 0) && (
+            {/* Alertas de Vencimento — sempre visíveis independente do modo/mês */}
+            {(dados?.alertas?.vencidos?.length > 0 || dados?.alertas?.a_vencer?.length > 0) && (
                 <div style={styles.alertasSection}>
                     {dados?.alertas?.vencidos?.length > 0 && (
                         <div style={styles.alertaVencido}>
