@@ -2409,6 +2409,7 @@ const Relatorios = () => {
     const [abaAtiva, setAbaAtiva] = useState('fluxo'); // 'fluxo' | 'rentabilidade' | 'dre'
     const [filtroImovel, setFiltroImovel] = useState('');
     const [filtroAno, setFiltroAno] = useState(new Date().getFullYear());
+    const [filtroMes, setFiltroMes] = useState(0); // 0 = Todos, 1-12 = mês específico
     const [exportando, setExportando] = useState(false);
 
     const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -2425,10 +2426,12 @@ const Relatorios = () => {
     }, [token]);
 
     const lancamentosFiltrados = lancamentos.filter(l => {
-        const ano = l.data_lancamento ? parseInt(l.data_lancamento.split('-')[0]) : 0;
+        if (!l.data_lancamento) return false;
+        const [ano, mes] = l.data_lancamento.split('-').map(Number);
         const matchAno = ano === filtroAno;
+        const matchMes = filtroMes === 0 || mes === filtroMes;
         const matchImovel = !filtroImovel || String(l.imovel_id) === String(filtroImovel);
-        return matchAno && matchImovel && l.status !== 'cancelado';
+        return matchAno && matchMes && matchImovel && l.status !== 'cancelado';
     });
 
     // ─── FLUXO DE CAIXA ────────────────────────────────────────────────────────
@@ -2476,22 +2479,25 @@ const Relatorios = () => {
     const resultadoDRE = totalDREReceitas - totalDREDespesas;
 
     // ─── EXPORTAR CSV ──────────────────────────────────────────────────────────
+    const periodoLabel = filtroMes === 0 ? `${filtroAno}` : `${mesesNomes[filtroMes - 1]}/${filtroAno}`;
+    const periodoFile = filtroMes === 0 ? `${filtroAno}` : `${String(filtroMes).padStart(2, '0')}-${filtroAno}`;
+
     const exportarCSV = () => {
         setExportando(true);
         let csv = '\uFEFF';
         const imovelNome = filtroImovel ? imoveis.find(i => String(i.id) === String(filtroImovel))?.nome : 'Todos';
 
         if (abaAtiva === 'fluxo') {
-            csv += `Fluxo de Caixa - ${imovelNome} - ${filtroAno}\n`;
+            csv += `Fluxo de Caixa - ${imovelNome} - ${periodoLabel}\n`;
             csv += 'Mês;Despesas;Receitas;Saldo\n';
             fluxoPorMes.forEach(m => csv += `${m.mes};${m.despesas.toFixed(2)};${m.receitas.toFixed(2)};${m.saldo.toFixed(2)}\n`);
             csv += `TOTAL;${totalFluxo.despesas.toFixed(2)};${totalFluxo.receitas.toFixed(2)};${totalFluxo.saldo.toFixed(2)}\n`;
         } else if (abaAtiva === 'rentabilidade') {
-            csv += `Rentabilidade por Imóvel - ${filtroAno}\n`;
+            csv += `Rentabilidade por Imóvel - ${periodoLabel}\n`;
             csv += 'Imóvel;Despesas;Receitas;Saldo;Rentabilidade\n';
             rentabilidade.forEach(i => csv += `"${i.nome}";${i.despesas.toFixed(2)};${i.receitas.toFixed(2)};${i.saldo.toFixed(2)};${i.rentabilidade ?? '-'}%\n`);
         } else {
-            csv += `DRE - ${imovelNome} - ${filtroAno}\n\n`;
+            csv += `DRE - ${imovelNome} - ${periodoLabel}\n\n`;
             csv += 'RECEITAS\nCategoria;Valor\n';
             dreReceitas.forEach(c => csv += `"${c.icone} ${c.nome}";${c.total.toFixed(2)}\n`);
             csv += `TOTAL RECEITAS;${totalDREReceitas.toFixed(2)}\n\n`;
@@ -2504,9 +2510,212 @@ const Relatorios = () => {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `relatorio_${abaAtiva}_${filtroAno}.csv`;
+        a.href = url; a.download = `relatorio_${abaAtiva}_${periodoFile}.csv`;
         document.body.appendChild(a); a.click();
         document.body.removeChild(a); URL.revokeObjectURL(url);
+        setExportando(false);
+    };
+
+    // ─── EXPORTAR PDF (via window.print — usuário escolhe "Salvar como PDF") ───
+    const exportarPDF = () => {
+        setExportando(true);
+        const imovelNome = filtroImovel ? imoveis.find(i => String(i.id) === String(filtroImovel))?.nome : 'Todos os Imóveis';
+        const dataGeracao = new Date().toLocaleString('pt-BR');
+
+        const fmtBR = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        let titulo = '';
+        let conteudo = '';
+
+        if (abaAtiva === 'fluxo') {
+            titulo = 'Fluxo de Caixa';
+            conteudo = `
+                <div class="resumo">
+                    <div class="kpi red"><span>Total Despesas</span><strong>${fmtBR(totalFluxo.despesas)}</strong></div>
+                    <div class="kpi green"><span>Total Receitas</span><strong>${fmtBR(totalFluxo.receitas)}</strong></div>
+                    <div class="kpi ${totalFluxo.saldo >= 0 ? 'green' : 'red'}"><span>Saldo</span><strong>${fmtBR(totalFluxo.saldo)}</strong></div>
+                </div>
+                <table>
+                    <thead><tr><th>Mês</th><th class="r">Despesas</th><th class="r">Receitas</th><th class="r">Saldo</th></tr></thead>
+                    <tbody>
+                        ${fluxoPorMes.map(m => `
+                            <tr ${m.despesas === 0 && m.receitas === 0 ? 'class="empty-row"' : ''}>
+                                <td><strong>${m.mes}</strong></td>
+                                <td class="r red">${m.despesas > 0 ? fmtBR(m.despesas) : '—'}</td>
+                                <td class="r green">${m.receitas > 0 ? fmtBR(m.receitas) : '—'}</td>
+                                <td class="r ${m.saldo >= 0 ? 'green' : 'red'}">${m.despesas || m.receitas ? fmtBR(m.saldo) : '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>TOTAL</strong></td>
+                            <td class="r red"><strong>${fmtBR(totalFluxo.despesas)}</strong></td>
+                            <td class="r green"><strong>${fmtBR(totalFluxo.receitas)}</strong></td>
+                            <td class="r ${totalFluxo.saldo >= 0 ? 'green' : 'red'}"><strong>${fmtBR(totalFluxo.saldo)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+        } else if (abaAtiva === 'rentabilidade') {
+            titulo = 'Rentabilidade por Imóvel';
+            const totDesp = rentabilidade.reduce((a, i) => a + i.despesas, 0);
+            const totRec = rentabilidade.reduce((a, i) => a + i.receitas, 0);
+            const totSaldo = rentabilidade.reduce((a, i) => a + i.saldo, 0);
+            if (rentabilidade.length === 0) {
+                conteudo = `<p class="empty">Nenhum dado encontrado para o período selecionado.</p>`;
+            } else {
+                conteudo = `
+                    <table>
+                        <thead><tr><th>Imóvel</th><th>Status</th><th class="r">Despesas</th><th class="r">Receitas</th><th class="r">Saldo</th><th class="r">Rentab.</th></tr></thead>
+                        <tbody>
+                            ${rentabilidade.map(i => `
+                                <tr>
+                                    <td><strong>${i.nome}</strong></td>
+                                    <td><span class="badge">${i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : i.status}</span></td>
+                                    <td class="r red">${fmtBR(i.despesas)}</td>
+                                    <td class="r green">${i.receitas > 0 ? fmtBR(i.receitas) : '—'}</td>
+                                    <td class="r ${i.saldo >= 0 ? 'green' : 'red'}">${fmtBR(i.saldo)}</td>
+                                    <td class="r ${i.rentabilidade >= 0 ? 'green' : 'red'}">${i.rentabilidade != null ? i.rentabilidade + '%' : '—'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2"><strong>TOTAL</strong></td>
+                                <td class="r red"><strong>${fmtBR(totDesp)}</strong></td>
+                                <td class="r green"><strong>${fmtBR(totRec)}</strong></td>
+                                <td class="r ${totSaldo >= 0 ? 'green' : 'red'}"><strong>${fmtBR(totSaldo)}</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                `;
+            }
+        } else {
+            titulo = 'DRE — Demonstração do Resultado';
+            const receitasHTML = dreReceitas.length ? `
+                <table>
+                    <tbody>
+                        ${dreReceitas.map(c => `
+                            <tr>
+                                <td>${c.icone} ${c.nome}</td>
+                                <td class="r green"><strong>${fmtBR(c.total)}</strong></td>
+                                <td class="r muted">${totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            ` : '<p class="empty">Nenhuma receita no período.</p>';
+            const despesasHTML = dreDespesas.length ? `
+                <table>
+                    <tbody>
+                        ${dreDespesas.map(c => `
+                            <tr>
+                                <td>${c.icone} ${c.nome}</td>
+                                <td class="r red"><strong>${fmtBR(c.total)}</strong></td>
+                                <td class="r muted">${totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            ` : '<p class="empty">Nenhuma despesa no período.</p>';
+            conteudo = `
+                <div class="dre-grid">
+                    <div class="dre-box">
+                        <div class="dre-head green-bg"><span>📥 Receitas</span><strong>${fmtBR(totalDREReceitas)}</strong></div>
+                        ${receitasHTML}
+                    </div>
+                    <div class="dre-box">
+                        <div class="dre-head red-bg"><span>📤 Despesas</span><strong>${fmtBR(totalDREDespesas)}</strong></div>
+                        ${despesasHTML}
+                    </div>
+                </div>
+                <div class="resultado ${resultadoDRE >= 0 ? 'green-box' : 'red-box'}">
+                    <div><span>RESULTADO DO PERÍODO</span><small>Receitas − Despesas</small></div>
+                    <strong>${resultadoDRE >= 0 ? '+' : ''}${fmtBR(resultadoDRE)}</strong>
+                </div>
+            `;
+        }
+
+        const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${titulo} — ${periodoLabel}</title>
+<style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 24px; font-size: 13px; }
+    .header { border-bottom: 3px solid #1e293b; padding-bottom: 14px; margin-bottom: 20px; }
+    .header h1 { margin: 0; font-size: 22px; color: #1e293b; }
+    .header .sub { color: #475569; margin-top: 6px; font-size: 13px; }
+    .header .meta { color: #94a3b8; font-size: 11px; margin-top: 4px; }
+    .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; }
+    .kpi span { display: block; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .kpi strong { font-size: 18px; font-weight: 800; }
+    .kpi.red strong { color: #dc2626; }
+    .kpi.green strong { color: #16a34a; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+    th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid #e5e7eb; color: #475569; font-size: 12px; }
+    th.r, td.r { text-align: right; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+    td.red { color: #dc2626; font-weight: 600; }
+    td.green { color: #16a34a; font-weight: 600; }
+    td.muted { color: #94a3b8; font-size: 11px; }
+    tfoot td { background: #f8fafc; border-top: 2px solid #e5e7eb; padding: 10px 12px; border-bottom: none; }
+    .empty-row td { opacity: 0.4; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #64748b; }
+    .dre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .dre-box { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #fff; }
+    .dre-box table { border: none; border-radius: 0; margin: 0; }
+    .dre-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+    .dre-head span { font-weight: 700; font-size: 14px; }
+    .dre-head strong { font-size: 17px; font-weight: 800; }
+    .green-bg { background: #dcfce7; color: #166534; }
+    .red-bg { background: #fee2e2; color: #991b1b; }
+    .resultado { padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .resultado div { display: flex; flex-direction: column; }
+    .resultado span { font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .resultado small { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+    .resultado strong { font-size: 26px; font-weight: 900; }
+    .green-box { background: #f0fdf4; border: 2px solid #bbf7d0; }
+    .green-box strong { color: #16a34a; }
+    .red-box { background: #fff1f2; border: 2px solid #fecdd3; }
+    .red-box strong { color: #dc2626; }
+    .empty { text-align: center; color: #94a3b8; padding: 24px; margin: 0; font-style: italic; }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #059669; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    @media print {
+        body { margin: 14mm; }
+        .print-btn { display: none; }
+        .resumo { grid-template-columns: repeat(3, 1fr) !important; }
+        .dre-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+</style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <div class="header">
+        <h1>📈 ${titulo}</h1>
+        <div class="sub"><strong>${imovelNome}</strong> · Período: <strong>${periodoLabel}</strong></div>
+        <div class="meta">Gerado em ${dataGeracao} · Obraly Patrimonial</div>
+    </div>
+    ${conteudo}
+    <script>
+        window.onload = function() { setTimeout(function() { window.print(); }, 400); };
+    </script>
+</body>
+</html>`;
+
+        const win = window.open('', '_blank', 'width=900,height=700');
+        if (!win) {
+            alert('O bloqueador de pop-ups impediu a abertura da janela do PDF. Permita pop-ups para este site e tente novamente.');
+            setExportando(false);
+            return;
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
         setExportando(false);
     };
 
@@ -2520,16 +2729,26 @@ const Relatorios = () => {
             {/* Header */}
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>📈 Relatórios</h1>
-                <button onClick={exportarCSV} disabled={exportando}
-                    style={{ ...styles.primaryButton, background: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📥 {exportando ? 'Exportando...' : 'Exportar CSV'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button onClick={exportarPDF} disabled={exportando}
+                        style={{ ...styles.primaryButton, background: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🖨️ {exportando ? '...' : 'Exportar PDF'}
+                    </button>
+                    <button onClick={exportarCSV} disabled={exportando}
+                        style={{ ...styles.primaryButton, background: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📥 {exportando ? '...' : 'Exportar CSV'}
+                    </button>
+                </div>
             </div>
 
             {/* Filtros */}
             <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
                 <select value={filtroAno} onChange={e => setFiltroAno(Number(e.target.value))} style={styles.select}>
                     {anos.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+                <select value={filtroMes} onChange={e => setFiltroMes(Number(e.target.value))} style={styles.select}>
+                    <option value={0}>Todos os meses</option>
+                    {mesesNomes.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
                 </select>
                 <select value={filtroImovel} onChange={e => setFiltroImovel(e.target.value)} style={{ ...styles.select, minWidth: '200px' }}>
                     <option value="">Todos os imóveis</option>
