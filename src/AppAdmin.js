@@ -191,18 +191,31 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout }) => {
 const Dashboard = () => {
     const { token } = useAuthAdmin();
     const [dados, setDados] = useState(null);
+    const [dadosAcumulado, setDadosAcumulado] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [modo, setModo] = useState('mes'); // 'mes' | 'acumulado'
     const [mesAno, setMesAno] = useState({
         mes: new Date().getMonth() + 1,
         ano: new Date().getFullYear()
     });
+    const [modalLancamentos, setModalLancamentos] = useState(null); // { titulo, tipo }
+
+    const meses = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
 
     useEffect(() => {
         fetchDashboard();
     }, [mesAno]);
 
+    useEffect(() => {
+        if (modo === 'acumulado' && !dadosAcumulado) fetchAcumulado();
+    }, [modo]);
+
     const fetchDashboard = async () => {
         try {
+            setLoading(true);
             const response = await fetch(
                 `${API_URL_ADMIN}/dashboard?mes=${mesAno.mes}&ano=${mesAno.ano}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
@@ -216,10 +229,363 @@ const Dashboard = () => {
         }
     };
 
-    const meses = [
-        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
+    const fetchAcumulado = async () => {
+        try {
+            // Buscar todos os anos disponíveis e somar
+            const response = await fetch(
+                `${API_URL_ADMIN}/lancamentos`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            const lancamentos = await response.json();
+            if (!Array.isArray(lancamentos)) return;
+
+            const despesas = lancamentos
+                .filter(l => l.tipo === 'despesa' && l.status !== 'cancelado')
+                .reduce((a, l) => a + l.valor, 0);
+            const receitas = lancamentos
+                .filter(l => l.tipo === 'receita' && l.status !== 'cancelado')
+                .reduce((a, l) => a + l.valor, 0);
+
+            // Agrupar por categoria
+            const porCategoria = {};
+            lancamentos
+                .filter(l => l.tipo === 'despesa' && l.status !== 'cancelado')
+                .forEach(l => {
+                    const key = l.categoria_nome || 'Outros';
+                    if (!porCategoria[key]) porCategoria[key] = { nome: key, icone: l.categoria_icone || '💰', cor: '#6b7280', total: 0 };
+                    porCategoria[key].total += l.valor;
+                });
+
+            setDadosAcumulado({
+                resumo: { despesas_mes: despesas, receitas_mes: receitas, saldo_mes: receitas - despesas },
+                despesas_por_categoria: Object.values(porCategoria).sort((a, b) => b.total - a.total),
+                ultimos_lancamentos: [...lancamentos].sort((a, b) => (b.data_lancamento || '').localeCompare(a.data_lancamento || '')).slice(0, 20),
+            });
+        } catch (err) {
+            console.error('Erro ao carregar acumulado:', err);
+        }
+    };
+
+    const dadosAtivos = modo === 'acumulado' ? dadosAcumulado : dados;
+    const labelPeriodo = modo === 'acumulado' ? 'Total Acumulado' : `${meses[mesAno.mes - 1]} ${mesAno.ano}`;
+
+    if (loading) return <div style={styles.loading}>Carregando...</div>;
+
+    return (
+        <div style={styles.content}>
+            {/* Header */}
+            <div style={styles.pageHeader}>
+                <h1 style={styles.pageTitle}>📊 Dashboard</h1>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Toggle Modo */}
+                    <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                        {[['mes', '📅 Mensal'], ['acumulado', '📊 Acumulado']].map(([m, label]) => (
+                            <button key={m} onClick={() => setModo(m)} style={{
+                                padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                                background: modo === m ? '#1e293b' : '#fff',
+                                color: modo === m ? '#fff' : '#64748b',
+                                transition: 'all 0.15s'
+                            }}>{label}</button>
+                        ))}
+                    </div>
+
+                    {/* Seletores mês/ano — só no modo mensal */}
+                    {modo === 'mes' && (
+                        <div style={styles.periodSelector}>
+                            <select value={mesAno.mes} onChange={(e) => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })} style={styles.select}>
+                                {meses.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+                            </select>
+                            <select value={mesAno.ano} onChange={(e) => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })} style={styles.select}>
+                                {[2024, 2025, 2026, 2027].map(a => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Cards Resumo — clicáveis */}
+            <div style={styles.cardsGrid}>
+                <div style={{ ...styles.card, ...styles.cardBlue }}>
+                    <div style={styles.cardIcon}>🏠</div>
+                    <div style={styles.cardInfo}>
+                        <div style={styles.cardValue}>{dados?.resumo?.total_imoveis || 0}</div>
+                        <div style={styles.cardLabel}>Imóveis</div>
+                    </div>
+                </div>
+
+                <div
+                    style={{ ...styles.card, ...styles.cardRed, cursor: 'pointer', transition: 'transform 0.15s', ':hover': { transform: 'scale(1.02)' } }}
+                    onClick={() => setModalLancamentos({ titulo: `Despesas — ${labelPeriodo}`, tipo: 'despesa' })}
+                    title="Clique para ver lançamentos"
+                >
+                    <div style={styles.cardIcon}>📉</div>
+                    <div style={styles.cardInfo}>
+                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.despesas_mes || 0)}</div>
+                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Total Despesas' : 'Despesas do Mês'}</div>
+                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
+                    </div>
+                </div>
+
+                <div
+                    style={{ ...styles.card, ...styles.cardGreen, cursor: 'pointer' }}
+                    onClick={() => setModalLancamentos({ titulo: `Receitas — ${labelPeriodo}`, tipo: 'receita' })}
+                    title="Clique para ver lançamentos"
+                >
+                    <div style={styles.cardIcon}>📈</div>
+                    <div style={styles.cardInfo}>
+                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.receitas_mes || 0)}</div>
+                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Total Receitas' : 'Receitas do Mês'}</div>
+                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
+                    </div>
+                </div>
+
+                <div
+                    style={{ ...styles.card, ...(dadosAtivos?.resumo?.saldo_mes >= 0 ? styles.cardGreen : styles.cardRed), cursor: 'pointer' }}
+                    onClick={() => setModalLancamentos({ titulo: `Todos — ${labelPeriodo}`, tipo: '' })}
+                    title="Clique para ver todos os lançamentos"
+                >
+                    <div style={styles.cardIcon}>💰</div>
+                    <div style={styles.cardInfo}>
+                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.saldo_mes || 0)}</div>
+                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Saldo Acumulado' : 'Saldo do Mês'}</div>
+                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Alertas de Vencimento */}
+            {modo === 'mes' && (dados?.alertas?.vencidos?.length > 0 || dados?.alertas?.a_vencer?.length > 0) && (
+                <div style={styles.alertasSection}>
+                    {dados?.alertas?.vencidos?.length > 0 && (
+                        <div style={styles.alertaVencido}>
+                            <div style={styles.alertaHeader}>
+                                <span style={styles.alertaIcon}>🚨</span>
+                                <div>
+                                    <strong>VENCIDOS</strong>
+                                    <span style={styles.alertaTotal}>{formatCurrency(dados.alertas.total_vencido)}</span>
+                                </div>
+                            </div>
+                            <div style={styles.alertaItems}>
+                                {dados.alertas.vencidos.map((lanc, i) => (
+                                    <div key={i} style={styles.alertaItem}>
+                                        <div>
+                                            <span style={styles.alertaCategoria}>{lanc.categoria_icone}</span>
+                                            <strong>{lanc.descricao}</strong>
+                                            <span style={styles.alertaImovel}> - {lanc.imovel_nome}</span>
+                                        </div>
+                                        <div style={styles.alertaInfo}>
+                                            <span style={styles.alertaDias}>{Math.abs(lanc.dias_para_vencer)} dia(s) atraso</span>
+                                            <span style={styles.alertaValor}>{formatCurrency(lanc.valor)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {dados?.alertas?.a_vencer?.length > 0 && (
+                        <div style={styles.alertaAVencer}>
+                            <div style={styles.alertaHeader}>
+                                <span style={styles.alertaIcon}>⏰</span>
+                                <div>
+                                    <strong>A VENCER (próx. 7 dias)</strong>
+                                    <span style={styles.alertaTotal}>{formatCurrency(dados.alertas.total_a_vencer)}</span>
+                                </div>
+                            </div>
+                            <div style={styles.alertaItems}>
+                                {dados.alertas.a_vencer.map((lanc, i) => (
+                                    <div key={i} style={styles.alertaItem}>
+                                        <div>
+                                            <span style={styles.alertaCategoria}>{lanc.categoria_icone}</span>
+                                            <strong>{lanc.descricao}</strong>
+                                            <span style={styles.alertaImovel}> - {lanc.imovel_nome}</span>
+                                        </div>
+                                        <div style={styles.alertaInfo}>
+                                            <span style={styles.alertaDiasVencer}>
+                                                {lanc.dias_para_vencer === 0 ? 'Vence HOJE!' : `Vence em ${lanc.dias_para_vencer} dia(s)`}
+                                            </span>
+                                            <span style={styles.alertaValor}>{formatCurrency(lanc.valor)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Despesas por Categoria */}
+            <div style={styles.section}>
+                <h2 style={styles.sectionTitle}>💳 Despesas por Categoria</h2>
+                <div style={styles.categoryList}>
+                    {dadosAtivos?.despesas_por_categoria?.length > 0 ? (
+                        dadosAtivos.despesas_por_categoria.map((cat, i) => (
+                            <div key={i} style={styles.categoryItem}>
+                                <div style={styles.categoryInfo}>
+                                    <span style={styles.categoryIcon}>{cat.icone}</span>
+                                    <span>{cat.nome}</span>
+                                </div>
+                                <div style={styles.categoryBar}>
+                                    <div style={{
+                                        ...styles.categoryBarFill,
+                                        width: `${(cat.total / (dadosAtivos.resumo.despesas_mes || 1)) * 100}%`,
+                                        backgroundColor: cat.cor
+                                    }} />
+                                </div>
+                                <div style={styles.categoryValue}>{formatCurrency(cat.total)}</div>
+                            </div>
+                        ))
+                    ) : (
+                        <p style={styles.emptyText}>Nenhuma despesa no período</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Últimos Lançamentos */}
+            <div style={styles.section}>
+                <h2 style={styles.sectionTitle}>📋 Últimos Lançamentos</h2>
+                <div style={styles.tableContainer}>
+                    {dadosAtivos?.ultimos_lancamentos?.length > 0 ? (
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th style={styles.th}>Data</th>
+                                    <th style={styles.th}>Imóvel</th>
+                                    <th style={styles.th}>Descrição</th>
+                                    <th style={styles.th}>Tipo</th>
+                                    <th style={styles.thRight}>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dadosAtivos.ultimos_lancamentos.map((lanc, i) => (
+                                    <tr key={i} style={styles.tr}>
+                                        <td style={styles.td}>{formatDate(lanc.data_lancamento)}</td>
+                                        <td style={styles.td}>{lanc.imovel_nome}</td>
+                                        <td style={styles.td}>
+                                            <span style={styles.lancIcon}>{lanc.categoria_icone}</span>
+                                            {lanc.descricao}
+                                        </td>
+                                        <td style={styles.td}>
+                                            <span style={{
+                                                ...styles.badge,
+                                                backgroundColor: lanc.tipo === 'receita' ? '#dcfce7' : '#fee2e2',
+                                                color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626'
+                                            }}>
+                                                {lanc.tipo === 'receita' ? '↑ Receita' : '↓ Despesa'}
+                                            </span>
+                                        </td>
+                                        <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626', fontWeight: '600' }}>
+                                            {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p style={styles.emptyText}>Nenhum lançamento encontrado</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Modal de lançamentos ao clicar no card */}
+            {modalLancamentos && (
+                <ModalLancamentosDashboard
+                    titulo={modalLancamentos.titulo}
+                    tipo={modalLancamentos.tipo}
+                    mes={modo === 'mes' ? mesAno.mes : null}
+                    ano={modo === 'mes' ? mesAno.ano : null}
+                    token={token}
+                    onClose={() => setModalLancamentos(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+// Modal de lançamentos do Dashboard
+const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) => {
+    const [lancamentos, setLancamentos] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (tipo) params.append('tipo', tipo);
+        if (mes) params.append('mes', mes);
+        if (ano) params.append('ano', ano);
+
+        fetch(`${API_URL_ADMIN}/lancamentos?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => setLancamentos(Array.isArray(d) ? d : []))
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, [tipo, mes, ano, token]);
+
+    const total = lancamentos.filter(l => l.status !== 'cancelado').reduce((a, l) => a + l.valor, 0);
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+             onClick={e => e.target === e.currentTarget && onClose()}>
+            <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '860px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                {/* Header */}
+                <div style={{ padding: '18px 24px', background: '#1e293b', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h2 style={{ margin: 0, color: '#fff', fontSize: '17px', fontWeight: 700 }}>📋 {titulo}</h2>
+                        <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '13px' }}>{lancamentos.length} lançamentos · Total: {formatCurrency(total)}</p>
+                    </div>
+                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                </div>
+
+                {/* Tabela */}
+                <div style={{ overflow: 'auto', flex: 1 }}>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Carregando...</div>
+                    ) : lancamentos.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Nenhum lançamento encontrado.</div>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
+                                    {['Data', 'Imóvel', 'Categoria', 'Descrição', 'Status', 'Valor'].map(h =>
+                                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#475569', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                                    )}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {lancamentos.map(l => (
+                                    <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '10px 14px', color: '#64748b', whiteSpace: 'nowrap' }}>{formatDate(l.data_lancamento)}</td>
+                                        <td style={{ padding: '10px 14px', color: '#475569', fontSize: '13px' }}>{l.imovel_nome}</td>
+                                        <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{l.categoria_icone} {l.categoria_nome}</td>
+                                        <td style={{ padding: '10px 14px', maxWidth: '220px', color: '#1e293b' }}>{l.descricao}</td>
+                                        <td style={{ padding: '10px 14px' }}>
+                                            <span style={{
+                                                padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                                                background: l.status === 'pago' ? '#dcfce7' : l.status === 'cancelado' ? '#f1f5f9' : '#fef3c7',
+                                                color: l.status === 'pago' ? '#166534' : l.status === 'cancelado' ? '#94a3b8' : '#92400e',
+                                            }}>
+                                                {l.status === 'pago' ? '✓ Pago' : l.status === 'cancelado' ? 'Cancelado' : '⏳ Pendente'}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? '#ef4444' : '#22c55e', whiteSpace: 'nowrap' }}>
+                                            {l.tipo === 'despesa' ? '-' : '+'}{formatCurrency(l.valor)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                <div style={{ padding: '14px 24px', borderTop: '1px solid #e5e7eb', background: '#f8fafc', borderRadius: '0 0 16px 16px', textAlign: 'right' }}>
+                    <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
     if (loading) {
         return <div style={styles.loading}>Carregando...</div>;
@@ -348,95 +714,6 @@ const Dashboard = () => {
                     )}
                 </div>
             )}
-
-            {/* Alertas de Pendentes (fallback se não tiver alertas detalhados) */}
-            {!dados?.alertas && dados?.resumo?.pendentes > 0 && (
-                <div style={styles.alertBox}>
-                    ⚠️ Você tem <strong>{formatCurrency(dados.resumo.pendentes)}</strong> em despesas pendentes
-                </div>
-            )}
-
-            {/* Despesas por Categoria */}
-            <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>💳 Despesas por Categoria</h2>
-                <div style={styles.categoryList}>
-                    {dados?.despesas_por_categoria?.length > 0 ? (
-                        dados.despesas_por_categoria.map((cat, i) => (
-                            <div key={i} style={styles.categoryItem}>
-                                <div style={styles.categoryInfo}>
-                                    <span style={styles.categoryIcon}>{cat.icone}</span>
-                                    <span>{cat.nome}</span>
-                                </div>
-                                <div style={styles.categoryBar}>
-                                    <div 
-                                        style={{
-                                            ...styles.categoryBarFill,
-                                            width: `${(cat.total / (dados.resumo.despesas_mes || 1)) * 100}%`,
-                                            backgroundColor: cat.cor
-                                        }}
-                                    />
-                                </div>
-                                <div style={styles.categoryValue}>{formatCurrency(cat.total)}</div>
-                            </div>
-                        ))
-                    ) : (
-                        <p style={styles.emptyText}>Nenhuma despesa no período</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Últimos Lançamentos */}
-            <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>📋 Últimos Lançamentos</h2>
-                <div style={styles.tableContainer}>
-                    {dados?.ultimos_lancamentos?.length > 0 ? (
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Data</th>
-                                    <th style={styles.th}>Imóvel</th>
-                                    <th style={styles.th}>Descrição</th>
-                                    <th style={styles.th}>Tipo</th>
-                                    <th style={styles.thRight}>Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dados.ultimos_lancamentos.map((lanc, i) => (
-                                    <tr key={i} style={styles.tr}>
-                                        <td style={styles.td}>{formatDate(lanc.data_lancamento)}</td>
-                                        <td style={styles.td}>{lanc.imovel_nome}</td>
-                                        <td style={styles.td}>
-                                            <span style={styles.lancIcon}>{lanc.categoria_icone}</span>
-                                            {lanc.descricao}
-                                        </td>
-                                        <td style={styles.td}>
-                                            <span style={{
-                                                ...styles.badge,
-                                                backgroundColor: lanc.tipo === 'receita' ? '#dcfce7' : '#fee2e2',
-                                                color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626'
-                                            }}>
-                                                {lanc.tipo === 'receita' ? '↑ Receita' : '↓ Despesa'}
-                                            </span>
-                                        </td>
-                                        <td style={{
-                                            ...styles.tdRight,
-                                            color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626',
-                                            fontWeight: '600'
-                                        }}>
-                                            {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p style={styles.emptyText}>Nenhum lançamento encontrado</p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // ===================================================================================
 // COMPONENTE: MODAL LANÇAMENTOS DO IMÓVEL
