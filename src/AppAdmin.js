@@ -125,7 +125,7 @@ const LoginScreenAdmin = ({ onBack }) => {
 // COMPONENTE: SIDEBAR
 // ===================================================================================
 
-const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout }) => {
+const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, isOpen, onClose }) => {
     const menuItems = [
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'imoveis', icon: '🏠', label: 'Imóveis' },
@@ -133,21 +133,29 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout }) => {
         { id: 'boletos', icon: '📄', label: 'Boletos' },
         { id: 'relatorios', icon: '📈', label: 'Relatórios' },
     ];
-    
+
     // Menu de admin (apenas para role='admin')
     if (user?.role === 'admin') {
         menuItems.push({ id: 'usuarios', icon: '👥', label: 'Usuários' });
     }
 
     return (
-        <div style={styles.sidebar}>
+        <div className={`admin-sidebar${isOpen ? ' open' : ''}`} style={styles.sidebar}>
             {/* Logo */}
             <div style={styles.sidebarHeader}>
                 <span style={styles.sidebarLogo}>🏢</span>
-                <div>
+                <div style={{ flex: 1 }}>
                     <div style={styles.sidebarTitle}>Obraly</div>
                     <div style={styles.sidebarSubtitle}>Administração</div>
                 </div>
+                <button
+                    className="admin-sidebar-close"
+                    onClick={onClose}
+                    aria-label="Fechar menu"
+                    style={styles.sidebarCloseBtn}
+                >
+                    ✕
+                </button>
             </div>
 
             {/* Menu */}
@@ -183,6 +191,73 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout }) => {
         </div>
     );
 };
+
+// CSS responsivo do admin: drawer off-canvas em ≤768px
+const AdminMobileStyles = () => (
+    <style>{`
+        .admin-hamburger { display: none; }
+        .admin-overlay { display: none; }
+        .admin-sidebar-close { display: none; }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                width: 260px !important;
+                height: 100vh !important;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                z-index: 1002;
+            }
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+            .admin-overlay {
+                display: block;
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+            .admin-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .admin-hamburger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                top: 12px;
+                left: 12px;
+                width: 44px;
+                height: 44px;
+                border-radius: 8px;
+                border: none;
+                background: #0F766E;
+                color: #fff;
+                font-size: 22px;
+                cursor: pointer;
+                z-index: 1001;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+            .admin-sidebar-close {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .admin-main {
+                padding-top: 56px;
+            }
+        }
+    `}</style>
+);
 
 // ===================================================================================
 // COMPONENTE: DASHBOARD
@@ -3289,6 +3364,20 @@ const Usuarios = () => {
 const DashboardAdmin = () => {
     const { user, logout } = useAuthAdmin();
     const [activeMenu, setActiveMenu] = useState('dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 768) setSidebarOpen(false);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handleMenuSelect = (id) => {
+        setActiveMenu(id);
+        setSidebarOpen(false);
+    };
 
     const renderContent = () => {
         switch (activeMenu) {
@@ -3304,13 +3393,27 @@ const DashboardAdmin = () => {
 
     return (
         <div style={styles.layout}>
-            <Sidebar 
-                activeMenu={activeMenu} 
-                setActiveMenu={setActiveMenu} 
+            <AdminMobileStyles />
+            <button
+                className="admin-hamburger"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Abrir menu"
+            >
+                ☰
+            </button>
+            <div
+                className={`admin-overlay${sidebarOpen ? ' open' : ''}`}
+                onClick={() => setSidebarOpen(false)}
+            />
+            <Sidebar
+                activeMenu={activeMenu}
+                setActiveMenu={handleMenuSelect}
                 user={user}
                 onLogout={logout}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
             />
-            <main style={styles.main}>
+            <main className="admin-main" style={styles.main}>
                 {renderContent()}
             </main>
         </div>
@@ -3411,6 +3514,15 @@ const styles = {
     sidebarSubtitle: {
         fontSize: '12px',
         color: '#94a3b8',
+    },
+    sidebarCloseBtn: {
+        background: 'transparent',
+        border: 'none',
+        color: '#94a3b8',
+        fontSize: '20px',
+        cursor: 'pointer',
+        padding: '4px 8px',
+        marginLeft: 'auto',
     },
     sidebarNav: {
         flex: 1,
