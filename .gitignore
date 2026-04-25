@@ -134,3 +134,17 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# CRA production build output
+/build/
+
+# JetBrains / Android Studio per-user config
+.idea/
+
+# VS Code per-user config
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
