@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx cap *)",
+      "Bash(./gradlew help *)",
+      "Bash(adb devices *)"
+    ]
+  }
+}

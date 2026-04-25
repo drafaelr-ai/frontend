@@ -1,0 +1,5 @@
+package uk.obraly.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}
