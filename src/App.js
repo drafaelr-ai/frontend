@@ -10985,7 +10985,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                         color: status === 'paga' || parcela.numero_parcela === 0 ? 'white' : 'var(--cor-texto-muted)',
                                         border: status !== 'paga' && parcela.numero_parcela !== 0 ? '2px solid var(--cor-borda)' : 'none'
                                     }}>
-                                        {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : parcela.numero_parcela}
+                                        {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
                                     </div>
                                     
                                     {/* Dados */}
@@ -11336,7 +11336,10 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 [0];
             if (!proxima) return null;
             const totalParcelas = pp.numero_parcelas || pp.qtd_parcelas || '?';
-            const numDisplay = proxima.numero_parcela === 0 ? 'Entrada' : (proxima.numero_parcela || '?');
+            // Bug Extra: entrada conta como pagamento #1; regulares ficam +1
+            const numDisplay = proxima.numero_parcela === 0
+                ? 'Entrada'
+                : (pp.tem_entrada ? (proxima.numero_parcela + 1) : (proxima.numero_parcela || '?'));
             return {
                 key: `parcela-${proxima.id}`,
                 tipo: '📦 Parcela',
@@ -12493,8 +12496,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 <div className="parcela-popup-info-item">
                                                     <div className="parcela-popup-info-label">Parcela</div>
                                                     <div className="parcela-popup-info-value">
-                                                        {pag.proxima_parcela_numero === 0 ? 'Entrada' : 
-                                                         `${pag.proxima_parcela_numero || pag.numero_parcelas}/${pag.numero_parcelas}`}
+                                                        {pag.proxima_parcela_numero === 0 ? 'Entrada' : (() => {
+                                                            // Bug Extra: entrada conta como pagamento #1; regulares ficam +1
+                                                            const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
+                                                            const num = pag.tem_entrada ? baseNum + 1 : baseNum;
+                                                            return `${num}/${pag.numero_parcelas}`;
+                                                        })()}
                                                     </div>
                                                 </div>
                                                 <div className="parcela-popup-info-item">
@@ -12542,7 +12549,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                         handleMarcarParcelaPaga(pag);
                                                     }}
                                                 >
-                                                    💰 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : `Pagar Parcela ${pag.proxima_parcela_numero || pag.numero_parcelas}`}
+                                                    💰 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
+                                                        const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
+                                                        const num = pag.tem_entrada ? baseNum + 1 : baseNum;
+                                                        return `Pagar Parcela ${num}`;
+                                                    })()}
                                                 </button>
                                                 <button 
                                                     className="parcela-popup-btn"
