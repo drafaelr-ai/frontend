@@ -10707,7 +10707,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
     const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
 
     return (
-        <Modal customWidth="900px">
+        <Modal onClose={onClose} customWidth="900px">
             <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                 {/* Header */}
                 <div style={{
@@ -10854,18 +10854,6 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                             </>
                         )}
                     </div>
-                    <button 
-                        onClick={onClose} 
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '24px',
-                            cursor: 'pointer',
-                            color: 'var(--cor-texto-secundario)',
-                            padding: 0,
-                            lineHeight: 1
-                        }}
-                    >×</button>
                 </div>
 
                 {/* Resumo */}
