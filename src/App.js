@@ -2199,8 +2199,11 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             });
             
             if (response.ok) {
-                alert('Pagamento atualizado com sucesso!');
-                setEditandoItem(null);
+                const toast = document.createElement('div');
+                toast.className = 'cf-toast';
+                toast.textContent = '✅ Pagamento atualizado com sucesso!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
                 if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
