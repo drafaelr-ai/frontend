@@ -5831,10 +5831,52 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
 
 
 // --- MODAL DE RELATÓRIOS ---
-const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
+const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadType, setDownloadType] = useState(null);
     const [error, setError] = useState(null);
+    const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
+
+    // Bug B1: WhatsApp share com dados financeiros completos
+    const handleCompartilharWhatsApp = async () => {
+        if (isSharingWhatsApp) return;
+        setIsSharingWhatsApp(true);
+        try {
+            const resCaixa = await fetchWithAuth(`${API_URL}/obras/${obraId}/caixa`);
+            const caixa = resCaixa.ok ? await resCaixa.json() : null;
+
+            const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const linhas = [];
+            linhas.push(`📋 *RELATÓRIO DE OBRA - OBRALY*`);
+            linhas.push(`🏗️ Obra: *${obraNome}*`);
+            linhas.push(`📅 Data: ${new Date().toLocaleDateString('pt-BR')}`);
+            linhas.push(`─────────────────────────`);
+            linhas.push(`\n💰 *FINANCEIRO*`);
+            linhas.push(`📊 Orçamento Total: ${formatVal(sumarios?.orcamento_total)}`);
+            linhas.push(`✅ Valores Pagos: ${formatVal(sumarios?.valores_pagos)}`);
+            if (caixa) {
+                linhas.push(`📈 Entradas (mês): ${formatVal(caixa.total_entradas_mes)}`);
+                linhas.push(`📉 Saídas (mês): ${formatVal(caixa.total_saidas_mes)}`);
+                linhas.push(`💵 Saldo Atual: ${formatVal(caixa.saldo_atual)}`);
+            }
+            linhas.push(`\n_Gerado pelo Obraly_`);
+
+            const url = `https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`;
+            // Anchor click: funciona melhor em Capacitor WebView que window.open
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error('Erro ao gerar mensagem WhatsApp:', err);
+            alert('Erro ao gerar mensagem do WhatsApp. Tente novamente.');
+        } finally {
+            setIsSharingWhatsApp(false);
+        }
+    };
 
     // NOVO: Função para baixar Relatório Financeiro (Cronograma)
     const handleDownloadRelatorioFinanceiro = () => {
@@ -6110,18 +6152,9 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
             {/* Botão compartilhar WhatsApp */}
             <div style={{ marginTop: '20px' }}>
                 <button
-                    onClick={() => {
-                        const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        const linhas = [];
-                        linhas.push(`📋 *RELATÓRIO DE OBRA - OBRALY*`);
-                        linhas.push(`🏗️ Obra: *${obraNome}*`);
-                        linhas.push(`📅 Data: ${new Date().toLocaleDateString('pt-BR')}`);
-                        linhas.push(`─────────────────────────`);
-                        linhas.push(`\nAcesse o relatório completo na plataforma Obraly.`);
-                        linhas.push(`\n_Gerado pelo Obraly_`);
-                        const texto = linhas.join('\n');
-                        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
-                    }}
+                    type="button"
+                    onClick={handleCompartilharWhatsApp}
+                    disabled={isSharingWhatsApp}
                     style={{
                         width: '100%',
                         padding: '14px',
@@ -6131,14 +6164,15 @@ const RelatoriosModal = ({ onClose, obraId, obraNome }) => {
                         borderRadius: '8px',
                         fontSize: '15px',
                         fontWeight: '700',
-                        cursor: 'pointer',
+                        cursor: isSharingWhatsApp ? 'wait' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        opacity: isSharingWhatsApp ? 0.7 : 1
                     }}
                 >
-                    💬 Compartilhar via WhatsApp
+                    {isSharingWhatsApp ? '⏳ Gerando...' : '💬 Compartilhar via WhatsApp'}
                 </button>
             </div>
 
@@ -7847,6 +7881,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
+                            sumarios={sumarios}
                             onClose={() => setCurrentPage('home')}
                             embedded={true}
                         />
@@ -11378,7 +11413,15 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
         linhas.push(`💰 *TOTAL SELECIONADO: ${formatVal(totalSelecionado)}*`);
         linhas.push(`_Gerado pelo Obraly_`);
 
-        window.open(`https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`, '_blank');
+        // Bug B2: anchor click em vez de window.open (Capacitor WebView interceptava)
+        const url = `https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`;
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         onClose();
     };
 
@@ -11465,6 +11508,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                         Cancelar
                     </button>
                     <button
+                        type="button"
                         onClick={compartilhar}
                         disabled={selecionados.size === 0}
                         style={{
@@ -12081,6 +12125,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 {/* Botão WhatsApp - apenas no modo completo */}
                 {!simplified && (
                     <button
+                        type="button"
                         onClick={() => setShowWhatsAppModal(true)}
                         className="export-btn"
                         style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
