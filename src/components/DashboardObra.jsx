@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './DashboardObra.css';
 
-const API_URL = 'https://backend-production-78c9.up.railway.app';
+const API_URL = 'https://obraly-api.fly.dev';
 
 // Helper para fetch com autenticação
 const fetchWithAuth = async (url, options = {}) => {
