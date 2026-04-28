@@ -1856,6 +1856,16 @@ const fetchWithAuth = async (url, options = {}) => {
     return response;
 };
 
+const fetchWithAuthTimeout = async (url, options = {}, timeoutMs = 30000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetchWithAuth(url, { ...options, signal: controller.signal });
+    } finally {
+        clearTimeout(timer);
+    }
+};
+
 
 // --- CONTEXTO DE AUTENTICAÇÃO ---
 const AuthContext = createContext(null);
@@ -11549,7 +11559,28 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-    
+
+    const [processingIds, setProcessingIds] = useState(() => new Set());
+    const isProcessing = (key) => processingIds.has(key);
+    const startProcessing = (key) => setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.add(key);
+        return next;
+    });
+    const stopProcessing = (key) => setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+    });
+
+    const showCronogramaToast = (msg, color = '#10b981') => {
+        const toast = document.createElement('div');
+        toast.textContent = msg;
+        toast.style.cssText = `position:fixed;top:20px;right:20px;background:${color};color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    };
+
     const handleAbrirEditarParcelas = (pagamento) => {
         setPagamentoParceladoSelecionado(pagamento);
         setEditarParcelasVisible(true);
@@ -11858,31 +11889,42 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     // Deletar Pagamento Futuro
     const handleDeletePagamentoFuturo = async (id) => {
         const idStr = String(id);
-        
+
         // Se for um pagamento de serviço (id começa com "servico-"), não pode deletar daqui
         if (idStr.startsWith('servico-')) {
             alert('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
             return;
         }
-        
+
         if (!window.confirm('Deseja realmente excluir este pagamento futuro?')) return;
 
+        const lockKey = `futuro-${id}`;
+        if (isProcessing(lockKey)) return;
+        startProcessing(lockKey);
+
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}`,
                 { method: 'DELETE' }
             );
 
             if (res.ok) {
-                alert('Pagamento futuro excluído com sucesso!');
-                fetchData();
+                setPagamentosFuturos(prev => prev.filter(pag => pag.id !== id));
+                showCronogramaToast('🗑️ Pagamento futuro excluído!');
+                setTimeout(() => fetchData(), 500);
             } else {
-                const errorData = await res.json();
+                const errorData = await res.json().catch(() => ({}));
                 alert('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
             console.error('Erro ao deletar pagamento futuro:', error);
-            alert('Erro ao deletar pagamento futuro: ' + error.message);
+            if (error.name === 'AbortError') {
+                alert('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+            } else {
+                alert('Erro ao deletar pagamento futuro: ' + error.message);
+            }
+        } finally {
+            stopProcessing(lockKey);
         }
     };
 
@@ -11890,15 +11932,18 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const handleMarcarPagamentoFuturoPago = async (id) => {
         if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
 
+        const idStr = String(id);
+        const lockKey = `futuro-${id}`;
+        if (isProcessing(lockKey)) return;
+        startProcessing(lockKey);
+
         try {
             let res;
-            const idStr = String(id);
-            
+
             if (idStr.startsWith('servico-')) {
-                // É um pagamento de serviço pendente "injetado" na lista
                 const servPagId = parseInt(idStr.split('-').pop(), 10);
                 console.log("Marcando pagamento de serviço futuro como pago:", servPagId);
-                res = await fetchWithAuth(
+                res = await fetchWithAuthTimeout(
                     `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
                     {
                         method: 'POST',
@@ -11909,45 +11954,40 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     }
                 );
             } else {
-                // É um pagamento futuro "normal"
                 console.log("Marcando pagamento futuro normal como pago:", id);
-                res = await fetchWithAuth(
+                res = await fetchWithAuthTimeout(
                     `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
                     { method: 'POST' }
                 );
             }
 
             if (res.ok) {
-                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
                 if (idStr.startsWith('servico-')) {
-                    // Remove da lista de serviços pendentes
                     const servPagId = parseInt(idStr.split('-').pop(), 10);
-                    setPagamentosServicoPendentes(prev => 
+                    setPagamentosServicoPendentes(prev =>
                         prev.filter(p => p.id !== servPagId)
                     );
                 } else {
-                    // Remove da lista de pagamentos futuros
-                    setPagamentosFuturos(prev => 
+                    setPagamentosFuturos(prev =>
                         prev.filter(pag => pag.id !== id)
                     );
                 }
-                
-                // Feedback visual rápido
-                const toast = document.createElement('div');
-                toast.textContent = '✅ Pagamento marcado como pago!';
-                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-                
-                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
+
+                showCronogramaToast('✅ Pagamento marcado como pago!');
                 setTimeout(() => fetchData(), 500);
             } else {
-                const errorData = await res.json();
+                const errorData = await res.json().catch(() => ({}));
                 alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
             console.error('Erro ao marcar pagamento como pago:', error);
-            alert('Erro ao processar: ' + error.message);
+            if (error.name === 'AbortError') {
+                alert('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+            } else {
+                alert('Erro ao processar: ' + error.message);
+            }
+        } finally {
+            stopProcessing(lockKey);
         }
     };
 
@@ -11955,21 +11995,33 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const handleDeletePagamentoParcelado = async (id) => {
         if (!window.confirm('Deseja realmente excluir este pagamento parcelado?')) return;
 
+        const lockKey = `parcelado-${id}`;
+        if (isProcessing(lockKey)) return;
+        startProcessing(lockKey);
+
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${id}`,
-                { method: 'DELETE' }
+                { method: 'DELETE' },
+                60000  // delete cascade pode demorar mais com muitas parcelas
             );
 
             if (res.ok) {
-                alert('Pagamento parcelado excluído com sucesso!');
-                fetchData();
+                setPagamentosParcelados(prev => prev.filter(pag => pag.id !== id));
+                showCronogramaToast('🗑️ Pagamento parcelado excluído!');
+                setTimeout(() => fetchData(), 500);
             } else {
                 alert('Erro ao excluir pagamento parcelado');
             }
         } catch (error) {
             console.error('Erro ao deletar pagamento parcelado:', error);
-            alert('Erro ao deletar pagamento parcelado');
+            if (error.name === 'AbortError') {
+                alert('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+            } else {
+                alert('Erro ao deletar pagamento parcelado');
+            }
+        } finally {
+            stopProcessing(lockKey);
         }
     };
 
@@ -11979,9 +12031,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             return;
         }
 
+        const lockKey = `parcelado-${pagamento.id}`;
+        if (isProcessing(lockKey)) return;
+        startProcessing(lockKey);
+
         try {
             // 1. Buscar as parcelas individuais
-            const resListaParcelas = await fetchWithAuth(
+            const resListaParcelas = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas`
             );
 
@@ -11991,7 +12047,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
 
             const parcelas = await resListaParcelas.json();
-            
+
             // 2. Encontrar a próxima parcela não paga
             const proximaParcela = parcelas.find(p => p.status !== 'Pago');
 
@@ -12001,7 +12057,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
 
             // 3. Marcar a parcela como paga (isso criará o lançamento no backend)
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas/${proximaParcela.id}/pagar`,
                 {
                     method: 'POST',
@@ -12011,26 +12067,21 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 const resultado = await res.json();
-                
-                // <--- MUDANÇA: Atualização LOCAL instantânea (sem reload) -->
+
                 setPagamentosParcelados(prev => {
                     return prev.map(pag => {
                         if (pag.id === pagamento.id) {
-                            // Atualizar as parcelas
-                            const parcelasAtualizadas = pag.parcelas ? pag.parcelas.map(p => 
-                                p.id === proximaParcela.id 
+                            const parcelasAtualizadas = pag.parcelas ? pag.parcelas.map(p =>
+                                p.id === proximaParcela.id
                                     ? { ...p, status: 'Pago', data_pagamento: getTodayString() }
                                     : p
                             ) : [];
-                            
-                            // Recalcular próxima parcela
+
                             const proxima = parcelasAtualizadas.find(p => p.status !== 'Pago');
                             const numeroProxima = proxima ? proxima.numero_parcela : null;
                             const vencimentoProximo = proxima ? proxima.data_vencimento : null;
-                            
-                            // Se todas pagas, marcar como Concluído
                             const todasPagas = parcelasAtualizadas.every(p => p.status === 'Pago');
-                            
+
                             return {
                                 ...pag,
                                 parcelas: parcelasAtualizadas,
@@ -12042,23 +12093,22 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         return pag;
                     });
                 });
-                
-                // Feedback visual rápido
-                const toast = document.createElement('div');
-                toast.textContent = `✅ ${resultado.mensagem}`;
-                toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-                
-                // CORREÇÃO: Usar fetchData() local do modal (não tem acesso aos setters globais)
+
+                showCronogramaToast(`✅ ${resultado.mensagem}`);
                 setTimeout(() => fetchData(), 500);
             } else {
-                const erro = await res.json();
+                const erro = await res.json().catch(() => ({}));
                 alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
             }
         } catch (error) {
             console.error('Erro ao marcar parcela:', error);
-            alert('Erro ao marcar parcela como paga');
+            if (error.name === 'AbortError') {
+                alert('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+            } else {
+                alert('Erro ao marcar parcela como paga');
+            }
+        } finally {
+            stopProcessing(lockKey);
         }
     };
 
@@ -12358,22 +12408,29 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                     </div>
                                     
                                     {/* Badge Status */}
-                                    <span 
-                                        onClick={() => {
-                                            if (pag.status === 'Previsto') {
-                                                handleMarcarPagamentoFuturoPago(pag.id);
-                                            }
-                                        }}
-                                        className="cf-badge cf-badge-warning"
-                                        style={{
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                        title="Clique para marcar como pago"
-                                    >
-                                        Pendente
-                                    </span>
-                                    
+                                    {(() => {
+                                        const futuroProcessing = isProcessing(`futuro-${pag.id}`);
+                                        return (
+                                            <span
+                                                onClick={() => {
+                                                    if (pag.status === 'Previsto' && !futuroProcessing) {
+                                                        handleMarcarPagamentoFuturoPago(pag.id);
+                                                    }
+                                                }}
+                                                className="cf-badge cf-badge-warning"
+                                                style={{
+                                                    cursor: futuroProcessing ? 'wait' : 'pointer',
+                                                    opacity: futuroProcessing ? 0.6 : 1,
+                                                    pointerEvents: futuroProcessing ? 'none' : 'auto',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                title={futuroProcessing ? 'Processando...' : 'Clique para marcar como pago'}
+                                            >
+                                                {futuroProcessing ? '⏳ Processando...' : 'Pendente'}
+                                            </span>
+                                        );
+                                    })()}
+
                                     {/* Ações */}
                                     <div className="cf-pagamento-futuro-actions">
                                         {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
@@ -12382,11 +12439,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                     e.stopPropagation();
                                                     handleDeletePagamentoFuturo(pag.id);
                                                 }}
+                                                disabled={isProcessing(`futuro-${pag.id}`)}
                                                 className="cf-btn cf-btn-danger"
-                                                style={{ padding: '6px 10px', fontSize: '12px' }}
-                                                title="Excluir pagamento"
+                                                style={{
+                                                    padding: '6px 10px',
+                                                    fontSize: '12px',
+                                                    opacity: isProcessing(`futuro-${pag.id}`) ? 0.5 : 1,
+                                                    cursor: isProcessing(`futuro-${pag.id}`) ? 'wait' : 'pointer'
+                                                }}
+                                                title={isProcessing(`futuro-${pag.id}`) ? 'Processando...' : 'Excluir pagamento'}
                                             >
-                                                🗑️
+                                                {isProcessing(`futuro-${pag.id}`) ? '⏳' : '🗑️'}
                                             </button>
                                         )}
                                     </div>
@@ -12540,33 +12603,54 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                                         {/* Footer */}
                                         <div className="parcela-popup-footer">
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button 
-                                                    className="parcela-popup-btn"
-                                                    style={{ flex: 1, background: corConfig.cor, color: corConfig.corText }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleMarcarParcelaPaga(pag);
-                                                    }}
-                                                >
-                                                    💰 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
-                                                        const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
-                                                        const num = pag.tem_entrada ? baseNum + 1 : baseNum;
-                                                        return `Pagar Parcela ${num}`;
-                                                    })()}
-                                                </button>
-                                                <button 
-                                                    className="parcela-popup-btn"
-                                                    style={{ background: 'var(--cor-vermelho-bg)', color: 'var(--cor-vermelho)', padding: '10px 12px' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeletePagamentoParcelado(pag.id);
-                                                    }}
-                                                    title="Excluir parcelamento"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </div>
+                                            {(() => {
+                                                const parceladoProcessing = isProcessing(`parcelado-${pag.id}`);
+                                                return (
+                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button
+                                                            className="parcela-popup-btn"
+                                                            style={{
+                                                                flex: 1,
+                                                                background: corConfig.cor,
+                                                                color: corConfig.corText,
+                                                                opacity: parceladoProcessing ? 0.6 : 1,
+                                                                cursor: parceladoProcessing ? 'wait' : 'pointer'
+                                                            }}
+                                                            disabled={parceladoProcessing}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleMarcarParcelaPaga(pag);
+                                                            }}
+                                                        >
+                                                            {parceladoProcessing ? '⏳ Processando...' : (
+                                                                <>💰 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
+                                                                    const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
+                                                                    const num = pag.tem_entrada ? baseNum + 1 : baseNum;
+                                                                    return `Pagar Parcela ${num}`;
+                                                                })()}</>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            className="parcela-popup-btn"
+                                                            style={{
+                                                                background: 'var(--cor-vermelho-bg)',
+                                                                color: 'var(--cor-vermelho)',
+                                                                padding: '10px 12px',
+                                                                opacity: parceladoProcessing ? 0.5 : 1,
+                                                                cursor: parceladoProcessing ? 'wait' : 'pointer'
+                                                            }}
+                                                            disabled={parceladoProcessing}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeletePagamentoParcelado(pag.id);
+                                                            }}
+                                                            title={parceladoProcessing ? 'Processando...' : 'Excluir parcelamento'}
+                                                        >
+                                                            {parceladoProcessing ? '⏳' : '🗑️'}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 );
