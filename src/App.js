@@ -30,12 +30,12 @@ import AgendaDemandas from './components/AgendaDemandas';
 
 // 🆕 MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
 import AppAdmin from './AppAdmin';
+import { API_URL } from './config';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- CONFIGURAÇÃO INICIAL ---
-const API_URL = 'https://obraly-api.fly.dev';
 
 // Helper para exibir a prioridade
 const PrioridadeBadge = ({ prioridade }) => {

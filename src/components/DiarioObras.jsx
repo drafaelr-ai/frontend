@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO DE IMAGENS
-
-const API_URL = 'https://obraly-api.fly.dev';
+import { API_URL } from '../config';
 
 // Helper para formatar datas
 const formatDate = (dateString) => {

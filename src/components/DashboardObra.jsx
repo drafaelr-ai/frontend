@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './DashboardObra.css';
-
-const API_URL = 'https://obraly-api.fly.dev';
+import { API_URL } from '../config';
 
 // Helper para fetch com autenticação
 const fetchWithAuth = async (url, options = {}) => {
