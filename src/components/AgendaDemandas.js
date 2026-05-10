@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { notify, confirmDialog } from '../utils/notify';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -791,7 +792,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             });
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -830,22 +831,22 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             carregarOrcamentoImportar();
             carregarServicosImportar();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
     const excluirDemanda = async (demanda) => {
-        if (!window.confirm(`Excluir "${demanda.descricao}"?`)) return;
-        
+        if (!await confirmDialog(`Excluir "${demanda.descricao}"?`, { danger: true, confirmText: 'Excluir' })) return;
+
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}`, {
                 method: 'DELETE'
             });
-            
+
             if (!res.ok) throw new Error('Erro ao excluir demanda');
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -882,7 +883,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             setShowModalEditar(null);
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -1867,8 +1868,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         <div style={styles.modalFooter}>
                             <button 
                                 style={{ ...styles.button, ...styles.buttonDanger }}
-                                onClick={() => {
-                                    if (window.confirm(`Excluir "${showModalEditar.descricao}"?`)) {
+                                onClick={async () => {
+                                    if (await confirmDialog(`Excluir "${showModalEditar.descricao}"?`, { danger: true, confirmText: 'Excluir' })) {
                                         excluirDemanda(showModalEditar);
                                         setShowModalEditar(null);
                                     }

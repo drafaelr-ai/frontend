@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO DE IMAGENS
 import { API_URL } from '../config';
+import { notify, confirmDialog } from '../utils/notify';
 
 // Helper para formatar datas
 const formatDate = (dateString) => {
@@ -616,7 +617,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
     const handleImageUpload = async () => {
         if (imageFiles.length === 0) {
-            alert('Selecione pelo menos um arquivo');
+            notify.warning('Selecione pelo menos um arquivo');
             return;
         }
 
@@ -655,18 +656,18 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                 }
             }
 
-            alert('Arquivos adicionados com sucesso!');
+            notify.success('Arquivos adicionados com sucesso!');
             setImageFiles([]);
             onAddImage(); // Recarrega os dados
         } catch (err) {
-            alert('Erro ao enviar arquivos: ' + err.message);
+            notify.error('Erro ao enviar arquivos: ' + err.message);
         } finally {
             setIsUploading(false);
         }
     };
 
     const handleDeleteImage = async (imagemId) => {
-        if (!window.confirm('Deseja realmente excluir esta imagem?')) return;
+        if (!await confirmDialog('Deseja realmente excluir esta imagem?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(`${API_URL}/diario/imagens/${imagemId}`, {
@@ -677,10 +678,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                 throw new Error('Erro ao excluir imagem');
             }
 
-            alert('Imagem excluída com sucesso!');
+            notify.success('Imagem excluída com sucesso!');
             onAddImage(); // Recarrega os dados
         } catch (err) {
-            alert('Erro ao excluir imagem: ' + err.message);
+            notify.error('Erro ao excluir imagem: ' + err.message);
         }
     };
 
@@ -934,7 +935,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             setEntradas(entradasArray);
         } catch (err) {
             console.error('Erro ao carregar entradas:', err);
-            alert('Erro ao carregar o diário: ' + err.message);
+            notify.error('Erro ao carregar o diário: ' + err.message);
             setEntradas([]); // Garantir que entradas seja um array vazio em caso de erro
         } finally {
             setIsLoading(false);
@@ -954,7 +955,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     };
 
     const handleDeleteEntrada = async (entradaId) => {
-        if (!window.confirm('Deseja realmente excluir esta entrada?')) return;
+        if (!await confirmDialog('Deseja realmente excluir esta entrada?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(`${API_URL}/diario/${entradaId}`, {
@@ -965,11 +966,11 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 throw new Error('Erro ao excluir entrada');
             }
 
-            alert('Entrada excluída com sucesso!');
+            notify.success('Entrada excluída com sucesso!');
             carregarEntradas();
             setIsDetalhesModalOpen(false);
         } catch (err) {
-            alert('Erro ao excluir entrada: ' + err.message);
+            notify.error('Erro ao excluir entrada: ' + err.message);
         }
     };
 
@@ -997,7 +998,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             window.URL.revokeObjectURL(downloadUrl);
             document.body.removeChild(a);
         } catch (err) {
-            alert('Erro ao gerar relatório: ' + err.message);
+            notify.error('Erro ao gerar relatório: ' + err.message);
         }
     };
 

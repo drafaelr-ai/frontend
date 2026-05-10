@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { notify, confirmDialog } from '../utils/notify';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -831,15 +832,15 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
 
     const handleSalvar = async (continuarAdicionando = false) => {
         if (!form.etapa_id) {
-            alert('Selecione uma etapa');
+            notify.warning('Selecione uma etapa');
             return;
         }
         if (!form.descricao || !form.descricao.trim()) {
-            alert('Preencha a descrição do serviço');
+            notify.warning('Preencha a descrição do serviço');
             return;
         }
         if (!form.unidade) {
-            alert('Selecione uma unidade');
+            notify.warning('Selecione uma unidade');
             return;
         }
         setSalvando(true);
@@ -1969,7 +1970,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             }
             
             const data = await response.json();
-            alert(`✅ Orçamento importado!\n\n${data.etapas_criadas} etapas\n${data.itens_criados} itens`);
+            notify.success(`Orçamento importado! ${data.etapas_criadas} etapas, ${data.itens_criados} itens`);
             
             if (onImportar) onImportar();
             onClose();
@@ -2531,7 +2532,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
 
     // Deletar item
     const deletarItem = async (itemId) => {
-        if (!window.confirm('Excluir este item e o serviço vinculado?')) return;
+        if (!await confirmDialog('Excluir este item e o serviço vinculado?', { danger: true, confirmText: 'Excluir' })) return;
         
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
@@ -2547,7 +2548,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
 
     // Deletar etapa
     const deletarEtapa = async (etapaId) => {
-        if (!window.confirm('Excluir esta etapa e todos os seus itens?')) return;
+        if (!await confirmDialog('Excluir esta etapa e todos os seus itens?', { danger: true, confirmText: 'Excluir' })) return;
         
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
@@ -2695,7 +2696,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             }
             
             carregarDados();
-            alert(`Importação concluída! ${itensParaImportar.length} itens importados.`);
+            notify.success(`Importação concluída! ${itensParaImportar.length} itens importados.`);
         };
         
         reader.readAsText(file, 'UTF-8');
@@ -2715,27 +2716,27 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         
         if (confirmacao !== 'APAGAR') {
             if (confirmacao !== null) {
-                alert('Operação cancelada. Digite exatamente "APAGAR" para confirmar.');
+                notify.warning('Operação cancelada. Digite exatamente "APAGAR" para confirmar.');
             }
             return;
         }
-        
+
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/apagar-tudo`, {
                 method: 'DELETE'
             });
-            
+
             if (res.ok) {
                 const data = await res.json();
-                alert(`${data.mensagem}\n\nEtapas: ${data.etapas_deletadas}\nItens: ${data.itens_deletados}\nServiços: ${data.servicos_deletados}`);
+                notify.success(`${data.mensagem} — Etapas: ${data.etapas_deletadas}, Itens: ${data.itens_deletados}, Serviços: ${data.servicos_deletados}`);
                 carregarDados();
             } else {
                 const data = await res.json();
-                alert(data.erro || 'Erro ao apagar orçamento');
+                notify.error(data.erro || 'Erro ao apagar orçamento');
             }
         } catch (e) {
             console.error('Erro ao apagar:', e);
-            alert('Erro ao apagar orçamento');
+            notify.error('Erro ao apagar orçamento');
         }
     };
 
