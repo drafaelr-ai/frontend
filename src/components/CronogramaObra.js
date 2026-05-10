@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './CronogramaObra.css';
 import { API_URL } from '../config';
+import { notify, confirmDialog } from '../utils/notify';
 
 // Helper para formatar datas
 const formatDate = (dateStr) => {
@@ -195,7 +196,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     
     const handleAddServico = async () => {
         if (!novoServico.servico_nome.trim()) {
-            alert('Informe o nome do serviço');
+            notify.warning('Informe o nome do serviço');
             return;
         }
 
@@ -230,13 +231,13 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 observacoes: ''
             });
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
     const handleImportServicos = async () => {
         if (servicosSelecionados.length === 0) {
-            alert('Selecione pelo menos um serviço para importar');
+            notify.warning('Selecione pelo menos um serviço para importar');
             return;
         }
         
@@ -261,10 +262,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             setShowImportModal(false);
             setServicosSelecionados([]);
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
-    
+
     const toggleServicoSelecionado = (servico) => {
         setServicosSelecionados(prev => {
             const isSelected = prev.some(s => s.id === servico.id);
@@ -323,7 +324,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
     const handleImportarOrcamento = async () => {
         if (etapasOrcamentoSelecionadas.length === 0) {
-            alert('Selecione pelo menos uma etapa para importar');
+            notify.warning('Selecione pelo menos uma etapa para importar');
             return;
         }
 
@@ -345,20 +346,20 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             }
 
             const result = await response.json();
-            alert(`✅ ${result.total_importados} serviço(s) importado(s) com sucesso!`);
-            
+            notify.success(`${result.total_importados} serviço(s) importado(s) com sucesso!`);
+
             fetchCronograma();
             setShowImportOrcamentoModal(false);
             setEtapasOrcamentoSelecionadas([]);
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         } finally {
             setImportandoOrcamento(false);
         }
     };
 
     const handleDeleteServico = async (servicoId) => {
-        if (!window.confirm('Excluir este serviço e todas suas etapas?')) return;
+        if (!await confirmDialog('Excluir este serviço e todas suas etapas?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(`${API_URL}/cronograma/${servicoId}`, {
@@ -368,7 +369,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             if (!response.ok) throw new Error('Erro ao excluir serviço');
             fetchCronograma();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -386,9 +387,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             }
 
             const result = await response.json();
-            alert(`✅ ${result.mensagem}`);
+            notify.success(result.mensagem);
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
@@ -396,7 +397,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     
     const handleAddEtapaPai = async () => {
         if (!novaEtapaPai.nome.trim()) {
-            alert('Informe o nome da etapa');
+            notify.warning('Informe o nome da etapa');
             return;
         }
 
@@ -435,7 +436,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 observacoes: ''
             });
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -460,12 +461,12 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             fetchCronograma();
             setEditingEtapaPai(null);
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
     const handleDeleteEtapaPai = async (cronogramaId, etapaId, etapaNome) => {
-        if (!window.confirm(`Excluir etapa "${etapaNome}" e todas suas subetapas?`)) return;
+        if (!await confirmDialog(`Excluir etapa "${etapaNome}" e todas suas subetapas?`, { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(
@@ -476,7 +477,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             if (!response.ok) throw new Error('Erro ao excluir etapa');
             fetchCronograma();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -484,7 +485,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     
     const handleAddSubetapa = async () => {
         if (!novaSubetapa.nome.trim()) {
-            alert('Informe o nome da subetapa');
+            notify.warning('Informe o nome da subetapa');
             return;
         }
 
@@ -524,7 +525,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 observacoes: ''
             });
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -548,12 +549,12 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             fetchCronograma();
             setEditingSubetapa(null);
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
     const handleDeleteSubetapa = async (cronogramaId, subetapaId, subetapaNome) => {
-        if (!window.confirm(`Excluir subetapa "${subetapaNome}"?`)) return;
+        if (!await confirmDialog(`Excluir subetapa "${subetapaNome}"?`, { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(
@@ -564,7 +565,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             if (!response.ok) throw new Error('Erro ao excluir subetapa');
             fetchCronograma();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -630,7 +631,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -1807,7 +1808,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     if (!response.ok) throw new Error('Erro ao atualizar');
                                     fetchCronograma();
                                     setEditingServico(null);
-                                } catch (err) { alert(err.message); }
+                                } catch (err) { notify.error(err.message); }
                             }}>Salvar</button>
                         </div>
                     </div>
