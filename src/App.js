@@ -31,6 +31,7 @@ import AgendaDemandas from './components/AgendaDemandas';
 // 🆕 MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
 import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
+import { ToastContainer } from './utils/notify';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -13046,9 +13047,12 @@ function App() {
 
     // Se selecionou Obras ou já está logado
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
-            {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
-        </AuthContext.Provider>
+        <>
+            <ToastContainer />
+            <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
+            </AuthContext.Provider>
+        </>
     );
 }
 
