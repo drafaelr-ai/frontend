@@ -31,6 +31,16 @@ ou incluir no início da fase 6 (design system) — momento natural para padroni
 - Solução futura: helper em src/utils/notaFiscal.js — getRealItemId(item)
 - Quando: pode ser feito em qualquer momento (low risk)
 
+### Orçamento: Add vs Edit
+- Arquivos: src/components/modals/AddOrcamentoModal.jsx, EditOrcamentoModal.jsx
+- Duplicação: campos idênticos (descricao, fornecedor, valor, dadosPagamento, tipo, servicoId, observacoes, anexos)
+- Diferenças: Add tem `dataVencimento`/`numeroParcelas`/`periodicidade` (condições de pagamento); Edit tem `existingAnexos` (fetch + delete), `newAnexos`; título e endpoint diferentes
+- Solução futura: extrair OrcamentoForm em src/components/forms/ (mais complexo que o par PagamentoFuturo por causa das diferenças maiores)
+- Quando: após fase 3 (telas grandes extraídas), consolidar todos os pares Add/Edit juntos
+
 ## Padrão observado
 
-Modais "Cadastrar X" e "Editar X" sempre têm essa duplicação. Aguardar para ver se aparece em outros pares (provavelmente Orçamento e Boleto), depois consolidar todos juntos em uma fase específica.
+Modais "Add X" / "Edit X" sempre têm essa duplicação. Confirmado em 2 pares:
+1. CadastrarPagamentoFuturoModal vs EditarPagamentoFuturoModal
+2. AddOrcamentoModal vs EditOrcamentoModal
+Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fase específica.
