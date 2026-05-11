@@ -1,95 +1,86 @@
-import React, { useState, useEffect, useMemo, useContext, createContext } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 
 // Imports do Chart.js
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
-// MUDANÇA 1: Import do componente DiarioObras
+// MUDAN�A 1: Import do componente DiarioObras
 import DiarioObras from './components/DiarioObras';
 
-// MUDANÇA 2: Import do componente CronogramaObra
+// MUDAN�A 2: Import do componente CronogramaObra
 import CronogramaObra from './components/CronogramaObra';
 
-// NOVO: Import do Dashboard com gráficos
+// NOVO: Import do Dashboard com gr�ficos
 import DashboardObra from './components/DashboardObra';
 import './components/DashboardObra.css';
 
-// Import para compressão de imagens
+// Import para compress�o de imagens
 import { compressImages } from './utils/imageCompression';
 
-// 🆕 MÓDULO BI - Import do Business Intelligence Dashboard
+// ?? M�DULO BI - Import do Business Intelligence Dashboard
 // NOTA: Coloque o arquivo BiModule.js na pasta src/
 import { BiDashboard } from './BiModule';
 
-// 🆕 MÓDULO ORÇAMENTO DE ENGENHARIA
+// ?? M�DULO OR�AMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
 
-// 🆕 MÓDULO AGENDA DE DEMANDAS
+// ?? M�DULO AGENDA DE DEMANDAS
 import AgendaDemandas from './components/AgendaDemandas';
 
-// 🆕 MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
+// ?? M�DULO ADMINISTRA��O (Gest�o Patrimonial)
 import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
 import { ToastContainer, notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
+import { formatCurrency, getTodayString } from './utils/format';
+import PrioridadeBadge from './components/PrioridadeBadge';
+import { AuthContext, useAuth } from './auth/AuthContext';
+import { fetchWithAuth, fetchWithAuthTimeout } from './auth/fetchWithAuth';
+import Modal from './components/modals/Modal';
+import EditPrioridadeModal from './components/modals/EditPrioridadeModal';
+import ViewAnexosModal from './components/modals/ViewAnexosModal';
+import PartialPaymentModal from './components/modals/PartialPaymentModal';
+import ExportReportModal from './components/modals/ExportReportModal';
+import UploadNotaFiscalModal from './components/modals/UploadNotaFiscalModal';
+import EditLancamentoModal from './components/modals/EditLancamentoModal';
+import VisualizarNotaFiscalModal from './components/modals/VisualizarNotaFiscalModal';
+import CadastrarPagamentoFuturoModal from './components/modals/CadastrarPagamentoFuturoModal';
+import EditarPagamentoFuturoModal from './components/modals/EditarPagamentoFuturoModal';
+import ModalAprovarOrcamento from './components/modals/ModalAprovarOrcamento';
+import AddLancamentoModal from './components/modals/AddLancamentoModal';
+import UserPermissionsModal from './components/modals/UserPermissionsModal';
+import AddOrcamentoModal from './components/modals/AddOrcamentoModal';
+import EditOrcamentoModal from './components/modals/EditOrcamentoModal';
+import AdminPanelModal from './components/modals/AdminPanelModal';
+import NotaFiscalIcon from './components/NotaFiscalIcon';
+import ModalRelatorioCronograma from './components/modals/ModalRelatorioCronograma';
+import ModalWhatsAppCronograma from './components/modals/ModalWhatsAppCronograma';
+import ModalNovaMovimentacaoCaixa from './components/modals/ModalNovaMovimentacaoCaixa';
+import RelatoriosModal from './components/modals/RelatoriosModal';
+import CadastrarPagamentoParceladoModal from './components/modals/CadastrarPagamentoParceladoModal';
+import ModalOrcamentos from './components/modals/ModalOrcamentos';
+import OrcamentosModal from './components/modals/OrcamentosModal';
+import CadastrarBoletoModal from './components/modals/CadastrarBoletoModal';
+import CaixaObraModal from './components/modals/CaixaObraModal';
+import EditarParcelasModal from './components/modals/EditarParcelasModal';
+import InserirPagamentoModal from './components/modals/InserirPagamentoModal';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- CONFIGURAÇÃO INICIAL ---
-
-// Helper para exibir a prioridade
-const PrioridadeBadge = ({ prioridade }) => {
-    let p = parseInt(prioridade, 10) || 0;
-    if (p === 0) {
-        return <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>;
-    }
-    
-    let color = '#6c757d'; // 1-2 (Baixa)
-    if (p === 3) color = '#007bff'; // 3 (Média)
-    if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Urgente)
-
-    const style = {
-        backgroundColor: color,
-        color: 'white',
-        padding: '3px 8px',
-        borderRadius: '12px',
-        fontSize: '0.8em',
-        fontWeight: 'bold',
-        display: 'inline-block',
-        minWidth: '10px',
-        textAlign: 'center'
-    };
-    return <span style={style}>{p}</span>;
-};
-
-
-// Helper para formatar BRL
-const formatCurrency = (value) => {
-    if (typeof value !== 'number') { value = 0; }
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
-
-// Helper para pegar a data de hoje (para novos lançamentos)
-const getTodayString = () => {
-    const today = new Date();
-    const offset = today.getTimezoneOffset();
-    const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000));
-    return todayWithOffset.toISOString().split('T')[0];
-};
+// --- CONFIGURA��O INICIAL ---
 
 // --- COMPONENTE SIDEBAR ---
 
-// --- COMPONENTE DE NOTIFICAÇÕES ---
+// --- COMPONENTE DE NOTIFICA��ES ---
 const NotificacoesDropdown = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [notificacoes, setNotificacoes] = useState([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
     
-    // Buscar contador de notificações não lidas
+    // Buscar contador de notifica��es n�o lidas
     const fetchCount = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -101,11 +92,11 @@ const NotificacoesDropdown = ({ user }) => {
                 setCount(data.count);
             }
         } catch (err) {
-            logger.error('Erro ao buscar contador de notificações:', err);
+            logger.error('Erro ao buscar contador de notifica��es:', err);
         }
     };
     
-    // Buscar notificações
+    // Buscar notifica��es
     const fetchNotificacoes = async () => {
         try {
             setLoading(true);
@@ -118,13 +109,13 @@ const NotificacoesDropdown = ({ user }) => {
                 setNotificacoes(data);
             }
         } catch (err) {
-            logger.error('Erro ao buscar notificações:', err);
+            logger.error('Erro ao buscar notifica��es:', err);
         } finally {
             setLoading(false);
         }
     };
     
-    // Marcar como lida/não lida
+    // Marcar como lida/n�o lida
     const toggleLida = async (notifId, lida) => {
         try {
             const token = localStorage.getItem('token');
@@ -142,7 +133,7 @@ const NotificacoesDropdown = ({ user }) => {
             ));
             setCount(prev => lida ? prev + 1 : Math.max(0, prev - 1));
         } catch (err) {
-            logger.error('Erro ao marcar notificação:', err);
+            logger.error('Erro ao marcar notifica��o:', err);
         }
     };
     
@@ -156,13 +147,13 @@ const NotificacoesDropdown = ({ user }) => {
             });
             setNotificacoes(prev => prev.filter(n => !n.lida));
         } catch (err) {
-            logger.error('Erro ao limpar notificações:', err);
+            logger.error('Erro ao limpar notifica��es:', err);
         }
     };
 
-    // Limpar TODAS as notificações
+    // Limpar TODAS as notifica��es
     const limparTodas = async () => {
-        if (!await confirmDialog('Limpar TODAS as notificações?', { confirmText: 'Limpar tudo' })) return;
+        if (!await confirmDialog('Limpar TODAS as notifica��es?', { confirmText: 'Limpar tudo' })) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${API_URL}/notificacoes/limpar-todas`, {
@@ -173,7 +164,7 @@ const NotificacoesDropdown = ({ user }) => {
             setCount(0);
             setIsOpen(false);
         } catch (err) {
-            logger.error('Erro ao limpar todas notificações:', err);
+            logger.error('Erro ao limpar todas notifica��es:', err);
         }
     };
     
@@ -199,7 +190,7 @@ const NotificacoesDropdown = ({ user }) => {
         return () => clearInterval(interval);
     }, []);
     
-    // Buscar notificações quando abrir dropdown
+    // Buscar notifica��es quando abrir dropdown
     useEffect(() => {
         if (isOpen) {
             fetchNotificacoes();
@@ -223,19 +214,19 @@ const NotificacoesDropdown = ({ user }) => {
         return date.toLocaleDateString('pt-BR');
     };
     
-    // Ícone por tipo
+    // �cone por tipo
     const getIconByType = (tipo) => {
         switch(tipo) {
-            case 'servico_criado': return '🛠️';
-            case 'pagamento_inserido': return '💰';
-            case 'orcamento_aprovado': return '✅';
-            case 'orcamento_pendente': return '📋';
-            case 'orcamento_rejeitado': return '❌';
-            case 'boleto_vencido': return '🚨';
-            case 'boleto_hoje': return '⚠️';
-            case 'boleto_3dias': return '📄';
-            case 'boleto_7dias': return '📄';
-            default: return '🔔';
+            case 'servico_criado': return '???';
+            case 'pagamento_inserido': return '??';
+            case 'orcamento_aprovado': return '?';
+            case 'orcamento_pendente': return '??';
+            case 'orcamento_rejeitado': return '?';
+            case 'boleto_vencido': return '??';
+            case 'boleto_hoje': return '??';
+            case 'boleto_3dias': return '??';
+            case 'boleto_7dias': return '??';
+            default: return '??';
         }
     };
     
@@ -254,9 +245,9 @@ const NotificacoesDropdown = ({ user }) => {
                     borderRadius: '8px',
                     transition: 'background 0.2s'
                 }}
-                title="Notificações"
+                title="Notifica��es"
             >
-                🔔
+                ??
                 {count > 0 && (
                     <span style={{
                         position: 'absolute',
@@ -291,7 +282,7 @@ const NotificacoesDropdown = ({ user }) => {
                         onClick={() => setIsOpen(false)}
                     />
                     
-                    {/* Dropdown - aparece ABAIXO do sino, alinhado à direita */}
+                    {/* Dropdown - aparece ABAIXO do sino, alinhado � direita */}
                     <div style={{
                         position: 'absolute',
                         top: '100%',
@@ -313,16 +304,16 @@ const NotificacoesDropdown = ({ user }) => {
                             borderBottom: '1px solid #e5e7eb',
                             backgroundColor: '#f8fafc'
                         }}>
-                            {/* Título */}
+                            {/* T�tulo */}
                             <div style={{ 
                                 fontWeight: '600', 
                                 color: '#1e293b',
                                 marginBottom: '10px',
                                 fontSize: '1em'
                             }}>
-                                🔔 Notificações
+                                ?? Notifica��es
                             </div>
-                            {/* Botões de ação */}
+                            {/* Bot�es de a��o */}
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {count > 0 && (
                                     <button
@@ -338,7 +329,7 @@ const NotificacoesDropdown = ({ user }) => {
                                         }}
                                         title="Marcar todas como lidas"
                                     >
-                                        ✓ Marcar lidas
+                                        ? Marcar lidas
                                     </button>
                                 )}
                                 <button
@@ -352,9 +343,9 @@ const NotificacoesDropdown = ({ user }) => {
                                         fontSize: '0.75em',
                                         padding: '4px 8px'
                                     }}
-                                    title="Limpar notificações lidas"
+                                    title="Limpar notifica��es lidas"
                                 >
-                                    🗑️ Limpar lidas
+                                    ??? Limpar lidas
                                 </button>
                                 <button
                                     onClick={limparTodas}
@@ -368,14 +359,14 @@ const NotificacoesDropdown = ({ user }) => {
                                         padding: '4px 8px',
                                         fontWeight: '600'
                                     }}
-                                    title="Limpar TODAS as notificações"
+                                    title="Limpar TODAS as notifica��es"
                                 >
-                                    🗑️ Limpar TODAS
+                                    ??? Limpar TODAS
                                 </button>
                             </div>
                         </div>
                         
-                        {/* Lista de notificações */}
+                        {/* Lista de notifica��es */}
                         <div style={{ 
                             overflowY: 'auto', 
                             flex: 1,
@@ -387,8 +378,8 @@ const NotificacoesDropdown = ({ user }) => {
                                 </div>
                             ) : notificacoes.length === 0 ? (
                                 <div style={{ padding: '30px', textAlign: 'center', color: '#6b7280' }}>
-                                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>🔕</div>
-                                    Nenhuma notificação
+                                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>??</div>
+                                    Nenhuma notifica��o
                                 </div>
                             ) : (
                                 notificacoes.map(notif => (
@@ -463,9 +454,9 @@ const NotificacoesDropdown = ({ user }) => {
                                                 color: notif.lida ? '#94a3b8' : '#3b82f6',
                                                 fontSize: '0.9em'
                                             }}
-                                            title={notif.lida ? 'Marcar como não lida' : 'Marcar como lida'}
+                                            title={notif.lida ? 'Marcar como n�o lida' : 'Marcar como lida'}
                                         >
-                                            {notif.lida ? '○' : '●'}
+                                            {notif.lida ? '?' : '?'}
                                         </button>
                                     </div>
                                 ))
@@ -479,7 +470,7 @@ const NotificacoesDropdown = ({ user }) => {
 };
 
 // ==============================================================================
-// NAVEGAÇÃO ESTILO WINDOWS - Barra de Menus no Topo
+// NAVEGA��O ESTILO WINDOWS - Barra de Menus no Topo
 // ==============================================================================
 const WindowsNavBar = ({ 
     user, 
@@ -516,74 +507,74 @@ const WindowsNavBar = ({
             id: 'obra',
             label: 'Obra',
             items: [
-                { id: 'home', label: 'Início', icon: '🏠', shortcut: 'Alt+I' },
-                { id: 'obras', label: 'Minhas Obras', icon: '🏗️', shortcut: 'Alt+O' },
+                { id: 'home', label: 'In�cio', icon: '??', shortcut: 'Alt+I' },
+                { id: 'obras', label: 'Minhas Obras', icon: '???', shortcut: 'Alt+O' },
                 { type: 'separator' },
-                { id: 'exportar', label: 'Exportar Relatório...', icon: '📤', shortcut: 'Ctrl+E' },
+                { id: 'exportar', label: 'Exportar Relat�rio...', icon: '??', shortcut: 'Ctrl+E' },
                 { type: 'separator' },
-                { id: 'sair', label: 'Sair', icon: '🚪', shortcut: 'Alt+F4', action: 'logout' },
+                { id: 'sair', label: 'Sair', icon: '??', shortcut: 'Alt+F4', action: 'logout' },
             ]
         },
         {
             id: 'financeiro',
             label: 'Financeiro',
             items: [
-                { id: 'financeiro', label: 'Cronograma Financeiro', icon: '💰', shortcut: 'F2' },
-                { id: 'boletos', label: 'Gestão de Boletos', icon: '📄', shortcut: 'F3' },
-                { id: 'caixa', label: 'Caixa de Obra', icon: '🏦', shortcut: 'F4' },
+                { id: 'financeiro', label: 'Cronograma Financeiro', icon: '??', shortcut: 'F2' },
+                { id: 'boletos', label: 'Gest�o de Boletos', icon: '??', shortcut: 'F3' },
+                { id: 'caixa', label: 'Caixa de Obra', icon: '??', shortcut: 'F4' },
                 { type: 'separator' },
-                { id: 'pagamento', label: 'Novo Pagamento...', icon: '💳', shortcut: 'Ctrl+P' },
+                { id: 'pagamento', label: 'Novo Pagamento...', icon: '??', shortcut: 'Ctrl+P' },
             ]
         },
         {
             id: 'cronograma',
             label: 'Cronograma',
             items: [
-                { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: '📅', shortcut: 'F5' },
+                { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: '??', shortcut: 'F5' },
             ]
         },
         {
             id: 'documentos',
             label: 'Documentos',
             items: [
-                { id: 'diario', label: 'Diário de Obras', icon: '📔', shortcut: 'F6' },
-                { id: 'agenda', label: 'Agenda de Demandas', icon: '📆', shortcut: 'F9' },
-                { id: 'orcamentos', label: 'Solicitações', icon: '📋', shortcut: 'F7', adminOnly: true },
-                { id: 'relatorios', label: 'Relatórios', icon: '📊', shortcut: 'F8' },
+                { id: 'diario', label: 'Di�rio de Obras', icon: '??', shortcut: 'F6' },
+                { id: 'agenda', label: 'Agenda de Demandas', icon: '??', shortcut: 'F9' },
+                { id: 'orcamentos', label: 'Solicita��es', icon: '??', shortcut: 'F7', adminOnly: true },
+                { id: 'relatorios', label: 'Relat�rios', icon: '??', shortcut: 'F8' },
             ]
         },
         {
             id: 'ferramentas',
             label: 'Ferramentas',
             items: [
-                { id: 'usuarios', label: 'Gerenciar Usuários', icon: '👥', masterOnly: true },
+                { id: 'usuarios', label: 'Gerenciar Usu�rios', icon: '??', masterOnly: true },
                 { type: 'separator' },
-                { id: 'configuracoes', label: 'Configurações', icon: '⚙️' },
+                { id: 'configuracoes', label: 'Configura��es', icon: '??' },
             ]
         },
         {
             id: 'ajuda',
             label: 'Ajuda',
             items: [
-                { id: 'tutorial', label: 'Tutorial', icon: '📖' },
-                { id: 'atalhos', label: 'Atalhos de Teclado', icon: '⌨️' },
+                { id: 'tutorial', label: 'Tutorial', icon: '??' },
+                { id: 'atalhos', label: 'Atalhos de Teclado', icon: '??' },
                 { type: 'separator' },
-                { id: 'sobre', label: 'Sobre o Obraly', icon: 'ℹ️' },
+                { id: 'sobre', label: 'Sobre o Obraly', icon: '??' },
             ]
         },
     ];
 
-    // Barra de ferramentas rápidas
+    // Barra de ferramentas r�pidas
     const toolbarItems = [
-        { id: 'home', icon: '🏠', label: 'Início' },
-        { id: 'orcamento-eng', icon: '📋', label: 'Orçamento' },
-        { id: 'financeiro', icon: '💰', label: 'Financeiro' },
-        { id: 'cronograma-obra', icon: '📅', label: 'Cronograma' },
-        { id: 'boletos', icon: '📄', label: 'Boletos' },
-        { id: 'relatorios', icon: '📊', label: 'Relatórios' },
-        { id: 'diario', icon: '📔', label: 'Diário' },
-        { id: 'agenda', icon: '📆', label: 'Agenda' },
-        { id: 'caixa', icon: '🏦', label: 'Caixa' },
+        { id: 'home', icon: '??', label: 'In�cio' },
+        { id: 'orcamento-eng', icon: '??', label: 'Or�amento' },
+        { id: 'financeiro', icon: '??', label: 'Financeiro' },
+        { id: 'cronograma-obra', icon: '??', label: 'Cronograma' },
+        { id: 'boletos', icon: '??', label: 'Boletos' },
+        { id: 'relatorios', icon: '??', label: 'Relat�rios' },
+        { id: 'diario', icon: '??', label: 'Di�rio' },
+        { id: 'agenda', icon: '??', label: 'Agenda' },
+        { id: 'caixa', icon: '??', label: 'Caixa' },
     ];
 
     const handleMenuClick = (menuId) => {
@@ -618,15 +609,15 @@ const WindowsNavBar = ({
             setObraSelecionada(null);
             setCurrentPage('obras');
         } else {
-            // CORREÇÃO: Usar navigateTo para atualizar URL e chamar fetchObraData
+            // CORRE��O: Usar navigateTo para atualizar URL e chamar fetchObraData
             if (typeof window.navigateTo === 'function') {
                 window.navigateTo('home', obraId);
             }
-            // Chamar handleSelectObra se disponível globalmente
+            // Chamar handleSelectObra se dispon�vel globalmente
             if (typeof window.handleSelectObra === 'function') {
                 window.handleSelectObra(obraId);
             } else {
-                // Fallback: só mudar a obra visualmente (dados antigos)
+                // Fallback: s� mudar a obra visualmente (dados antigos)
                 const obra = obras.find(o => o.id === obraId);
                 if (obra) {
                     setObraSelecionada(obra);
@@ -644,14 +635,14 @@ const WindowsNavBar = ({
 
     return (
         <>
-            {/* === BARRA DE TÍTULO === */}
+            {/* === BARRA DE T�TULO === */}
             <div className="windows-title-bar">
                 <div className="title-bar-left">
-                    <span className="title-bar-logo">🏗️</span>
+                    <span className="title-bar-logo">???</span>
                     <span className="title-bar-name">Obraly</span>
                     {obraSelecionada && (
                         <>
-                            <span className="title-bar-separator">—</span>
+                            <span className="title-bar-separator">�</span>
                             <span className="title-bar-obra">{obraSelecionada.nome}</span>
                         </>
                     )}
@@ -662,9 +653,9 @@ const WindowsNavBar = ({
                         <span className="user-avatar-mini">
                             {user.nome ? user.nome.charAt(0).toUpperCase() : '?'}
                         </span>
-                        <span className="user-name-mini">{user.nome || 'Usuário'}</span>
+                        <span className="user-name-mini">{user.nome || 'Usu�rio'}</span>
                         <span className="user-role-badge">
-                            {user.role === 'master' ? '👑' : user.role === 'administrador' ? '⭐' : '👤'}
+                            {user.role === 'master' ? '??' : user.role === 'administrador' ? '?' : '??'}
                         </span>
                     </div>
                 </div>
@@ -728,7 +719,7 @@ const WindowsNavBar = ({
                         value={obraSelecionada?.id || 0}
                         onChange={handleObraChange}
                     >
-                        <option value={0}>📂 Selecionar Obra...</option>
+                        <option value={0}>?? Selecionar Obra...</option>
                         {(obras || []).map(obra => (
                             <option key={obra.id} value={obra.id}>
                                 {obra.nome}
@@ -763,7 +754,7 @@ const WindowsNavBar = ({
                                 className="toolbar-action-btn primary"
                                 onClick={() => setCurrentPage('pagamento')}
                             >
-                                💳 Novo Pagamento
+                                ?? Novo Pagamento
                             </button>
                         </div>
                     )}
@@ -781,7 +772,7 @@ const WindowsNavBar = ({
     );
 };
 
-// CSS da Navegação Windows
+// CSS da Navega��o Windows
 const WindowsNavStyles = () => (
     <style>{`
         /* === LAYOUT WINDOWS === */
@@ -799,7 +790,7 @@ const WindowsNavStyles = () => (
             overflow-y: auto;
         }
         
-        /* === BARRA DE TÍTULO === */
+        /* === BARRA DE T�TULO === */
         .windows-title-bar {
             display: flex;
             align-items: center;
@@ -1188,12 +1179,12 @@ const WindowsNavStyles = () => (
                 padding: 10px 12px;
                 font-size: 13px;
                 white-space: nowrap;
-                min-height: 44px; /* Área de toque mínima para mobile */
+                min-height: 44px; /* �rea de toque m�nima para mobile */
             }
             
             .menu-dropdown {
                 position: fixed;
-                top: 120px; /* Abaixo da barra de navegação */
+                top: 120px; /* Abaixo da barra de navega��o */
                 left: 10px;
                 right: 10px;
                 bottom: auto;
@@ -1208,7 +1199,7 @@ const WindowsNavStyles = () => (
             
             .menu-dropdown-item {
                 padding: 14px 16px;
-                min-height: 48px; /* Área de toque maior no mobile */
+                min-height: 48px; /* �rea de toque maior no mobile */
                 font-size: 15px;
             }
             
@@ -1252,30 +1243,30 @@ const Sidebar = ({
     isCollapsed,
     setIsCollapsed 
 }) => {
-    // Menu items - só aparece quando obra está selecionada
+    // Menu items - s� aparece quando obra est� selecionada
     const menuItems = [
-        { id: 'home', icon: '🏠', label: 'Início', shortLabel: 'Início' },
-        { id: 'orcamento-eng', icon: '📐', label: 'Orçamento de Engenharia', shortLabel: 'Orçamento' },
-        { id: 'cronograma-obra', icon: '📅', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
-        { id: 'financeiro', icon: '💰', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
-        { id: 'boletos', icon: '📄', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
-        { id: 'relatorios', icon: '📊', label: 'Relatórios', shortLabel: 'Relatórios' },
-        { id: 'orcamentos', icon: '📋', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
-        { id: 'diario', icon: '📔', label: 'Diário de Obras', shortLabel: 'Diário' },
-        { id: 'agenda', icon: '📆', label: 'Agenda de Demandas', shortLabel: 'Agenda' },
-        { id: 'caixa', icon: '🏦', label: 'Caixa de Obra', shortLabel: 'Caixa' },
+        { id: 'home', icon: '??', label: 'In�cio', shortLabel: 'In�cio' },
+        { id: 'orcamento-eng', icon: '??', label: 'Or�amento de Engenharia', shortLabel: 'Or�amento' },
+        { id: 'cronograma-obra', icon: '??', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
+        { id: 'financeiro', icon: '??', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
+        { id: 'boletos', icon: '??', label: 'Gest�o de Boletos', shortLabel: 'Boletos' },
+        { id: 'relatorios', icon: '??', label: 'Relat�rios', shortLabel: 'Relat�rios' },
+        { id: 'orcamentos', icon: '??', label: 'Solicita��es', shortLabel: 'Solicita��es', adminOnly: true },
+        { id: 'diario', icon: '??', label: 'Di�rio de Obras', shortLabel: 'Di�rio' },
+        { id: 'agenda', icon: '??', label: 'Agenda de Demandas', shortLabel: 'Agenda' },
+        { id: 'caixa', icon: '??', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
 
     const bottomItems = [
-        { id: 'obras', icon: '🏗️', label: 'Minhas Obras', shortLabel: 'Obras' },
-        { id: 'usuarios', icon: '👥', label: 'Gerenciar Usuários', shortLabel: 'Usuários', masterOnly: true },
+        { id: 'obras', icon: '???', label: 'Minhas Obras', shortLabel: 'Obras' },
+        { id: 'usuarios', icon: '??', label: 'Gerenciar Usu�rios', shortLabel: 'Usu�rios', masterOnly: true },
     ];
 
     const handleItemClick = (item) => {
         if (item.id === 'obras') {
             setObraSelecionada(null);
         }
-        // Usar navigateTo para atualizar histórico do browser
+        // Usar navigateTo para atualizar hist�rico do browser
         if (typeof window.navigateTo === 'function') {
             window.navigateTo(item.id, item.id !== 'obras' ? obraSelecionada?.id : null);
         } else {
@@ -1297,7 +1288,7 @@ const Sidebar = ({
                 {/* Logo/Header */}
                 <div className="sidebar-header">
                     <div className="sidebar-logo">
-                        <span className="logo-icon">🏗️</span>
+                        <span className="logo-icon">???</span>
                         {!isCollapsed && <span className="logo-text">OBRALY</span>}
                     </div>
                     <button 
@@ -1305,7 +1296,7 @@ const Sidebar = ({
                         onClick={() => setIsCollapsed(!isCollapsed)}
                         title={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
                     >
-                        {isCollapsed ? '→' : '←'}
+                        {isCollapsed ? '?' : '?'}
                     </button>
                 </div>
 
@@ -1313,7 +1304,7 @@ const Sidebar = ({
                 {obraSelecionada && (
                     <div className="sidebar-obra-info">
                         <div className="obra-badge">
-                            <span className="obra-icon">📍</span>
+                            <span className="obra-icon">??</span>
                             {!isCollapsed && (
                                 <div className="obra-details">
                                     <span className="obra-nome">{obraSelecionada.nome}</span>
@@ -1330,7 +1321,7 @@ const Sidebar = ({
                                 }}
                                 title="Trocar obra"
                             >
-                                ↻
+                                ?
                             </button>
                         )}
                     </div>
@@ -1340,7 +1331,7 @@ const Sidebar = ({
                 <nav className="sidebar-nav">
                     <ul className="sidebar-menu">
                         {menuItems.map(item => {
-                            // Verificar permissões
+                            // Verificar permiss�es
                             if (item.adminOnly && user.role !== 'administrador' && user.role !== 'master') {
                                 return null;
                             }
@@ -1372,7 +1363,7 @@ const Sidebar = ({
                                 return null;
                             }
                             
-                            // Mostrar "Minhas Obras" apenas quando há obra selecionada
+                            // Mostrar "Minhas Obras" apenas quando h� obra selecionada
                             if (item.id === 'obras' && !obraSelecionada) {
                                 return null;
                             }
@@ -1395,7 +1386,7 @@ const Sidebar = ({
                     </ul>
                 </nav>
 
-                {/* Footer com usuário */}
+                {/* Footer com usu�rio */}
                 <div className="sidebar-footer">
                     <div className="user-info">
                         <div className="user-avatar">
@@ -1403,10 +1394,10 @@ const Sidebar = ({
                         </div>
                         {!isCollapsed && (
                             <div className="user-details">
-                                <span className="user-name">{user.nome || 'Usuário'}</span>
+                                <span className="user-name">{user.nome || 'Usu�rio'}</span>
                                 <span className="user-role">
-                                    {user.role === 'master' ? '👑 Master' : 
-                                     user.role === 'administrador' ? '⭐ Admin' : '👤 Usuário'}
+                                    {user.role === 'master' ? '?? Master' : 
+                                     user.role === 'administrador' ? '? Admin' : '?? Usu�rio'}
                                 </span>
                             </div>
                         )}
@@ -1418,7 +1409,7 @@ const Sidebar = ({
                             onClick={onLogout}
                             title="Sair"
                         >
-                            {isCollapsed ? '🚪' : '🚪 Sair'}
+                            {isCollapsed ? '??' : '?? Sair'}
                         </button>
                     </div>
                 </div>
@@ -1578,7 +1569,7 @@ const SidebarStyles = () => (
             transform: rotate(180deg);
         }
         
-        /* Navegação */
+        /* Navega��o */
         .sidebar-nav {
             flex: 1;
             overflow-y: auto;
@@ -1823,54 +1814,9 @@ const SidebarStyles = () => (
 );
 
 
-// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
-const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-
-    const headers = {
-        ...options.headers,
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-
-        notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
-
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-
-        throw new Error('Sessão expirada. Faça o login novamente.');
-    }
-
-    return response;
-};
-
-const fetchWithAuthTimeout = async (url, options = {}, timeoutMs = 30000) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        return await fetchWithAuth(url, { ...options, signal: controller.signal });
-    } finally {
-        clearTimeout(timer);
-    }
-};
-
-
-// --- CONTEXTO DE AUTENTICAÇÃO ---
-const AuthContext = createContext(null);
-const useAuth = () => useContext(AuthContext);
+// --- CONTEXTO DE AUTENTICA��O + FETCH ---
+// fetchWithAuth, fetchWithAuthTimeout ? src/auth/fetchWithAuth.js
+// AuthContext, useAuth              ? src/auth/AuthContext.jsx
 
 // --- COMPONENTE DE LOGIN ---
 const LoginScreen = ({ onBack }) => {
@@ -1901,7 +1847,7 @@ const LoginScreen = ({ onBack }) => {
         })
         .catch(err => {
             logger.error("Erro no login:", err);
-            setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
+            setError(err.message || "Credenciais inv�lidas. Verifique seu usu�rio e senha.");
             setIsLoading(false);
         });
     };
@@ -1916,7 +1862,7 @@ const LoginScreen = ({ onBack }) => {
             <div className="floating-shape square-1"></div>
             <div className="floating-shape triangle-1"></div>
             
-            {/* Botão Voltar */}
+            {/* Bot�o Voltar */}
             {onBack && (
                 <button
                     onClick={onBack}
@@ -1940,7 +1886,7 @@ const LoginScreen = ({ onBack }) => {
                     onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
                     onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
                 >
-                    ← Voltar
+                    ? Voltar
                 </button>
             )}
             
@@ -1960,7 +1906,7 @@ const LoginScreen = ({ onBack }) => {
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input
                         type="text"
-                        placeholder="Usuário"
+                        placeholder="Usu�rio"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         style={{ 
@@ -2016,10 +1962,10 @@ const LoginScreen = ({ onBack }) => {
     );
 };
 
-// Gráfico de Pizza
+// Gr�fico de Pizza
 const GastosPorSegmentoChart = ({ data }) => {
     if (!data || Object.keys(data).length === 0) {
-        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gráfico.</p>;
+        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gr�fico.</p>;
     }
 
     const chartData = {
@@ -2030,8 +1976,8 @@ const GastosPorSegmentoChart = ({ data }) => {
                 data: Object.values(data),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.7)', // Vermelho (Material)
-                    'rgba(54, 162, 235, 0.7)', // Azul (Mão de Obra)
-                    'rgba(255, 206, 86, 0.7)', // Amarelo (Serviço)
+                    'rgba(54, 162, 235, 0.7)', // Azul (M�o de Obra)
+                    'rgba(255, 206, 86, 0.7)', // Amarelo (Servi�o)
                     'rgba(75, 192, 192, 0.7)', // Verde (Equipamentos)
                     'rgba(153, 102, 255, 0.7)', // Roxo
                 ],
@@ -2069,7 +2015,7 @@ const GastosPorSegmentoChart = ({ data }) => {
 // ---------------------------------
 
 
-// --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
+// --- COMPONENTE: HIST�RICO DE PAGAMENTOS (Card para Home) ---
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     const [editandoItem, setEditandoItem] = useState(null);
@@ -2095,7 +2041,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             // Filtro por tipo
             const tipoItem = (item.tipo || item.tipo_pagamento || '').toLowerCase();
             const matchTipo = filtroTipo === 'todos' || 
-                (filtroTipo === 'mao_de_obra' && (tipoItem.includes('mão') || tipoItem.includes('mao') || tipoItem === 'mao_de_obra')) ||
+                (filtroTipo === 'mao_de_obra' && (tipoItem.includes('m�o') || tipoItem.includes('mao') || tipoItem === 'mao_de_obra')) ||
                 (filtroTipo === 'material' && tipoItem.includes('material')) ||
                 (filtroTipo === 'equipamento' && (tipoItem.includes('equipamento') || tipoItem.includes('despesa')));
             
@@ -2107,7 +2053,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         });
     }, [itemsPagos, busca, filtroTipo, filtroFornecedor]);
     
-    // Lista de fornecedores únicos para o filtro
+    // Lista de fornecedores �nicos para o filtro
     const fornecedoresUnicos = useMemo(() => {
         const fornecedores = [...new Set(itemsPagos.map(item => item.fornecedor).filter(Boolean))];
         return fornecedores.sort();
@@ -2120,7 +2066,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
     const isMaster = user && user.role === 'master';
     
-    // Buscar itens do orçamento quando abrir modal de edição
+    // Buscar itens do or�amento quando abrir modal de edi��o
     const fetchItensOrcamento = async () => {
         if (!obraId) return;
         setLoadingItens(true);
@@ -2131,17 +2077,17 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 setItensOrcamento(data);
             }
         } catch (err) {
-            logger.error('Erro ao buscar itens do orçamento:', err);
+            logger.error('Erro ao buscar itens do or�amento:', err);
         } finally {
             setLoadingItens(false);
         }
     };
     
-    // Abrir modal de edição
+    // Abrir modal de edi��o
     const handleEditarItem = (item) => {
-        // Normalizar o tipo para 'Mão de Obra' ou 'Material'
+        // Normalizar o tipo para 'M�o de Obra' ou 'Material'
         let tipoNorm = item.tipo || item.segmento || item.tipo_pagamento || 'Material';
-        if (tipoNorm === 'mao_de_obra' || tipoNorm === 'mao_obra') tipoNorm = 'Mão de Obra';
+        if (tipoNorm === 'mao_de_obra' || tipoNorm === 'mao_obra') tipoNorm = 'M�o de Obra';
         if (tipoNorm === 'material') tipoNorm = 'Material';
         setEditandoItem({
             ...item,
@@ -2151,7 +2097,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         fetchItensOrcamento();
     };
     
-    // Salvar edição (vincular item do orçamento)
+    // Salvar edi��o (vincular item do or�amento)
     const handleSalvarEdicao = async () => {
         if (!editandoItem) return;
         
@@ -2164,9 +2110,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 orcamento_item_id: editandoItem.orcamento_item_id || null
             };
             
-            // Extrair ID numérico
+            // Extrair ID num�rico
             const tipoEdit = editandoItem.tipo_edit || 'Material';
-            const tipoMaoDeObra = tipoEdit === 'Mão de Obra';
+            const tipoMaoDeObra = tipoEdit === 'M�o de Obra';
 
             if (strId.startsWith('lanc-')) {
                 numericId = strId.replace('lanc-', '');
@@ -2197,7 +2143,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         segmento: tipoEdit
                     };
                 } else {
-                    throw new Error('ID do pagamento parcelado não encontrado');
+                    throw new Error('ID do pagamento parcelado n�o encontrado');
                 }
             } else {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
@@ -2212,7 +2158,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             if (response.ok) {
                 const toast = document.createElement('div');
                 toast.className = 'cf-toast';
-                toast.textContent = '✅ Pagamento atualizado com sucesso!';
+                toast.textContent = '? Pagamento atualizado com sucesso!';
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 3000);
                 if (fetchObraData && obraId) fetchObraData(obraId);
@@ -2221,20 +2167,20 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao atualizar');
             }
         } catch (err) {
-            logger.error('Erro ao salvar edição:', err);
+            logger.error('Erro ao salvar edi��o:', err);
             notify.error(`Erro ao salvar: ${err.message}`);
         }
     };
     
-    // Função para exportar CSV
+    // Fun��o para exportar CSV
     const exportarCSV = () => {
         if (itemsPagos.length === 0) {
             notify.info('Nenhum pagamento para exportar');
             return;
         }
         
-        // Cabeçalho CSV
-        const headers = ['Data', 'Descrição', 'Fornecedor', 'Serviço', 'Valor', 'Status'];
+        // Cabe�alho CSV
+        const headers = ['Data', 'Descri��o', 'Fornecedor', 'Servi�o', 'Valor', 'Status'];
         
         // Linhas de dados
         const rows = itemsPagos.map(item => {
@@ -2272,9 +2218,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         URL.revokeObjectURL(url);
     };
     
-    // Função para reverter parcela paga (voltar para pendente)
+    // Fun��o para reverter parcela paga (voltar para pendente)
     const handleRevertParcela = async (item) => {
-        if (!await confirmDialog(`Deseja reverter o pagamento "${item.descricao}"? A parcela voltará ao status "Pendente".`, { confirmText: 'Reverter' })) return;
+        if (!await confirmDialog(`Deseja reverter o pagamento "${item.descricao}"? A parcela voltar� ao status "Pendente".`, { confirmText: 'Reverter' })) return;
         
         try {
             const response = await fetchWithAuth(
@@ -2307,19 +2253,19 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         try {
             let endpoint = '';
             
-            // Extrair ID numérico (remover prefixos como "lanc-", "serv-pag-")
+            // Extrair ID num�rico (remover prefixos como "lanc-", "serv-pag-")
             const extractNumericId = (id) => {
                 const strId = String(id);
                 if (strId.startsWith('lanc-')) return strId.replace('lanc-', '');
                 if (strId.startsWith('serv-pag-')) return strId.replace('serv-pag-', '');
-                if (strId.startsWith('parcela-')) return null; // Parcelas não podem ser deletadas
+                if (strId.startsWith('parcela-')) return null; // Parcelas n�o podem ser deletadas
                 return strId;
             };
             
             const numericId = extractNumericId(item.id);
             
             if (!numericId) {
-                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados n�o podem ser exclu�das individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             }
             
@@ -2329,7 +2275,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             } else if (item.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
-                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados n�o podem ser exclu�das individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             } else {
                 // Tentar identificar pelo prefixo do ID
@@ -2344,7 +2290,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
             
             if (response.ok) {
-                notify.success('Item excluído com sucesso!');
+                notify.success('Item exclu�do com sucesso!');
                 if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -2356,7 +2302,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         }
     };
     
-    // Helper para verificar se é parcela
+    // Helper para verificar se � parcela
     const isParcela = (item) => {
         return item.tipo_registro === 'parcela_individual' || String(item.id).startsWith('parcela-');
     };
@@ -2393,7 +2339,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 gap: '10px',
                 flexWrap: 'wrap'
             }}>
-                💰 Histórico de Pagamentos
+                ?? Hist�rico de Pagamentos
                 <span style={{ 
                     fontSize: '0.6em', 
                     backgroundColor: '#4CAF50', 
@@ -2420,9 +2366,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             gap: '5px',
                             fontWeight: '500'
                         }}
-                        title="Exportar histórico para CSV"
+                        title="Exportar hist�rico para CSV"
                     >
-                        📥 Exportar CSV
+                        ?? Exportar CSV
                     </button>
                 )}
             </h2>
@@ -2446,7 +2392,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             backgroundColor: '#6366f1',
                             display: 'inline-block'
                         }}></span>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Mão de Obra</span>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>M�o de Obra</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ 
@@ -2474,14 +2420,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             {/* Barra de Busca e Filtros */}
             {itemsPagos.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                    {/* Linha principal: Busca + Botão Filtros */}
+                    {/* Linha principal: Busca + Bot�o Filtros */}
                     <div style={{ 
                         display: 'flex', 
                         gap: '12px', 
                         alignItems: 'center',
                         flexWrap: 'wrap'
                     }}>
-                        {/* Campo de Busca Rápida */}
+                        {/* Campo de Busca R�pida */}
                         <div style={{ 
                             flex: '1', 
                             minWidth: '250px',
@@ -2494,10 +2440,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 transform: 'translateY(-50%)',
                                 fontSize: '16px',
                                 color: '#9ca3af'
-                            }}>🔍</span>
+                            }}>??</span>
                             <input
                                 type="text"
-                                placeholder="Buscar por descrição, fornecedor ou serviço..."
+                                placeholder="Buscar por descri��o, fornecedor ou servi�o..."
                                 value={busca}
                                 onChange={(e) => setBusca(e.target.value)}
                                 style={{
@@ -2530,12 +2476,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     }}
                                     title="Limpar busca"
                                 >
-                                    ✕
+                                    ?
                                 </button>
                             )}
                         </div>
                         
-                        {/* Botão Filtros */}
+                        {/* Bot�o Filtros */}
                         <button
                             onClick={() => setMostrarFiltros(!mostrarFiltros)}
                             style={{
@@ -2554,7 +2500,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <span>🎛️</span>
+                            <span>???</span>
                             Filtros
                             {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
                                 <span style={{
@@ -2598,7 +2544,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         color: '#64748b',
                                         marginBottom: '6px'
                                     }}>
-                                        📦 Tipo
+                                        ?? Tipo
                                     </label>
                                     <select
                                         value={filtroTipo}
@@ -2614,9 +2560,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         }}
                                     >
                                         <option value="todos">Todos os tipos</option>
-                                        <option value="mao_de_obra">🔵 Mão de Obra</option>
-                                        <option value="material">🟢 Material</option>
-                                        <option value="equipamento">🟠 Equipamento</option>
+                                        <option value="mao_de_obra">?? M�o de Obra</option>
+                                        <option value="material">?? Material</option>
+                                        <option value="equipamento">?? Equipamento</option>
                                     </select>
                                 </div>
                                 
@@ -2629,7 +2575,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         color: '#64748b',
                                         marginBottom: '6px'
                                     }}>
-                                        🏢 Fornecedor
+                                        ?? Fornecedor
                                     </label>
                                     <select
                                         value={filtroFornecedor}
@@ -2654,7 +2600,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 </div>
                             </div>
                             
-                            {/* Botão Limpar Filtros */}
+                            {/* Bot�o Limpar Filtros */}
                             {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
                                 <div style={{ 
                                     borderTop: '1px solid #e2e8f0', 
@@ -2682,7 +2628,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             gap: '6px'
                                         }}
                                     >
-                                        ✕ Limpar todos os filtros
+                                        ? Limpar todos os filtros
                                     </button>
                                 </div>
                             )}
@@ -2703,10 +2649,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             gap: '8px',
                             flexWrap: 'wrap'
                         }}>
-                            <span>📋</span>
+                            <span>??</span>
                             Exibindo <strong>{pagamentosFiltrados.length}</strong> de <strong>{itemsPagos.length}</strong> pagamentos
                             {busca && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Busca: "{busca}"</span>}
-                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'Mão de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
+                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'M�o de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
                             {filtroFornecedor && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Fornecedor: {filtroFornecedor}</span>}
                         </div>
                     )}
@@ -2721,7 +2667,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                     backgroundColor: '#f9f9f9',
                     borderRadius: '8px'
                 }}>
-                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>📋</div>
+                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>??</div>
                     <p>Nenhum pagamento registrado</p>
                 </div>
             ) : (
@@ -2731,12 +2677,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <thead>
                                 <tr>
                                     <th>Data</th>
-                                    <th>Descrição</th>
+                                    <th>Descri��o</th>
                                     <th>Fornecedor</th>
                                     <th>Valor</th>
                                     <th>Status</th>
                                     <th style={{width: '50px', textAlign: 'center'}}>NF</th>
-                                    {isAdmin && <th style={{width: '50px'}}>Ações</th>}
+                                    {isAdmin && <th style={{width: '50px'}}>A��es</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -2745,10 +2691,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     const getTipoColor = () => {
                                         const tipo = item.tipo || item.tipo_pagamento || '';
                                         const tipoLower = tipo.toLowerCase();
-                                        if (tipoLower.includes('mão') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1'; // Indigo
+                                        if (tipoLower.includes('m�o') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1'; // Indigo
                                         if (tipoLower.includes('material')) return '#10b981'; // Verde
                                         if (tipoLower.includes('equipamento')) return '#f59e0b'; // Laranja
-                                        return '#94a3b8'; // Cinza padrão
+                                        return '#94a3b8'; // Cinza padr�o
                                     };
                                     const tipoColor = getTipoColor();
                                     
@@ -2772,7 +2718,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             <div style={{ fontWeight: '500' }}>{item.descricao}</div>
                                             {item.orcamento_item_nome && (
                                                 <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                                    📦 {item.orcamento_item_nome}
+                                                    ?? {item.orcamento_item_nome}
                                                 </div>
                                             )}
                                         </td>
@@ -2788,7 +2734,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                 color: 'white',
                                                 fontSize: '0.8em'
                                             }}>
-                                                ✓ Pago
+                                                ? Pago
                                             </span>
                                         </td>
                                         <td style={{textAlign: 'center'}}>
@@ -2808,7 +2754,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         </td>
                                         {isAdmin && (
                                             <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
-                                                {/* Botão de editar (vincular serviço) */}
+                                                {/* Bot�o de editar (vincular servi�o) */}
                                                 <button 
                                                     onClick={() => handleEditarItem(item)}
                                                     style={{ 
@@ -2819,12 +2765,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                         padding: '3px', 
                                                         color: '#1976d2' 
                                                     }}
-                                                    title="Editar / Vincular a serviço"
+                                                    title="Editar / Vincular a servi�o"
                                                 >
-                                                    ✏️
+                                                    ??
                                                 </button>
                                                 {isParcela(item) ? (
-                                                    /* Para parcelas: botão de reverter pagamento (admin e master) */
+                                                    /* Para parcelas: bot�o de reverter pagamento (admin e master) */
                                                     <button 
                                                         onClick={() => handleRevertParcela(item)}
                                                         style={{ 
@@ -2837,10 +2783,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                         }}
                                                         title="Reverter pagamento (voltar para Pendente)"
                                                     >
-                                                        ↩️
+                                                        ??
                                                     </button>
                                                 ) : (
-                                                    /* Para outros itens: botão de excluir */
+                                                    /* Para outros itens: bot�o de excluir */
                                                     <button 
                                                         onClick={() => handleDelete(item)}
                                                         style={{ 
@@ -2853,7 +2799,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                         }}
                                                         title="Excluir"
                                                     >
-                                                        🗑️
+                                                        ???
                                                     </button>
                                                 )}
                                             </td>
@@ -2872,8 +2818,8 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 className="voltar-btn"
                             >
                                 {mostrarTodos 
-                                    ? '↑ Mostrar menos' 
-                                    : `Ver todos os ${pagamentosFiltrados.length} pagamentos →`
+                                    ? '? Mostrar menos' 
+                                    : `Ver todos os ${pagamentosFiltrados.length} pagamentos ?`
                                 }
                             </button>
                         </div>
@@ -2906,7 +2852,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 </>
             )}
             
-            {/* Modal de Edição - Vincular Serviço */}
+            {/* Modal de Edi��o - Vincular Servi�o */}
             {editandoItem && (
                 <div style={{
                     position: 'fixed',
@@ -2929,11 +2875,11 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
                     }} onClick={e => e.stopPropagation()}>
                         <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            ✏️ Editar Pagamento
+                            ?? Editar Pagamento
                         </h3>
                         
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descrição:</label>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descri��o:</label>
                             <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px' }}>
                                 {editandoItem.descricao}
                             </div>
@@ -2948,10 +2894,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
 
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                🏷️ Tipo:
+                                ??? Tipo:
                             </label>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                {['Mão de Obra', 'Material'].map(opcao => (
+                                {['M�o de Obra', 'Material'].map(opcao => (
                                     <button
                                         key={opcao}
                                         onClick={() => setEditandoItem({...editandoItem, tipo_edit: opcao})}
@@ -2960,16 +2906,16 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             padding: '10px',
                                             borderRadius: '8px',
                                             border: '2px solid',
-                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
-                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
-                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
+                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'M�o de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
+                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'M�o de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
+                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'M�o de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
                                             fontWeight: editandoItem.tipo_edit === opcao ? '700' : '400',
                                             cursor: 'pointer',
                                             fontSize: '0.9em',
                                             transition: 'all 0.15s'
                                         }}
                                     >
-                                        {opcao === 'Mão de Obra' ? '👷 Mão de Obra' : '📦 Material'}
+                                        {opcao === 'M�o de Obra' ? '?? M�o de Obra' : '?? Material'}
                                     </button>
                                 ))}
                             </div>
@@ -2977,7 +2923,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                📦 Vincular a Item do Orçamento:
+                                ?? Vincular a Item do Or�amento:
                             </label>
                             {loadingItens ? (
                                 <div style={{ color: '#666' }}>Carregando itens...</div>
@@ -3000,7 +2946,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 </select>
                             )}
                             <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                                💡 Vincular a um item faz o valor contar no orçamento
+                                ?? Vincular a um item faz o valor contar no or�amento
                             </small>
                         </div>
 
@@ -3008,7 +2954,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         {editandoItem.comprovante_url && (
                             <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                                 <label style={{ fontWeight: '600', color: '#166534', fontSize: '0.9em', display: 'block', marginBottom: '10px' }}>
-                                    📎 Comprovante de Pagamento
+                                    ?? Comprovante de Pagamento
                                 </label>
                                 {editandoItem.comprovante_url.startsWith('data:image') ? (
                                     <div style={{ textAlign: 'center' }}>
@@ -3022,23 +2968,23 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         <div style={{ marginTop: '8px' }}>
                                             <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
                                                 style={{ fontSize: '12px', color: '#166534', textDecoration: 'none', fontWeight: '600' }}>
-                                                🔍 Ampliar imagem
+                                                ?? Ampliar imagem
                                             </a>
                                         </div>
                                     </div>
                                 ) : editandoItem.comprovante_url.startsWith('data:application/pdf') ? (
                                     <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>📄</div>
+                                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>??</div>
                                         <a href={editandoItem.comprovante_url}
                                             download={`comprovante_${editandoItem.descricao || 'pagamento'}.pdf`}
                                             style={{ padding: '8px 16px', background: '#166534', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: '600' }}>
-                                            📥 Baixar PDF
+                                            ?? Baixar PDF
                                         </a>
                                     </div>
                                 ) : (
                                     <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
                                         style={{ color: '#166534', fontWeight: '600', fontSize: '13px' }}>
-                                        📎 Ver comprovante
+                                        ?? Ver comprovante
                                     </a>
                                 )}
                             </div>
@@ -3069,7 +3015,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     fontWeight: '500'
                                 }}
                             >
-                                💾 Salvar
+                                ?? Salvar
                             </button>
                         </div>
                     </div>
@@ -3081,3629 +3027,40 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
 
 
 // --- COMPONENTES DE MODAL (Existentes) ---
-const Modal = ({ children, onClose, customWidth }) => (
-    <div className="modal-overlay" onClick={onClose} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 9999,
-        padding: '10px',
-        overflowY: 'auto'
-    }}>
-        <div 
-            className="modal-content" 
-            style={{ 
-                maxWidth: customWidth || '500px',
-                width: '95%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                background: 'white',
-                borderRadius: '12px',
-                position: 'relative',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-            }}
-            onClick={e => e.stopPropagation()}
-        >
-            <button onClick={onClose} className="close-modal-btn">&times;</button>
-            {children}
-        </div>
-    </div>
-);
+// <--- MUDAN�A: Modal de Edi��o (com valor_total e valor_pago) -->
+// --- MODAIS DE ADMINISTRA��O ---
 
-// <--- MUDANÇA: Modal de Edição (com valor_total e valor_pago) -->
-const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) => {
-    const [formData, setFormData] = useState({});
-    
-    useEffect(() => {
-         if (lancamento) {
-             const initialData = { ...lancamento };
-             if (initialData.data) {
-                 try {
-                     initialData.data = new Date(initialData.data + 'T00:00:00').toISOString().split('T')[0];
-                 } catch (e) {
-                     logger.error("Erro ao formatar data para edição:", e);
-                     initialData.data = '';
-                 }
-             }
-             // Formatar data_vencimento
-             if (initialData.data_vencimento) {
-                 try {
-                     initialData.data_vencimento = new Date(initialData.data_vencimento + 'T00:00:00').toISOString().split('T')[0];
-                 } catch (e) {
-                     logger.error("Erro ao formatar data_vencimento para edição:", e);
-                     initialData.data_vencimento = '';
-                 }
-             } else {
-                 initialData.data_vencimento = initialData.data || ''; // Fallback para data normal
-             }
-             initialData.orcamento_item_id = initialData.orcamento_item_id ? parseInt(initialData.orcamento_item_id, 10) : '';
-             initialData.prioridade = initialData.prioridade ? parseInt(initialData.prioridade, 10) : 0; 
-             initialData.fornecedor = initialData.fornecedor || ''; 
-
-             setFormData(initialData);
-         } else {
-             setFormData({});
-         }
-     }, [lancamento]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        let finalValue = value;
-        
-        if (name === 'valor_total' || name === 'valor_pago') { // <-- MUDANÇA
-            finalValue = parseFloat(value) || 0;
-        }
-        if (name === 'orcamento_item_id') {
-            finalValue = value ? parseInt(value, 10) : ''; 
-        }
-        if (name === 'prioridade') {
-            finalValue = value ? parseInt(value, 10) : 0;
-        }
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    const handleSubmit = (e) => { 
-        e.preventDefault(); 
-        const dataToSend = {
-            ...formData,
-            orcamento_item_id: formData.orcamento_item_id || null,
-            prioridade: parseInt(formData.prioridade, 10) || 0,
-            fornecedor: formData.fornecedor || null 
-        };
-        onSave(dataToSend); 
-    };
-    
-    if (!lancamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Lançamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" name="data" value={formData.data || ''} onChange={handleChange} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" name="data_vencimento" value={formData.data_vencimento || ''} onChange={handleChange} required />
-                </div>
-                
-                <div className="form-group"><label>Descrição</label><input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" name="pix" value={formData.pix || ''} onChange={handleChange} /></div>
-                
-                {/* <-- MUDANÇA: valor -> valor_total --> */}
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" name="valor_total" value={formData.valor_total || 0} onChange={handleChange} required />
-                </div>
-                {/* <-- MUDANÇA: Novo campo valor_pago --> */}
-                <div className="form-group"><label>Valor Já Pago (R$)</label>
-                    <input type="number" step="0.01" name="valor_pago" value={formData.valor_pago || 0} onChange={handleChange} required />
-                </div>
-
-                
-                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select name="orcamento_item_id" value={formData.orcamento_item_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Despesa Geral)</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select name="prioridade" value={formData.prioridade || 0} onChange={handleChange}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Mão de Obra'} onChange={handleChange} required>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Material</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                <div className="form-group"><label>Status</label><select name="status" value={formData.status || 'A Pagar'} onChange={handleChange} required><option>A Pagar</option><option>Pago</option></select></div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Alterações</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-
-// --- MODAIS DE ADMINISTRAÇÃO ---
-const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
-    // ... (código inalterado)
-    const [selectedObraIds, setSelectedObraIds] = useState(new Set());
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        if (userToEdit) {
-            fetchWithAuth(`${API_URL}/admin/users/${userToEdit.id}/permissions`)
-                .then(res => res.json())
-                .then(data => {
-                    setSelectedObraIds(new Set(data.obra_ids));
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    logger.error("Erro ao buscar permissões:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [userToEdit]);
-    const handleCheckboxChange = (obraId) => {
-        setSelectedObraIds(prevSet => {
-            const newSet = new Set(prevSet);
-            if (newSet.has(obraId)) {
-                newSet.delete(obraId);
-            } else {
-                newSet.add(obraId);
-            }
-            return newSet;
-        });
-    };
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const obra_ids = Array.from(selectedObraIds);
-        onSave(userToEdit.id, obra_ids);
-    };
-    if (isLoading) {
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando permissões...</div></Modal>;
-    }
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Permissões: {userToEdit.username}</h2>
-            <p>Nível: <strong>{userToEdit.role}</strong></p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione as obras que este usuário pode ver:</label>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '4px' }}>
-                        {allObras.length > 0 ? allObras.map(obra => (
-                            <div key={obra.id}>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedObraIds.has(obra.id)}
-                                        onChange={() => handleCheckboxChange(obra.id)}
-                                    />
-                                    {obra.nome}
-                                </label>
-                            </div>
-                        )) : <p>Nenhuma obra cadastrada para atribuir.</p>}
-                    </div>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Permissões</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-const AdminPanelModal = ({ allObras, onClose }) => {
-    // ... (código inalterado)
-    const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [userToEdit, setUserToEdit] = useState(null);
-    const [newUsername, setNewUsername] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [newRole, setNewRole] = useState('comum');
-    const [changingRole, setChangingRole] = useState(null); // ID do usuário tendo role alterado
-    
-    const fetchUsers = () => {
-        setIsLoading(true);
-        fetchWithAuth(`${API_URL}/admin/users`)
-            .then(res => res.json())
-            .then(data => {
-                setUsers(Array.isArray(data) ? data : []);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                logger.error("Erro ao buscar usuários:", err);
-                setError("Falha ao carregar usuários.");
-                setIsLoading(false);
-            });
-    };
-    // ... (depois da função handleCreateUser)
-
-    const handleChangeRole = async (userId, novoRole) => {
-        if (!await confirmDialog(`Deseja alterar o nível deste usuário para "${novoRole}"?`, { confirmText: 'Alterar nível' })) {
-            return;
-        }
-        
-        setChangingRole(userId);
-        setError(null);
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/admin/users/${userId}/role`, {
-                method: 'PATCH',
-                body: JSON.stringify({ role: novoRole })
-            });
-            
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.erro || 'Erro ao alterar nível');
-            }
-            
-            const data = await response.json();
-            
-            // Atualizar localmente
-            setUsers(prevUsers => prevUsers.map(u => 
-                u.id === userId ? { ...u, role: novoRole } : u
-            ));
-            
-        } catch (err) {
-            logger.error("Erro ao alterar nível:", err);
-            setError(err.message);
-        } finally {
-            setChangingRole(null);
-        }
-    };
-
-    const handleDeleteUser = async (user) => {
-        if (!await confirmDialog(`Tem certeza que deseja excluir o usuário ${user.username}? Esta ação não pode ser desfeita.`, { danger: true, confirmText: 'Excluir' })) {
-            return;
-        }
-        
-        setError(null);
-        
-        fetchWithAuth(`${API_URL}/admin/users/${user.id}`, {
-            method: 'DELETE'
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
-            return res.json();
-        })
-        .then(() => {
-            // Remove o usuário da lista no frontend
-            setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
-        })
-        .catch(err => {
-            logger.error("Erro ao deletar usuário:", err);
-            setError(err.message);
-        });
-    };
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-    const handleCreateUser = (e) => {
-        e.preventDefault();
-        setError(null);
-        fetchWithAuth(`${API_URL}/admin/users`, {
-            method: 'POST',
-            body: JSON.stringify({
-                username: newUsername,
-                password: newPassword,
-                role: newRole
-            })
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro desconhecido') });
-            return res.json();
-        })
-        .then(newUser => {
-            setUsers(prevUsers => [...prevUsers, newUser]);
-            setNewUsername('');
-            setNewPassword('');
-            setNewRole('comum');
-        })
-        .catch(err => {
-            logger.error("Erro ao criar usuário:", err);
-            setError(err.message);
-        });
-    };
-    const handleSavePermissions = (userId, obra_ids) => {
-        fetchWithAuth(`${API_URL}/admin/users/${userId}/permissions`, {
-            method: 'PUT',
-            body: JSON.stringify({ obra_ids })
-        })
-        .then(res => {
-            if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro ao salvar') });
-            return res.json();
-        })
-        .then(() => {
-            setUserToEdit(null); 
-        })
-        .catch(err => {
-            logger.error("Erro ao salvar permissões:", err);
-            setError(err.message); 
-        });
-    };
-    
-    const getRoleBadge = (role) => {
-        const styles = {
-            master: { bg: '#fef3c7', color: '#92400e', icon: '👑' },
-            administrador: { bg: '#dbeafe', color: '#1e40af', icon: '⭐' },
-            comum: { bg: '#f3f4f6', color: '#374151', icon: '👤' }
-        };
-        const s = styles[role] || styles.comum;
-        return (
-            <span style={{
-                backgroundColor: s.bg,
-                color: s.color,
-                padding: '4px 10px',
-                borderRadius: '12px',
-                fontSize: '0.85em',
-                fontWeight: '500',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-            }}>
-                {s.icon} {role}
-            </span>
-        );
-    };
-    
-    return (
-        <Modal onClose={onClose} customWidth="800px">
-            {userToEdit && (
-                <UserPermissionsModal
-                    userToEdit={userToEdit}
-                    allObras={allObras}
-                    onClose={() => setUserToEdit(null)}
-                    onSave={handleSavePermissions}
-                />
-            )}
-            <div style={{opacity: userToEdit ? 0.1 : 1}}>
-                <h2>Painel de Administração</h2>
-                <div className="card-full" style={{ background: '#f8f9fa' }}>
-                    <h3>Criar Novo Usuário</h3>
-                    <form onSubmit={handleCreateUser} className="form-add-obra">
-                        <input
-                            type="text"
-                            placeholder="Usuário (ou e-mail)"
-                            value={newUsername}
-                            onChange={(e) => setNewUsername(e.target.value)}
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Senha Temporária"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
-                        <select
-                            value={newRole}
-                            onChange={(e) => setNewRole(e.target.value)}
-                        >
-                            <option value="comum">👤 Operador (comum)</option>
-                            <option value="administrador">⭐ Administrador</option>
-                            <option value="master">👑 Master</option>
-                        </select>
-                        <button type="submit" className="submit-btn" style={{flexGrow: 0}}>Criar</button>
-                    </form>
-                    {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
-                </div>
-                <h3 style={{marginTop: '30px'}}>Usuários Existentes</h3>
-                {isLoading ? <p>Carregando usuários...</p> : (
-                    <table className="tabela-historico">
-                        <thead>
-                            <tr>
-                                <th>Usuário</th>
-                                <th style={{width: '180px'}}>Nível</th>
-                                <th style={{textAlign: 'center'}}>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td>{user.username}</td>
-                                    <td>
-                                        <select
-                                            value={user.role}
-                                            onChange={(e) => handleChangeRole(user.id, e.target.value)}
-                                            disabled={changingRole === user.id}
-                                            style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #d1d5db',
-                                                backgroundColor: changingRole === user.id ? '#f3f4f6' : 'white',
-                                                cursor: changingRole === user.id ? 'wait' : 'pointer',
-                                                fontSize: '0.9em',
-                                                width: '100%'
-                                            }}
-                                        >
-                                            <option value="comum">👤 Operador</option>
-                                            <option value="administrador">⭐ Admin</option>
-                                            <option value="master">👑 Master</option>
-                                        </select>
-                                    </td>
-                                   <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
-                                        <button 
-                                            className="acao-btn" 
-                                            style={{backgroundColor: '#17a2b8', color: 'white'}}
-                                            onClick={() => setUserToEdit(user)}
-                                        >
-                                            Obras
-                                        </button>
-                                        <button 
-                                            className="acao-btn" 
-                                            style={{backgroundColor: 'var(--cor-vermelho)', color: 'white'}}
-                                            onClick={() => handleDeleteUser(user)}
-                                        >
-                                            Excluir
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </Modal>
-    );
-};
 // ----------------------------------------------------
 
-// Modal "Exportar Relatório Geral"
-const ExportReportModal = ({ onClose }) => {
-    // ... (código inalterado)
-    const [selectedPriority, setSelectedPriority] = useState('todas');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleGenerate = () => {
-        setIsLoading(true);
-        setError(null);
-
-        const url = `${API_URL}/export/pdf_pendentes_todas_obras?prioridade=${selectedPriority}`;
-
-        fetchWithAuth(url)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Falha ao gerar o relatório.');
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL);
-                
-                setIsLoading(false);
-                onClose();
-            })
-            .catch(err => {
-                logger.error("Erro ao gerar PDF:", err);
-                setError(err.message || "Não foi possível gerar o PDF.");
-                setIsLoading(false);
-            });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Exportar Relatório Geral de Pendências</h2>
-            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
-                <div className="form-group">
-                    <label>Filtrar por Prioridade</label>
-                    <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
-                        <option value="todas">Todas as Pendências</option>
-                        <option value="5">Prioridade 5 (Urgente)</option>
-                        <option value="4">Prioridade 4</option>
-                        <option value="3">Prioridade 3 (Média)</option>
-                        <option value="2">Prioridade 2</option>
-                        <option value="1">Prioridade 1</option>
-                        <option value="0">Prioridade 0 (Nenhuma)</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions" style={{ marginTop: '30px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isLoading}>Cancelar</button>
-                    <button type="submit" className="submit-btn pdf" disabled={isLoading}>
-                        {isLoading ? 'Gerando...' : 'Gerar PDF'}
-                    </button>
-                </div>
-                {error && <p style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}
-            </form>
-        </Modal>
-    );
-};
+// Modal "Exportar Relat�rio Geral"
 // ----------------------------------------------------
 
 
-// Modal "Relatório do Cronograma Financeiro"
-const ModalRelatorioCronograma = ({ onClose, obras }) => {
-    const [obraSelecionada, setObraSelecionada] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleGerarRelatorio = async () => {
-        if (!obraSelecionada) {
-            notify.warning('Por favor, selecione uma obra primeiro.');
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraSelecionada.id}/relatorio-cronograma-pdf`,
-                { method: 'GET' }
-            );
-
-            if (!response.ok) {
-                throw new Error('Erro ao gerar relatório do cronograma.');
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Cronograma_${obraSelecionada.nome.replace(/\\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            notify.success('Relatório gerado com sucesso!');
-            onClose();
-        } catch (err) {
-            logger.error("Erro ao gerar relatório:", err);
-            setError(err.message || "Não foi possível gerar o relatório.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <div className="modal-content" style={{ maxWidth: '600px' }}>
-                <h2>📊 Relatório do Cronograma Financeiro</h2>
-                
-                {error && (
-                    <div style={{ 
-                        padding: '10px', 
-                        marginBottom: '15px', 
-                        backgroundColor: '#ffebee', 
-                        border: '1px solid #ef5350',
-                        borderRadius: '5px',
-                        color: '#c62828'
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                <div style={{ marginBottom: '20px' }}>
-                    <p style={{ marginBottom: '10px', color: '#666' }}>
-                        Selecione a obra para gerar o relatório do cronograma financeiro:
-                    </p>
-                    
-                    <div style={{ 
-                        display: 'grid', 
-                        gap: '10px',
-                        maxHeight: '400px',
-                        overflowY: 'scroll',
-                        padding: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px'
-                    }} 
-                    className="hide-scrollbar modal-lista-obras">
-                        {obras.map(obra => (
-                            <div
-                                key={obra.id}
-                                onClick={() => setObraSelecionada(obra)}
-                                style={{
-                                    padding: '15px',
-                                    border: obraSelecionada?.id === obra.id 
-                                        ? '2px solid var(--cor-primaria)' 
-                                        : '1px solid #ddd',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    backgroundColor: obraSelecionada?.id === obra.id 
-                                        ? '#e3f2fd' 
-                                        : 'white',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (obraSelecionada?.id !== obra.id) {
-                                        e.currentTarget.style.backgroundColor = '#f5f5f5';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (obraSelecionada?.id !== obra.id) {
-                                        e.currentTarget.style.backgroundColor = 'white';
-                                    }
-                                }}
-                            >
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}>
-                                    <div>
-                                        <h4 style={{ margin: '0 0 5px 0' }}>{obra.nome}</h4>
-                                        <p style={{ margin: 0, fontSize: '0.9em', color: '#666' }}>
-                                            Cliente: {obra.cliente || 'N/A'}
-                                        </p>
-                                    </div>
-                                    {obraSelecionada?.id === obra.id && (
-                                        <span style={{ 
-                                            fontSize: '1.5em',
-                                            color: 'var(--cor-primaria)'
-                                        }}>
-                                            ✓
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <button 
-                        onClick={onClose} 
-                        className="voltar-btn"
-                        disabled={isLoading}
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        onClick={handleGerarRelatorio} 
-                        className="submit-btn"
-                        disabled={isLoading || !obraSelecionada}
-                        style={{
-                            opacity: (!obraSelecionada || isLoading) ? 0.6 : 1
-                        }}
-                    >
-                        {isLoading ? '⏳ Gerando...' : '📄 Gerar Relatório PDF'}
-                    </button>
-                </div>
-
-                {obraSelecionada && (
-                    <div style={{ 
-                        marginTop: '15px', 
-                        padding: '10px', 
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '5px',
-                        fontSize: '0.9em',
-                        color: '#2e7d32'
-                    }}>
-                        ✓ Obra selecionada: <strong>{obraSelecionada.nome}</strong>
-                    </div>
-                )}
-            </div>
-        </Modal>
-    );
-};
 // ----------------------------------------------------
 
 
 // Modal para Editar Prioridade
-const EditPrioridadeModal = ({ item, onClose, onSave }) => {
-    // ... (código inalterado)
-    const [prioridade, setPrioridade] = useState(0);
-
-    useEffect(() => {
-        if (item) {
-            setPrioridade(item.prioridade || 0);
-        }
-    }, [item]);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(parseInt(prioridade, 10));
-    };
-    
-    if (!item) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Prioridade</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
-                </div>
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Prioridade</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
 // ----------------------------------------------------
 
-// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
-const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString()); // NOVO campo
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState(''); 
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(''); // Este 'valor' será enviado como 'valor_total'
-    const [tipo, setTipo] = useState('Material');
-    // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
-    const status = 'Pago';
-    const [orcamentoItemId, setOrcamentoItemId] = useState('');
-    const [prioridade, setPrioridade] = useState(0); 
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            data,
-            data_vencimento: dataVencimento, // NOVO campo
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0, // O handler 'handleSaveLancamento' espera 'valor'
-            tipo,
-            status: 'Pago', // MUDANÇA 2: Sempre "Pago"
-            prioridade: parseInt(prioridade, 10) || 0,
-            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
-            is_gasto_avulso_historico: true // MUDANÇA 2: Flag para backend
-        });
-    };
 
-    return (
-        <Modal onClose={onClose}>
-            <h2>💵 Adicionar Gasto Avulso (Pago)</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Este gasto será automaticamente marcado como <strong>PAGO</strong> e adicionado ao histórico.
-            </p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                
-                {/* O usuário insere 'valor', mas o backend salvará em 'valor_total' */}
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
-                        <option value="">Nenhum (Despesa Geral)</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                {/* MUDANÇA 2: Campo Status removido - sempre será Pago */}
-                <div style={{padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', marginBottom: '15px'}}>
-                    <strong>Status: PAGO</strong> (automático)
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal "Adicionar Orçamento"
-const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [valor, setValor] = useState('');
-    const [dadosPagamento, setDadosPagamento] = useState('');
-    const [tipo, setTipo] = useState('Material'); 
-    const [servicoId, setServicoId] = useState(''); 
-    const [observacoes, setObservacoes] = useState(''); 
-    const [anexos, setAnexos] = useState([]);
-    
-    // NOVOS CAMPOS - Condições de Pagamento
-    const [dataVencimento, setDataVencimento] = useState(() => {
-        const d = new Date();
-        d.setDate(d.getDate() + 30);
-        return d.toISOString().split('T')[0];
-    });
-    const [numeroParcelas, setNumeroParcelas] = useState(1);
-    const [periodicidade, setPeriodicidade] = useState('Mensal');
-
-    const handleFileChange = (e) => {
-        setAnexos(Array.from(e.target.files));
-    };
-
-    const valorParcela = numeroParcelas > 0 && valor ? (parseFloat(valor) / numeroParcelas) : 0;
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append('descricao', descricao);
-        formData.append('fornecedor', fornecedor || '');
-        formData.append('valor', parseFloat(valor) || 0);
-        formData.append('dados_pagamento', dadosPagamento || '');
-        formData.append('tipo', tipo);
-        formData.append('servico_id', servicoId ? parseInt(servicoId, 10) : '');
-        formData.append('observacoes', observacoes || '');
-        
-        // NOVOS CAMPOS
-        formData.append('data_vencimento', dataVencimento);
-        formData.append('numero_parcelas', numeroParcelas);
-        formData.append('periodicidade', periodicidade);
-        
-        anexos.forEach(file => {
-            formData.append('anexos', file);
-        });
-        
-        onSave(formData);
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="600px">
-            <h2>📋 Nova Solicitação de Compra</h2>
-            <form onSubmit={handleSubmit}>
-                {/* Descrição e Fornecedor */}
-                <div className="form-group">
-                    <label>Descrição do Item/Serviço *</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex: Cimento CP-II 50kg (100 sacos)" required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} placeholder="Ex: Casa do Construtor" />
-                </div>
-                
-                {/* Tipo e Serviço */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div className="form-group">
-                        <label>Tipo *</label>
-                        <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                            <option>Material</option>
-                            <option>Mão de Obra</option>
-                            <option>Serviço</option>
-                            <option>Equipamentos</option>
-                        </select>
-                    </div>
-                    <div className="form-group">
-                        <label>Vincular ao Serviço</label>
-                        <select value={servicoId} onChange={(e) => setServicoId(e.target.value)}>
-                            <option value="">Nenhum (Geral)</option>
-                            {(servicos || []).map(s => (
-                                <option key={s.id} value={s.id}>{s.nome}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                
-                <hr style={{margin: '20px 0'}} />
-                <h4 style={{ marginBottom: '15px', color: '#666' }}>💰 Condições de Pagamento</h4>
-                
-                {/* Valor e Data */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div className="form-group">
-                        <label>Valor Total (R$) *</label>
-                        <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" required />
-                    </div>
-                    <div className="form-group">
-                        <label>Data 1º Vencimento *</label>
-                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                    </div>
-                </div>
-                
-                {/* Parcelas */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div className="form-group">
-                        <label>Nº de Parcelas</label>
-                        <input type="number" min="1" max="60" value={numeroParcelas} onChange={(e) => setNumeroParcelas(parseInt(e.target.value) || 1)} />
-                    </div>
-                    {numeroParcelas > 1 && (
-                        <div className="form-group">
-                            <label>Periodicidade</label>
-                            <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)}>
-                                <option value="Semanal">Semanal</option>
-                                <option value="Quinzenal">Quinzenal</option>
-                                <option value="Mensal">Mensal</option>
-                            </select>
-                        </div>
-                    )}
-                </div>
-                
-                {numeroParcelas > 1 && valor && (
-                    <div style={{ 
-                        backgroundColor: '#e8f5e9', 
-                        padding: '10px 15px', 
-                        borderRadius: '6px',
-                        marginBottom: '15px',
-                        fontSize: '0.95em'
-                    }}>
-                        💡 <strong>{numeroParcelas}x</strong> de <strong>{formatCurrency(valorParcela)}</strong> ({periodicidade.toLowerCase()})
-                    </div>
-                )}
-                
-                {/* Dados de Pagamento */}
-                <div className="form-group">
-                    <label>Dados de Pagamento (PIX, Conta, etc.)</label>
-                    <input type="text" value={dadosPagamento} onChange={(e) => setDadosPagamento(e.target.value)} placeholder="PIX: (71) 99999-9999" />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações</label>
-                    <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows="2" placeholder="Ex: Entrega em 5 dias úteis"></textarea>
-                </div>
-                
-                <div className="form-group">
-                    <label>Anexos (Orçamentos, PDF)</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">📤 Enviar para Aprovação</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO E BOLETO
-const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [pix, setPix] = useState('');
-    const [codigoBarras, setCodigoBarras] = useState('');
-    const [valor, setValor] = useState('');
-    const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
-    const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
-    const [orcamentoItemId, setOrcamentoItemId] = useState('');
-    
-    // 🆕 NOVOS ESTADOS PARA PARCELAMENTO
-    const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
-    const [meioPagamento, setMeioPagamento] = useState('PIX'); // PIX, Boleto, Transferência
-    const [numeroParcelas, setNumeroParcelas] = useState('');
-    const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
-    const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
-    
-    // 🆕 NOVOS ESTADOS PARA ENTRADA
-    const [temEntrada, setTemEntrada] = useState(false);
-    const [percentualEntrada, setPercentualEntrada] = useState(30);
-    const [dataEntrada, setDataEntrada] = useState(getTodayString());
-    
-    // Estados para boletos parcelados (valores diferentes)
-    const [valoresIguais, setValoresIguais] = useState(true);
-    const [boletosConfig, setBoletosConfig] = useState([]);
-    
-    // 🆕 ESTADOS PARA "SALVAR E NOVO"
-    const [contadorInseridos, setContadorInseridos] = useState(0);
-    const [toastMsg, setToastMsg] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // 🆕 Cálculos de entrada e parcelas
-    const valorTotal = parseFloat(valor) || 0;
-    const valorEntrada = temEntrada ? (valorTotal * percentualEntrada / 100) : 0;
-    const valorRestante = valorTotal - valorEntrada;
-    const numParcelas = parseInt(numeroParcelas) || 1;
-    const valorParcela = numParcelas > 0 ? valorRestante / numParcelas : 0;
-    
-    // Gerar configuração de boletos quando mudar número de parcelas
-    useEffect(() => {
-        if (tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas) {
-            const dataInicial = dataPrimeiraParcela ? new Date(dataPrimeiraParcela + 'T12:00:00') : new Date();
-            
-            const novosBoletos = [];
-            for (let i = 0; i < numParcelas; i++) {
-                const dataVenc = new Date(dataInicial);
-                if (periodicidade === 'Semanal') {
-                    dataVenc.setDate(dataVenc.getDate() + (i * 7));
-                } else if (periodicidade === 'Quinzenal') {
-                    dataVenc.setDate(dataVenc.getDate() + (i * 15));
-                } else {
-                    dataVenc.setMonth(dataVenc.getMonth() + i);
-                }
-                
-                novosBoletos.push({
-                    numero: i + 1,
-                    valor: valoresIguais ? valorParcela.toFixed(2) : (boletosConfig[i]?.valor || valorParcela.toFixed(2)),
-                    data_vencimento: dataVenc.toISOString().split('T')[0],
-                    codigo_barras: boletosConfig[i]?.codigo_barras || ''
-                });
-            }
-            setBoletosConfig(novosBoletos);
-        }
-    }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
-    
-    // 🆕 Função para limpar campos (mantém alguns que repetem)
-    const limparCamposParaNovo = () => {
-        setDescricao('');
-        setValor('');
-        setCodigoBarras('');
-        setDataVencimento(getTodayString());
-        setNumeroParcelas('');
-        setTemEntrada(false);
-        setBoletosConfig([]);
-        // Mantém: fornecedor, pix, tipo, orcamentoItemId, meioPagamento, tipoFormaPagamento, periodicidade
-    };
-    
-    // 🆕 Mostrar toast temporário
-    const mostrarToast = (msg) => {
-        setToastMsg(msg);
-        setTimeout(() => setToastMsg(''), 3000);
-    };
-
-    // Atualizar boleto específico
-    const handleBoletoChange = (index, field, value) => {
-        const novosBoletos = [...boletosConfig];
-        novosBoletos[index] = { ...novosBoletos[index], [field]: value };
-        setBoletosConfig(novosBoletos);
-    };
-
-    // Copiar código de barras
-    const copiarCodigo = (codigo) => {
-        navigator.clipboard.writeText(codigo);
-        notify.success('Código copiado!');
-    };
-
-    const handleSubmit = async (e, salvarENovo = false) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        
-        const dadosPagamento = {
-            data,
-            data_vencimento: dataVencimento,
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: meioPagamento === 'PIX' ? pix : null,
-            codigo_barras: meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' ? codigoBarras : null,
-            valor: parseFloat(valor) || 0,
-            tipo,
-            status,
-            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
-            tipo_forma_pagamento: tipoFormaPagamento,
-            meio_pagamento: meioPagamento
-        };
-        
-        // Adicionar campos de parcelamento se aplicável
-        if (tipoFormaPagamento === 'parcelado') {
-            dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
-            dadosPagamento.periodicidade = periodicidade;
-            dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
-            
-            // 🆕 Adicionar dados de entrada
-            if (temEntrada) {
-                dadosPagamento.tem_entrada = true;
-                dadosPagamento.percentual_entrada = percentualEntrada;
-                dadosPagamento.valor_entrada = valorEntrada;
-                dadosPagamento.data_entrada = dataEntrada;
-                dadosPagamento.valor_parcela = valorParcela; // Valor de cada parcela após entrada
-                logger.debug("🔍 DEBUG ENTRADA (frontend):", {
-                    temEntrada,
-                    percentualEntrada,
-                    valorEntrada,
-                    dataEntrada,
-                    valorParcela
-                });
-            }
-            
-            logger.debug("📤 Dados de parcelamento a enviar:", dadosPagamento);
-            
-            // Se for boleto parcelado, incluir configuração dos boletos
-            if (meioPagamento === 'Boleto') {
-                dadosPagamento.parcelas_customizadas = boletosConfig;
-            }
-        }
-        
-        try {
-            await onSave(dadosPagamento, salvarENovo); // Passa flag para callback
-            
-            if (salvarENovo) {
-                // Incrementa contador e limpa campos para próximo
-                setContadorInseridos(prev => prev + 1);
-                mostrarToast(`✅ Pagamento "${descricao}" inserido com sucesso!`);
-                limparCamposParaNovo();
-            }
-            // Se não for salvarENovo, o onSave vai fechar o modal
-        } catch (error) {
-            logger.error('Erro ao salvar:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💳 Inserir Pagamento</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
-            </p>
-            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                {/* 🆕 TIPO DE FORMA DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Forma de Pagamento</label>
-                    <div style={{display: 'flex', gap: '20px', marginTop: '8px'}}>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="avista" 
-                                checked={tipoFormaPagamento === 'avista'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            À vista
-                        </label>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="parcelado" 
-                                checked={tipoFormaPagamento === 'parcelado'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            Parcelado
-                        </label>
-                    </div>
-                </div>
-
-                {/* 🆕 MEIO DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Meio de Pagamento</label>
-                    <select value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
-                        <option value="PIX">PIX</option>
-                        <option value="Boleto">Boleto</option>
-                        <option value="Transferência">Transferência</option>
-                        <option value="Dinheiro">Dinheiro</option>
-                    </select>
-                </div>
-                
-                {/* 🆕 CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
-                {tipoFormaPagamento === 'parcelado' && (
-                    <>
-                        {/* 🆕 SEÇÃO DE ENTRADA */}
-                        <div style={{
-                            background: '#e8f5e9',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #a5d6a7'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#2e7d32' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={temEntrada}
-                                        onChange={(e) => setTemEntrada(e.target.checked)}
-                                        style={{ width: '18px', height: '18px' }}
-                                    />
-                                    💰 Tem entrada?
-                                </label>
-                            </div>
-                            
-                            {temEntrada && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Percentual de Entrada (%)</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="99"
-                                                value={percentualEntrada}
-                                                onChange={(e) => setPercentualEntrada(parseFloat(e.target.value) || 0)}
-                                                style={{ width: '80px' }}
-                                            />
-                                            <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                                                = {formatCurrency(valorEntrada)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Data da Entrada</label>
-                                        <input
-                                            type="date"
-                                            value={dataEntrada}
-                                            onChange={(e) => setDataEntrada(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {temEntrada && valor && (
-                                <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em',
-                                    color: '#666'
-                                }}>
-                                    Valor restante para parcelar: <strong style={{ color: '#1976d2' }}>{formatCurrency(valorRestante)}</strong>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* CONFIGURAÇÃO DAS PARCELAS */}
-                        <div style={{
-                            background: '#f0f8ff',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #b3d9ff'
-                        }}>
-                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração das Parcelas</h4>
-                            
-                            <div className="form-group">
-                                <label>Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
-                                <input 
-                                    type="number" 
-                                    min="1" 
-                                    max="60" 
-                                    value={numeroParcelas} 
-                                    onChange={(e) => setNumeroParcelas(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Periodicidade</label>
-                                <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
-                                    <option value="Semanal">Semanal (7 dias)</option>
-                                    <option value="Quinzenal">Quinzenal (15 dias)</option>
-                                    <option value="Mensal">Mensal (30 dias)</option>
-                                </select>
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Data da 1ª Parcela</label>
-                                <input 
-                                    type="date" 
-                                    value={dataPrimeiraParcela} 
-                                    onChange={(e) => setDataPrimeiraParcela(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            {numeroParcelas && valor && (
-                                <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em'
-                                }}>
-                                    <strong>Valor por parcela:</strong> {formatCurrency(valorParcela)}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 🆕 RESUMO DO PARCELAMENTO */}
-                        {numeroParcelas && valor && (
-                            <div style={{
-                                background: '#fff3e0',
-                                padding: '15px',
-                                borderRadius: '8px',
-                                marginBottom: '15px',
-                                border: '1px solid #ffcc80'
-                            }}>
-                                <h4 style={{margin: '0 0 12px 0', color: '#e65100'}}>📋 Resumo do Parcelamento</h4>
-                                
-                                <div style={{ fontSize: '0.95em' }}>
-                                    {temEntrada && (
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            justifyContent: 'space-between', 
-                                            padding: '8px 0',
-                                            borderBottom: '2px solid #ffcc80',
-                                            marginBottom: '8px',
-                                            color: '#2e7d32',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            <span>🟢 ENTRADA ({percentualEntrada}%)</span>
-                                            <span>{formatCurrency(valorEntrada)} - {new Date(dataEntrada + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                                        </div>
-                                    )}
-                                    
-                                    {Array.from({ length: Math.min(numParcelas, 5) }, (_, i) => {
-                                        const dataBase = new Date(dataPrimeiraParcela + 'T12:00:00');
-                                        if (periodicidade === 'Semanal') {
-                                            dataBase.setDate(dataBase.getDate() + (i * 7));
-                                        } else if (periodicidade === 'Quinzenal') {
-                                            dataBase.setDate(dataBase.getDate() + (i * 15));
-                                        } else {
-                                            dataBase.setMonth(dataBase.getMonth() + i);
-                                        }
-                                        return (
-                                            <div key={i} style={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between', 
-                                                padding: '6px 0',
-                                                borderBottom: '1px solid #ffe0b2'
-                                            }}>
-                                                <span>Parcela {i + 1}/{numParcelas}</span>
-                                                <span>{formatCurrency(valorParcela)} - {dataBase.toLocaleDateString('pt-BR')}</span>
-                                            </div>
-                                        );
-                                    })}
-                                    
-                                    {numParcelas > 5 && (
-                                        <div style={{ padding: '6px 0', color: '#999', fontStyle: 'italic' }}>
-                                            ... e mais {numParcelas - 5} parcela(s)
-                                        </div>
-                                    )}
-                                    
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        padding: '10px 0 0 0',
-                                        marginTop: '8px',
-                                        borderTop: '2px solid #e65100',
-                                        fontWeight: 'bold',
-                                        color: '#e65100'
-                                    }}>
-                                        <span>TOTAL ({temEntrada ? numParcelas + 1 : numParcelas} pagamentos)</span>
-                                        <span>{formatCurrency(valorTotal)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* 🆕 CONFIGURAÇÃO DE BOLETOS PARCELADOS */}
-                {tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas && (
-                    <div style={{
-                        background: '#fff8e1',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        marginBottom: '15px',
-                        border: '1px solid #ffcc80',
-                        maxHeight: '300px',
-                        overflowY: 'auto'
-                    }}>
-                        <h4 style={{margin: '0 0 12px 0', color: '#f57c00'}}>🎫 Códigos de Barras dos Boletos</h4>
-                        
-                        <div style={{ marginBottom: '10px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={valoresIguais}
-                                    onChange={(e) => setValoresIguais(e.target.checked)}
-                                />
-                                Valores iguais
-                            </label>
-                        </div>
-                        
-                        {boletosConfig.map((boleto, index) => (
-                            <div key={index} style={{
-                                background: '#fff',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '5px',
-                                padding: '10px',
-                                marginBottom: '8px'
-                            }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    marginBottom: '8px',
-                                    fontWeight: 'bold',
-                                    color: '#555'
-                                }}>
-                                    <span>Boleto {boleto.numero}/{numeroParcelas}</span>
-                                    <span style={{ fontSize: '12px', color: '#888' }}>
-                                        Venc: {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
-                                    </span>
-                                </div>
-                                
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {!valoresIguais && (
-                                        <div style={{ flex: '1', minWidth: '100px' }}>
-                                            <label style={{ fontSize: '11px', color: '#666' }}>Valor:</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={boleto.valor}
-                                                onChange={(e) => handleBoletoChange(index, 'valor', e.target.value)}
-                                                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                            />
-                                        </div>
-                                    )}
-                                    <div style={{ flex: '3', minWidth: '200px' }}>
-                                        <label style={{ fontSize: '11px', color: '#666' }}>Código de Barras:</label>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
-                                            <input
-                                                type="text"
-                                                value={boleto.codigo_barras}
-                                                onChange={(e) => handleBoletoChange(index, 'codigo_barras', e.target.value)}
-                                                placeholder="Cole a linha digitável"
-                                                style={{ flex: '1', padding: '5px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
-                                            />
-                                            {boleto.codigo_barras && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => copiarCodigo(boleto.codigo_barras)}
-                                                    style={{
-                                                        padding: '5px 10px',
-                                                        background: '#4CAF50',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '4px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    title="Copiar código"
-                                                >
-                                                    📋
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                
-                {/* CAMPOS ORIGINAIS CONTINUAM */}
-                {tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Data de Vencimento</label>
-                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                    </div>
-                )}
-                
-                {/* Campo de PIX - só aparece se meio for PIX */}
-                {meioPagamento === 'PIX' && (
-                    <div className="form-group">
-                        <label>Chave PIX (Opcional)</label>
-                        <input 
-                            type="text" 
-                            value={pix} 
-                            onChange={(e) => setPix(e.target.value)} 
-                            placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
-                        />
-                    </div>
-                )}
-
-                {/* Campo de Código de Barras - só aparece se meio for Boleto e À vista */}
-                {meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Código de Barras do Boleto</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input 
-                                type="text" 
-                                value={codigoBarras} 
-                                onChange={(e) => setCodigoBarras(e.target.value)} 
-                                placeholder="Cole a linha digitável do boleto"
-                                style={{ flex: 1 }}
-                            />
-                            {codigoBarras && (
-                                <button
-                                    type="button"
-                                    onClick={() => copiarCodigo(codigoBarras)}
-                                    style={{
-                                        padding: '8px 15px',
-                                        background: '#4CAF50',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                    title="Copiar código"
-                                >
-                                    📋 Copiar
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
-                
-                <div className="form-group">
-                    <label>Tipo</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                        <option value="Serviço">Serviço</option>
-                        <option value="Equipamentos">Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option value="Pago">Pago</option>
-                        <option value="A Pagar">A Pagar</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
-                        <option value="">Nenhum</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isSubmitting}>
-                        {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
-                    </button>
-                    <button 
-                        type="button" 
-                        onClick={(e) => handleSubmit(e, true)} 
-                        className="submit-btn"
-                        style={{ backgroundColor: '#17a2b8', flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳...' : '➕ Salvar e Novo'}
-                    </button>
-                    <button 
-                        type="submit" 
-                        className="submit-btn"
-                        style={{ flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳...' : (tipoFormaPagamento === 'parcelado' ? '📦 Salvar e Fechar' : '💾 Salvar e Fechar')}
-                    </button>
-                </div>
-                
-                {/* 🆕 Toast de sucesso */}
-                {toastMsg && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: '20px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                        zIndex: 10000,
-                        animation: 'fadeIn 0.3s ease',
-                        fontWeight: 'bold'
-                    }}>
-                        {toastMsg}
-                    </div>
-                )}
-            </form>
-        </Modal>
-    );
-};
-
-// Modal para Editar Solicitação
-const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
-    // ... (código inalterado)
-    const [formData, setFormData] = useState({});
-    const [existingAnexos, setExistingAnexos] = useState([]);
-    const [newAnexos, setNewAnexos] = useState([]);
-    const [isLoadingAnexos, setIsLoadingAnexos] = useState(false);
-
-    useEffect(() => {
-        if (orcamento) {
-            setFormData({
-                ...orcamento,
-                servico_id: orcamento.servico_id ? parseInt(orcamento.servico_id, 10) : '',
-                observacoes: orcamento.observacoes || ''
-            });
-            
-            setIsLoadingAnexos(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setExistingAnexos(Array.isArray(data) ? data : []);
-                    setIsLoadingAnexos(false);
-                })
-                .catch(err => {
-                    logger.error("Erro ao buscar anexos:", err);
-                    setIsLoadingAnexos(false);
-                });
-        }
-    }, [orcamento]);
-
-    const handleChange = (e) => { 
-        const { name, value } = e.target; 
-        let finalValue = value;
-        if (name === 'valor') {
-            finalValue = parseFloat(value) || 0;
-        }
-        if (name === 'servico_id') {
-            finalValue = value ? parseInt(value, 10) : ''; 
-        }
-        setFormData(prev => ({ ...prev, [name]: finalValue })); 
-    };
-    
-    const handleFileChange = (e) => {
-        setNewAnexos(Array.from(e.target.files));
-    };
-
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => notify.error(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    const handleDeleteAnexo = async (anexoId, e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!await confirmDialog('Tem certeza que deseja excluir este anexo?', { danger: true, confirmText: 'Excluir' })) return;
-
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
-            .then(res => {
-                if (!res.ok) throw new Error('Falha ao deletar');
-                setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
-            })
-            .catch(err => notify.error(`Erro ao deletar anexo: ${err.message}`));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const data = new FormData();
-        data.append('descricao', formData.descricao || '');
-        data.append('fornecedor', formData.fornecedor || '');
-        data.append('valor', parseFloat(formData.valor) || 0);
-        data.append('dados_pagamento', formData.dados_pagamento || '');
-        data.append('tipo', formData.tipo || 'Material');
-        data.append('servico_id', formData.servico_id || '');
-        data.append('observacoes', formData.observacoes || '');
-        
-        onSave(formData.id, data, newAnexos);
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Editar Solicitação</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
-                </div>
-                 <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
-                </div>
-                
-                <hr style={{margin: '20px 0'}} />
-
-                <div className="form-group">
-                    <label>Anexos Atuais</label>
-                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
-                        <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
-                            {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
-                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
-                                    <a 
-                                        href="#"
-                                        onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                        title={`Abrir ${anexo.filename}`}
-                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                    >
-                                        {anexo.filename}
-                                    </a>
-                                    <button 
-                                        type="button" 
-                                        onClick={(e) => handleDeleteAnexo(anexo.id, e)}
-                                        title="Excluir Anexo"
-                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
-                                    >
-                                        &times;
-                                    </button>
-                                </li>
-                            )) : <p>Nenhum anexo.</p>}
-                        </ul>
-                    )}
-                </div>
-
-                <div className="form-group">
-                    <label>Adicionar Novos Anexos</label>
-                    <input 
-                        type="file" 
-                        multiple 
-                        onChange={handleFileChange} 
-                        accept="image/*,.pdf"
-                    />
-                </div>
-
-                <hr style={{margin: '20px 0'}} />
-                
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Alterações</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
 
 // --- NOVO MODAL PARA VER ANEXOS ---
-const ViewAnexosModal = ({ orcamento, onClose }) => {
-    // ... (código inalterado)
-    const [anexos, setAnexos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (orcamento) {
-            setIsLoading(true);
-            fetchWithAuth(`${API_URL}/orcamentos/${orcamento.id}/anexos`)
-                .then(res => res.json())
-                .then(data => {
-                    setAnexos(Array.isArray(data) ? data : []);
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    logger.error("Erro ao buscar anexos:", err);
-                    setIsLoading(false);
-                });
-        }
-    }, [orcamento]);
-
-    const handleOpenAnexo = (anexoId) => {
-        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Erro ao buscar anexo');
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL, '_blank');
-            })
-            .catch(err => notify.error(`Erro ao abrir anexo: ${err.message}`));
-    };
-
-    if (!orcamento) return null;
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexos de: {orcamento.descricao}</h2>
-            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
-                {isLoading ? <p>Carregando anexos...</p> : (
-                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
-                        {anexos.length > 0 ? anexos.map(anexo => (
-                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                    title={`Abrir ${anexo.filename}`}
-                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                >
-                                    📎 {anexo.filename}
-                                </a>
-                            </li>
-                        )) : <p>Nenhum anexo encontrado.</p>}
-                    </ul>
-                )}
-            </div>
-            <div className="form-actions" style={{marginTop: '20px'}}>
-                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
-            </div>
-        </Modal>
-    );
-};
 // --- FIM DO NOVO MODAL ---
 
 
-// <--- MUDANÇA: NOVO MODAL PARA PAGAMENTO PARCIAL ---
-const PartialPaymentModal = ({ item, onClose, onSave }) => {
-    
-    // Calcula o valor que ainda falta pagar
-    const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-    
-    // Define o valor inicial do input como o valor restante
-    const [valorAPagar, setValorAPagar] = useState(valorRestante.toFixed(2));
-    const [error, setError] = useState('');
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setError('');
-        
-        const valorFloat = parseFloat(valorAPagar);
-        
-        if (isNaN(valorFloat) || valorFloat <= 0) {
-            setError('O valor deve ser um número positivo.');
-            return;
-        }
-        
-        // +0.01 para evitar erros de arredondamento de centavos
-        if (valorFloat > (valorRestante + 0.01)) {
-            setError(`O valor não pode ser maior que o restante (${formatCurrency(valorRestante)}).`);
-            return;
-        }
-        
-        // Envia o valor para a função principal
-        onSave(valorFloat);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Registrar Pagamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Restante</label>
-                    <input 
-                        type="text" 
-                        value={formatCurrency(valorRestante)} 
-                        readOnly 
-                        disabled 
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Valor a Pagar Hoje</label>
-                    <input 
-                        type="number" 
-                        step="0.01"
-                        value={valorAPagar}
-                        onChange={(e) => setValorAPagar(e.target.value)}
-                        required
-                        autoFocus
-                    />
-                </div>
-                
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn" style={{backgroundColor: 'var(--cor-acento)'}}>
-                        Registrar Pagamento
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
 // --- FIM DO NOVO MODAL ---
 
 
-// --- MODAL DE UPLOAD DE NOTA FISCAL ---
-const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
-    const [file, setFile] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
-        if (selectedFile) {
-            // Validar tipo de arquivo (PDF, imagens)
-            const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-            if (!validTypes.includes(selectedFile.type)) {
-                setError('Tipo de arquivo inválido. Apenas PDF e imagens são permitidos.');
-                return;
-            }
-            // Validar tamanho (max 10MB)
-            if (selectedFile.size > 10 * 1024 * 1024) {
-                setError('Arquivo muito grande. Tamanho máximo: 10MB');
-                return;
-            }
-            setFile(selectedFile);
-            setError(null);
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!file) {
-            setError('Por favor, selecione um arquivo');
-            return;
-        }
-
-        setIsUploading(true);
-        setError(null);
-
-        // <-- CORREÇÃO: Pegar o ID correto baseado no tipo de registro
-        const realItemId = item.tipo_registro === 'lancamento' 
-            ? item.lancamento_id 
-            : item.pagamento_id;
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('item_id', realItemId);
-        formData.append('item_type', item.tipo_registro);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => {
-            if (!res.ok) {
-                return res.json().then(err => { throw new Error(err.erro || 'Erro ao fazer upload'); });
-            }
-            return res.json();
-        })
-        .then(() => {
-            onSuccess();
-            onClose();
-        })
-        .catch(err => {
-            logger.error("Erro ao fazer upload:", err);
-            setError(err.message);
-        })
-        .finally(() => {
-            setIsUploading(false);
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>Anexar Nota Fiscal</h2>
-            <div style={{ marginBottom: '15px', padding: '10px', background: '#f8f9fa', borderRadius: '5px' }}>
-                <strong>Item:</strong> {item.descricao}<br />
-                <strong>Fornecedor:</strong> {item.fornecedor || 'N/A'}
-            </div>
-            
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione o arquivo (PDF ou Imagem)</label>
-                    <input 
-                        type="file"
-                        accept=".pdf,.png,.jpg,.jpeg"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
-                    />
-                    {file && (
-                        <p style={{ marginTop: '5px', color: 'var(--cor-acento)', fontSize: '0.9em' }}>
-                            ✓ Arquivo selecionado: {file.name}
-                        </p>
-                    )}
-                </div>
-
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isUploading}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="submit-btn" disabled={isUploading}>
-                        {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
-                    </button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
 // --- FIM DO MODAL DE UPLOAD DE NOTA FISCAL ---
 
-// --- MODAL PARA VISUALIZAR NOTA FISCAL ---
-const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
-    const [isDeleting, setIsDeleting] = useState(false);
-    const { user } = useAuth();
-    
-    const handleDelete = async () => {
-        if (!await confirmDialog('Tem certeza que deseja excluir esta nota fiscal?', { danger: true, confirmText: 'Excluir' })) {
-            return;
-        }
-        
-        setIsDeleting(true);
-        try {
-            const response = await fetchWithAuth(`${API_URL}/notas-fiscais/${nota.id}`, {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erro ao excluir nota fiscal');
-            }
-            
-            onDelete();
-            onClose();
-        } catch (error) {
-            logger.error('Erro ao excluir nota fiscal:', error);
-            notify.error('Erro ao excluir nota fiscal');
-        } finally {
-            setIsDeleting(false);
-        }
-    };
-    
-    const handleDownload = () => {
-        window.open(`${API_URL}/notas-fiscais/${nota.id}`, '_blank');
-    };
-    
-    const isPDF = nota.mimetype === 'application/pdf';
-    const isImage = nota.mimetype?.startsWith('image/');
-    
-    return (
-        <Modal onClose={onClose} customWidth="800px">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>📄 Nota Fiscal</h2>
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <button 
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        style={{
-                            background: 'var(--cor-vermelho)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                        }}
-                    >
-                        {isDeleting ? 'Excluindo...' : '🗑️ Excluir'}
-                    </button>
-                )}
-            </div>
-            
-            <div style={{ 
-                padding: '15px', 
-                background: '#f8f9fa', 
-                borderRadius: '8px',
-                marginBottom: '20px'
-            }}>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Arquivo:</strong> {nota.filename}
-                </p>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Tipo:</strong> {nota.mimetype}
-                </p>
-            </div>
-            
-            <div style={{ 
-                border: '1px solid #ddd', 
-                borderRadius: '8px',
-                overflow: 'hidden',
-                marginBottom: '20px',
-                maxHeight: '500px',
-                overflowY: 'auto'
-            }}>
-                {isPDF && (
-                    <iframe 
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
-                        style={{ 
-                            width: '100%', 
-                            height: '500px', 
-                            border: 'none' 
-                        }}
-                        title="Nota Fiscal PDF"
-                    />
-                )}
-                
-                {isImage && (
-                    <img 
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
-                        alt="Nota Fiscal"
-                        style={{ 
-                            width: '100%', 
-                            height: 'auto',
-                            display: 'block'
-                        }}
-                    />
-                )}
-                
-                {!isPDF && !isImage && (
-                    <div style={{ 
-                        padding: '40px', 
-                        textAlign: 'center',
-                        color: '#666'
-                    }}>
-                        <p>Pré-visualização não disponível para este tipo de arquivo.</p>
-                        <p>Clique em "Baixar" para visualizar o arquivo.</p>
-                    </div>
-                )}
-            </div>
-            
-            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button onClick={onClose} className="cancel-btn">
-                    Fechar
-                </button>
-                <button 
-                    onClick={handleDownload}
-                    className="submit-btn"
-                    style={{ background: 'var(--cor-acento)' }}
-                >
-                    📥 Baixar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-
-// --- COMPONENTE DE ÍCONE DE NOTA FISCAL CLICÁVEL ---
-const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
-    const [nota, setNota] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [showVisualizacao, setShowVisualizacao] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const fileInputRef = React.useRef(null);
-    const { user } = useAuth();
-    
-    useEffect(() => {
-        carregarNotaFiscal();
-    }, [item.id]);
-    
-    const carregarNotaFiscal = async () => {
-        try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`);
-            const data = await response.json();
-            
-            const notaDoItem = data.find(n => 
-                n.item_id === item.id && n.item_type === itemType
-            );
-            
-            setNota(notaDoItem || null);
-        } catch (error) {
-            logger.error('Erro ao carregar nota fiscal:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    const handleFileSelect = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-        if (!allowedTypes.includes(file.type)) {
-            notify.warning('Apenas arquivos PDF, PNG ou JPG são permitidos');
-            return;
-        }
-        
-        if (file.size > 10 * 1024 * 1024) {
-            notify.warning('Arquivo muito grande. Tamanho máximo: 10MB');
-            return;
-        }
-        
-        setIsUploading(true);
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('item_id', item.id);
-        formData.append('item_type', itemType);
-        
-        try {
-            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erro ao fazer upload');
-            }
-            
-            const novaNota = await response.json();
-            setNota(novaNota);
-            
-            if (onNotaAdded) {
-                onNotaAdded();
-            }
-        } catch (error) {
-            logger.error('Erro ao fazer upload:', error);
-            notify.error('Erro ao anexar nota fiscal');
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
-    };
-    
-    const handleClick = (e) => {
-        e.stopPropagation();
-        
-        if (nota) {
-            setShowVisualizacao(true);
-        } else if (user.role === 'administrador' || user.role === 'master') {
-            fileInputRef.current?.click();
-        }
-    };
-    
-    const canUpload = user.role === 'administrador' || user.role === 'master';
-    
-    if (isLoading) {
-        return (
-            <span style={{ 
-                fontSize: '1.2em', 
-                color: '#ccc',
-                cursor: 'default'
-            }}>
-                ⏳
-            </span>
-        );
-    }
-    
-    return (
-        <>
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-                disabled={isUploading}
-            />
-            
-            <span
-                onClick={handleClick}
-                title={
-                    nota 
-                        ? 'Clique para visualizar a nota fiscal' 
-                        : canUpload 
-                            ? 'Clique para anexar nota fiscal'
-                            : 'Sem nota fiscal'
-                }
-                style={{
-                    fontSize: '1.2em',
-                    cursor: (nota || canUpload) ? 'pointer' : 'default',
-                    color: nota ? 'var(--cor-acento)' : '#ccc',
-                    transition: 'all 0.2s',
-                    display: 'inline-block',
-                    marginLeft: '8px'
-                }}
-                onMouseEnter={(e) => {
-                    if (nota || canUpload) {
-                        e.target.style.transform = 'scale(1.2)';
-                    }
-                }}
-                onMouseLeave={(e) => {
-                    e.target.style.transform = 'scale(1)';
-                }}
-            >
-                {isUploading ? '⏳' : nota ? '📄' : canUpload ? '📎' : ''}
-            </span>
-            
-            {showVisualizacao && nota && (
-                <VisualizarNotaFiscalModal
-                    nota={nota}
-                    onClose={() => setShowVisualizacao(false)}
-                    onDelete={() => {
-                        setNota(null);
-                        if (onNotaAdded) {
-                            onNotaAdded();
-                        }
-                    }}
-                />
-            )}
-        </>
-    );
-};
 // --- FIM DOS COMPONENTES DE NOTAS FISCAIS ---
 
 
-// --- MODAL DE ORÇAMENTOS ---
-const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [filtro, setFiltro] = useState('Todos');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        carregarOrcamentos();
-    }, [obraId]);
+// --- FIM DO MODAL DE RELAT�RIOS ---
 
-    const carregarOrcamentos = () => {
-        setIsLoading(true);
-        setError(null);
 
-        fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao carregar solicitações'); });
-                }
-                return res.json();
-            })
-            .then(data => {
-                setOrcamentos(data);
-            })
-            .catch(err => {
-                logger.error('Erro ao carregar solicitações:', err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    };
-
-    const handleDownloadAnexo = (anexoId, filename) => {
-        window.open(`${API_URL}/anexos/${anexoId}`, '_blank');
-    };
-
-    const orcamentosFiltrados = orcamentos.filter(orc => {
-        if (filtro === 'Todos') return true;
-        return orc.status === filtro;
-    });
-
-    const getStatusColor = (status) => {
-        switch(status) {
-            case 'Aprovado': return '#28a745';
-            case 'Rejeitado': return '#dc3545';
-            case 'Pendente': return '#ffc107';
-            default: return '#6c757d';
-        }
-    };
-
-    const getStatusIcon = (status) => {
-        switch(status) {
-            case 'Aprovado': return '✅';
-            case 'Rejeitado': return '❌';
-            case 'Pendente': return '⏳';
-            default: return '📋';
-        }
-    };
-
-    const contadores = {
-        total: orcamentos.length,
-        aprovados: orcamentos.filter(o => o.status === 'Aprovado').length,
-        rejeitados: orcamentos.filter(o => o.status === 'Rejeitado').length,
-        pendentes: orcamentos.filter(o => o.status === 'Pendente').length
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="900px">
-            <h2>💰 Solicitações de Compra</h2>
-            <p style={{ marginBottom: '20px', color: 'var(--cor-texto-secundario)' }}>
-                {obraNome}
-            </p>
-
-            {/* Filtros */}
-            <div style={{ 
-                display: 'flex', 
-                gap: '10px', 
-                marginBottom: '25px',
-                flexWrap: 'wrap'
-            }}>
-                {['Todos', 'Aprovado', 'Rejeitado', 'Pendente'].map(statusFiltro => (
-                    <button
-                        key={statusFiltro}
-                        onClick={() => setFiltro(statusFiltro)}
-                        style={{
-                            padding: '8px 16px',
-                            border: `2px solid ${filtro === statusFiltro ? 'var(--cor-primaria)' : '#ddd'}`,
-                            borderRadius: '20px',
-                            background: filtro === statusFiltro ? 'var(--cor-primaria)' : 'white',
-                            color: filtro === statusFiltro ? 'white' : 'var(--cor-texto)',
-                            cursor: 'pointer',
-                            fontSize: '0.9em',
-                            fontWeight: filtro === statusFiltro ? 'bold' : 'normal',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {statusFiltro} 
-                        {statusFiltro === 'Todos' && ` (${contadores.total})`}
-                        {statusFiltro === 'Aprovado' && ` (${contadores.aprovados})`}
-                        {statusFiltro === 'Rejeitado' && ` (${contadores.rejeitados})`}
-                        {statusFiltro === 'Pendente' && ` (${contadores.pendentes})`}
-                    </button>
-                ))}
-            </div>
-
-            {/* Conteúdo */}
-            <div style={{ 
-                maxHeight: '500px', 
-                overflowY: 'auto',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                padding: '15px',
-                background: '#f8f9fa'
-            }}>
-                {isLoading ? (
-                    <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <p>⏳ Carregando orçamentos...</p>
-                    </div>
-                ) : error ? (
-                    <div style={{ 
-                        textAlign: 'center', 
-                        padding: '40px',
-                        color: 'var(--cor-vermelho)'
-                    }}>
-                        <p>❌ {error}</p>
-                        <button 
-                            onClick={carregarOrcamentos}
-                            style={{
-                                marginTop: '15px',
-                                padding: '8px 16px',
-                                background: 'var(--cor-primaria)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Tentar novamente
-                        </button>
-                    </div>
-                ) : orcamentosFiltrados.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                        <p>📋 Nenhuma solicitação {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
-                    </div>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        {orcamentosFiltrados.map(orc => (
-                            <div 
-                                key={orc.id}
-                                style={{
-                                    background: 'white',
-                                    padding: '20px',
-                                    borderRadius: '8px',
-                                    border: `2px solid ${getStatusColor(orc.status)}20`,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                }}
-                            >
-                                {/* Header com status */}
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '15px'
-                                }}>
-                                    <div>
-                                        <h3 style={{ 
-                                            margin: '0 0 5px 0',
-                                            color: 'var(--cor-primaria)',
-                                            fontSize: '1.1em'
-                                        }}>
-                                            {orc.descricao}
-                                        </h3>
-                                        {orc.servico_nome && (
-                                            <p style={{ 
-                                                margin: 0,
-                                                fontSize: '0.85em',
-                                                color: '#6c757d'
-                                            }}>
-                                                🔗 Serviço: {orc.servico_nome}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <span style={{
-                                        padding: '6px 12px',
-                                        borderRadius: '20px',
-                                        background: getStatusColor(orc.status),
-                                        color: 'white',
-                                        fontSize: '0.9em',
-                                        fontWeight: 'bold',
-                                        whiteSpace: 'nowrap'
-                                    }}>
-                                        {getStatusIcon(orc.status)} {orc.status}
-                                    </span>
-                                </div>
-
-                                {/* Informações */}
-                                <div style={{ 
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                    gap: '12px',
-                                    marginBottom: '15px'
-                                }}>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Fornecedor:
-                                        </strong>
-                                        <p style={{ margin: '2px 0 0 0' }}>
-                                            {orc.fornecedor || 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Valor:
-                                        </strong>
-                                        <p style={{ 
-                                            margin: '2px 0 0 0',
-                                            color: 'var(--cor-primaria)',
-                                            fontWeight: 'bold',
-                                            fontSize: '1.1em'
-                                        }}>
-                                            {new Intl.NumberFormat('pt-BR', { 
-                                                style: 'currency', 
-                                                currency: 'BRL' 
-                                            }).format(orc.valor)}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Tipo:
-                                        </strong>
-                                        <p style={{ margin: '2px 0 0 0' }}>
-                                            {orc.tipo}
-                                        </p>
-                                    </div>
-                                    {orc.dados_pagamento && (
-                                        <div>
-                                            <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                                Pagamento:
-                                            </strong>
-                                            <p style={{ margin: '2px 0 0 0' }}>
-                                                {orc.dados_pagamento}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Observações */}
-                                {orc.observacoes && (
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        padding: '10px',
-                                        background: '#f8f9fa',
-                                        borderRadius: '5px',
-                                        borderLeft: '3px solid var(--cor-primaria)'
-                                    }}>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
-                                            Observações:
-                                        </strong>
-                                        <p style={{ margin: '5px 0 0 0', fontSize: '0.9em' }}>
-                                            {orc.observacoes}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Anexos */}
-                                {orc.anexos && orc.anexos.length > 0 && (
-                                    <div>
-                                        <strong style={{ 
-                                            fontSize: '0.9em',
-                                            color: '#6c757d',
-                                            display: 'block',
-                                            marginBottom: '8px'
-                                        }}>
-                                            📎 Anexos ({orc.anexos.length}):
-                                        </strong>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: '8px'
-                                        }}>
-                                            {orc.anexos.map(anexo => (
-                                                <button
-                                                    key={anexo.id}
-                                                    onClick={() => handleDownloadAnexo(anexo.id, anexo.filename)}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        background: '#e7f3ff',
-                                                        border: '1px solid #0066cc',
-                                                        borderRadius: '5px',
-                                                        cursor: 'pointer',
-                                                        fontSize: '0.85em',
-                                                        color: '#0066cc',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '5px',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.background = '#0066cc';
-                                                        e.currentTarget.style.color = 'white';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = '#e7f3ff';
-                                                        e.currentTarget.style.color = '#0066cc';
-                                                    }}
-                                                >
-                                                    <span>📄</span>
-                                                    {anexo.filename}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Footer */}
-            <div style={{ 
-                marginTop: '20px',
-                padding: '15px',
-                background: '#f8f9fa',
-                borderRadius: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
-                <div style={{ fontSize: '0.9em', color: '#6c757d' }}>
-                    <strong>Resumo:</strong> {contadores.total} solicitação(ões) • 
-                    ✅ {contadores.aprovados} aprovado(s) • 
-                    ❌ {contadores.rejeitados} rejeitado(s) • 
-                    ⏳ {contadores.pendentes} pendente(s)
-                </div>
-                <button 
-                    onClick={onClose}
-                    className="cancel-btn"
-                >
-                    Fechar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE ORÇAMENTOS ---
-
-
-// --- MODAL DE RELATÓRIOS ---
-const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [downloadType, setDownloadType] = useState(null);
-    const [error, setError] = useState(null);
-    const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
-
-    // Bug B1: WhatsApp share com dados financeiros completos
-    const handleCompartilharWhatsApp = async () => {
-        if (isSharingWhatsApp) return;
-        setIsSharingWhatsApp(true);
-        try {
-            const resCaixa = await fetchWithAuth(`${API_URL}/obras/${obraId}/caixa`);
-            const caixa = resCaixa.ok ? await resCaixa.json() : null;
-
-            const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const linhas = [];
-            linhas.push(`📋 *RELATÓRIO DE OBRA - OBRALY*`);
-            linhas.push(`🏗️ Obra: *${obraNome}*`);
-            linhas.push(`📅 Data: ${new Date().toLocaleDateString('pt-BR')}`);
-            linhas.push(`─────────────────────────`);
-            linhas.push(`\n💰 *FINANCEIRO*`);
-            linhas.push(`📊 Orçamento Total: ${formatVal(sumarios?.orcamento_total)}`);
-            linhas.push(`✅ Valores Pagos: ${formatVal(sumarios?.valores_pagos)}`);
-            if (caixa) {
-                linhas.push(`📈 Entradas (mês): ${formatVal(caixa.total_entradas_mes)}`);
-                linhas.push(`📉 Saídas (mês): ${formatVal(caixa.total_saidas_mes)}`);
-                linhas.push(`💵 Saldo Atual: ${formatVal(caixa.saldo_atual)}`);
-            }
-            linhas.push(`\n_Gerado pelo Obraly_`);
-
-            const url = `https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`;
-            // Anchor click: funciona melhor em Capacitor WebView que window.open
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (err) {
-            logger.error('Erro ao gerar mensagem WhatsApp:', err);
-            notify.error('Erro ao gerar mensagem do WhatsApp. Tente novamente.');
-        } finally {
-            setIsSharingWhatsApp(false);
-        }
-    };
-
-    // NOVO: Função para baixar Relatório Financeiro (Cronograma)
-    const handleDownloadRelatorioFinanceiro = () => {
-        setIsDownloading(true);
-        setDownloadType('financeiro');
-        setError(null);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio-cronograma-pdf`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório financeiro'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Cronograma_Financeiro_${obraNome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => {
-                logger.error("Erro ao baixar relatório financeiro:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    const handleDownloadNotasFiscais = () => {
-        setIsDownloading(true);
-        setDownloadType('notas');
-        setError(null);
-
-        fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais/export/zip`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao baixar notas fiscais'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `notas_fiscais_${obraNome}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => {
-                logger.error("Erro ao baixar notas fiscais:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    const handleDownloadResumoObra = () => {
-        setIsDownloading(true);
-        setDownloadType('resumo');
-        setError(null);
-
-        // <-- CORREÇÃO: Usar fetchWithAuth para enviar token
-        fetchWithAuth(`${API_URL}/obras/${obraId}/relatorio/resumo-completo`)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(err => { throw new Error(err.erro || 'Erro ao gerar relatório'); });
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                // Criar URL temporário e abrir em nova aba
-                const url = window.URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                
-                // Limpar URL após um tempo
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(url);
-                }, 1000);
-            })
-            .catch(err => {
-                logger.error("Erro ao gerar relatório:", err);
-                setError(err.message);
-            })
-            .finally(() => {
-                setIsDownloading(false);
-                setDownloadType(null);
-            });
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="500px">
-            <h2>📊 Relatórios da Obra</h2>
-            <p style={{ marginBottom: '25px', color: 'var(--cor-texto-secundario)' }}>
-                Selecione o tipo de relatório que deseja gerar:
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {/* NOVO: Opção 0: Relatório Financeiro (Cronograma) */}
-                <button
-                    onClick={handleDownloadRelatorioFinanceiro}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid #e91e63',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'financeiro' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = '#fce4ec';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📊</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: '#e91e63' }}>
-                                {isDownloading && downloadType === 'financeiro' ? 'Gerando...' : 'Relatório Financeiro'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Cronograma com pagamentos futuros, parcelados e previsões
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 1: Baixar Notas Fiscais */}
-                <button
-                    onClick={handleDownloadNotasFiscais}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid var(--cor-primaria)',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'notas' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📎</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-primaria)' }}>
-                                {isDownloading && downloadType === 'notas' ? 'Preparando...' : 'Baixar Notas Fiscais'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Exporta todas as notas fiscais em um arquivo ZIP
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 2: Resumo da Obra */}
-                <button
-                    onClick={handleDownloadResumoObra}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid var(--cor-acento)',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading && downloadType !== 'resumo' ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>📄</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: 'var(--cor-acento)' }}>
-                                {isDownloading && downloadType === 'resumo' ? 'Gerando...' : 'Resumo Completo da Obra'}
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                PDF com serviços, valores, pendências, orçamentos e gráficos
-                            </p>
-                        </div>
-                    </div>
-                </button>
-
-                {/* Opção 3: Orçamentos */}
-                <button
-                    onClick={() => {
-                        onClose(); // Fecha o modal de relatórios
-                        // Abre o modal de orçamentos através do callback
-                        if (window.abrirModalOrcamentos) {
-                            window.abrirModalOrcamentos();
-                        }
-                    }}
-                    disabled={isDownloading}
-                    style={{
-                        padding: '20px',
-                        border: '2px solid #17a2b8',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        opacity: isDownloading ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--cor-fundo)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <span style={{ fontSize: '2em' }}>💰</span>
-                        <div>
-                            <strong style={{ fontSize: '1.1em', color: '#17a2b8' }}>
-                                Orçamentos
-                            </strong>
-                            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: 'var(--cor-texto-secundario)' }}>
-                                Visualize todos os orçamentos com status e anexos
-                            </p>
-                        </div>
-                    </div>
-                </button>
-            </div>
-
-            {error && (
-                <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center', marginTop: '15px' }}>
-                    {error}
-                </p>
-            )}
-
-            {/* Botão compartilhar WhatsApp */}
-            <div style={{ marginTop: '20px' }}>
-                <button
-                    type="button"
-                    onClick={handleCompartilharWhatsApp}
-                    disabled={isSharingWhatsApp}
-                    style={{
-                        width: '100%',
-                        padding: '14px',
-                        background: '#25D366',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '15px',
-                        fontWeight: '700',
-                        cursor: isSharingWhatsApp ? 'wait' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        opacity: isSharingWhatsApp ? 0.7 : 1
-                    }}
-                >
-                    {isSharingWhatsApp ? '⏳ Gerando...' : '💬 Compartilhar via WhatsApp'}
-                </button>
-            </div>
-
-            <div style={{ marginTop: '15px', textAlign: 'center' }}>
-                <button onClick={onClose} className="cancel-btn" disabled={isDownloading}>
-                    Fechar
-                </button>
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE RELATÓRIOS ---
-
-
-// --- MODAL DE APROVAÇÃO DE SOLICITAÇÃO (SIMPLIFICADO) ---
-const ModalAprovarOrcamento = ({ orcamento, onClose, onConfirmar }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleAprovar = async () => {
-        setIsSubmitting(true);
-        try {
-            await onConfirmar();
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose} customWidth="450px">
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h2 style={{ marginBottom: '20px', color: '#28a745' }}>
-                    ✅ Aprovar Solicitação
-                </h2>
-                
-                {/* Info da Solicitação */}
-                <div style={{ 
-                    backgroundColor: '#f8f9fa', 
-                    padding: '20px', 
-                    borderRadius: '8px', 
-                    marginBottom: '25px',
-                    border: '1px solid #e9ecef',
-                    textAlign: 'left'
-                }}>
-                    <strong style={{ fontSize: '1.1em', display: 'block', marginBottom: '10px' }}>
-                        {orcamento.descricao}
-                    </strong>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#666' }}>
-                        <span>💰 Valor: <strong style={{ color: '#28a745' }}>{formatCurrency(orcamento.valor)}</strong></span>
-                        {orcamento.fornecedor && <span>🏢 Fornecedor: {orcamento.fornecedor}</span>}
-                        {orcamento.tipo && <span>📦 Tipo: {orcamento.tipo}</span>}
-                        {orcamento.servico_nome && <span>🔧 Serviço: {orcamento.servico_nome}</span>}
-                        {orcamento.numero_parcelas > 1 && (
-                            <span>📅 Parcelamento: {orcamento.numero_parcelas}x de {formatCurrency(orcamento.valor / orcamento.numero_parcelas)}</span>
-                        )}
-                        {orcamento.data_vencimento && (
-                            <span>📆 Vencimento: {new Date(orcamento.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                        )}
-                    </div>
-                </div>
-
-                <p style={{ marginBottom: '20px', color: '#666' }}>
-                    Ao aprovar, será criado automaticamente um <strong>pagamento futuro</strong> no cronograma financeiro.
-                    {orcamento.servico_nome && (
-                        <><br/><br/>O valor será somado ao orçamento do serviço <strong>"{orcamento.servico_nome}"</strong>.</>
-                    )}
-                </p>
-
-                {/* Botões */}
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={onClose}
-                        className="cancel-btn"
-                        style={{ flex: 1, padding: '14px' }}
-                        disabled={isSubmitting}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleAprovar}
-                        className="submit-btn"
-                        style={{ 
-                            flex: 2, 
-                            padding: '14px',
-                            backgroundColor: '#28a745',
-                            fontSize: '1.05em'
-                        }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳ Aprovando...' : '✅ Aprovar Compra'}
-                    </button>
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-// --- MODAL DE ORÇAMENTOS ---
-const OrcamentosModal = ({ obraId, onClose, onSave }) => {
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [servicos, setServicos] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAddModalVisible, setAddModalVisible] = useState(false);
-    const [editingOrcamento, setEditingOrcamento] = useState(null);
-    const [viewingAnexos, setViewingAnexos] = useState(null);
-    
-    // Estado para modal de aprovação com escolha de serviço
-    const [aprovandoOrcamento, setAprovandoOrcamento] = useState(null);
-    
-    // Estado para seleção múltipla
-    const [selecionados, setSelecionados] = useState([]);
-    const [aprovandoMultiplos, setAprovandoMultiplos] = useState(false);
-
-    useEffect(() => {
-        carregarDados();
-    }, [obraId]);
-
-    const carregarDados = async () => {
-        try {
-            setIsLoading(true);
-            const [orcRes, servRes] = await Promise.all([
-                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamentos`),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`)
-            ]);
-            
-            if (!orcRes.ok || !servRes.ok) throw new Error('Erro ao carregar dados');
-            
-            const orcData = await orcRes.json();
-            const servData = await servRes.json();
-            
-            setOrcamentos(Array.isArray(orcData) ? orcData : []);
-            setServicos(Array.isArray(servData) ? servData : []);
-        } catch (err) {
-            logger.error('Erro:', err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleAprovar = (orcamento) => {
-        setAprovandoOrcamento(orcamento);
-    };
-
-    // Funções para seleção múltipla
-    const toggleSelecionado = (id) => {
-        setSelecionados(prev => 
-            prev.includes(id) 
-                ? prev.filter(x => x !== id) 
-                : [...prev, id]
-        );
-    };
-
-    const toggleSelecionarTodos = () => {
-        const pendentes = orcamentos.filter(orc => orc.status === 'Pendente');
-        if (selecionados.length === pendentes.length) {
-            setSelecionados([]);
-        } else {
-            setSelecionados(pendentes.map(orc => orc.id));
-        }
-    };
-
-    const handleAprovarSelecionados = async () => {
-        if (selecionados.length === 0) {
-            notify.warning('Selecione pelo menos uma solicitação para aprovar.');
-            return;
-        }
-
-        if (!await confirmDialog(`Confirma a aprovação de ${selecionados.length} solicitação(ões)?`, { confirmText: 'Aprovar' })) {
-            return;
-        }
-
-        setAprovandoMultiplos(true);
-        let aprovados = 0;
-        let erros = [];
-
-        for (const id of selecionados) {
-            try {
-                const response = await fetchWithAuth(
-                    `${API_URL}/orcamentos/${id}/aprovar`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({})
-                    }
-                );
-
-                if (response.ok) {
-                    aprovados++;
-                } else {
-                    const data = await response.json();
-                    erros.push(`ID ${id}: ${data.erro || 'Erro desconhecido'}`);
-                }
-            } catch (err) {
-                erros.push(`ID ${id}: ${err.message}`);
-            }
-        }
-
-        setAprovandoMultiplos(false);
-        setSelecionados([]);
-
-        if (erros.length > 0) {
-            notify.success(`✅ ${aprovados} aprovado(s)\n❌ ${erros.length} erro(s):\n${erros.join('\n')}`);
-        } else {
-            notify.success(`✅ ${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
-        }
-
-        if (onSave) onSave();
-        carregarDados();
-    };
-
-    const handleConfirmarAprovacao = async () => {
-        try {
-            logger.debug('Enviando aprovação para:', aprovandoOrcamento.id);
-
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({})
-                }
-            );
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.erro || data.error || 'Erro ao aprovar solicitação');
-            }
-
-            notify.success(data.sucesso || '✅ Solicitação aprovada com sucesso!');
-            setAprovandoOrcamento(null);
-            if (onSave) onSave();
-        } catch (err) {
-            logger.error('Erro ao aprovar:', err);
-            notify.error(`Erro ao aprovar solicitação: ${err.message}`);
-        }
-    };
-
-    const handleRejeitar = async (orcamentoId) => {
-        if (!await confirmDialog('Confirma a rejeição deste orçamento?', { danger: true, confirmText: 'Rejeitar' })) return;
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${orcamentoId}`,
-                { method: 'DELETE' }
-            );
-
-            if (!response.ok) throw new Error('Erro ao rejeitar solicitação');
-
-            notify.success('✅ Solicitação rejeitada!');
-            // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    // CORREÇÃO: Função para salvar novo orçamento
-    const handleSaveOrcamento = async (formData) => {
-        try {
-            logger.debug("Salvando novo orçamento...");
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/orcamentos`,
-                {
-                    method: 'POST',
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.erro || 'Erro ao salvar orçamento');
-            }
-
-            notify.success('✅ Solicitação enviada com sucesso!');
-            setAddModalVisible(false);
-            carregarDados(); // Recarrega a lista de orçamentos
-            if (onSave) onSave(); // Notifica o Dashboard também
-        } catch (err) {
-            logger.error("Erro ao salvar orçamento:", err);
-            notify.error(`Erro ao salvar orçamento: ${err.message}`);
-        }
-    };
-
-    // CORREÇÃO: Função para editar orçamento
-    const handleEditOrcamento = async (orcamentoId, formData, newFiles) => {
-        try {
-            logger.debug("Salvando edição do orçamento:", orcamentoId);
-            
-            // 1. Atualizar dados do orçamento
-            const response = await fetchWithAuth(
-                `${API_URL}/orcamentos/${orcamentoId}`,
-                {
-                    method: 'PUT',
-                    body: formData
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.erro || 'Erro ao salvar edição');
-            }
-
-            // 2. Upload de novos anexos (se houver)
-            if (newFiles.length > 0) {
-                const fileFormData = new FormData();
-                newFiles.forEach(file => {
-                    fileFormData.append('anexos', file);
-                });
-                
-                const fileResponse = await fetchWithAuth(
-                    `${API_URL}/orcamentos/${orcamentoId}/anexos`,
-                    {
-                        method: 'POST',
-                        body: fileFormData
-                    }
-                );
-
-                if (!fileResponse.ok) {
-                    const error = await fileResponse.json();
-                    throw new Error(error.erro || 'Erro ao enviar anexos');
-                }
-            }
-
-            notify.success('✅ Solicitação atualizada com sucesso!');
-            setEditingOrcamento(null);
-            carregarDados(); // Recarrega a lista de orçamentos
-            if (onSave) onSave(); // Notifica o Dashboard também
-        } catch (err) {
-            logger.error("Erro ao salvar edição do orçamento:", err);
-            notify.error(`Erro ao salvar edição: ${err.message}`);
-        }
-    };
-
-    // Filtrar apenas orçamentos PENDENTES
-    const orcamentosPendentes = orcamentos.filter(orc => orc.status === 'Pendente');
-    const totalPendente = orcamentosPendentes.reduce((sum, orc) => sum + (orc.valor || 0), 0);
-
-    if (isLoading) {
-        return (
-            <Modal onClose={onClose} customWidth="96%">
-                <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                    <h2>📋 Solicitações</h2>
-                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
-                </div>
-            </Modal>
-        );
-    }
-
-    return (
-        <Modal onClose={onClose} customWidth="96%">
-            <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                <button onClick={onClose} className="close-modal-btn">×</button>
-                <h2>📋 Solicitações Pendentes</h2>
-                
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px',
-                    padding: '15px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px'
-                }}>
-                    <div>
-                        <span style={{ fontSize: '1.1em', color: 'var(--cor-texto-secundario)' }}>
-                            Total Pendente: 
-                        </span>
-                        <span style={{ 
-                            fontSize: '1.5em', 
-                            fontWeight: 'bold',
-                            color: 'var(--cor-primaria)',
-                            marginLeft: '10px'
-                        }}>
-                            {formatCurrency(totalPendente)}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        {selecionados.length > 0 && (
-                            <button 
-                                onClick={handleAprovarSelecionados}
-                                disabled={aprovandoMultiplos}
-                                className="acao-btn"
-                                style={{ 
-                                    backgroundColor: 'var(--cor-acento)', 
-                                    color: 'white',
-                                    opacity: aprovandoMultiplos ? 0.7 : 1
-                                }}
-                            >
-                                {aprovandoMultiplos ? '⏳ Aprovando...' : `✓ Aprovar Selecionados (${selecionados.length})`}
-                            </button>
-                        )}
-                        <button 
-                            onClick={() => setAddModalVisible(true)}
-                            className="acao-btn add-btn"
-                            style={{ backgroundColor: 'var(--cor-info)' }}
-                        >
-                            + Nova Solicitação
-                        </button>
-                    </div>
-                </div>
-
-                {orcamentosPendentes.length > 0 ? (
-                    <table className="tabela-pendencias">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '40px', textAlign: 'center' }}>
-                                    <input 
-                                        type="checkbox"
-                                        checked={selecionados.length === orcamentosPendentes.length && orcamentosPendentes.length > 0}
-                                        onChange={toggleSelecionarTodos}
-                                        title="Selecionar todos"
-                                        style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                    />
-                                </th>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Segmento</th>
-                                <th>Serviço</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orcamentosPendentes.map(orc => (
-                                <tr key={orc.id} style={{ 
-                                    backgroundColor: selecionados.includes(orc.id) ? '#e8f5e9' : 'transparent'
-                                }}>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <input 
-                                            type="checkbox"
-                                            checked={selecionados.includes(orc.id)}
-                                            onChange={() => toggleSelecionado(orc.id)}
-                                            style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                        />
-                                    </td>
-                                    <td
-                                        onClick={() => setEditingOrcamento(orc)}
-                                        style={{
-                                            cursor: 'pointer',
-                                            color: 'var(--cor-primaria)',
-                                            fontWeight: '500',
-                                            textDecoration: 'underline'
-                                        }}
-                                        title="Clique para editar"
-                                    >
-                                        {orc.descricao}
-                                    </td>
-                                    <td>{orc.fornecedor || 'N/A'}</td>
-                                    <td>{orc.tipo}</td>
-                                    <td>{orc.servico_nome || 'Geral'}</td>
-                                    <td><strong>{formatCurrency(orc.valor)}</strong></td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                            {orc.anexos_count > 0 && (
-                                                <button
-                                                    onClick={() => setViewingAnexos(orc)}
-                                                    className="acao-icon-btn"
-                                                    title={`${orc.anexos_count} anexo(s)`}
-                                                    style={{ fontSize: '1.3em', color: '#007bff' }}
-                                                >
-                                                    📎
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleRejeitar(orc.id)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Rejeitar
-                                            </button>
-                                            <button
-                                                onClick={() => handleAprovar(orc)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Aprovar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-secundario)' }}>
-                        Nenhuma solicitação pendente.
-                    </p>
-                )}
-
-                {/* Modal de Aprovação */}
-                {aprovandoOrcamento && (
-                    <ModalAprovarOrcamento
-                        orcamento={aprovandoOrcamento}
-                        onClose={() => setAprovandoOrcamento(null)}
-                        onConfirmar={handleConfirmarAprovacao}
-                    />
-                )}
-
-                {/* Aqui vão os outros modais (add, edit, anexos) se necessário */}
-                {isAddModalVisible && (
-                    <AddOrcamentoModal
-                        obraId={obraId}
-                        onClose={() => setAddModalVisible(false)}
-                        onSave={handleSaveOrcamento}
-                        servicos={servicos}
-                    />
-                )}
-
-                {editingOrcamento && (
-                    <EditOrcamentoModal
-                        orcamento={editingOrcamento}
-                        obraId={obraId}
-                        onClose={() => setEditingOrcamento(null)}
-                        onSave={handleEditOrcamento}
-                        servicos={servicos}
-                    />
-                )}
-            </div>
-        </Modal>
-    );
-};
-// --- FIM DO MODAL DE ORÇAMENTOS ---
 
 
 // --- COMPONENTE DO DASHBOARD (Atualizado) ---
@@ -6713,18 +3070,18 @@ function Dashboard() {
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
     const [servicos, setServicos] = useState([]); // Mantido para compatibilidade
-    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
+    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do or�amento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     
-    // CORREÇÃO: Verificar URL uma única vez no início
+    // CORRE��O: Verificar URL uma �nica vez no in�cio
     const urlParamsInicial = new URLSearchParams(window.location.search);
     const obraIdDaUrl = urlParamsInicial.get('obra');
     const temObraNaUrl = !!obraIdDaUrl;
     
-    // CORREÇÃO: Iniciar loading se tiver obra na URL
+    // CORRE��O: Iniciar loading se tiver obra na URL
     const [isLoading, setIsLoading] = useState(temObraNaUrl);
-    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para não causar re-render)
+    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para n�o causar re-render)
     const [carregandoObraDaUrl, setCarregandoObraDaUrl] = useState(temObraNaUrl);
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
@@ -6742,7 +3099,7 @@ function Dashboard() {
     const [editingOrcamento, setEditingOrcamento] = useState(null);
     const [viewingAnexos, setViewingAnexos] = useState(null);
     
-    // <--- MUDANÇA: Novo estado para o modal de pagamento -->
+    // <--- MUDAN�A: Novo estado para o modal de pagamento -->
     const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
@@ -6752,34 +3109,34 @@ function Dashboard() {
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
     const [uploadingNFFor, setUploadingNFFor] = useState(null);
-    const isLoadingNotasFiscais = React.useRef(false); // Proteção contra múltiplas requisições
+    const isLoadingNotasFiscais = React.useRef(false); // Prote��o contra m�ltiplas requisi��es
     
     // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
-    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
+    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que est� recebendo upload
     
-    // <--- NOVO: Estado para modal de relatórios -->
+    // <--- NOVO: Estado para modal de relat�rios -->
     const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
     
-    // <--- NOVO: Estado para modal de orçamentos -->
+    // <--- NOVO: Estado para modal de or�amentos -->
     const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
     
     // <--- NOVO: Estado para modal do Cronograma Financeiro -->
     const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
     
-    // MUDANÇA 2: Estado para modal do Diário de Obras
+    // MUDAN�A 2: Estado para modal do Di�rio de Obras
     const [isDiarioVisible, setDiarioVisible] = useState(false);
     
-    // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
+    // MUDAN�A 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
     
     // NOVO: Estado para modal do Caixa de Obra
     const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
     
-    // NOVO: Estado para mostrar obras concluídas
+    // NOVO: Estado para mostrar obras conclu�das
     const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
     
     // === NOVO: Estados para Sidebar ===
-    // CORREÇÃO: Iniciar como null para não piscar na tela de obras
+    // CORRE��O: Iniciar como null para n�o piscar na tela de obras
     const [currentPage, setCurrentPage] = useState(() => {
         // Ler da URL imediatamente para evitar flash
         const urlParams = new URLSearchParams(window.location.search);
@@ -6791,8 +3148,8 @@ function Dashboard() {
     });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
-    // Função para navegar COM histórico do browser (botão voltar funciona)
+    // === NAVEGA��O COM HIST�RICO DO BROWSER ===
+    // Fun��o para navegar COM hist�rico do browser (bot�o voltar funciona)
     const navigateTo = (page, obraId = null) => {
         const state = { page, obraId };
         const url = obraId ? `?obra=${obraId}&page=${page}` : `?page=${page}`;
@@ -6803,17 +3160,17 @@ function Dashboard() {
     // Expor navigateTo globalmente para uso no Sidebar
     window.navigateTo = navigateTo;
     
-    // Estado para controlar se a URL inicial já foi processada
+    // Estado para controlar se a URL inicial j� foi processada
     const [urlProcessada, setUrlProcessada] = useState(false);
 
-    // Escutar botão voltar do navegador
+    // Escutar bot�o voltar do navegador
     useEffect(() => {
         const handlePopState = (event) => {
             logger.debug('PopState event:', event.state);
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
-                    // fetchObraData será chamado pelo useEffect abaixo
+                    // fetchObraData ser� chamado pelo useEffect abaixo
                     const obraId = event.state.obraId;
                     setIsLoading(true);
                     fetchWithAuth(`${API_URL}/obras/${obraId}`)
@@ -6836,7 +3193,7 @@ function Dashboard() {
                     setObraSelecionada(null);
                 }
             } else {
-                // Se não tem estado, voltar para lista de obras
+                // Se n�o tem estado, voltar para lista de obras
                 setCurrentPage('obras');
                 setObraSelecionada(null);
             }
@@ -6850,14 +3207,14 @@ function Dashboard() {
     }, []);
 
 const totalOrcamentosPendentes = useMemo(() => {
-        // A variável 'orcamentos' já contém
-        // apenas os orçamentos com status 'Pendente' vindos do backend.
+        // A vari�vel 'orcamentos' j� cont�m
+        // apenas os or�amentos com status 'Pendente' vindos do backend.
         return (Array.isArray(orcamentos) ? orcamentos : [])
             .reduce((total, orc) => total + (orc.valor || 0), 0);
     }, [orcamentos]);
 
    const itemsAPagar = useMemo(() => {
-    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
+    // <--- MUDAN�A: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     return (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item =>
         (item.valor_total || 0) > (item.valor_pago || 0)
     )
@@ -6880,7 +3237,7 @@ const totalOrcamentosPendentes = useMemo(() => {
  // --- NOVO BLOCO DO CRONOGRAMA (LUGAR CORRETO) ---
     const cronogramaPagamentos = useMemo(() => {
         const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
+        hoje.setHours(0, 0, 0, 0); // Zera a hora para compara��o de datas
 
         const data7Dias = new Date(hoje);
         data7Dias.setDate(hoje.getDate() + 7);
@@ -6896,10 +3253,10 @@ const totalOrcamentosPendentes = useMemo(() => {
             totalAPagar: 0
         };
 
-        // Usa a variável 'itemsAPagar' que já foi definida ANTES
+        // Usa a vari�vel 'itemsAPagar' que j� foi definida ANTES
         (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
             const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            // Usa data_vencimento se existir, senão usa data como fallback
+            // Usa data_vencimento se existir, sen�o usa data como fallback
             const dataParaUsar = item.data_vencimento || item.data;
             const dataVencimento = new Date(dataParaUsar + 'T00:00:00'); 
             
@@ -6917,7 +3274,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         });
 
         return totais;
-    }, [itemsAPagar]); // A dependência é 'itemsAPagar'
+    }, [itemsAPagar]); // A depend�ncia � 'itemsAPagar'
     // --- FIM DO NOVO BLOCO ---
 
 
@@ -6928,7 +3285,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         [historicoUnificado]
     );
     
-    // <--- NOVO: Função para agrupar pagamentos por mês -->
+    // <--- NOVO: Fun��o para agrupar pagamentos por m�s -->
     const pagamentosPorMes = useMemo(() => {
         const grupos = {};
         
@@ -6943,7 +3300,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     label: mesAnoLabel,
                     items: [],
                     total: 0,
-                    dataOrdem: dataItem // Para ordenação
+                    dataOrdem: dataItem // Para ordena��o
                 };
             }
             
@@ -6957,7 +3314,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .map(([mesAno, dados]) => ({ mesAno, ...dados }));
     }, [itemsPagos]);
     
-    // <--- NOVO: Função para toggle de expandir/recolher mês -->
+    // <--- NOVO: Fun��o para toggle de expandir/recolher m�s -->
     const toggleMes = (mesAno) => {
         setMesesExpandidos(prev => ({
             ...prev,
@@ -6978,7 +3335,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .catch(error => { logger.error("Erro ao buscar obras:", error); setObras([]); });
     }, [mostrarConcluidas]); 
     
-    // Callback para abrir modal de orçamentos
+    // Callback para abrir modal de or�amentos
     useEffect(() => {
         window.abrirModalOrcamentos = () => {
             setOrcamentosModalVisible(true);
@@ -6992,7 +3349,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         setIsLoading(true);
         logger.debug(`Buscando dados da obra ID: ${obraId}`);
         
-        // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
+        // OTIMIZA��O: Carregar dados principais primeiro, secund�rios em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
@@ -7009,22 +3366,22 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // Carregar dados secundários (não bloqueia a tela principal)
+                // Carregar dados secund�rios (n�o bloqueia a tela principal)
                 fetchCronogramaObras(obraId);
                 fetchItensOrcamento(obraId);
                 
-                // Notas fiscais - tentar carregar mas não falhar se não existir
+                // Notas fiscais - tentar carregar mas n�o falhar se n�o existir
                 try {
                     fetchNotasFiscais(obraId);
                 } catch (error) {
-                    logger.debug("Notas fiscais não disponíveis");
+                    logger.debug("Notas fiscais n�o dispon�veis");
                 }
             })
             .catch(error => { logger.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
-    // NOVO: Buscar itens do orçamento para dropdown
+    // NOVO: Buscar itens do or�amento para dropdown
     const fetchItensOrcamento = async (obraId) => {
         try {
             const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
@@ -7033,12 +3390,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setItensOrcamento(data);
             }
         } catch (error) {
-            logger.debug("Itens do orçamento não disponíveis:", error);
+            logger.debug("Itens do or�amento n�o dispon�veis:", error);
             setItensOrcamento([]);
         }
     };
     
-    // CORREÇÃO: Processar URL inicial ao montar o componente
+    // CORRE��O: Processar URL inicial ao montar o componente
     useEffect(() => {
         if (urlProcessada) return;
         
@@ -7046,7 +3403,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
         
-        logger.debug("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
+        logger.debug("[URL INIT] Par�metros:", { page: pageFromUrl, obra: obraFromUrl });
         
         if (obraFromUrl) {
             const obraId = parseInt(obraFromUrl);
@@ -7074,11 +3431,11 @@ const totalOrcamentosPendentes = useMemo(() => {
         setUrlProcessada(true);
     }, [urlProcessada]);
     
-    // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
+    // NOVO: Fun��o para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
         try {
-            // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
-            // As etapas já vêm incluídas na resposta do backend via to_dict()
+            // Buscar cronogramas da obra (CronogramaObra = servi�os com cronograma)
+            // As etapas j� v�m inclu�das na resposta do backend via to_dict()
             const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
             if (!response.ok) {
                 setCronogramaObras([]);
@@ -7093,12 +3450,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return;
             }
             
-            // As etapas já vêm na resposta do backend, não precisa buscar separadamente
+            // As etapas j� v�m na resposta do backend, n�o precisa buscar separadamente
             const cronogramasFormatados = cronogramasData.map((cron) => ({
                 servico_id: cron.servico_id,
                 servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
                 cronograma_id: cron.id,
-                // Usar diretamente as etapas que já vieram na resposta
+                // Usar diretamente as etapas que j� vieram na resposta
                 etapas: Array.isArray(cron.etapas) ? cron.etapas : [],
                 // Incluir dados adicionais do cronograma para o Gantt
                 data_inicio: cron.data_inicio,
@@ -7109,28 +3466,28 @@ const totalOrcamentosPendentes = useMemo(() => {
             logger.debug("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
-            // Silencioso — cronograma de obras é feature secundária
+            // Silencioso � cronograma de obras � feature secund�ria
             setCronogramaObras([]);
         }
     };
     
-    // <--- NOVO: Função para buscar notas fiscais -->
+    // <--- NOVO: Fun��o para buscar notas fiscais -->
     const fetchNotasFiscais = (obraId) => {
-        // Proteção contra múltiplas requisições simultâneas
+        // Prote��o contra m�ltiplas requisi��es simult�neas
         if (isLoadingNotasFiscais.current) {
-            logger.debug("Já está carregando notas fiscais, ignorando requisição duplicada");
+            logger.debug("J� est� carregando notas fiscais, ignorando requisi��o duplicada");
             return;
         }
         
         isLoadingNotasFiscais.current = true;
         
-        // CORREÇÃO: Verificar se a rota existe antes de fazer a requisição
+        // CORRE��O: Verificar se a rota existe antes de fazer a requisi��o
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
             .then(res => {
                 if (!res.ok) {
-                    // Se for 404, significa que a rota não existe - ignorar silenciosamente
+                    // Se for 404, significa que a rota n�o existe - ignorar silenciosamente
                     if (res.status === 404) {
-                        logger.debug("Rota de notas fiscais não disponível (404) - ignorando");
+                        logger.debug("Rota de notas fiscais n�o dispon�vel (404) - ignorando");
                         throw new Error('NOT_FOUND');
                     }
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -7142,13 +3499,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
-                // CORREÇÃO: Não logar erro se for NOT_FOUND ou erro de rede
+                // CORRE��O: N�o logar erro se for NOT_FOUND ou erro de rede
                 if (error.message === 'NOT_FOUND') {
-                    // Silencioso - rota não implementada ainda
+                    // Silencioso - rota n�o implementada ainda
                     setNotasFiscais([]);
                 } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    // Erro de rede - não logar (evita spam no console)
-                    logger.warn("Notas fiscais: rota não disponível");
+                    // Erro de rede - n�o logar (evita spam no console)
+                    logger.warn("Notas fiscais: rota n�o dispon�vel");
                     setNotasFiscais([]);
                 } else {
                     // Outros erros - logar normalmente
@@ -7163,7 +3520,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     
     // <--- NOVO: Helper para verificar se item tem nota fiscal -->
     const itemHasNotaFiscal = (item) => {
-        // <-- CORREÇÃO: Usar o ID correto baseado no tipo de registro
+        // <-- CORRE��O: Usar o ID correto baseado no tipo de registro
         const realItemId = item.tipo_registro === 'lancamento' 
             ? item.lancamento_id 
             : item.pagamento_id;
@@ -7173,9 +3530,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         );
     };
 
-    // --- FUNÇÕES DE AÇÃO (CRUD) ---
+    // --- FUN��ES DE A��O (CRUD) ---
     const handleAddObra = (e) => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
@@ -7185,14 +3542,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => logger.error('Erro ao deletar obra:', error));
     };
     
-    // NOVO: Função para marcar obra como concluída/reabrir
+    // NOVO: Fun��o para marcar obra como conclu�da/reabrir
     const handleConcluirObra = async (obraId, concluida) => {
         const acao = concluida ? 'reabrir' : 'concluir';
         if (!await confirmDialog(`Deseja ${acao} esta obra?`, { confirmText: 'Confirmar' })) return;
@@ -7212,7 +3569,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
-    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
+    // <--- MUDAN�A: Esta fun��o (marcar pago 100%) ser� chamada pelo modal de edi��o, n�o mais pelo bot�o -->
     const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
@@ -7235,15 +3592,15 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
 
     const handleDeletarLancamento = (itemId) => {
-         // ... (código inalterado)
+         // ... (c�digo inalterado)
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
-            logger.debug("Deletando lançamento geral:", actualId);
+            logger.debug("Deletando lan�amento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => logger.error('Erro ao deletar lançamento:', error));
+                .catch(error => logger.error('Erro ao deletar lan�amento:', error));
         }
     };
     
@@ -7251,12 +3608,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // <--- MUDANÇA: Atualizado para enviar valor_total e valor_pago -->
+    // <--- MUDAN�A: Atualizado para enviar valor_total e valor_pago -->
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
-            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANÇA
-            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANÇA
+            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDAN�A
+            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDAN�A
             servico_id: updatedLancamento.servico_id || null 
         };
         // Remove 'valor' se existir por acidente
@@ -7267,23 +3624,23 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar edição:", error));
+        .catch(error => logger.error("Erro ao salvar edi��o:", error));
     };
     
-    // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
+    // <--- MUDAN�A: handleSaveLancamento (o 'valor' do formul�rio � o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
-        logger.debug("Salvando novo lançamento:", lancamentoData);
-        // O formulário envia 'valor', mas o backend espera 'valor'
-        // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
+        logger.debug("Salvando novo lan�amento:", lancamentoData);
+        // O formul�rio envia 'valor', mas o backend espera 'valor'
+        // A l�gica do backend j� converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar lançamento:", error));
+        .catch(error => logger.error("Erro ao salvar lan�amento:", error));
     };
     
-    // MUDANÇA 3: NOVO handler para Inserir Pagamento
+    // MUDAN�A 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
         logger.debug("Inserindo novo pagamento:", pagamentoData);
         
@@ -7299,14 +3656,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         
         await response.json();
         fetchObraData(obraSelecionada.id); // Atualiza dados em background
-        // Não mostra alert - o modal cuida do toast
-        // Não fecha modal - isso é controlado pelo callback onSave
+        // N�o mostra alert - o modal cuida do toast
+        // N�o fecha modal - isso � controlado pelo callback onSave
     };
 
-    // --- Handlers de Orçamento (inalterados) ---
+    // --- Handlers de Or�amento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
-        // ... (código inalterado)
-        logger.debug("Salvando novo orçamento...");
+        // ... (c�digo inalterado)
+        logger.debug("Salvando novo or�amento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
             body: formData
@@ -7316,13 +3673,13 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => {
-            logger.error("Erro ao salvar orçamento:", error);
-            notify.error(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+            logger.error("Erro ao salvar or�amento:", error);
+            notify.error(`Erro ao salvar or�amento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
-        // ... (código inalterado)
-        logger.debug("Salvando edição do orçamento:", orcamentoId);
+        // ... (c�digo inalterado)
+        logger.debug("Salvando edi��o do or�amento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
@@ -7353,32 +3710,32 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar edição do orçamento:", error);
-            notify.error(`Erro ao salvar edição: ${error.message}`);
+            logger.error("Erro ao salvar edi��o do or�amento:", error);
+            notify.error(`Erro ao salvar edi��o: ${error.message}`);
         });
     };
     const handleAprovarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao aprovar orçamento:", error));
+        .catch(error => logger.error("Erro ao aprovar or�amento:", error));
     };
     const handleRejeitarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
+        .catch(error => logger.error("Erro ao rejeitar solicita��o:", error));
     };
 
     // Handler do PDF da Obra
     const handleExportObraPDF = () => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         if (!obraSelecionada) return;
         
         setIsExportingPDF(true);
@@ -7398,14 +3755,14 @@ const totalOrcamentosPendentes = useMemo(() => {
             })
             .catch(err => {
                 logger.error("Erro ao gerar PDF da obra:", err);
-                notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
+                notify.error("N�o foi poss�vel gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
     };
 
     // Handler de Prioridade
     const handleSaveServicoPrioridade = (novaPrioridade) => {
-        // ... (código inalterado)
+        // ... (c�digo inalterado)
         if (!editingServicoPrioridade) return;
 
         const pagamentoId = editingServicoPrioridade.pagamento_id;
@@ -7420,12 +3777,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar prioridade do serviço:", error);
+            logger.error("Erro ao salvar prioridade do servi�o:", error);
             notify.error(`Erro ao salvar prioridade: ${error.message}`);
         });
     };
 
-    // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
+    // <--- MUDAN�A: NOVA FUN��O HANDLER PARA PAGAMENTO PARCIAL ---
     const handleSavePartialPayment = (valor_a_pagar) => {
         if (!payingItem) return;
 
@@ -7450,22 +3807,22 @@ const totalOrcamentosPendentes = useMemo(() => {
         })
         .catch(error => {
             logger.error("Erro ao registrar pagamento parcial:", error);
-            // Mostra o erro de validação (ex: "valor maior que o restante")
+            // Mostra o erro de valida��o (ex: "valor maior que o restante")
             // Precisamos garantir que o modal esteja aberto para mostrar o erro
             if (payingItem) {
                 notify.error(`Erro: ${error.message}`);
             }
         });
     };
-    // <--- FIM DA NOVA FUNÇÃO ---
+    // <--- FIM DA NOVA FUN��O ---
 
 
-    // --- RENDERIZAÇÃO ---
+    // --- RENDERIZA��O ---
     
-    // Função para selecionar obra e ir para cronograma financeiro
+    // Fun��o para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        // Usar navigateTo para atualizar histórico do browser
+        // Usar navigateTo para atualizar hist�rico do browser
         if (typeof window.navigateTo === 'function') {
             window.navigateTo('home', obraId);
         } else {
@@ -7477,7 +3834,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     window.handleSelectObra = handleSelectObra;
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
-    // CORREÇÃO: Se estiver carregando obra da URL, mostrar loading
+    // CORRE��O: Se estiver carregando obra da URL, mostrar loading
     if (carregandoObraDaUrl) {
         return (
             <div style={{ 
@@ -7505,7 +3862,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     }
 
     if (!obraSelecionada) {
-        // 🆕 Se estiver na página de BI, mostrar dashboard
+        // ?? Se estiver na p�gina de BI, mostrar dashboard
         if (currentPage === 'bi') {
             return (
                 <BiDashboard
@@ -7531,13 +3888,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
-                        {/* 🆕 Botão BI Dashboard */}
+                        {/* ?? Bot�o BI Dashboard */}
                         <button 
                             onClick={() => setCurrentPage('bi')} 
                             className="export-btn" 
                             style={{marginRight: '10px', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6'}}
                         >
-                            📈 BI Dashboard
+                            ?? BI Dashboard
                         </button>
                         
                         <button 
@@ -7545,12 +3902,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                             className="export-btn pdf" 
                             style={{marginRight: '10px'}}
                         >
-                            📊 Relatório Financeiro
+                            ?? Relat�rio Financeiro
                         </button>
                         
                         {user.role === 'master' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
-                                Gerenciar Usuários
+                                Gerenciar Usu�rios
                             </button>
                         )}
                         <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
@@ -7568,7 +3925,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 )}
                 
-                {/* Toggle para mostrar obras concluídas */}
+                {/* Toggle para mostrar obras conclu�das */}
                 <div style={{ 
                     display: 'flex', 
                     justifyContent: 'flex-end', 
@@ -7590,7 +3947,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             onChange={(e) => setMostrarConcluidas(e.target.checked)}
                             style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
-                        Mostrar obras concluídas
+                        Mostrar obras conclu�das
                     </label>
                 </div>
                 
@@ -7618,7 +3975,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         fontSize: '0.75em',
                                         fontWeight: 'bold'
                                     }}>
-                                        ✓ CONCLUÍDA
+                                        ? CONCLU�DA
                                     </div>
                                 )}
                                 
@@ -7627,7 +3984,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleConcluirObra(obra.id, obra.concluida); }}
                                             className="card-obra-action-btn"
-                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Concluída'}
+                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Conclu�da'}
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
@@ -7638,14 +3995,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 opacity: 0.7
                                             }}
                                         >
-                                            {obra.concluida ? '🔄' : '✅'}
+                                            {obra.concluida ? '??' : '?'}
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
                                             className="card-obra-delete-btn"
                                             title="Excluir Obra"
                                         >
-                                            🗑️
+                                            ???
                                         </button>
                                     </div>
                                 )}
@@ -7656,7 +4013,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     
                                     <div className="obra-kpi-summary">
                                         <div>
-                                            <span>Orçamento Total</span>
+                                            <span>Or�amento Total</span>
                                             <strong style={{ color: 'var(--cor-vermelho)' }}>
                                                 {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
@@ -7684,7 +4041,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             </div>
                         ))
                     ) : (
-                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
+                        <p>Nenhuma obra cadastrada ou voc� ainda n�o tem permiss�o para ver nenhuma.</p>
                     )}
                 </div>
             </div>
@@ -7696,12 +4053,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         return <div className="loading-screen">Carregando dados da obra...</div>;
     }
 
-    // === LAYOUT COM NAVEGAÇÃO WINDOWS (OBRA SELECIONADA) ===
+    // === LAYOUT COM NAVEGA��O WINDOWS (OBRA SELECIONADA) ===
     return (
         <>
             <WindowsNavStyles />
             <div className="app-layout-windows">
-                {/* Navegação Windows */}
+                {/* Navega��o Windows */}
                 <WindowsNavBar 
                     user={user}
                     currentPage={currentPage}
@@ -7712,14 +4069,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                     onLogout={logout}
                 />
                 
-                {/* Conteúdo Principal */}
+                {/* Conte�do Principal */}
                 <main className="main-content-windows">
 
-                    {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
+                    {/* === P�GINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
-                            {/* Header com Título + Cards de Resumo */}
-                           {/* Header com Título + Cards de Resumo */}
+                            {/* Header com T�tulo + Cards de Resumo */}
+                           {/* Header com T�tulo + Cards de Resumo */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -7732,7 +4089,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 flexWrap: 'wrap',
                                 gap: '16px'
                             }}>
-                                {/* Título */}
+                                {/* T�tulo */}
                                 <h1 style={{ 
                                     margin: 0,
                                     fontSize: '1.4rem',
@@ -7741,7 +4098,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     gap: '10px',
                                     color: '#1e293b'
                                 }}>
-                                    🏠 Início - {obraSelecionada.nome}
+                                    ?? In�cio - {obraSelecionada.nome}
                                 </h1>
 
                                 {/* Cards de Resumo - Usando valores do backend (sumarios) */}
@@ -7757,7 +4114,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         borderLeft: '4px solid #ef4444',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Or�amento Total</div>
                                         <div style={{ fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
                                             {formatCurrency(sumarios?.orcamento_total || 0)}
                                         </div>
@@ -7804,7 +4161,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 </div>
                             </div>
                             
-                            {/* Dashboard com Gráficos */}
+                            {/* Dashboard com Gr�ficos */}
                             <DashboardObra 
                                 obraId={obraSelecionada.id}
                                 obraNome={obraSelecionada.nome}
@@ -7825,7 +4182,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 simplified={true}
                             />
                             
-                            {/* Histórico de Pagamentos */}
+                            {/* Hist�rico de Pagamentos */}
                             <HistoricoPagamentosCard 
                                 itemsPagos={itemsPagos}
                                 itemsAPagar={itemsAPagar}
@@ -7836,7 +4193,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         </div>
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
+                    {/* === P�GINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
                     {currentPage === 'cronograma-obra' && (
                         <CronogramaObra 
                             obraId={obraSelecionada.id}
@@ -7846,7 +4203,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: ORÇAMENTO DE ENGENHARIA === */}
+                    {/* === P�GINA: OR�AMENTO DE ENGENHARIA === */}
                     {currentPage === 'orcamento-eng' && (
                         <OrcamentoEngenharia 
                             obraId={obraSelecionada.id}
@@ -7856,7 +4213,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Completo) === */}
+                    {/* === P�GINA: CRONOGRAMA FINANCEIRO (Completo) === */}
                     {currentPage === 'financeiro' && (
                         <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
@@ -7870,7 +4227,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
+                    {/* === P�GINA: INSERIR PAGAMENTO === */}
                     {currentPage === 'pagamento' && (
                         <InserirPagamentoModal
                             obraId={obraSelecionada.id}
@@ -7887,7 +4244,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: RELATÓRIOS === */}
+                    {/* === P�GINA: RELAT�RIOS === */}
                     {currentPage === 'relatorios' && (
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
@@ -7898,7 +4255,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: ORÇAMENTOS === */}
+                    {/* === P�GINA: OR�AMENTOS === */}
                     {currentPage === 'orcamentos' && (
                         <OrcamentosModal
                             obraId={obraSelecionada.id}
@@ -7908,7 +4265,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: DIÁRIO DE OBRAS === */}
+                    {/* === P�GINA: DI�RIO DE OBRAS === */}
                     {currentPage === 'diario' && (
                         <DiarioObras 
                             obraId={obraSelecionada.id}
@@ -7918,7 +4275,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: AGENDA DE DEMANDAS === */}
+                    {/* === P�GINA: AGENDA DE DEMANDAS === */}
                     {currentPage === 'agenda' && (
                         <AgendaDemandas 
                             obraId={obraSelecionada.id}
@@ -7929,7 +4286,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: CAIXA DE OBRA === */}
+                    {/* === P�GINA: CAIXA DE OBRA === */}
                     {currentPage === 'caixa' && (
                         <CaixaObraModal
                             obraId={obraSelecionada.id}
@@ -7939,7 +4296,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: GESTÃO DE BOLETOS === */}
+                    {/* === P�GINA: GEST�O DE BOLETOS === */}
                     {currentPage === 'boletos' && (
                         <GestaoBoletos
                             obraId={obraSelecionada.id}
@@ -7948,7 +4305,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
+                    {/* === P�GINA: GERENCIAR USU�RIOS === */}
                     {currentPage === 'usuarios' && (
                         <AdminPanelModal 
                             allObras={obras}
@@ -7991,13 +4348,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                 {/* Barra de Status */}
                 <div className="windows-status-bar">
                     <div className="status-bar-left">
-                        <span className="status-bar-item">📍 {obraSelecionada.nome}</span>
-                        <span className="status-bar-item">•</span>
-                        <span className="status-bar-item">Página: {currentPage}</span>
+                        <span className="status-bar-item">?? {obraSelecionada.nome}</span>
+                        <span className="status-bar-item">�</span>
+                        <span className="status-bar-item">P�gina: {currentPage}</span>
                     </div>
                     <div className="status-bar-right">
-                        <span className="status-bar-item">👤 {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
-                        <span className="status-bar-item">•</span>
+                        <span className="status-bar-item">?? {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
+                        <span className="status-bar-item">�</span>
                         <span className="status-bar-item">{new Date().toLocaleDateString('pt-BR')}</span>
                     </div>
                 </div>
@@ -8033,250 +4390,8 @@ const totalOrcamentosPendentes = useMemo(() => {
 // COMPONENTE CRONOGRAMA FINANCEIRO
 // ===================================
 
-// Modal para Cadastrar Pagamento Futuro (Único)
-const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId, itensOrcamento = [] }) => {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        valor: '',
-        data_vencimento: getTodayString(),
-        fornecedor: '',
-        pix: '',
-        codigo_barras: '',
-        observacoes: '',
-        orcamento_item_id: ''
-    });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onSave({
-            ...formData,
-            orcamento_item_id: formData.orcamento_item_id || null
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💰 Cadastrar Pagamento Futuro</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento">
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Valor:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor}
-                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Data de Vencimento:
-                    <input
-                        type="date"
-                        value={formData.data_vencimento}
-                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-
-                <label>
-                    Chave PIX:
-                    <input
-                        type="text"
-                        value={formData.pix}
-                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
-                        placeholder="CPF, telefone, email ou chave aleatória"
-                        maxLength="100"
-                    />
-                </label>
-
-                <label>
-                    Código de Barras / Linha Digitável:
-                    <input
-                        type="text"
-                        value={formData.codigo_barras}
-                        onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
-                        placeholder="Ex: 34191.09008 12345.678901..."
-                        maxLength="100"
-                    />
-                </label>
-                
-                <label>
-                    📦 Vincular a Item do Orçamento:
-                    <select
-                        value={formData.orcamento_item_id || ''}
-                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
-                    >
-                        <option value="">-- Nenhum (Despesa Geral) --</option>
-                        {itensOrcamento.map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
-                    </small>
-                </label>
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="3"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn">Cadastrar</button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-// Modal para Editar Pagamento Futuro
-const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento, itensOrcamento = [] }) => {
-    const [formData, setFormData] = useState({
-        descricao: pagamento.descricao || '',
-        valor: pagamento.valor || '',
-        data_vencimento: pagamento.data_vencimento || getTodayString(),
-        fornecedor: pagamento.fornecedor || '',
-        pix: pagamento.pix || '',
-        codigo_barras: pagamento.codigo_barras || '',
-        observacoes: pagamento.observacoes || '',
-        orcamento_item_id: pagamento.orcamento_item_id || ''
-    });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        await onSave({
-            ...formData,
-            orcamento_item_id: formData.orcamento_item_id || null
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>✏️ Editar Pagamento Futuro</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento">
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Valor:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor}
-                        onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Data de Vencimento:
-                    <input
-                        type="date"
-                        value={formData.data_vencimento}
-                        onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-
-                <label>
-                    Chave PIX:
-                    <input
-                        type="text"
-                        value={formData.pix}
-                        onChange={(e) => setFormData({...formData, pix: e.target.value})}
-                        placeholder="CPF, telefone, email ou chave aleatória"
-                        maxLength="100"
-                    />
-                </label>
-
-                <label>
-                    Código de Barras / Linha Digitável:
-                    <input
-                        type="text"
-                        value={formData.codigo_barras || ""}
-                        onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
-                        placeholder="Ex: 34191.09008 12345.678901..."
-                        maxLength="100"
-                    />
-                </label>
-                
-                <label>
-                    📦 Vincular a Item do Orçamento:
-                    <select
-                        value={formData.orcamento_item_id || ''}
-                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
-                    >
-                        <option value="">-- Nenhum (Despesa Geral) --</option>
-                        {itensOrcamento.map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
-                    </small>
-                </label>
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="3"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn">Salvar</button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-
-
-// ===== COMPONENTE: GESTÃO DE BOLETOS =====
+// Modal para Cadastrar Pagamento Futuro (�nico)
+// ===== COMPONENTE: GEST�O DE BOLETOS =====
 const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     const [boletos, setBoletos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -8364,7 +4479,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 fetchBoletos();
                 fetchResumo();
                 if (onUpdate) onUpdate(); // Atualizar tela principal
-                notify.success('✅ Boleto marcado como pago!');
+                notify.success('? Boleto marcado como pago!');
             }
         } catch (error) {
             logger.error('Erro ao marcar como pago:', error);
@@ -8393,10 +4508,10 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
         }
     };
     
-    // Copiar código de barras
+    // Copiar c�digo de barras
     const copiarCodigo = (codigo) => {
         navigator.clipboard.writeText(codigo);
-        notify.success('Código de barras copiado!');
+        notify.success('C�digo de barras copiado!');
     };
     
     // Ver preview do PDF
@@ -8411,14 +4526,14 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 const data = await response.json();
                 setModalPreview(data);
             } else {
-                notify.info('Boleto não possui arquivo anexado');
+                notify.info('Boleto n�o possui arquivo anexado');
             }
         } catch (error) {
             logger.error('Erro ao buscar arquivo:', error);
         }
     };
     
-    // Agrupar boletos por urgência
+    // Agrupar boletos por urg�ncia
     const boletosVencidos = boletos.filter(b => b.status === 'Vencido' || (b.status === 'Pendente' && b.dias_para_vencer < 0));
     const boletosUrgentes = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer >= 0 && b.dias_para_vencer <= 3);
     const boletosProximos = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer > 3 && b.dias_para_vencer <= 7);
@@ -8447,11 +4562,11 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                     <div>
                         <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
-                            🏢 {boleto.descricao}
+                            ?? {boleto.descricao}
                         </h4>
                         {boleto.beneficiario && (
                             <span style={{ fontSize: '0.85em', color: '#666' }}>
-                                Beneficiário: {boleto.beneficiario}
+                                Benefici�rio: {boleto.beneficiario}
                             </span>
                         )}
                         {boleto.servico_nome && (
@@ -8463,7 +4578,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 alignItems: 'center',
                                 gap: '5px'
                             }}>
-                                🔗 Vinculado: <strong>{boleto.servico_nome}</strong>
+                                ?? Vinculado: <strong>{boleto.servico_nome}</strong>
                             </div>
                         )}
                     </div>
@@ -8475,9 +4590,9 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         fontSize: '0.8em',
                         fontWeight: 'bold'
                     }}>
-                        {boleto.status === 'Pago' ? '✅ Pago' : 
-                         boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
-                         boleto.dias_para_vencer === 0 ? '🚨 Vence HOJE' :
+                        {boleto.status === 'Pago' ? '? Pago' : 
+                         boleto.dias_para_vencer < 0 ? `Vencido h� ${Math.abs(boleto.dias_para_vencer)}d` :
+                         boleto.dias_para_vencer === 0 ? '?? Vence HOJE' :
                          `${boleto.dias_para_vencer}d para vencer`}
                     </span>
                 </div>
@@ -8516,7 +4631,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         wordBreak: 'break-all'
                     }}>
                         <span style={{ fontSize: '0.8em', color: '#666', display: 'block', marginBottom: '5px' }}>
-                            Código de Barras:
+                            C�digo de Barras:
                         </span>
                         {boleto.codigo_barras}
                     </div>
@@ -8536,7 +4651,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 fontSize: '0.85em'
                             }}
                         >
-                            📋 Copiar Código
+                            ?? Copiar C�digo
                         </button>
                     )}
                     
@@ -8553,7 +4668,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 fontSize: '0.85em'
                             }}
                         >
-                            👁️ Ver PDF
+                            ??? Ver PDF
                         </button>
                     )}
                     
@@ -8570,7 +4685,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 fontSize: '0.85em'
                             }}
                         >
-                            ✅ Marcar Pago
+                            ? Marcar Pago
                         </button>
                     )}
                     
@@ -8586,7 +4701,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             fontSize: '0.85em'
                         }}
                     >
-                        🗑️
+                        ???
                     </button>
                 </div>
             </div>
@@ -8604,7 +4719,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 flexWrap: 'wrap',
                 gap: '10px'
             }}>
-                <h2 style={{ margin: 0 }}>📄 Gestão de Boletos</h2>
+                <h2 style={{ margin: 0 }}>?? Gest�o de Boletos</h2>
                 <button
                     onClick={() => setModalCadastro(true)}
                     style={{
@@ -8708,27 +4823,27 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {boletosVencidos.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#d32f2f', marginBottom: '10px' }}>
-                                ❌ VENCIDOS ({boletosVencidos.length})
+                                ? VENCIDOS ({boletosVencidos.length})
                             </h3>
                             {boletosVencidos.map(b => renderBoletoCard(b, 'vencido'))}
                         </div>
                     )}
                     
-                    {/* Urgentes (≤3 dias) */}
+                    {/* Urgentes (=3 dias) */}
                     {boletosUrgentes.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#f57c00', marginBottom: '10px' }}>
-                                🚨 URGENTE - Vence em até 3 dias ({boletosUrgentes.length})
+                                ?? URGENTE - Vence em at� 3 dias ({boletosUrgentes.length})
                             </h3>
                             {boletosUrgentes.map(b => renderBoletoCard(b, 'urgente'))}
                         </div>
                     )}
                     
-                    {/* Próximos (4-7 dias) */}
+                    {/* Pr�ximos (4-7 dias) */}
                     {boletosProximos.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#ffa000', marginBottom: '10px' }}>
-                                ⚠️ Vence em até 7 dias ({boletosProximos.length})
+                                ?? Vence em at� 7 dias ({boletosProximos.length})
                             </h3>
                             {boletosProximos.map(b => renderBoletoCard(b, 'proximo'))}
                         </div>
@@ -8738,7 +4853,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {boletosNormais.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#666', marginBottom: '10px' }}>
-                                📄 Próximos vencimentos ({boletosNormais.length})
+                                ?? Pr�ximos vencimentos ({boletosNormais.length})
                             </h3>
                             {boletosNormais.map(b => renderBoletoCard(b, 'normal'))}
                         </div>
@@ -8748,7 +4863,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {boletosPagos.length > 0 && filtroStatus === 'todos' && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#388e3c', marginBottom: '10px' }}>
-                                ✅ Pagos ({boletosPagos.length})
+                                ? Pagos ({boletosPagos.length})
                             </h3>
                             {boletosPagos.map(b => renderBoletoCard(b, 'pago'))}
                         </div>
@@ -8773,9 +4888,9 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
             {/* Modal de Preview do PDF */}
             {modalPreview && (
                 <Modal onClose={() => setModalPreview(null)}>
-                    <h2>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
+                    <h2>?? {modalPreview.arquivo_nome || 'Boleto'}</h2>
                     <div style={{ height: '70vh', marginTop: '15px', position: 'relative' }}>
-                        {/* Usar object em vez de iframe para evitar disparo de impressão */}
+                        {/* Usar object em vez de iframe para evitar disparo de impress�o */}
                         <object
                             data={`data:application/pdf;base64,${modalPreview.arquivo_base64}#toolbar=1&navpanes=0&scrollbar=1`}
                             type="application/pdf"
@@ -8790,7 +4905,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: '#f5f5f5',
                                 borderRadius: '5px'
                             }}>
-                                <p>Seu navegador não suporta visualização de PDF.</p>
+                                <p>Seu navegador n�o suporta visualiza��o de PDF.</p>
                                 <a 
                                     href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
                                     download={modalPreview.arquivo_nome || 'boleto.pdf'}
@@ -8803,7 +4918,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                         marginTop: '10px'
                                     }}
                                 >
-                                    📥 Baixar PDF
+                                    ?? Baixar PDF
                                 </a>
                             </div>
                         </object>
@@ -8821,7 +4936,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 cursor: 'pointer'
                             }}
                         >
-                            📥 Baixar PDF
+                            ?? Baixar PDF
                         </a>
                         <button
                             onClick={() => setModalPreview(null)}
@@ -8843,2290 +4958,6 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     );
 };
 
-// Modal para Cadastrar Boleto com Upload de PDF
-const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        beneficiario: '',
-        valor: '',
-        data_vencimento: getTodayString(),
-        codigo_barras: '',
-        vinculado_servico_id: ''  // Serviço vinculado
-    });
-    const [arquivo, setArquivo] = useState(null);
-    const [arquivoBase64, setArquivoBase64] = useState(null);
-    const [extraindo, setExtraindo] = useState(false);
-    const [salvando, setSalvando] = useState(false);
-    const [multiplosboletos, setMultiplosBoletos] = useState(null); // Lista de boletos encontrados
-    const [salvandoTodos, setSalvandoTodos] = useState(false);
-    const [servicos, setServicos] = useState([]);  // Lista de serviços da obra
-    
-    // Carregar serviços da obra
-    useEffect(() => {
-        const fetchServicos = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/obras/${obraId}/servicos`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setServicos(data || []);
-                }
-            } catch (error) {
-                logger.error('Erro ao carregar serviços:', error);
-            }
-        };
-        fetchServicos();
-    }, [obraId]);
-    
-    // Converter arquivo para Base64
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        if (file.type !== 'application/pdf') {
-            notify.warning('Por favor, selecione um arquivo PDF');
-            return;
-        }
-        
-        setArquivo(file);
-        setMultiplosBoletos(null); // Reset
-        
-        // Converter para Base64
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const base64 = event.target.result.split(',')[1];
-            setArquivoBase64(base64);
-            
-            // Tentar extrair dados do PDF
-            await extrairDadosPDF(base64);
-        };
-        reader.readAsDataURL(file);
-    };
-    
-    // Extrair dados do PDF
-    const extrairDadosPDF = async (base64) => {
-        try {
-            setExtraindo(true);
-            const token = localStorage.getItem('token');
-            
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/extrair-pdf`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ arquivo_base64: base64 })
-            });
-            
-            if (response.ok) {
-                const dados = await response.json();
-                logger.debug('Dados extraídos:', dados);
-                
-                if (dados.sucesso) {
-                    // Verificar se há múltiplos boletos
-                    if (dados.multiplos && dados.quantidade > 1) {
-                        setMultiplosBoletos(dados.boletos);
-                        notify.info(`📄 Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
-                    } else {
-                        // Boleto único - preencher formulário
-                        const dadosExtraidos = [];
-                        
-                        if (dados.codigo_barras) {
-                            setFormData(prev => ({ ...prev, codigo_barras: dados.codigo_barras }));
-                            dadosExtraidos.push('Código de barras');
-                        }
-                        if (dados.valor) {
-                            setFormData(prev => ({ ...prev, valor: dados.valor.toString() }));
-                            dadosExtraidos.push('Valor');
-                        }
-                        if (dados.data_vencimento) {
-                            setFormData(prev => ({ ...prev, data_vencimento: dados.data_vencimento }));
-                            dadosExtraidos.push('Data de vencimento');
-                        }
-                        if (dados.beneficiario) {
-                            setFormData(prev => ({ ...prev, beneficiario: dados.beneficiario }));
-                            dadosExtraidos.push('Beneficiário');
-                        }
-                        
-                        notify.success(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
-                    }
-                } else {
-                    notify.error('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
-                }
-            } else {
-                const erro = await response.json();
-                logger.error('Erro na API:', erro);
-                notify.error('⚠️ Erro ao processar PDF. Preencha manualmente.');
-            }
-        } catch (error) {
-            logger.error('Erro ao extrair dados:', error);
-            notify.error('⚠️ Erro de conexão. Preencha manualmente.');
-        } finally {
-            setExtraindo(false);
-        }
-    };
-    
-    // Cadastrar TODOS os boletos de uma vez
-    const cadastrarTodosBoletos = async () => {
-        // Proteção contra duplo clique
-        if (salvandoTodos) return;
-        if (!multiplosboletos || multiplosboletos.length === 0) return;
-        
-        const descricaoBase = prompt('Digite uma descrição base para os boletos:', 'Boleto');
-        if (!descricaoBase) return;
-        
-        setSalvandoTodos(true); // Mover para antes do try para garantir
-        
-        try {
-            const token = localStorage.getItem('token');
-            let sucessos = 0;
-            let erros = 0;
-            
-            for (let i = 0; i < multiplosboletos.length; i++) {
-                const boleto = multiplosboletos[i];
-                
-                const payload = {
-                    descricao: `${descricaoBase} - Parcela ${i + 1}/${multiplosboletos.length}`,
-                    beneficiario: boleto.beneficiario || '',
-                    codigo_barras: boleto.codigo_barras || '',
-                    valor: boleto.valor || 0,
-                    data_vencimento: boleto.data_vencimento,
-                    vinculado_servico_id: formData.vinculado_servico_id ? parseInt(formData.vinculado_servico_id) : null,  // Usar serviço selecionado
-                    arquivo_nome: arquivo?.name,
-                    arquivo_base64: arquivoBase64
-                };
-                
-                try {
-                    const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        sucessos++;
-                    } else if (response.status === 409) {
-                        // Boleto duplicado - ignorar silenciosamente
-                        logger.debug(`Boleto ${i + 1} já existe, ignorando...`);
-                    } else {
-                        erros++;
-                    }
-                } catch {
-                    erros++;
-                }
-            }
-            
-            notify.error(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
-            setMultiplosBoletos(null); // Limpar lista para evitar duplicação
-            onSave();
-            onClose();
-            
-        } catch (error) {
-            logger.error('Erro ao cadastrar boletos:', error);
-            notify.error('Erro ao cadastrar boletos');
-        } finally {
-            setSalvandoTodos(false);
-        }
-    };
-    
-    // Selecionar um boleto específico da lista
-    const selecionarBoleto = (boleto) => {
-        setFormData({
-            descricao: '',
-            beneficiario: boleto.beneficiario || '',
-            valor: boleto.valor ? boleto.valor.toString() : '',
-            data_vencimento: boleto.data_vencimento || '',
-            codigo_barras: boleto.codigo_barras || ''
-        });
-        setMultiplosBoletos(null); // Sair do modo múltiplos
-    };
-    
-    // Salvar boleto
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!formData.descricao || !formData.valor || !formData.data_vencimento) {
-            notify.warning('Preencha os campos obrigatórios');
-            return;
-        }
-        
-        try {
-            setSalvando(true);
-            const token = localStorage.getItem('token');
-            
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    valor: parseFloat(formData.valor),
-                    vinculado_servico_id: formData.vinculado_servico_id ? parseInt(formData.vinculado_servico_id) : null,
-                    arquivo_nome: arquivo?.name || null,
-                    arquivo_base64: arquivoBase64
-                })
-            });
-            
-            if (response.ok) {
-                notify.success('✅ Boleto cadastrado com sucesso!');
-                onSave();
-            } else {
-                const error = await response.json();
-                notify.error(`Erro: ${error.erro}`);
-            }
-        } catch (error) {
-            logger.error('Erro ao salvar:', error);
-            notify.error('Erro ao salvar boleto');
-        } finally {
-            setSalvando(false);
-        }
-    };
-    
-    // Copiar código
-    const copiarCodigo = () => {
-        if (formData.codigo_barras) {
-            navigator.clipboard.writeText(formData.codigo_barras);
-            notify.success('Código copiado!');
-        }
-    };
-    
-    return (
-        <Modal onClose={onClose}>
-            <h2>📄 Cadastrar Novo Boleto</h2>
-            <p style={{ color: '#666', marginBottom: '15px' }}>
-                Faça upload do PDF do boleto para extração automática dos dados.
-            </p>
-            
-            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                {/* Upload de PDF */}
-                <div style={{
-                    border: '2px dashed #1976d2',
-                    borderRadius: '10px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    marginBottom: '20px',
-                    background: arquivo ? '#e3f2fd' : '#f5f5f5'
-                }}>
-                    <input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                        id="pdf-upload"
-                    />
-                    <label htmlFor="pdf-upload" style={{ cursor: 'pointer' }}>
-                        {extraindo ? (
-                            <span>⏳ Extraindo dados do PDF...</span>
-                        ) : arquivo ? (
-                            <span>✅ {arquivo.name}</span>
-                        ) : (
-                            <span>📁 Clique para selecionar o PDF do boleto</span>
-                        )}
-                    </label>
-                </div>
-                
-                {/* Confirmação de PDF carregado - sem preview para evitar impressão */}
-                {arquivoBase64 && !multiplosboletos && (
-                    <div style={{ 
-                        marginBottom: '20px', 
-                        padding: '15px',
-                        background: '#e3f2fd',
-                        borderRadius: '8px',
-                        border: '1px solid #90caf9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px'
-                    }}>
-                        <span style={{ fontSize: '24px' }}>✅</span>
-                        <div>
-                            <strong style={{ color: '#1976d2' }}>PDF carregado com sucesso!</strong>
-                            <br />
-                            <span style={{ fontSize: '12px', color: '#666' }}>{arquivo?.name}</span>
-                        </div>
-                    </div>
-                )}
-                
-                {/* MÚLTIPLOS BOLETOS ENCONTRADOS */}
-                {multiplosboletos && multiplosboletos.length > 1 && (
-                    <div style={{
-                        marginBottom: '20px',
-                        padding: '15px',
-                        background: '#fff3e0',
-                        borderRadius: '8px',
-                        border: '1px solid #ffb74d'
-                    }}>
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            marginBottom: '15px'
-                        }}>
-                            <h3 style={{ margin: 0, color: '#e65100' }}>
-                                📄 {multiplosboletos.length} Boletos Encontrados
-                            </h3>
-                        </div>
-                        
-                        {/* Dropdown de Serviço para múltiplos boletos */}
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: 'bold', fontSize: '13px', color: '#333' }}>
-                                Vincular todos a um Serviço:
-                            </label>
-                            <select
-                                value={formData.vinculado_servico_id}
-                                onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
-                                style={{ 
-                                    width: '100%', 
-                                    padding: '8px', 
-                                    marginTop: '5px',
-                                    borderRadius: '5px', 
-                                    border: '1px solid #ddd' 
-                                }}
-                            >
-                                <option value="">-- Nenhum (Despesa Extra) --</option>
-                                {servicos.map(servico => (
-                                    <option key={servico.id} value={servico.id}>
-                                        {servico.nome}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        
-                        <div style={{ marginBottom: '10px' }}>
-                            <button
-                                type="button"
-                                onClick={cadastrarTodosBoletos}
-                                disabled={salvandoTodos}
-                                style={{
-                                    padding: '10px 20px',
-                                    background: salvandoTodos ? '#ccc' : '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: salvandoTodos ? 'default' : 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold',
-                                    width: '100%'
-                                }}
-                            >
-                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar Todos os ${multiplosboletos.length} Boletos`}
-                            </button>
-                        </div>
-                        
-                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>
-                            Ou clique em um boleto específico para cadastrá-lo individualmente:
-                        </p>
-                        
-                        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                            {multiplosboletos.map((boleto, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => selecionarBoleto(boleto)}
-                                    style={{
-                                        padding: '10px',
-                                        marginBottom: '8px',
-                                        background: 'white',
-                                        borderRadius: '5px',
-                                        border: '1px solid #ddd',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.background = '#e3f2fd'}
-                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
-                                >
-                                    <div>
-                                        <strong style={{ color: '#1976d2' }}>
-                                            Parcela {index + 1}
-                                        </strong>
-                                        <br />
-                                        <span style={{ fontSize: '12px', color: '#666' }}>
-                                            Venc: {boleto.data_vencimento ? new Date(boleto.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
-                                        </span>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <strong style={{ color: '#2e7d32', fontSize: '16px' }}>
-                                            R$ {boleto.valor ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
-                                        </strong>
-                                        <br />
-                                        <span style={{ fontSize: '11px', color: '#999' }}>
-                                            Clique para selecionar
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        
-                        <div style={{ 
-                            marginTop: '10px', 
-                            padding: '10px', 
-                            background: '#e8f5e9', 
-                            borderRadius: '5px',
-                            fontSize: '12px',
-                            color: '#2e7d32'
-                        }}>
-                            💡 <strong>Total:</strong> R$ {multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            {multiplosboletos[0]?.beneficiario && (
-                                <span> | <strong>Beneficiário:</strong> {multiplosboletos[0].beneficiario}</span>
-                            )}
-                        </div>
-                    </div>
-                )}
-                
-                {/* Formulário normal (quando não há múltiplos boletos) */}
-                {!multiplosboletos && (
-                    <>
-                <div className="form-group">
-                    <label>Descrição *</label>
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                        placeholder="Ex: Conta de Energia - CEMIG"
-                        required
-                    />
-                </div>
-                
-                <div className="form-group">
-                    <label>Beneficiário</label>
-                    <input
-                        type="text"
-                        value={formData.beneficiario}
-                        onChange={(e) => setFormData({ ...formData, beneficiario: e.target.value })}
-                        placeholder="Nome do beneficiário"
-                    />
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div className="form-group">
-                        <label>Valor (R$) *</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={formData.valor}
-                            onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                            required
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label>Data de Vencimento *</label>
-                        <input
-                            type="date"
-                            value={formData.data_vencimento}
-                            onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
-                            required
-                        />
-                    </div>
-                </div>
-                
-                <div className="form-group">
-                    <label>Código de Barras (Linha Digitável)</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                            type="text"
-                            value={formData.codigo_barras}
-                            onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })}
-                            placeholder="Cole a linha digitável do boleto"
-                            style={{ flex: 1 }}
-                        />
-                        {formData.codigo_barras && (
-                            <button
-                                type="button"
-                                onClick={copiarCodigo}
-                                style={{
-                                    padding: '8px 15px',
-                                    background: '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                📋
-                            </button>
-                        )}
-                    </div>
-                </div>
-                
-                {/* Vincular a Serviço */}
-                <div className="form-group">
-                    <label>Vincular a Serviço (Opcional)</label>
-                    <select
-                        value={formData.vinculado_servico_id}
-                        onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
-                        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-                    >
-                        <option value="">-- Nenhum (Despesa Extra) --</option>
-                        {servicos.map(servico => (
-                            <option key={servico.id} value={servico.id}>
-                                {servico.nome}
-                            </option>
-                        ))}
-                    </select>
-                    <small style={{ color: '#666', fontSize: '11px' }}>
-                        💡 Boletos vinculados a serviços são somados ao orçamento. Boletos sem serviço vão para "Despesas Extras".
-                    </small>
-                </div>
-                
-                <div className="form-actions" style={{ marginTop: '20px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn">
-                        Cancelar
-                    </button>
-                    <button type="submit" className="submit-btn" disabled={salvando}>
-                        {salvando ? '⏳ Salvando...' : '💾 Salvar Boleto'}
-                    </button>
-                </div>
-                    </>
-                )}
-            </form>
-        </Modal>
-    );
-};
-
-
-// Modal para Cadastrar Pagamento Parcelado (com suporte a Boletos)
-const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcamento = [] }) => {
-    const [formData, setFormData] = useState({
-        descricao: '',
-        fornecedor: '',
-        orcamento_item_id: '',
-        segmento: 'Material',
-        valor_total: '',
-        numero_parcelas: '1',
-        periodicidade: 'Mensal',
-        data_primeira_parcela: getTodayString(),
-        observacoes: '',
-        pix: '',
-        forma_pagamento: 'PIX'  // PIX, Boleto, Transferência
-    });
-    
-    const [valoresIguais, setValoresIguais] = useState(true);
-    const [parcelasCustomizadas, setParcelasCustomizadas] = useState([]);
-
-    // Gerar parcelas quando mudar número ou data ou valor
-    useEffect(() => {
-        const numParcelas = parseInt(formData.numero_parcelas) || 1;
-        const valorTotal = parseFloat(formData.valor_total) || 0;
-        const valorParcela = valorTotal / numParcelas;
-        const dataInicial = formData.data_primeira_parcela ? new Date(formData.data_primeira_parcela + 'T12:00:00') : new Date();
-        
-        const novasParcelas = [];
-        for (let i = 0; i < numParcelas; i++) {
-            const dataVenc = new Date(dataInicial);
-            if (formData.periodicidade === 'Semanal') {
-                dataVenc.setDate(dataVenc.getDate() + (i * 7));
-            } else if (formData.periodicidade === 'Quinzenal') {
-                dataVenc.setDate(dataVenc.getDate() + (i * 15));
-            } else {
-                dataVenc.setMonth(dataVenc.getMonth() + i);
-            }
-            
-            novasParcelas.push({
-                numero: i + 1,
-                valor: valoresIguais ? valorParcela.toFixed(2) : (parcelasCustomizadas[i]?.valor || valorParcela.toFixed(2)),
-                data_vencimento: dataVenc.toISOString().split('T')[0],
-                codigo_barras: parcelasCustomizadas[i]?.codigo_barras || ''
-            });
-        }
-        setParcelasCustomizadas(novasParcelas);
-    }, [formData.numero_parcelas, formData.valor_total, formData.data_primeira_parcela, formData.periodicidade, valoresIguais]);
-
-    // Atualizar valor de uma parcela específica
-    const handleParcelaChange = (index, field, value) => {
-        const novasParcelas = [...parcelasCustomizadas];
-        novasParcelas[index] = { ...novasParcelas[index], [field]: value };
-        setParcelasCustomizadas(novasParcelas);
-        
-        // Se mudou valor, recalcular total
-        if (field === 'valor' && !valoresIguais) {
-            const novoTotal = novasParcelas.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
-            setFormData(prev => ({ ...prev, valor_total: novoTotal.toFixed(2) }));
-        }
-    };
-
-    // Copiar código de barras
-    const copiarCodigo = (codigo) => {
-        navigator.clipboard.writeText(codigo);
-        notify.success('Código copiado!');
-    };
-
-    const valor_parcela = formData.valor_total && formData.numero_parcelas 
-        ? (parseFloat(formData.valor_total) / parseInt(formData.numero_parcelas)).toFixed(2)
-        : '0.00';
-
-    // Validar soma das parcelas
-    const somaValoresParcelas = parcelasCustomizadas.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0);
-    const diferencaValor = Math.abs(somaValoresParcelas - parseFloat(formData.valor_total || 0));
-    const valoresValidos = valoresIguais || diferencaValor < 0.02;
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!valoresValidos) {
-            notify.warning('A soma dos valores das parcelas deve ser igual ao valor total!');
-            return;
-        }
-        
-        // Montar dados para enviar
-        const dadosEnviar = {
-            ...formData,
-            orcamento_item_id: formData.orcamento_item_id || null,
-            parcelas_customizadas: (formData.forma_pagamento === 'Boleto' || !valoresIguais) ? parcelasCustomizadas : []
-        };
-        
-        await onSave(dadosEnviar);
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>📊 Cadastrar Pagamento Parcelado</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <label>
-                    Descrição:
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Fornecedor:
-                    <input
-                        type="text"
-                        value={formData.fornecedor}
-                        onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
-                    />
-                </label>
-                
-                <label>
-                    📦 Vincular a Item do Orçamento (Opcional):
-                    <select
-                        value={formData.orcamento_item_id}
-                        onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
-                    >
-                        <option value="">-- Nenhum (Despesa Geral) --</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
-                    </small>
-                </label>
-
-                <label>
-                    Segmento:
-                    <select
-                        value={formData.segmento}
-                        onChange={(e) => setFormData({...formData, segmento: e.target.value})}
-                        required
-                    >
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                    </select>
-                </label>
-
-                {/* Forma de Pagamento */}
-                <label>
-                    Forma de Pagamento:
-                    <select
-                        value={formData.forma_pagamento}
-                        onChange={(e) => setFormData({...formData, forma_pagamento: e.target.value})}
-                        required
-                    >
-                        <option value="PIX">PIX</option>
-                        <option value="Boleto">Boleto</option>
-                        <option value="Transferência">Transferência</option>
-                    </select>
-                </label>
-
-                {/* Campo PIX - só aparece se forma_pagamento for PIX ou Transferência */}
-                {formData.forma_pagamento !== 'Boleto' && (
-                    <label>
-                        Chave PIX:
-                        <input
-                            type="text"
-                            value={formData.pix}
-                            onChange={(e) => setFormData({...formData, pix: e.target.value})}
-                            placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
-                        />
-                    </label>
-                )}
-
-                <label>
-                    Valor Total:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor_total}
-                        onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
-                        required
-                        disabled={!valoresIguais && formData.forma_pagamento === 'Boleto'}
-                    />
-                </label>
-
-                <label>
-                    Número de Parcelas:
-                    <input
-                        type="number"
-                        min="1"
-                        max="48"
-                        value={formData.numero_parcelas}
-                        onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Periodicidade:
-                    <select
-                        value={formData.periodicidade}
-                        onChange={(e) => setFormData({...formData, periodicidade: e.target.value})}
-                        required
-                    >
-                        <option value="Semanal">Semanal (a cada 7 dias)</option>
-                        <option value="Quinzenal">Quinzenal (a cada 15 dias)</option>
-                        <option value="Mensal">Mensal (a cada 30 dias)</option>
-                    </select>
-                </label>
-
-                <label>
-                    Data da 1ª Parcela:
-                    <input
-                        type="date"
-                        value={formData.data_primeira_parcela}
-                        onChange={(e) => setFormData({...formData, data_primeira_parcela: e.target.value})}
-                        required
-                    />
-                </label>
-
-                {/* Opção valores iguais/diferentes */}
-                <div style={{ 
-                    padding: '10px', 
-                    background: '#f5f5f5', 
-                    borderRadius: '5px',
-                    marginBottom: '10px'
-                }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                        <input
-                            type="radio"
-                            checked={valoresIguais}
-                            onChange={() => setValoresIguais(true)}
-                        />
-                        Valores iguais ({formatCurrency(parseFloat(valor_parcela))} cada)
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <input
-                            type="radio"
-                            checked={!valoresIguais}
-                            onChange={() => setValoresIguais(false)}
-                        />
-                        Valores diferentes
-                    </label>
-                </div>
-
-                {/* Configuração das parcelas (Boletos ou valores diferentes) */}
-                {(formData.forma_pagamento === 'Boleto' || !valoresIguais) && parcelasCustomizadas.length > 0 && (
-                    <div style={{ 
-                        border: '1px solid #ddd', 
-                        borderRadius: '8px', 
-                        padding: '10px',
-                        marginBottom: '10px',
-                        background: '#fafafa',
-                        maxHeight: '300px',
-                        overflowY: 'auto'
-                    }}>
-                        <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
-                            🎫 {formData.forma_pagamento === 'Boleto' ? 'Configuração dos Boletos' : 'Valores das Parcelas'}
-                        </h4>
-                        
-                        {parcelasCustomizadas.map((parcela, index) => (
-                            <div key={index} style={{ 
-                                background: '#fff', 
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '5px',
-                                padding: '10px',
-                                marginBottom: '8px'
-                            }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '8px',
-                                    fontWeight: 'bold',
-                                    color: '#555'
-                                }}>
-                                    <span>Parcela {parcela.numero}/{formData.numero_parcelas}</span>
-                                    <span style={{ fontSize: '12px', color: '#888' }}>
-                                        Venc: {new Date(parcela.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
-                                    </span>
-                                </div>
-                                
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {/* Valor */}
-                                    <div style={{ flex: '1', minWidth: '100px' }}>
-                                        <label style={{ fontSize: '12px', color: '#666' }}>Valor:</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={parcela.valor}
-                                            onChange={(e) => handleParcelaChange(index, 'valor', e.target.value)}
-                                            disabled={valoresIguais}
-                                            style={{ 
-                                                width: '100%', 
-                                                padding: '5px',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px'
-                                            }}
-                                        />
-                                    </div>
-                                    
-                                    {/* Código de Barras (só para boleto) */}
-                                    {formData.forma_pagamento === 'Boleto' && (
-                                        <div style={{ flex: '3', minWidth: '200px' }}>
-                                            <label style={{ fontSize: '12px', color: '#666' }}>Código de Barras:</label>
-                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                <input
-                                                    type="text"
-                                                    value={parcela.codigo_barras}
-                                                    onChange={(e) => handleParcelaChange(index, 'codigo_barras', e.target.value)}
-                                                    placeholder="Cole a linha digitável do boleto"
-                                                    style={{ 
-                                                        flex: '1',
-                                                        padding: '5px',
-                                                        border: '1px solid #ccc',
-                                                        borderRadius: '4px',
-                                                        fontSize: '12px'
-                                                    }}
-                                                />
-                                                {parcela.codigo_barras && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => copiarCodigo(parcela.codigo_barras)}
-                                                        style={{
-                                                            padding: '5px 10px',
-                                                            background: '#4CAF50',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            borderRadius: '4px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '12px'
-                                                        }}
-                                                        title="Copiar código"
-                                                    >
-                                                        📋
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                        
-                        {/* Validação de soma */}
-                        {!valoresIguais && (
-                            <div style={{ 
-                                marginTop: '10px', 
-                                padding: '8px',
-                                background: valoresValidos ? '#e8f5e9' : '#ffebee',
-                                borderRadius: '4px',
-                                fontSize: '13px'
-                            }}>
-                                <strong>Soma das parcelas:</strong> {formatCurrency(somaValoresParcelas)}
-                                {!valoresValidos && (
-                                    <span style={{ color: '#d32f2f', marginLeft: '10px' }}>
-                                        ⚠️ Diferença de {formatCurrency(diferencaValor)}
-                                    </span>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <label>
-                    Observações:
-                    <textarea
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                        rows="2"
-                    />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn" disabled={!valoresValidos}>
-                        Cadastrar
-                    </button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
-                </div>
-            </form>
-        </Modal>
-    );
-};
-// ==========================================
-// COMPONENTE: MODAL DE EDIÇÃO DE PARCELAS
-// ==========================================
-
-// ==========================================
-// COMPONENTE: CAIXA DE OBRA
-// ==========================================
-
-const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
-    const [caixa, setCaixa] = useState(null);
-    const [movimentacoes, setMovimentacoes] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [modalAberto, setModalAberto] = useState(false);
-    const [mesAno, setMesAno] = useState({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
-    const [filtroTipo, setFiltroTipo] = useState(''); // '', 'Entrada', 'Saída'
-    const [reanexandoId, setReanexandoId] = useState(null); // ID da movimentação sendo editada
-    const [deletandoId, setDeletandoId] = useState(null); // ID da movimentação sendo deletada
-
-    // Função para deletar movimentação
-    const handleDeletarMovimentacao = async (movId, descricao) => {
-        if (!await confirmDialog(`Tem certeza que deseja apagar a movimentação "${descricao}"? Essa ação não pode ser desfeita e o saldo será ajustado automaticamente.`, { danger: true, confirmText: 'Apagar' })) {
-            return;
-        }
-        
-        try {
-            setDeletandoId(movId);
-            
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
-                { method: 'DELETE' }
-            );
-            
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.erro || 'Erro ao deletar movimentação');
-            }
-            
-            notify.success('✅ Movimentação apagada com sucesso!');
-            carregarDados(); // Recarregar dados para atualizar saldo
-        } catch (err) {
-            logger.error('Erro ao deletar movimentação:', err);
-            notify.error('Erro ao apagar movimentação: ' + err.message);
-        } finally {
-            setDeletandoId(null);
-        }
-    };
-
-    // Função para reanexar comprovante
-    const handleReanexarComprovante = async (movId, file) => {
-        if (!file) return;
-        
-        try {
-            // Comprimir imagem
-            const compressImage = (file) => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 1200;
-                            const MAX_HEIGHT = 1200;
-                            let width = img.width;
-                            let height = img.height;
-                            
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
-                            
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.7));
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
-            };
-            
-            const base64 = await compressImage(file);
-            
-            // Atualizar movimentação com novo comprovante
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes/${movId}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify({ comprovante_url: base64 })
-                }
-            );
-            
-            if (!response.ok) throw new Error('Erro ao atualizar comprovante');
-            
-            notify.success('✅ Comprovante atualizado com sucesso!');
-            carregarDados(); // Recarregar dados
-        } catch (err) {
-            logger.error('Erro ao reanexar comprovante:', err);
-            notify.error('Erro ao atualizar comprovante');
-        } finally {
-            setReanexandoId(null);
-        }
-    };
-
-    useEffect(() => {
-        carregarDados();
-    }, [obraId, mesAno]);
-
-    const carregarDados = async () => {
-        try {
-            setIsLoading(true);
-            
-            // Carregar informações do caixa
-            const resCaixa = await fetchWithAuth(`${API_URL}/obras/${obraId}/caixa`);
-            if (!resCaixa.ok) throw new Error('Erro ao carregar caixa');
-            const dataCaixa = await resCaixa.json();
-            setCaixa(dataCaixa);
-
-            // Carregar movimentações do mês
-            const resMovs = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes?mes=${mesAno.mes}&ano=${mesAno.ano}`
-            );
-            if (!resMovs.ok) throw new Error('Erro ao carregar movimentações');
-            const dataMovs = await resMovs.json();
-            setMovimentacoes(dataMovs);
-        } catch (err) {
-            logger.error('Erro ao carregar dados do caixa:', err);
-            notify.error('Erro ao carregar dados do caixa');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleNovaMovimentacao = () => {
-        setModalAberto(true);
-    };
-
-    const handleGerarRelatorio = async () => {
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/relatorio-pdf`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ mes: mesAno.mes, ano: mesAno.ano })
-                }
-            );
-
-            if (!response.ok) {
-                // Tentar pegar mensagem de erro do servidor
-                try {
-                    const errorData = await response.json();
-                    logger.error('Erro do servidor:', errorData);
-                    throw new Error(errorData.mensagem || errorData.erro || 'Erro ao gerar relatório');
-                } catch (jsonErr) {
-                    throw new Error('Erro ao gerar relatório');
-                }
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Caixa_${obraNome}_${mesAno.mes}_${mesAno.ano}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (err) {
-            logger.error('Erro ao gerar relatório:', err);
-            notify.error('Erro ao gerar relatório PDF: ' + err.message);
-        }
-    };
-
-    const movimentacoesFiltradas = filtroTipo 
-        ? movimentacoes.filter(m => m.tipo === filtroTipo)
-        : movimentacoes;
-
-    if (isLoading) {
-        return (
-            <Modal customWidth="1200px">
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                    Carregando...
-                </div>
-            </Modal>
-        );
-    }
-
-    return (
-        <Modal customWidth="1200px">
-            <div style={{ padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
-                {/* Cabeçalho */}
-                <h2 style={{ fontSize: '2em', marginBottom: '10px' }}>💰 Caixa de Obra</h2>
-                <p style={{ color: '#666', marginBottom: '30px', fontSize: '1.1em' }}>
-                    <strong>{obraNome}</strong>
-                </p>
-
-                {/* Dashboard do Caixa */}
-                {caixa && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '30px'
-                    }}>
-                        <div style={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saldo Atual</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.saldo_atual)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#2196F3',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Entradas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_entradas_mes || 0)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saídas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_saidas_mes || 0)}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Controles */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '25px',
-                    flexWrap: 'wrap',
-                    gap: '15px'
-                }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <label style={{ fontSize: '1.1em' }}>Período:</label>
-                        <select
-                            value={mesAno.mes}
-                            onChange={e => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })}
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px' }}
-                        >
-                            <option value={1}>Janeiro</option>
-                            <option value={2}>Fevereiro</option>
-                            <option value={3}>Março</option>
-                            <option value={4}>Abril</option>
-                            <option value={5}>Maio</option>
-                            <option value={6}>Junho</option>
-                            <option value={7}>Julho</option>
-                            <option value={8}>Agosto</option>
-                            <option value={9}>Setembro</option>
-                            <option value={10}>Outubro</option>
-                            <option value={11}>Novembro</option>
-                            <option value={12}>Dezembro</option>
-                        </select>
-                        <input
-                            type="number"
-                            value={mesAno.ano}
-                            onChange={e => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })}
-                            min="2020"
-                            max="2100"
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px', width: '100px' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            onClick={handleNovaMovimentacao}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                        >
-                            + Nova Movimentação
-                        </button>
-                        <button
-                            onClick={handleGerarRelatorio}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em', backgroundColor: '#ff9800' }}
-                        >
-                            📊 Gerar Relatório PDF
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filtros */}
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={() => setFiltroTipo('')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === '' ? '2px solid #4CAF50' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === '' ? '#e8f5e9' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Todas
-                    </button>
-                    <button
-                        onClick={() => setFiltroTipo('Entrada')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Entrada' ? '2px solid #2196F3' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Entrada' ? '#e3f2fd' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        📥 Entradas
-                    </button>
-                    <button
-                        onClick={() => setFiltroTipo('Saída')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Saída' ? '2px solid #f44336' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Saída' ? '#ffebee' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        📤 Saídas
-                    </button>
-                </div>
-
-                {/* Lista de Movimentações */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ marginBottom: '15px', fontSize: '1.3em' }}>Movimentações</h3>
-                    {movimentacoesFiltradas.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                            Nenhuma movimentação registrada neste período
-                        </p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {movimentacoesFiltradas.map(mov => (
-                                <div
-                                    key={mov.id}
-                                    style={{
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        padding: '15px',
-                                        backgroundColor: mov.tipo === 'Entrada' ? '#e3f2fd' : '#ffebee'
-                                    }}
-                                >
-                                    {/* Header: Ícone, Data, Anexo e Valor */}
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        alignItems: 'center',
-                                        marginBottom: '10px',
-                                        flexWrap: 'wrap',
-                                        gap: '5px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '1.3em' }}>
-                                                {mov.tipo === 'Entrada' ? '📥' : '📤'}
-                                            </span>
-                                            <span style={{ fontSize: '0.85em', color: '#666' }}>
-                                                {new Date(mov.data).toLocaleString('pt-BR')}
-                                            </span>
-                                            {mov.comprovante_url && (
-                                                <span style={{ fontSize: '1em' }}>📎</span>
-                                            )}
-                                        </div>
-                                        <div style={{
-                                            fontSize: '1.4em',
-                                            fontWeight: 'bold',
-                                            color: mov.tipo === 'Entrada' ? '#2196F3' : '#f44336',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Descrição */}
-                                    <div style={{
-                                        fontSize: '1.05em',
-                                        fontWeight: '600',
-                                        color: '#333'
-                                    }}>
-                                        {mov.descricao}
-                                    </div>
-                                    
-                                    {/* Observações */}
-                                    {mov.observacoes && (
-                                        <div style={{ fontSize: '0.85em', color: '#666', fontStyle: 'italic', marginTop: '5px' }}>
-                                            Obs: {mov.observacoes}
-                                        </div>
-                                    )}
-                                    
-                                    {/* Botão para reanexar comprovante e Apagar */}
-                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <label 
-                                                style={{ 
-                                                    cursor: 'pointer',
-                                                    padding: '5px 10px',
-                                                    backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
-                                                    color: 'white',
-                                                    borderRadius: '5px',
-                                                    fontSize: '0.85em',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px'
-                                                }}
-                                            >
-                                                {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        if (e.target.files[0]) {
-                                                            handleReanexarComprovante(mov.id, e.target.files[0]);
-                                                        }
-                                                    }}
-                                                />
-                                            </label>
-                                            {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                                <span style={{ fontSize: '0.75em', color: '#999' }}>
-                                                    ⚠️ Precisa reanexar
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Botão Apagar */}
-                                        <button
-                                            onClick={() => handleDeletarMovimentacao(mov.id, mov.descricao)}
-                                            disabled={deletandoId === mov.id}
-                                            style={{
-                                                padding: '5px 12px',
-                                                backgroundColor: deletandoId === mov.id ? '#ccc' : '#dc2626',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '5px',
-                                                fontSize: '0.85em',
-                                                cursor: deletandoId === mov.id ? 'not-allowed' : 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '5px'
-                                            }}
-                                        >
-                                            {deletandoId === mov.id ? '⏳ Apagando...' : '🗑️ Apagar'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
-                        Fechar
-                    </button>
-                </div>
-            </div>
-
-            {/* Modal de Nova Movimentação */}
-            {modalAberto && (
-                <ModalNovaMovimentacaoCaixa
-                    obraId={obraId}
-                    onClose={() => setModalAberto(false)}
-                    onSave={() => {
-                        setModalAberto(false);
-                        carregarDados();
-                    }}
-                />
-            )}
-        </Modal>
-    );
-};
-
-// Modal de Nova Movimentação
-const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
-    const [tipo, setTipo] = useState('Saída');
-    const [valor, setValor] = useState('');
-    const [descricao, setDescricao] = useState('');
-    const [observacoes, setObservacoes] = useState('');
-    const [comprovante, setComprovante] = useState(null);
-    const [previewComprovante, setPreviewComprovante] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isCompressing, setIsCompressing] = useState(false);
-
-    const handleComprovanteChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Se for PDF, não comprimir
-        if (file.type === 'application/pdf') {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setComprovante(reader.result);
-                setPreviewComprovante(null); // PDF não tem preview
-            };
-            reader.readAsDataURL(file);
-            return;
-        }
-        
-        // Se for imagem, comprimir
-        if (file.type.startsWith('image/')) {
-            try {
-                setIsCompressing(true);
-                logger.debug('🔄 Comprimindo imagem do comprovante...');
-                
-                const compressedImages = await compressImages([file]);
-                
-                if (compressedImages && compressedImages.length > 0) {
-                    const compressed = compressedImages[0];
-                    setComprovante(compressed.base64);
-                    setPreviewComprovante(compressed.base64);
-                    logger.debug('✅ Imagem comprimida com sucesso');
-                }
-            } catch (err) {
-                logger.error('Erro ao comprimir imagem:', err);
-                // Fallback: usar imagem original
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setComprovante(reader.result);
-                    setPreviewComprovante(reader.result);
-                };
-                reader.readAsDataURL(file);
-            } finally {
-                setIsCompressing(false);
-            }
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!valor || parseFloat(valor) <= 0) {
-            notify.warning('Por favor, informe um valor válido');
-            return;
-        }
-
-        if (!descricao.trim()) {
-            notify.warning('Por favor, informe uma descrição');
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-
-            let comprovanteUrl = null;
-
-            // Upload do comprovante se houver
-            if (comprovante) {
-                const resUpload = await fetchWithAuth(
-                    `${API_URL}/obras/${obraId}/caixa/upload-comprovante`,
-                    {
-                        method: 'POST',
-                        body: JSON.stringify({ imagem: comprovante })
-                    }
-                );
-
-                if (resUpload.ok) {
-                    const dataUpload = await resUpload.json();
-                    comprovanteUrl = dataUpload.comprovante_url;
-                }
-            }
-
-            // Criar movimentação
-            const response = await fetchWithAuth(
-                `${API_URL}/obras/${obraId}/caixa/movimentacoes`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        tipo,
-                        valor: parseFloat(valor),
-                        descricao: descricao.trim(),
-                        observacoes: observacoes.trim() || null,
-                        comprovante_url: comprovanteUrl
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao salvar movimentação');
-
-            notify.success('✅ Movimentação registrada com sucesso!');
-            onSave();
-        } catch (err) {
-            logger.error('Erro ao salvar movimentação:', err);
-            notify.error('Erro ao salvar movimentação');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal customWidth="600px">
-            <div style={{ padding: '30px' }}>
-                <h2 style={{ fontSize: '1.8em', marginBottom: '25px' }}>💸 Nova Movimentação</h2>
-
-                {/* Tipo */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Tipo:
-                    </label>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Saída"
-                                checked={tipo === 'Saída'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📤 Saída</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Entrada"
-                                checked={tipo === 'Entrada'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📥 Entrada</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Valor */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Valor (R$):
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={valor}
-                        onChange={e => setValor(e.target.value)}
-                        placeholder="0,00"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd'
-                        }}
-                    />
-                </div>
-
-                {/* Descrição */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Descrição:
-                    </label>
-                    <textarea
-                        value={descricao}
-                        onChange={e => setDescricao(e.target.value)}
-                        placeholder="Ex: Cimento urgência laje 3º andar"
-                        rows={3}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Observações */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Observações (opcional):
-                    </label>
-                    <textarea
-                        value={observacoes}
-                        onChange={e => setObservacoes(e.target.value)}
-                        placeholder="Informações adicionais..."
-                        rows={2}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Comprovante */}
-                <div style={{ marginBottom: '25px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Comprovante (opcional):
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={handleComprovanteChange}
-                        disabled={isCompressing}
-                        style={{ marginBottom: '15px' }}
-                    />
-                    {isCompressing && (
-                        <div style={{ color: '#007bff', fontSize: '0.9em', marginBottom: '10px' }}>
-                            ⏳ Comprimindo imagem...
-                        </div>
-                    )}
-                    {previewComprovante && (
-                        <div style={{ marginTop: '15px' }}>
-                            <img
-                                src={previewComprovante}
-                                alt="Preview"
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '300px',
-                                    borderRadius: '8px',
-                                    border: '2px solid #ddd'
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Botões */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || isCompressing}
-                        className="submit-btn"
-                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                    >
-                        {isCompressing ? '⏳ Comprimindo...' : isSubmitting ? 'Salvando...' : '💾 Salvar'}
-                    </button>
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, itensOrcamento = [] }) => {
-    const [parcelas, setParcelas] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [parcelaEditando, setParcelaEditando] = useState(null);
-    const [observacaoEditando, setObservacaoEditando] = useState(null);
-    const [editandoDadosGerais, setEditandoDadosGerais] = useState(false);
-    const [dadosGerais, setDadosGerais] = useState({
-        descricao: pagamentoParcelado.descricao,
-        fornecedor: pagamentoParcelado.fornecedor || '',
-        pix: pagamentoParcelado.pix || '',
-        // CORREÇÃO: Converter para string para comparação correta no select
-        orcamento_item_id: pagamentoParcelado.orcamento_item_id ? String(pagamentoParcelado.orcamento_item_id) : '',
-        segmento: pagamentoParcelado.segmento || 'Material'
-    });
-
-    useEffect(() => {
-        carregarParcelas();
-    }, []);
-
-    const carregarParcelas = async () => {
-        try {
-            setIsLoading(true);
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas`
-            );
-            
-            if (!response.ok) throw new Error('Erro ao carregar parcelas');
-            
-            const data = await response.json();
-            setParcelas(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleEditarParcela = async (parcela, novoValor, novaData, novaObs) => {
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        valor_parcela: parseFloat(novoValor),
-                        data_vencimento: novaData,
-                        observacao: novaObs || parcela.observacao
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao editar parcela');
-
-            await carregarParcelas();
-            setParcelaEditando(null);
-            setObservacaoEditando(null);
-            
-            // Toast de sucesso
-            showToast('✅ Parcela atualizada com sucesso!');
-            
-            // Notificar pai para atualizar cards (mas sem fechar o modal)
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    const handleMarcarPaga = async (parcela) => {
-        if (!await confirmDialog(`Confirma o pagamento da parcela ${parcela.numero_parcela}?`, { confirmText: 'Confirmar pagamento' })) return;
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        data_pagamento: getTodayString()
-                    })
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
-
-            const resultado = await response.json();
-            showToast(`✅ ${resultado.mensagem}`);
-            await carregarParcelas();
-            
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    // NOVO: Desfazer pagamento
-    const handleDesfazerPagamento = async (parcela) => {
-        if (!await confirmDialog(`Deseja desfazer o pagamento da parcela ${parcela.numero_parcela}? O lançamento associado será removido.`, { danger: true, confirmText: 'Desfazer' })) return;
-
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/desfazer`,
-                { method: 'POST' }
-            );
-
-            if (!response.ok) {
-                const erro = await response.json();
-                throw new Error(erro.erro || 'Erro ao desfazer pagamento');
-            }
-
-            showToast('↩️ Pagamento desfeito com sucesso!');
-            await carregarParcelas();
-            
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    const handleRecriarLancamentos = async () => {
-        if (!await confirmDialog('Deseja recriar os lançamentos de todas as parcelas pagas? Isso é útil se os lançamentos não foram criados corretamente.', { confirmText: 'Recriar' })) {
-            return;
-        }
-
-        try {
-            const parcelasPagas = parcelas.filter(p => p.status === 'Pago');
-            
-            if (parcelasPagas.length === 0) {
-                notify.warning('Não há parcelas pagas para reprocessar.');
-                return;
-            }
-
-            let sucessos = 0;
-            let erros = 0;
-
-            for (const parcela of parcelasPagas) {
-                try {
-                    const response = await fetchWithAuth(
-                        `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}/parcelas/${parcela.id}/pagar`,
-                        {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                data_pagamento: parcela.data_pagamento || getTodayString()
-                            })
-                        }
-                    );
-
-                    if (response.ok) {
-                        sucessos++;
-                    } else {
-                        erros++;
-                    }
-                } catch (error) {
-                    erros++;
-                }
-            }
-
-            showToast(`🔄 ${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
-            
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    // NOVO: Salvar dados gerais
-    const handleSalvarDadosGerais = async () => {
-        try {
-            const response = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamentoParcelado.id}`,
-                {
-                    method: 'PUT',
-                    body: JSON.stringify(dadosGerais)
-                }
-            );
-
-            if (!response.ok) throw new Error('Erro ao salvar dados gerais');
-
-            showToast('✅ Dados atualizados com sucesso!');
-            setEditandoDadosGerais(false);
-            
-            if (onSave) onSave();
-        } catch (err) {
-            notify.error(`Erro: ${err.message}`);
-        }
-    };
-
-    // Toast helper
-    const showToast = (message) => {
-        const toast = document.createElement('div');
-        toast.className = 'cf-toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    };
-
-    const calcularValorTotal = () => {
-        return parcelas.reduce((sum, p) => sum + p.valor_parcela, 0);
-    };
-
-    const calcularValorPago = () => {
-        return parcelas.filter(p => p.status === 'Pago').reduce((sum, p) => sum + p.valor_parcela, 0);
-    };
-
-    const calcularValorRestante = () => {
-        return parcelas.filter(p => p.status !== 'Pago').reduce((sum, p) => sum + p.valor_parcela, 0);
-    };
-
-    const getStatusParcela = (parcela) => {
-        if (parcela.status === 'Pago') return 'paga';
-        if (new Date(parcela.data_vencimento) < new Date()) return 'vencida';
-        return 'pendente';
-    };
-
-    if (isLoading) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
-    if (error) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
-
-    const parcelasPagas = parcelas.filter(p => p.status === 'Pago').length;
-    const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
-
-    return (
-        <Modal onClose={onClose} customWidth="900px">
-            <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                {/* Header */}
-                <div style={{
-                    padding: '20px 24px',
-                    background: 'var(--cor-purple-bg)',
-                    borderBottom: '3px solid var(--cor-purple-light)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start'
-                }}>
-                    <div style={{ flex: 1 }}>
-                        {editandoDadosGerais ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <input
-                                    type="text"
-                                    value={dadosGerais.descricao}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, descricao: e.target.value})}
-                                    style={{ 
-                                        fontSize: '18px', 
-                                        fontWeight: '700', 
-                                        padding: '8px 12px', 
-                                        borderRadius: '8px',
-                                        border: '2px solid var(--cor-purple-light)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Descrição"
-                                />
-                                <input
-                                    type="text"
-                                    value={dadosGerais.fornecedor}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, fornecedor: e.target.value})}
-                                    style={{ 
-                                        fontSize: '14px', 
-                                        padding: '6px 12px', 
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--cor-borda)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Fornecedor"
-                                />
-                                <input
-                                    type="text"
-                                    value={dadosGerais.pix}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, pix: e.target.value})}
-                                    style={{ 
-                                        fontSize: '14px', 
-                                        padding: '6px 12px', 
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--cor-borda)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Chave PIX (CPF, CNPJ, E-mail, Telefone ou Aleatória)"
-                                />
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    <select
-                                        value={dadosGerais.orcamento_item_id || ''}
-                                        onChange={(e) => setDadosGerais({...dadosGerais, orcamento_item_id: e.target.value || null})}
-                                        style={{ 
-                                            flex: 1,
-                                            minWidth: '200px',
-                                            fontSize: '14px', 
-                                            padding: '6px 12px', 
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--cor-borda)',
-                                            background: 'white'
-                                        }}
-                                    >
-                                        <option value="">Sem vínculo (Despesa Geral)</option>
-                                        {itensOrcamento.map(item => (
-                                            <option key={item.id} value={String(item.id)}>{item.nome_completo}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        value={dadosGerais.segmento || 'Material'}
-                                        onChange={(e) => setDadosGerais({...dadosGerais, segmento: e.target.value})}
-                                        style={{ 
-                                            fontSize: '14px', 
-                                            padding: '6px 12px', 
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--cor-borda)',
-                                            background: 'white'
-                                        }}
-                                    >
-                                        <option value="Material">Material</option>
-                                        <option value="Mão de Obra">Mão de Obra</option>
-                                    </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                        ✓ Salvar
-                                    </button>
-                                    <button onClick={() => setEditandoDadosGerais(false)} className="cf-btn cf-btn-outline" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                        ✕ Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <h2 style={{ 
-                                    margin: 0, 
-                                    fontSize: '20px', 
-                                    fontWeight: '700', 
-                                    color: 'var(--cor-texto)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px'
-                                }}>
-                                    📦 {pagamentoParcelado.descricao}
-                                    <button 
-                                        onClick={() => setEditandoDadosGerais(true)}
-                                        style={{ 
-                                            background: 'none', 
-                                            border: 'none', 
-                                            cursor: 'pointer', 
-                                            fontSize: '14px',
-                                            color: 'var(--cor-purple)'
-                                        }}
-                                        title="Editar dados gerais"
-                                    >
-                                        ✏️
-                                    </button>
-                                </h2>
-                                <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
-                                    Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
-                                    {pagamentoParcelado.pix && (
-                                        <span style={{ marginLeft: '8px' }}>
-                                            • PIX: {pagamentoParcelado.pix}
-                                        </span>
-                                    )}
-                                    {pagamentoParcelado.orcamento_item_id && (
-                                        <span style={{ 
-                                            marginLeft: '8px',
-                                            padding: '2px 8px',
-                                            backgroundColor: 'var(--cor-primaria-bg)',
-                                            color: 'var(--cor-primaria)',
-                                            borderRadius: '4px',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}>
-                                            📦 {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
-                                        </span>
-                                    )}
-                                </p>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Resumo */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '12px',
-                    padding: '20px 24px',
-                    background: 'var(--cor-fundo-secundario)',
-                    borderBottom: '1px solid var(--cor-borda)'
-                }}>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Total</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{formatCurrency(calcularValorTotal())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Pago</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-acento)' }}>{formatCurrency(calcularValorPago())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Restante</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-warning)' }}>{formatCurrency(calcularValorRestante())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Parcelas</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{parcelasPagas} / {parcelas.length}</div>
-                    </div>
-                </div>
-
-                {/* Barra de Progresso */}
-                <div style={{ padding: '16px 24px', background: 'var(--cor-fundo-secundario)', borderBottom: '1px solid var(--cor-borda)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto-secundario)' }}>Progresso do pagamento</span>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--cor-purple)' }}>{progresso}%</span>
-                    </div>
-                    <div style={{ height: '8px', background: 'var(--cor-borda)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ 
-                            width: `${progresso}%`, 
-                            height: '100%', 
-                            background: 'linear-gradient(90deg, var(--cor-purple-light) 0%, var(--cor-purple) 100%)',
-                            borderRadius: '4px',
-                            transition: 'width 0.4s ease'
-                        }} />
-                    </div>
-                </div>
-
-                {/* Lista de Parcelas */}
-                <div style={{ padding: '20px 24px', maxHeight: '350px', overflowY: 'auto' }}>
-                    <h4 style={{ margin: '0 0 16px', fontSize: '14px', color: 'var(--cor-texto-secundario)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Parcelas
-                        <span style={{ fontSize: '11px', background: 'var(--cor-fundo-secundario)', padding: '2px 8px', borderRadius: '10px' }}>
-                            Clique para editar
-                        </span>
-                    </h4>
-                    
-                    {parcelas.map(parcela => {
-                        const status = getStatusParcela(parcela);
-                        const isEditando = parcelaEditando === parcela.id;
-                        
-                        return (
-                            <div 
-                                key={parcela.id} 
-                                className={`parcela-item ${status}`}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '14px 16px',
-                                    background: status === 'paga' ? 'var(--cor-acento-bg)' : 
-                                               status === 'vencida' ? 'var(--cor-vermelho-bg)' : 'var(--cor-fundo-secundario)',
-                                    borderRadius: '10px',
-                                    marginBottom: '10px',
-                                    border: `1px solid ${status === 'paga' ? 'var(--cor-acento-light)' : 
-                                                        status === 'vencida' ? 'var(--cor-vermelho-light)' : 'var(--cor-borda)'}`,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    {/* Número da Parcela */}
-                                    <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: '700',
-                                        fontSize: parcela.numero_parcela === 0 ? '10px' : '14px',
-                                        background: status === 'paga' ? 'var(--cor-acento)' : 
-                                                   parcela.numero_parcela === 0 ? '#10b981' : 'var(--cor-card)',
-                                        color: status === 'paga' || parcela.numero_parcela === 0 ? 'white' : 'var(--cor-texto-muted)',
-                                        border: status !== 'paga' && parcela.numero_parcela !== 0 ? '2px solid var(--cor-borda)' : 'none'
-                                    }}>
-                                        {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
-                                    </div>
-                                    
-                                    {/* Dados */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        {isEditando ? (
-                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    defaultValue={parcela.valor_parcela}
-                                                    id={`valor-${parcela.id}`}
-                                                    className="parcela-edit-input"
-                                                    style={{ width: '110px' }}
-                                                    placeholder="Valor"
-                                                />
-                                                <input
-                                                    type="date"
-                                                    defaultValue={parcela.data_vencimento}
-                                                    id={`data-${parcela.id}`}
-                                                    className="parcela-edit-input"
-                                                    style={{ width: '140px' }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--cor-texto)' }}>
-                                                    {formatCurrency(parcela.valor_parcela)}
-                                                </span>
-                                                <span style={{ fontSize: '12px', color: 'var(--cor-texto-secundario)' }}>
-                                                    {status === 'paga' && parcela.data_pagamento 
-                                                        ? `Paga em ${new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}`
-                                                        : `Vence ${new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}`
-                                                    }
-                                                    {parcela.observacao && ` • ${parcela.observacao}`}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Ações */}
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    {/* Badge de Status */}
-                                    <span 
-                                        className={`parcela-status-badge ${status}`}
-                                        style={parcela.numero_parcela === 0 && status !== 'paga' ? { background: '#10b981', color: 'white' } : {}}
-                                    >
-                                        {status === 'paga' ? 'Paga' : 
-                                         status === 'vencida' ? 'Vencida' : 
-                                         parcela.numero_parcela === 0 ? 'Entrada' : 'Pendente'}
-                                    </span>
-                                    
-                                    {isEditando ? (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    const novoValor = document.getElementById(`valor-${parcela.id}`).value;
-                                                    const novaData = document.getElementById(`data-${parcela.id}`).value;
-                                                    handleEditarParcela(parcela, novoValor, novaData);
-                                                }}
-                                                className="parcela-action-btn primary"
-                                            >
-                                                ✓ Salvar
-                                            </button>
-                                            <button
-                                                onClick={() => setParcelaEditando(null)}
-                                                className="parcela-action-btn"
-                                            >
-                                                ✕
-                                            </button>
-                                        </>
-                                    ) : status === 'paga' ? (
-                                        <button
-                                            onClick={() => handleDesfazerPagamento(parcela)}
-                                            className="parcela-action-btn"
-                                            title="Desfazer pagamento"
-                                            style={{ color: 'var(--cor-vermelho)' }}
-                                        >
-                                            ↩️ Desfazer
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={() => setParcelaEditando(parcela.id)}
-                                                className="parcela-action-btn"
-                                                title="Editar valor e data"
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                onClick={() => handleMarcarPaga(parcela)}
-                                                className="parcela-action-btn success"
-                                                title="Marcar como paga"
-                                            >
-                                                💰 Pagar
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Footer */}
-                <div style={{ 
-                    padding: '16px 24px', 
-                    borderTop: '1px solid var(--cor-borda)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: 'var(--cor-fundo-secundario)'
-                }}>
-                    <button 
-                        onClick={handleRecriarLancamentos}
-                        className="cf-btn cf-btn-outline"
-                        title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
-                    >
-                        🔄 Recriar Lançamentos
-                    </button>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={onClose} className="cf-btn cf-btn-outline">
-                            Fechar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Modal>
-    );
-};
 
 
 // ==========================================
@@ -11167,7 +4998,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     if (isLoading) {
         return (
             <div className="card-full">
-                <h3>📊 Status de Pagamentos</h3>
+                <h3>?? Status de Pagamentos</h3>
                 <p>Carregando...</p>
             </div>
         );
@@ -11179,7 +5010,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         {
             key: 'vencidos',
             titulo: 'Vencidos',
-            icon: '⚠️',
+            icon: '??',
             cor: 'var(--cor-vermelho)',
             corLight: 'var(--cor-vermelho-light)',
             corBg: 'var(--cor-vermelho-bg)',
@@ -11188,7 +5019,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         {
             key: 'vence_hoje',
             titulo: 'Vence Hoje',
-            icon: '📅',
+            icon: '??',
             cor: 'var(--cor-warning)',
             corLight: 'var(--cor-warning-light)',
             corBg: 'var(--cor-warning-bg)',
@@ -11196,8 +5027,8 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         },
         {
             key: 'vence_amanha',
-            titulo: 'Vence Amanhã',
-            icon: '📆',
+            titulo: 'Vence Amanh�',
+            icon: '??',
             cor: 'var(--cor-info)',
             corLight: 'var(--cor-info-light)',
             corBg: 'var(--cor-info-bg)',
@@ -11205,8 +5036,8 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         },
         {
             key: 'vence_7_dias',
-            titulo: 'Próximos 7 dias',
-            icon: '📊',
+            titulo: 'Pr�ximos 7 dias',
+            icon: '??',
             cor: 'var(--cor-purple)',
             corLight: 'var(--cor-purple-light)',
             corBg: 'var(--cor-purple-bg)',
@@ -11215,7 +5046,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         {
             key: 'futuros',
             titulo: 'Futuros (+7d)',
-            icon: '🗓️',
+            icon: '???',
             cor: 'var(--cor-acento)',
             corLight: 'var(--cor-acento-light)',
             corBg: 'var(--cor-acento-bg)',
@@ -11226,7 +5057,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     return (
         <div className="cf-section" style={{ marginBottom: '24px' }}>
             <div className="cf-section-header">
-                <div className="cf-section-title">📊 Quadro Informativo - Cronograma Financeiro</div>
+                <div className="cf-section-title">?? Quadro Informativo - Cronograma Financeiro</div>
             </div>
             
             {/* Cards de Status - Design Moderno */}
@@ -11257,7 +5088,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                                     padding: '3px 8px',
                                     borderRadius: '12px'
                                 }}>
-                                    Ver →
+                                    Ver ?
                                 </span>
                             )}
                         </div>
@@ -11287,12 +5118,12 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                         {alertas[categoriaExpandida]?.itens?.map((item, index) => (
                             <div key={index} className="cf-pagamento-futuro-item">
                                 <div className="cf-pagamento-futuro-icon">
-                                    {item.tipo === 'Parcela' ? '📦' : '📄'}
+                                    {item.tipo === 'Parcela' ? '??' : '??'}
                                 </div>
                                 <div className="cf-pagamento-futuro-info">
                                     <div className="cf-pagamento-futuro-desc">{item.descricao}</div>
                                     <div className="cf-pagamento-futuro-meta">
-                                        {item.fornecedor || 'Sem fornecedor'} • {new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                        {item.fornecedor || 'Sem fornecedor'} � {new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                                     </div>
                                 </div>
                                 <div className="cf-pagamento-futuro-valor">{formatCurrency(item.valor)}</div>
@@ -11308,7 +5139,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                         className="cf-btn cf-btn-outline"
                         style={{ marginTop: '16px' }}
                     >
-                        ✕ Fechar detalhes
+                        ? Fechar detalhes
                     </button>
                 </div>
             )}
@@ -11316,229 +5147,6 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     );
 };
 // Modal Principal do Cronograma Financeiro
-// ===================================================================================
-// MODAL: SELEÇÃO DE PAGAMENTOS PARA WHATSAPP
-// ===================================================================================
-
-const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcelados, onClose }) => {
-    const hoje = new Date();
-    const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
-
-    // Montar lista de todos os itens pendentes
-    const todosPendentes = [
-        ...pagamentosFuturos
-            .filter(p => p.status === 'Previsto')
-            .map(p => ({
-                key: `futuro-${p.id}`,
-                tipo: new Date(p.data_vencimento + 'T00:00:00') < hoje ? '🚨 Vencido' : '⏰ A Vencer',
-                descricao: p.descricao,
-                valor: p.valor,
-                data_vencimento: p.data_vencimento,
-                pix: p.pix,
-                codigo_barras: p.codigo_barras,
-                vencido: new Date(p.data_vencimento + 'T00:00:00') < hoje,
-            })),
-        ...pagamentosParcelados.filter(pp => pp.status !== 'Concluído').map(pp => {
-            // Pegar apenas a PRÓXIMA parcela pendente (não todas)
-            const proxima = (pp.parcelas || [])
-                .filter(parc => parc.status === 'Previsto')
-                .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
-                [0];
-            if (!proxima) return null;
-            const totalParcelas = pp.numero_parcelas || pp.qtd_parcelas || '?';
-            // Bug Extra: entrada conta como pagamento #1; regulares ficam +1
-            const numDisplay = proxima.numero_parcela === 0
-                ? 'Entrada'
-                : (pp.tem_entrada ? (proxima.numero_parcela + 1) : (proxima.numero_parcela || '?'));
-            return {
-                key: `parcela-${proxima.id}`,
-                tipo: '📦 Parcela',
-                descricao: `${pp.descricao} (${numDisplay}/${totalParcelas})`,
-                valor: proxima.valor_parcela || proxima.valor || 0,
-                data_vencimento: proxima.data_vencimento,
-                pix: pp.pix,
-                codigo_barras: proxima.codigo_barras || pp.codigo_barras,
-                vencido: proxima.data_vencimento && new Date(proxima.data_vencimento + 'T00:00:00') < hoje,
-            };
-        }).filter(Boolean),
-    ].sort((a, b) => {
-        // Vencidos primeiro, depois por data
-        if (a.vencido !== b.vencido) return a.vencido ? -1 : 1;
-        return (a.data_vencimento || '').localeCompare(b.data_vencimento || '');
-    });
-
-    const [selecionados, setSelecionados] = useState(() => new Set(todosPendentes.map(p => p.key)));
-
-    const toggleItem = (key) => {
-        setSelecionados(prev => {
-            const next = new Set(prev);
-            if (next.has(key)) next.delete(key);
-            else next.add(key);
-            return next;
-        });
-    };
-
-    const toggleTodos = () => {
-        if (selecionados.size === todosPendentes.length) setSelecionados(new Set());
-        else setSelecionados(new Set(todosPendentes.map(p => p.key)));
-    };
-
-    const itensSelecionados = todosPendentes.filter(p => selecionados.has(p.key));
-    const totalSelecionado = itensSelecionados.reduce((a, p) => a + (p.valor || 0), 0);
-
-    const compartilhar = () => {
-        const linhas = [];
-        linhas.push(`📋 *CRONOGRAMA FINANCEIRO - OBRALY*`);
-        linhas.push(`🏗️ Obra: *${obraNome}*`);
-        linhas.push(`📅 Gerado em: ${hoje.toLocaleDateString('pt-BR')}`);
-        linhas.push(`─────────────────────────`);
-
-        const vencidos = itensSelecionados.filter(p => p.vencido);
-        const aVencer = itensSelecionados.filter(p => !p.vencido && p.tipo !== '📦 Parcela');
-        const parcelas = itensSelecionados.filter(p => p.tipo === '📦 Parcela');
-
-        if (vencidos.length > 0) {
-            linhas.push(`\n🚨 *VENCIDOS (${vencidos.length})*`);
-            vencidos.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
-                if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
-                if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
-            });
-        }
-        if (aVencer.length > 0) {
-            linhas.push(`\n⏰ *A VENCER (${aVencer.length})*`);
-            aVencer.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
-                if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
-                if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
-            });
-        }
-        if (parcelas.length > 0) {
-            linhas.push(`\n📦 *PARCELAS (${parcelas.length})*`);
-            parcelas.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
-                if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
-                if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
-            });
-        }
-
-        linhas.push(`\n─────────────────────────`);
-        linhas.push(`💰 *TOTAL SELECIONADO: ${formatVal(totalSelecionado)}*`);
-        linhas.push(`_Gerado pelo Obraly_`);
-
-        // Bug B2: anchor click em vez de window.open (Capacitor WebView interceptava)
-        const url = `https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`;
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        onClose();
-    };
-
-    return (
-        <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-            zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
-        }} onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{
-                background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '680px',
-                maxHeight: '88vh', display: 'flex', flexDirection: 'column',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.35)'
-            }}>
-                {/* Header */}
-                <div style={{ padding: '18px 24px', background: '#075E54', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h2 style={{ margin: 0, color: '#fff', fontSize: '17px', fontWeight: 700 }}>💬 Compartilhar no WhatsApp</h2>
-                        <p style={{ margin: '2px 0 0', color: '#a7f3d0', fontSize: '13px' }}>Selecione os pagamentos que deseja incluir</p>
-                    </div>
-                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                </div>
-
-                {/* Toolbar */}
-                <div style={{ padding: '12px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#374151' }}>
-                        <input type="checkbox"
-                            checked={selecionados.size === todosPendentes.length}
-                            onChange={toggleTodos}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        {selecionados.size === todosPendentes.length ? 'Desmarcar todos' : 'Selecionar todos'}
-                    </label>
-                    <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#6b7280' }}>
-                        {selecionados.size} de {todosPendentes.length} selecionados
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#075E54' }}>
-                        {formatVal(totalSelecionado)}
-                    </span>
-                </div>
-
-                {/* Lista de itens */}
-                <div style={{ overflow: 'auto', flex: 1, padding: '8px 0' }}>
-                    {todosPendentes.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
-                            Nenhum pagamento pendente encontrado.
-                        </div>
-                    ) : todosPendentes.map(item => (
-                        <label key={item.key} style={{
-                            display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 24px',
-                            cursor: 'pointer', borderBottom: '1px solid #f3f4f6', transition: 'background 0.1s',
-                            background: selecionados.has(item.key) ? '#f0fdf4' : '#fff',
-                        }}
-                            onMouseEnter={e => { if (!selecionados.has(item.key)) e.currentTarget.style.background = '#f9fafb'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = selecionados.has(item.key) ? '#f0fdf4' : '#fff'; }}
-                        >
-                            <input type="checkbox"
-                                checked={selecionados.has(item.key)}
-                                onChange={() => toggleItem(item.key)}
-                                style={{ width: '16px', height: '16px', marginTop: '2px', cursor: 'pointer', flexShrink: 0 }}
-                            />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span style={{
-                                        fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px',
-                                        background: item.vencido ? '#fee2e2' : item.tipo === '📦 Parcela' ? '#ede9fe' : '#fef3c7',
-                                        color: item.vencido ? '#991b1b' : item.tipo === '📦 Parcela' ? '#6d28d9' : '#92400e',
-                                    }}>{item.tipo}</span>
-                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{item.descricao}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: '16px', marginTop: '4px', fontSize: '13px', color: '#6b7280', flexWrap: 'wrap' }}>
-                                    <span style={{ fontWeight: 700, color: item.vencido ? '#dc2626' : '#059669' }}>{formatVal(item.valor)}</span>
-                                    <span>📅 {formatDate(item.data_vencimento)}</span>
-                                    {item.pix && <span>🔑 {item.pix}</span>}
-                                    {item.codigo_barras && <span>📋 {item.codigo_barras.substring(0, 20)}…</span>}
-                                </div>
-                            </div>
-                        </label>
-                    ))}
-                </div>
-
-                {/* Footer */}
-                <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '10px', justifyContent: 'flex-end', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
-                    <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', color: '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        onClick={compartilhar}
-                        disabled={selecionados.size === 0}
-                        style={{
-                            padding: '10px 24px', borderRadius: '8px', border: 'none',
-                            background: selecionados.size === 0 ? '#9ca3af' : '#25D366',
-                            color: '#fff', fontWeight: 700, cursor: selecionados.size === 0 ? 'not-allowed' : 'pointer', fontSize: '14px',
-                            display: 'flex', alignItems: 'center', gap: '8px'
-                        }}
-                    >
-                        💬 Compartilhar ({selecionados.size})
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, simplified = false }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
@@ -11549,14 +5157,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // NOVO: Itens do orçamento para dropdown de vinculação
+    // NOVO: Itens do or�amento para dropdown de vincula��o
     const [itensOrcamento, setItensOrcamento] = useState([]);
     
-    // NOVO: Estados para Expandir/Recolher seções
+    // NOVO: Estados para Expandir/Recolher se��es
     const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
     const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
     
-    // MUDANÇA 5: Estados para seleção múltipla
+    // MUDAN�A 5: Estados para sele��o m�ltipla
     const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
@@ -11591,18 +5199,18 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [isEditarFuturoVisible, setEditarFuturoVisible] = useState(false);
     const [pagamentoFuturoSelecionado, setPagamentoFuturoSelecionado] = useState(null);
     
-    // MUDANÇA 5: Funções de seleção
+    // MUDAN�A 5: Fun��es de sele��o
     const toggleSelecao = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-71" e converter
+        // CORRE��O CR�TICA: Detectar IDs tipo "servico-71" e converter
         let tipoFinal = tipo;
         let idFinal = id;
         
-        // Se o ID é uma string tipo "servico-X", extrair o ID numérico
+        // Se o ID � uma string tipo "servico-X", extrair o ID num�rico
         if (typeof id === 'string' && id.startsWith('servico-')) {
             const idNumerico = parseInt(id.split('-')[1], 10);
             tipoFinal = 'servico';
             idFinal = idNumerico;
-            logger.debug(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
+            logger.debug(`[CORRE��O] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
         }
         
         setItensSelecionados(prev => {
@@ -11616,7 +5224,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     };
     
     const isItemSelecionado = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Verificar com conversão também
+        // CORRE��O CR�TICA: Verificar com convers�o tamb�m
         let tipoCheck = tipo;
         let idCheck = id;
         
@@ -11635,7 +5243,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         // Pagamentos Futuros
         pagamentosFuturos.forEach(pag => {
             if (pag.status === 'Previsto') {
-                // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-X"
+                // CORRE��O CR�TICA: Detectar IDs tipo "servico-X"
                 if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
                     const idNumerico = parseInt(pag.id.split('-')[1], 10);
                     todos.push({ tipo: 'servico', id: idNumerico });
@@ -11646,7 +5254,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
         });
         
-        // Pagamentos de Serviço Pendentes
+        // Pagamentos de Servi�o Pendentes
         pagamentosServicoPendentes.forEach(pag => {
             todos.push({ tipo: 'servico', id: pag.id });
         });
@@ -11667,7 +5275,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         setItensSelecionados([]);
     };
     
-    // MUDANÇA 5: Handler para marcar múltiplos como pagos
+    // MUDAN�A 5: Handler para marcar m�ltiplos como pagos
     const handleMarcarMultiplosComoPago = async () => {
         if (itensSelecionados.length === 0) {
             notify.warning('Selecione pelo menos um item para marcar como pago.');
@@ -11708,7 +5316,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
+            // <--- MUDAN�A: Carregar dados principais primeiro (r�pido) -->
             const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes, itensOrcRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
@@ -11732,7 +5340,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await previsoesRes.json();
                     setPrevisoes(data);
                 } catch (e) {
-                    logger.error('Erro ao processar previsões:', e);
+                    logger.error('Erro ao processar previs�es:', e);
                 }
             }
             
@@ -11745,26 +5353,26 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 }
             }
             
-            // NOVO: Carregar itens do orçamento para dropdown
+            // NOVO: Carregar itens do or�amento para dropdown
             if (itensOrcRes.ok) {
                 try {
                     const data = await itensOrcRes.json();
                     setItensOrcamento(data);
                 } catch (e) {
-                    logger.error('Erro ao processar itens do orçamento:', e);
+                    logger.error('Erro ao processar itens do or�amento:', e);
                 }
             }
 
-            // <--- MUDANÇA: Processar parcelados SEM bloquear a tela -->
+            // <--- MUDAN�A: Processar parcelados SEM bloquear a tela -->
             if (parceladoRes.ok) {
                 try {
                     const data = await parceladoRes.json();
                     
-                    // Mostrar dados básicos imediatamente (sem parcelas)
+                    // Mostrar dados b�sicos imediatamente (sem parcelas)
                     setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
                     setIsLoading(false); // <-- Libera a tela AQUI
                     
-                    // Buscar parcelas em background (não bloqueia mais!)
+                    // Buscar parcelas em background (n�o bloqueia mais!)
                     const parceladosComParcelas = await Promise.all(
                         data.map(async (pagParcelado) => {
                             try {
@@ -11782,7 +5390,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         })
                     );
                     
-                    // Atualiza com parcelas quando disponíveis
+                    // Atualiza com parcelas quando dispon�veis
                     const parceladosComCamposCalculados = parceladosComParcelas.map(pag => {
                         const parcelas = pag.parcelas || [];
                         const proxima = parcelas.find(p => p.status !== 'Pago');
@@ -11891,9 +5499,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const handleDeletePagamentoFuturo = async (id) => {
         const idStr = String(id);
 
-        // Se for um pagamento de serviço (id começa com "servico-"), não pode deletar daqui
+        // Se for um pagamento de servi�o (id come�a com "servico-"), n�o pode deletar daqui
         if (idStr.startsWith('servico-')) {
-            notify.warning('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
+            notify.warning('?? Este pagamento est� vinculado a um servi�o.\n\nPara exclu�-lo, acesse a p�gina do servi�o correspondente.');
             return;
         }
 
@@ -11911,7 +5519,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosFuturos(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('🗑️ Pagamento futuro excluído!');
+                showCronogramaToast('??? Pagamento futuro exclu�do!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -11920,7 +5528,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao deletar pagamento futuro:', error);
             if (error.name === 'AbortError') {
-                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclus�o demorou demais. Verifique a conex�o e recarregue a tela.');
             } else {
                 notify.error('Erro ao deletar pagamento futuro: ' + error.message);
             }
@@ -11943,7 +5551,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (idStr.startsWith('servico-')) {
                 const servPagId = parseInt(idStr.split('-').pop(), 10);
-                logger.debug("Marcando pagamento de serviço futuro como pago:", servPagId);
+                logger.debug("Marcando pagamento de servi�o futuro como pago:", servPagId);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
                     {
@@ -11974,7 +5582,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     );
                 }
 
-                showCronogramaToast('✅ Pagamento marcado como pago!');
+                showCronogramaToast('? Pagamento marcado como pago!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -11983,7 +5591,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao marcar pagamento como pago:', error);
             if (error.name === 'AbortError') {
-                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A opera��o demorou demais. Verifique a conex�o e recarregue a tela.');
             } else {
                 notify.error('Erro ao processar: ' + error.message);
             }
@@ -12009,7 +5617,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosParcelados(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('🗑️ Pagamento parcelado excluído!');
+                showCronogramaToast('??? Pagamento parcelado exclu�do!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 notify.error('Erro ao excluir pagamento parcelado');
@@ -12017,7 +5625,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao deletar pagamento parcelado:', error);
             if (error.name === 'AbortError') {
-                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclus�o demorou demais. Verifique a conex�o e recarregue a tela.');
             } else {
                 notify.error('Erro ao deletar pagamento parcelado');
             }
@@ -12028,7 +5636,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Marcar parcela como paga
     const handleMarcarParcelaPaga = async (pagamento) => {
-        if (!await confirmDialog(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`, { confirmText: 'Confirmar pagamento' })) {
+        if (!await confirmDialog(`Confirma o pagamento da pr�xima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`, { confirmText: 'Confirmar pagamento' })) {
             return;
         }
 
@@ -12049,15 +5657,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             const parcelas = await resListaParcelas.json();
 
-            // 2. Encontrar a próxima parcela não paga
+            // 2. Encontrar a pr�xima parcela n�o paga
             const proximaParcela = parcelas.find(p => p.status !== 'Pago');
 
             if (!proximaParcela) {
-                notify.warning('Todas as parcelas já foram pagas!');
+                notify.warning('Todas as parcelas j� foram pagas!');
                 return;
             }
 
-            // 3. Marcar a parcela como paga (isso criará o lançamento no backend)
+            // 3. Marcar a parcela como paga (isso criar� o lan�amento no backend)
             const res = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas/${proximaParcela.id}/pagar`,
                 {
@@ -12088,14 +5696,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 parcelas: parcelasAtualizadas,
                                 proxima_parcela_numero: numeroProxima,
                                 proxima_parcela_vencimento: vencimentoProximo,
-                                status: todasPagas ? 'Concluído' : 'Ativo'
+                                status: todasPagas ? 'Conclu�do' : 'Ativo'
                             };
                         }
                         return pag;
                     });
                 });
 
-                showCronogramaToast(`✅ ${resultado.mensagem}`);
+                showCronogramaToast(`? ${resultado.mensagem}`);
                 setTimeout(() => fetchData(), 500);
             } else {
                 const erro = await res.json().catch(() => ({}));
@@ -12104,7 +5712,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao marcar parcela:', error);
             if (error.name === 'AbortError') {
-                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A opera��o demorou demais. Verifique a conex�o e recarregue a tela.');
             } else {
                 notify.error('Erro ao marcar parcela como paga');
             }
@@ -12122,30 +5730,30 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
-    // Conteúdo do cronograma (usado tanto em embedded quanto em modal)
+    // Conte�do do cronograma (usado tanto em embedded quanto em modal)
     const cronogramaContent = (
         <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>{simplified ? '🏠' : '💰'} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
+            <h2>{simplified ? '??' : '??'} {simplified ? 'In�cio' : 'Cronograma Financeiro'} - {obraNome}</h2>
             <QuadroAlertasVencimento obraId={obraId} /> 
-            {/* Botões de Exportação */}
+            {/* Bot�es de Exporta��o */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
+                {/* REMOVIDO: Bot�es de cadastro movidos para o dashboard principal
                 <button 
                     onClick={() => setCadastrarFuturoVisible(true)} 
                     className="submit-btn"
                 >
-                    ➕ Cadastrar Pagamento Futuro (Único)
+                    ? Cadastrar Pagamento Futuro (�nico)
                 </button>
                 <button 
                     onClick={() => setCadastrarParceladoVisible(true)} 
                     className="submit-btn"
                     style={{ backgroundColor: 'var(--cor-acento)' }}
                 >
-                    ➕ Cadastrar Pagamento Parcelado
+                    ? Cadastrar Pagamento Parcelado
                 </button>
                 */}
                 
-                {/* NOVO: Botão Gerar PDF - apenas no modo completo */}
+                {/* NOVO: Bot�o Gerar PDF - apenas no modo completo */}
                 {!simplified && (
                 <button 
                     onClick={async () => {
@@ -12170,13 +5778,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             }
                         }} 
                         className="export-btn pdf"
-                        title="Gerar relatório PDF do cronograma financeiro"
+                        title="Gerar relat�rio PDF do cronograma financeiro"
                     >
-                        📄 Gerar PDF
+                        ?? Gerar PDF
                     </button>
                 )}
 
-                {/* Botão WhatsApp - apenas no modo completo */}
+                {/* Bot�o WhatsApp - apenas no modo completo */}
                 {!simplified && (
                     <button
                         type="button"
@@ -12185,7 +5793,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
                         title="Compartilhar cronograma pelo WhatsApp"
                     >
-                        💬 WhatsApp
+                        ?? WhatsApp
                     </button>
                 )}
                     
@@ -12194,17 +5802,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             onClick={handleMarcarMultiplosComoPago} 
                             className="cf-btn cf-btn-success"
                         >
-                            ✓ Marcar {itensSelecionados.length} Selecionado(s) como Pago
+                            ? Marcar {itensSelecionados.length} Selecionado(s) como Pago
                         </button>
                     )}
                 </div>
 
-                {/* Previsão de Fluxo de Caixa - NOVO DESIGN */}
+                {/* Previs�o de Fluxo de Caixa - NOVO DESIGN */}
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
-                            <div className="cf-section-title">📊 Previsão de Fluxo de Caixa</div>
-                            <div className="cf-section-subtitle">Soma automática de pagamentos futuros e parcelados</div>
+                            <div className="cf-section-title">?? Previs�o de Fluxo de Caixa</div>
+                            <div className="cf-section-subtitle">Soma autom�tica de pagamentos futuros e parcelados</div>
                         </div>
                         <button 
                             onClick={async () => {
@@ -12227,13 +5835,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             }} 
                             className="cf-btn cf-btn-outline"
                         >
-                            📄 Gerar PDF
+                            ?? Gerar PDF
                         </button>
                     </div>
                     
                     {previsoes.length > 0 ? (
                         <>
-                            {/* Gráfico de Barras */}
+                            {/* Gr�fico de Barras */}
                             <div className="cf-chart-container">
                                 {previsoes.slice(0, 6).map((prev, index) => {
                                     const maxValor = Math.max(...previsoes.map(p => p.valor));
@@ -12262,24 +5870,24 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         </>
                     ) : (
                         <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
-                            Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.
+                            Nenhuma previs�o calculada. Cadastre pagamentos futuros ou parcelados.
                         </p>
                     )}
                 </div>
 
-                {/* NOVO: Listagem de Pagamentos de Serviço Pendentes */}
+                {/* NOVO: Listagem de Pagamentos de Servi�o Pendentes */}
                 {pagamentosServicoPendentes.length > 0 && (
                     <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--cor-warning-bg)', border: '2px solid var(--cor-warning-light)' }}>
-                        <h3>⚠️ Pagamentos de Serviço Pendentes</h3>
+                        <h3>?? Pagamentos de Servi�o Pendentes</h3>
                         <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
-                            Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
+                            Estes s�o pagamentos vinculados a servi�os que ainda n�o foram quitados totalmente.
                         </p>
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
-                                    <th style={{width: '40px'}}>✓</th>
-                                    <th>Serviço</th>
-                                    <th>Descrição</th>
+                                    <th style={{width: '40px'}}>?</th>
+                                    <th>Servi�o</th>
+                                    <th>Descri��o</th>
                                     <th>Tipo</th>
                                     <th>Valor Total</th>
                                     <th>Pago</th>
@@ -12305,7 +5913,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 padding: '3px 8px',
                                                 borderRadius: '12px',
                                                 fontSize: '0.85em',
-                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
+                                                backgroundColor: pag.tipo_pagamento === 'M�o de Obra' ? '#007bff' : '#28a745',
                                                 color: 'white'
                                             }}>
                                                 {pag.tipo_pagamento}
@@ -12324,24 +5932,24 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     </div>
                 )}
 
-                {/* Pagamentos Futuros (Únicos) - NOVO DESIGN */}
+                {/* Pagamentos Futuros (�nicos) - NOVO DESIGN */}
                 {!simplified && (
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
                             <div className="cf-section-title">
-                                📋 Pagamentos Futuros
-                                <span className="cf-badge cf-badge-info">Únicos</span>
+                                ?? Pagamentos Futuros
+                                <span className="cf-badge cf-badge-info">�nicos</span>
                             </div>
                             <div className="cf-section-subtitle">
-                                Clique na descrição para editar ou no badge para marcar como pago
+                                Clique na descri��o para editar ou no badge para marcar como pago
                             </div>
                         </div>
                         <button 
                             className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosFuturosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosFuturosCollapsed ? '▼ Expandir' : '▲ Recolher'}
+                            {isPagamentosFuturosCollapsed ? '? Expandir' : '? Recolher'}
                         </button>
                     </div>
                     
@@ -12375,9 +5983,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         />
                                     )}
                                     
-                                    {/* Ícone */}
+                                    {/* �cone */}
                                     <div className="cf-pagamento-futuro-icon">
-                                        {String(pag.id).startsWith('servico-') ? '🔗' : '📄'}
+                                        {String(pag.id).startsWith('servico-') ? '??' : '??'}
                                     </div>
                                     
                                     {/* Info */}
@@ -12399,7 +6007,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             {pag.descricao}
                                         </div>
                                         <div className="cf-pagamento-futuro-meta">
-                                            {pag.fornecedor || 'Sem fornecedor'} • {new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                            {pag.fornecedor || 'Sem fornecedor'} � {new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                                         </div>
                                     </div>
                                     
@@ -12427,12 +6035,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={futuroProcessing ? 'Processando...' : 'Clique para marcar como pago'}
                                             >
-                                                {futuroProcessing ? '⏳ Processando...' : 'Pendente'}
+                                                {futuroProcessing ? '? Processando...' : 'Pendente'}
                                             </span>
                                         );
                                     })()}
 
-                                    {/* Ações */}
+                                    {/* A��es */}
                                     <div className="cf-pagamento-futuro-actions">
                                         {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
                                             <button
@@ -12450,7 +6058,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={isProcessing(`futuro-${pag.id}`) ? 'Processando...' : 'Excluir pagamento'}
                                             >
-                                                {isProcessing(`futuro-${pag.id}`) ? '⏳' : '🗑️'}
+                                                {isProcessing(`futuro-${pag.id}`) ? '?' : '???'}
                                             </button>
                                         )}
                                     </div>
@@ -12473,20 +6081,20 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     <div className="cf-section-header">
                         <div>
                             <div className="cf-section-title">
-                                📦 Pagamentos Parcelados
+                                ?? Pagamentos Parcelados
                                 <span className="cf-badge cf-badge-purple">
                                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length} ativos
                                 </span>
                             </div>
                             <div className="cf-section-subtitle">
-                                Clique no card para editar • Bolinhas = parcelas (● paga ○ pendente)
+                                Clique no card para editar � Bolinhas = parcelas (? paga ? pendente)
                             </div>
                         </div>
                         <button 
                             className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosParceladosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosParceladosCollapsed ? '▼ Expandir' : '▲ Recolher'}
+                            {isPagamentosParceladosCollapsed ? '? Expandir' : '? Recolher'}
                         </button>
                     </div>
                     
@@ -12495,7 +6103,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <div className="parcelas-cards-grid">
                             {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
-                                // CORREÇÃO: Usar parcelas_pagas do backend, não calcular por proxima_parcela_numero
+                                // CORRE��O: Usar parcelas_pagas do backend, n�o calcular por proxima_parcela_numero
                                 const parcelasPagas = pag.parcelas_pagas || 0;
                                 const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
                                 
@@ -12524,7 +6132,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             }}
                                         >
                                             <span className="parcela-popup-title">
-                                                📦 {pag.descricao}
+                                                ?? {pag.descricao}
                                             </span>
                                             
                                             {/* Bolinhas = Parcelas */}
@@ -12543,7 +6151,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             </div>
                                         </div>
 
-                                        {/* Conteúdo */}
+                                        {/* Conte�do */}
                                         <div className="parcela-popup-content">
                                             {/* Valor Total */}
                                             <div className="parcela-popup-valor">
@@ -12578,7 +6186,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                                             {/* Vencimento */}
                                             <div className="parcela-popup-vencimento">
-                                                <span className="parcela-popup-vencimento-label">📅 Vencimento</span>
+                                                <span className="parcela-popup-vencimento-label">?? Vencimento</span>
                                                 <span className="parcela-popup-vencimento-value">
                                                     {pag.proxima_parcela_vencimento ? 
                                                         new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
@@ -12623,8 +6231,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                                 handleMarcarParcelaPaga(pag);
                                                             }}
                                                         >
-                                                            {parceladoProcessing ? '⏳ Processando...' : (
-                                                                <>💰 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
+                                                            {parceladoProcessing ? '? Processando...' : (
+                                                                <>?? {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
                                                                     const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
                                                                     const num = pag.tem_entrada ? baseNum + 1 : baseNum;
                                                                     return `Pagar Parcela ${num}`;
@@ -12647,7 +6255,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                             }}
                                                             title={parceladoProcessing ? 'Processando...' : 'Excluir parcelamento'}
                                                         >
-                                                            {parceladoProcessing ? '⏳' : '🗑️'}
+                                                            {parceladoProcessing ? '?' : '???'}
                                                         </button>
                                                     </div>
                                                 );
@@ -12669,7 +6277,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                 <div className="modal-footer" style={{ marginTop: '20px' }}>
                     <button onClick={onClose} className="voltar-btn">
-                        {embedded ? '← Voltar às Obras' : 'Fechar'}
+                        {embedded ? '? Voltar �s Obras' : 'Fechar'}
                     </button>
                 </div>
             </div>
@@ -12808,26 +6416,26 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
-// --- TELA DE SELEÇÃO DE MÓDULO ---
+// --- TELA DE SELE��O DE M�DULO ---
 const ModuleSelectorScreen = ({ onSelectModule }) => {
     const [hoveredModule, setHoveredModule] = useState(null);
     
     const modules = [
         {
             id: 'obras',
-            icon: '🏗️',
+            icon: '???',
             title: 'Obras',
-            subtitle: 'Gestão de Construções',
-            description: 'Gerencie obras, orçamentos, cronogramas, pagamentos e equipes.',
+            subtitle: 'Gest�o de Constru��es',
+            description: 'Gerencie obras, or�amentos, cronogramas, pagamentos e equipes.',
             color: '#6366f1',
             gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
         },
         {
             id: 'admin',
-            icon: '🏢',
-            title: 'Administração',
-            subtitle: 'Gestão Patrimonial',
-            description: 'Controle custos de imóveis, aluguéis, despesas e receitas.',
+            icon: '??',
+            title: 'Administra��o',
+            subtitle: 'Gest�o Patrimonial',
+            description: 'Controle custos de im�veis, alugu�is, despesas e receitas.',
             color: '#10b981',
             gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
         }
@@ -12864,11 +6472,11 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                     color: 'rgba(255,255,255,0.7)',
                     marginTop: '8px'
                 }}>
-                    Selecione o módulo para continuar
+                    Selecione o m�dulo para continuar
                 </p>
             </div>
             
-            {/* Cards de Módulos */}
+            {/* Cards de M�dulos */}
             <div style={{
                 display: 'flex',
                 gap: '30px',
@@ -12901,7 +6509,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                                 : '0 10px 30px rgba(0,0,0,0.2)'
                         }}
                     >
-                        {/* Ícone */}
+                        {/* �cone */}
                         <div style={{
                             width: '80px',
                             height: '80px',
@@ -12917,7 +6525,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.icon}
                         </div>
                         
-                        {/* Título */}
+                        {/* T�tulo */}
                         <h2 style={{
                             fontSize: '28px',
                             fontWeight: '700',
@@ -12927,7 +6535,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.title}
                         </h2>
                         
-                        {/* Subtítulo */}
+                        {/* Subt�tulo */}
                         <p style={{
                             fontSize: '14px',
                             color: module.color,
@@ -12939,7 +6547,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.subtitle}
                         </p>
                         
-                        {/* Descrição */}
+                        {/* Descri��o */}
                         <p style={{
                             fontSize: '14px',
                             color: 'rgba(255,255,255,0.6)',
@@ -12949,7 +6557,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.description}
                         </p>
                         
-                        {/* Botão */}
+                        {/* Bot�o */}
                         <div style={{
                             marginTop: '24px',
                             padding: '12px 24px',
@@ -12961,7 +6569,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             textAlign: 'center',
                             transition: 'all 0.3s ease'
                         }}>
-                            {hoveredModule === module.id ? 'Entrar →' : 'Selecionar'}
+                            {hoveredModule === module.id ? 'Entrar ?' : 'Selecionar'}
                         </div>
                     </div>
                 ))}
@@ -12973,7 +6581,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                 fontSize: '13px',
                 color: 'rgba(255,255,255,0.4)'
             }}>
-                © 2026 Obraly - Sistema de Gestão
+                � 2026 Obraly - Sistema de Gest�o
             </p>
         </div>
     );
@@ -12997,7 +6605,7 @@ function App() {
                 setSelectedModule(savedModule || 'obras');
             }
         } catch (error) {
-            logger.error("Falha ao carregar dados de autenticação:", error);
+            logger.error("Falha ao carregar dados de autentica��o:", error);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('selectedModule');
@@ -13035,7 +6643,7 @@ function App() {
         return <div className="loading-screen">Carregando...</div>;
     }
 
-    // Se não há módulo selecionado e não está logado, mostrar seletor
+    // Se n�o h� m�dulo selecionado e n�o est� logado, mostrar seletor
     if (!selectedModule && !user) {
         return <ModuleSelectorScreen onSelectModule={handleSelectModule} />;
     }
@@ -13045,7 +6653,7 @@ function App() {
         return <AppAdmin onBack={handleBackToSelector} />;
     }
 
-    // Se selecionou Obras ou já está logado
+    // Se selecionou Obras ou j� est� logado
     return (
         <>
             <ToastContainer />
