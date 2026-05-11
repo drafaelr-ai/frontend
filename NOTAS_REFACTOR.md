@@ -46,6 +46,19 @@ ou incluir no início da fase 6 (design system) — momento natural para padroni
 - Nota: se o endpoint de download de PDF for centralizado no futuro, seria natural extrair um helper `downloadCronogramaPDF(obraId, obraNome)` em src/utils/
 - Quando: fase 6 (design system) ou quando surgir terceiro caller
 
+## Investigação: ModalOrcamentos vs OrcamentosModal
+
+**Hipótese confirmada: C — responsabilidades completamente distintas**
+
+- `ModalOrcamentos` (modal 23): visualizador read-only de todas as solicitações por status. Filtros por Aprovado/Rejeitado/Pendente/Todos. Sem ações destrutivas. Usa `new Intl.NumberFormat('pt-BR', ...)` inline em vez de importar `formatCurrency` — inconsistência de formatação a consolidar na fase 6.
+- `OrcamentosModal` (modal 24): painel de ação admin para solicitações PENDENTES. Aprova individualmente ou em lote, rejeita, cria nova solicitação, edita. Depende de sub-modais já extraídos: `ModalAprovarOrcamento`, `AddOrcamentoModal`, `EditOrcamentoModal`. Usa `formatCurrency` corretamente importado.
+
+**NÃO são pares estruturais** — escopo, público-alvo e conjunto de ações são diferentes. Não consolidar.
+
+**Nota de formatação inline em ModalOrcamentos:** `Intl.NumberFormat` direto em vez de `formatCurrency` — terceiro caso de helper de formatação inline após `ModalWhatsAppCronograma` e `RelatoriosModal`. Consolidar todos na fase 6.
+
+---
+
 ## Padrão observado
 
 Modais "Add X" / "Edit X" sempre têm essa duplicação. Confirmado em 2 pares:
