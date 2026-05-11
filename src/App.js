@@ -5,30 +5,30 @@ import './App.css';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
-// MUDANÇA 1: Import do componente DiarioObras
+// MUDANï¿½A 1: Import do componente DiarioObras
 import DiarioObras from './components/DiarioObras';
 
-// MUDANÇA 2: Import do componente CronogramaObra
+// MUDANï¿½A 2: Import do componente CronogramaObra
 import CronogramaObra from './components/CronogramaObra';
 
-// NOVO: Import do Dashboard com gráficos
+// NOVO: Import do Dashboard com grï¿½ficos
 import DashboardObra from './components/DashboardObra';
 import './components/DashboardObra.css';
 
-// Import para compressão de imagens
+// Import para compressï¿½o de imagens
 import { compressImages } from './utils/imageCompression';
 
-// ?? MÓDULO BI - Import do Business Intelligence Dashboard
+// ?? Mï¿½DULO BI - Import do Business Intelligence Dashboard
 // NOTA: Coloque o arquivo BiModule.js na pasta src/
 import { BiDashboard } from './BiModule';
 
-// ?? MÓDULO ORÇAMENTO DE ENGENHARIA
+// ?? Mï¿½DULO ORï¿½AMENTO DE ENGENHARIA
 import OrcamentoEngenharia from './components/OrcamentoEngenharia';
 
-// ?? MÓDULO AGENDA DE DEMANDAS
+// ?? Mï¿½DULO AGENDA DE DEMANDAS
 import AgendaDemandas from './components/AgendaDemandas';
 
-// ?? MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
+// ?? Mï¿½DULO ADMINISTRAï¿½ï¿½O (Gestï¿½o Patrimonial)
 import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
 import { ToastContainer, notify, confirmDialog } from './utils/notify';
@@ -64,22 +64,23 @@ import OrcamentosModal from './components/modals/OrcamentosModal';
 import CadastrarBoletoModal from './components/modals/CadastrarBoletoModal';
 import CaixaObraModal from './components/modals/CaixaObraModal';
 import EditarParcelasModal from './components/modals/EditarParcelasModal';
+import InserirPagamentoModal from './components/modals/InserirPagamentoModal';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// --- CONFIGURAÇÃO INICIAL ---
+// --- CONFIGURAï¿½ï¿½O INICIAL ---
 
 // --- COMPONENTE SIDEBAR ---
 
-// --- COMPONENTE DE NOTIFICAÇÕES ---
+// --- COMPONENTE DE NOTIFICAï¿½ï¿½ES ---
 const NotificacoesDropdown = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [notificacoes, setNotificacoes] = useState([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
     
-    // Buscar contador de notificações não lidas
+    // Buscar contador de notificaï¿½ï¿½es nï¿½o lidas
     const fetchCount = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -91,11 +92,11 @@ const NotificacoesDropdown = ({ user }) => {
                 setCount(data.count);
             }
         } catch (err) {
-            logger.error('Erro ao buscar contador de notificações:', err);
+            logger.error('Erro ao buscar contador de notificaï¿½ï¿½es:', err);
         }
     };
     
-    // Buscar notificações
+    // Buscar notificaï¿½ï¿½es
     const fetchNotificacoes = async () => {
         try {
             setLoading(true);
@@ -108,13 +109,13 @@ const NotificacoesDropdown = ({ user }) => {
                 setNotificacoes(data);
             }
         } catch (err) {
-            logger.error('Erro ao buscar notificações:', err);
+            logger.error('Erro ao buscar notificaï¿½ï¿½es:', err);
         } finally {
             setLoading(false);
         }
     };
     
-    // Marcar como lida/não lida
+    // Marcar como lida/nï¿½o lida
     const toggleLida = async (notifId, lida) => {
         try {
             const token = localStorage.getItem('token');
@@ -132,7 +133,7 @@ const NotificacoesDropdown = ({ user }) => {
             ));
             setCount(prev => lida ? prev + 1 : Math.max(0, prev - 1));
         } catch (err) {
-            logger.error('Erro ao marcar notificação:', err);
+            logger.error('Erro ao marcar notificaï¿½ï¿½o:', err);
         }
     };
     
@@ -146,13 +147,13 @@ const NotificacoesDropdown = ({ user }) => {
             });
             setNotificacoes(prev => prev.filter(n => !n.lida));
         } catch (err) {
-            logger.error('Erro ao limpar notificações:', err);
+            logger.error('Erro ao limpar notificaï¿½ï¿½es:', err);
         }
     };
 
-    // Limpar TODAS as notificações
+    // Limpar TODAS as notificaï¿½ï¿½es
     const limparTodas = async () => {
-        if (!await confirmDialog('Limpar TODAS as notificações?', { confirmText: 'Limpar tudo' })) return;
+        if (!await confirmDialog('Limpar TODAS as notificaï¿½ï¿½es?', { confirmText: 'Limpar tudo' })) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${API_URL}/notificacoes/limpar-todas`, {
@@ -163,7 +164,7 @@ const NotificacoesDropdown = ({ user }) => {
             setCount(0);
             setIsOpen(false);
         } catch (err) {
-            logger.error('Erro ao limpar todas notificações:', err);
+            logger.error('Erro ao limpar todas notificaï¿½ï¿½es:', err);
         }
     };
     
@@ -189,7 +190,7 @@ const NotificacoesDropdown = ({ user }) => {
         return () => clearInterval(interval);
     }, []);
     
-    // Buscar notificações quando abrir dropdown
+    // Buscar notificaï¿½ï¿½es quando abrir dropdown
     useEffect(() => {
         if (isOpen) {
             fetchNotificacoes();
@@ -213,7 +214,7 @@ const NotificacoesDropdown = ({ user }) => {
         return date.toLocaleDateString('pt-BR');
     };
     
-    // Ícone por tipo
+    // ï¿½cone por tipo
     const getIconByType = (tipo) => {
         switch(tipo) {
             case 'servico_criado': return '???';
@@ -244,7 +245,7 @@ const NotificacoesDropdown = ({ user }) => {
                     borderRadius: '8px',
                     transition: 'background 0.2s'
                 }}
-                title="Notificações"
+                title="Notificaï¿½ï¿½es"
             >
                 ??
                 {count > 0 && (
@@ -281,7 +282,7 @@ const NotificacoesDropdown = ({ user }) => {
                         onClick={() => setIsOpen(false)}
                     />
                     
-                    {/* Dropdown - aparece ABAIXO do sino, alinhado à direita */}
+                    {/* Dropdown - aparece ABAIXO do sino, alinhado ï¿½ direita */}
                     <div style={{
                         position: 'absolute',
                         top: '100%',
@@ -303,16 +304,16 @@ const NotificacoesDropdown = ({ user }) => {
                             borderBottom: '1px solid #e5e7eb',
                             backgroundColor: '#f8fafc'
                         }}>
-                            {/* Título */}
+                            {/* Tï¿½tulo */}
                             <div style={{ 
                                 fontWeight: '600', 
                                 color: '#1e293b',
                                 marginBottom: '10px',
                                 fontSize: '1em'
                             }}>
-                                ?? Notificações
+                                ?? Notificaï¿½ï¿½es
                             </div>
-                            {/* Botões de ação */}
+                            {/* Botï¿½es de aï¿½ï¿½o */}
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                 {count > 0 && (
                                     <button
@@ -342,7 +343,7 @@ const NotificacoesDropdown = ({ user }) => {
                                         fontSize: '0.75em',
                                         padding: '4px 8px'
                                     }}
-                                    title="Limpar notificações lidas"
+                                    title="Limpar notificaï¿½ï¿½es lidas"
                                 >
                                     ??? Limpar lidas
                                 </button>
@@ -358,14 +359,14 @@ const NotificacoesDropdown = ({ user }) => {
                                         padding: '4px 8px',
                                         fontWeight: '600'
                                     }}
-                                    title="Limpar TODAS as notificações"
+                                    title="Limpar TODAS as notificaï¿½ï¿½es"
                                 >
                                     ??? Limpar TODAS
                                 </button>
                             </div>
                         </div>
                         
-                        {/* Lista de notificações */}
+                        {/* Lista de notificaï¿½ï¿½es */}
                         <div style={{ 
                             overflowY: 'auto', 
                             flex: 1,
@@ -378,7 +379,7 @@ const NotificacoesDropdown = ({ user }) => {
                             ) : notificacoes.length === 0 ? (
                                 <div style={{ padding: '30px', textAlign: 'center', color: '#6b7280' }}>
                                     <div style={{ fontSize: '2em', marginBottom: '10px' }}>??</div>
-                                    Nenhuma notificação
+                                    Nenhuma notificaï¿½ï¿½o
                                 </div>
                             ) : (
                                 notificacoes.map(notif => (
@@ -453,7 +454,7 @@ const NotificacoesDropdown = ({ user }) => {
                                                 color: notif.lida ? '#94a3b8' : '#3b82f6',
                                                 fontSize: '0.9em'
                                             }}
-                                            title={notif.lida ? 'Marcar como não lida' : 'Marcar como lida'}
+                                            title={notif.lida ? 'Marcar como nï¿½o lida' : 'Marcar como lida'}
                                         >
                                             {notif.lida ? '?' : '?'}
                                         </button>
@@ -469,7 +470,7 @@ const NotificacoesDropdown = ({ user }) => {
 };
 
 // ==============================================================================
-// NAVEGAÇÃO ESTILO WINDOWS - Barra de Menus no Topo
+// NAVEGAï¿½ï¿½O ESTILO WINDOWS - Barra de Menus no Topo
 // ==============================================================================
 const WindowsNavBar = ({ 
     user, 
@@ -506,10 +507,10 @@ const WindowsNavBar = ({
             id: 'obra',
             label: 'Obra',
             items: [
-                { id: 'home', label: 'Início', icon: '??', shortcut: 'Alt+I' },
+                { id: 'home', label: 'Inï¿½cio', icon: '??', shortcut: 'Alt+I' },
                 { id: 'obras', label: 'Minhas Obras', icon: '???', shortcut: 'Alt+O' },
                 { type: 'separator' },
-                { id: 'exportar', label: 'Exportar Relatório...', icon: '??', shortcut: 'Ctrl+E' },
+                { id: 'exportar', label: 'Exportar Relatï¿½rio...', icon: '??', shortcut: 'Ctrl+E' },
                 { type: 'separator' },
                 { id: 'sair', label: 'Sair', icon: '??', shortcut: 'Alt+F4', action: 'logout' },
             ]
@@ -519,7 +520,7 @@ const WindowsNavBar = ({
             label: 'Financeiro',
             items: [
                 { id: 'financeiro', label: 'Cronograma Financeiro', icon: '??', shortcut: 'F2' },
-                { id: 'boletos', label: 'Gestão de Boletos', icon: '??', shortcut: 'F3' },
+                { id: 'boletos', label: 'Gestï¿½o de Boletos', icon: '??', shortcut: 'F3' },
                 { id: 'caixa', label: 'Caixa de Obra', icon: '??', shortcut: 'F4' },
                 { type: 'separator' },
                 { id: 'pagamento', label: 'Novo Pagamento...', icon: '??', shortcut: 'Ctrl+P' },
@@ -536,19 +537,19 @@ const WindowsNavBar = ({
             id: 'documentos',
             label: 'Documentos',
             items: [
-                { id: 'diario', label: 'Diário de Obras', icon: '??', shortcut: 'F6' },
+                { id: 'diario', label: 'Diï¿½rio de Obras', icon: '??', shortcut: 'F6' },
                 { id: 'agenda', label: 'Agenda de Demandas', icon: '??', shortcut: 'F9' },
-                { id: 'orcamentos', label: 'Solicitações', icon: '??', shortcut: 'F7', adminOnly: true },
-                { id: 'relatorios', label: 'Relatórios', icon: '??', shortcut: 'F8' },
+                { id: 'orcamentos', label: 'Solicitaï¿½ï¿½es', icon: '??', shortcut: 'F7', adminOnly: true },
+                { id: 'relatorios', label: 'Relatï¿½rios', icon: '??', shortcut: 'F8' },
             ]
         },
         {
             id: 'ferramentas',
             label: 'Ferramentas',
             items: [
-                { id: 'usuarios', label: 'Gerenciar Usuários', icon: '??', masterOnly: true },
+                { id: 'usuarios', label: 'Gerenciar Usuï¿½rios', icon: '??', masterOnly: true },
                 { type: 'separator' },
-                { id: 'configuracoes', label: 'Configurações', icon: '??' },
+                { id: 'configuracoes', label: 'Configuraï¿½ï¿½es', icon: '??' },
             ]
         },
         {
@@ -563,15 +564,15 @@ const WindowsNavBar = ({
         },
     ];
 
-    // Barra de ferramentas rápidas
+    // Barra de ferramentas rï¿½pidas
     const toolbarItems = [
-        { id: 'home', icon: '??', label: 'Início' },
-        { id: 'orcamento-eng', icon: '??', label: 'Orçamento' },
+        { id: 'home', icon: '??', label: 'Inï¿½cio' },
+        { id: 'orcamento-eng', icon: '??', label: 'Orï¿½amento' },
         { id: 'financeiro', icon: '??', label: 'Financeiro' },
         { id: 'cronograma-obra', icon: '??', label: 'Cronograma' },
         { id: 'boletos', icon: '??', label: 'Boletos' },
-        { id: 'relatorios', icon: '??', label: 'Relatórios' },
-        { id: 'diario', icon: '??', label: 'Diário' },
+        { id: 'relatorios', icon: '??', label: 'Relatï¿½rios' },
+        { id: 'diario', icon: '??', label: 'Diï¿½rio' },
         { id: 'agenda', icon: '??', label: 'Agenda' },
         { id: 'caixa', icon: '??', label: 'Caixa' },
     ];
@@ -608,15 +609,15 @@ const WindowsNavBar = ({
             setObraSelecionada(null);
             setCurrentPage('obras');
         } else {
-            // CORREÇÃO: Usar navigateTo para atualizar URL e chamar fetchObraData
+            // CORREï¿½ï¿½O: Usar navigateTo para atualizar URL e chamar fetchObraData
             if (typeof window.navigateTo === 'function') {
                 window.navigateTo('home', obraId);
             }
-            // Chamar handleSelectObra se disponível globalmente
+            // Chamar handleSelectObra se disponï¿½vel globalmente
             if (typeof window.handleSelectObra === 'function') {
                 window.handleSelectObra(obraId);
             } else {
-                // Fallback: só mudar a obra visualmente (dados antigos)
+                // Fallback: sï¿½ mudar a obra visualmente (dados antigos)
                 const obra = obras.find(o => o.id === obraId);
                 if (obra) {
                     setObraSelecionada(obra);
@@ -634,14 +635,14 @@ const WindowsNavBar = ({
 
     return (
         <>
-            {/* === BARRA DE TÍTULO === */}
+            {/* === BARRA DE Tï¿½TULO === */}
             <div className="windows-title-bar">
                 <div className="title-bar-left">
                     <span className="title-bar-logo">???</span>
                     <span className="title-bar-name">Obraly</span>
                     {obraSelecionada && (
                         <>
-                            <span className="title-bar-separator">—</span>
+                            <span className="title-bar-separator">ï¿½</span>
                             <span className="title-bar-obra">{obraSelecionada.nome}</span>
                         </>
                     )}
@@ -652,7 +653,7 @@ const WindowsNavBar = ({
                         <span className="user-avatar-mini">
                             {user.nome ? user.nome.charAt(0).toUpperCase() : '?'}
                         </span>
-                        <span className="user-name-mini">{user.nome || 'Usuário'}</span>
+                        <span className="user-name-mini">{user.nome || 'Usuï¿½rio'}</span>
                         <span className="user-role-badge">
                             {user.role === 'master' ? '??' : user.role === 'administrador' ? '?' : '??'}
                         </span>
@@ -771,7 +772,7 @@ const WindowsNavBar = ({
     );
 };
 
-// CSS da Navegação Windows
+// CSS da Navegaï¿½ï¿½o Windows
 const WindowsNavStyles = () => (
     <style>{`
         /* === LAYOUT WINDOWS === */
@@ -789,7 +790,7 @@ const WindowsNavStyles = () => (
             overflow-y: auto;
         }
         
-        /* === BARRA DE TÍTULO === */
+        /* === BARRA DE Tï¿½TULO === */
         .windows-title-bar {
             display: flex;
             align-items: center;
@@ -1178,12 +1179,12 @@ const WindowsNavStyles = () => (
                 padding: 10px 12px;
                 font-size: 13px;
                 white-space: nowrap;
-                min-height: 44px; /* Área de toque mínima para mobile */
+                min-height: 44px; /* ï¿½rea de toque mï¿½nima para mobile */
             }
             
             .menu-dropdown {
                 position: fixed;
-                top: 120px; /* Abaixo da barra de navegação */
+                top: 120px; /* Abaixo da barra de navegaï¿½ï¿½o */
                 left: 10px;
                 right: 10px;
                 bottom: auto;
@@ -1198,7 +1199,7 @@ const WindowsNavStyles = () => (
             
             .menu-dropdown-item {
                 padding: 14px 16px;
-                min-height: 48px; /* Área de toque maior no mobile */
+                min-height: 48px; /* ï¿½rea de toque maior no mobile */
                 font-size: 15px;
             }
             
@@ -1242,30 +1243,30 @@ const Sidebar = ({
     isCollapsed,
     setIsCollapsed 
 }) => {
-    // Menu items - só aparece quando obra está selecionada
+    // Menu items - sï¿½ aparece quando obra estï¿½ selecionada
     const menuItems = [
-        { id: 'home', icon: '??', label: 'Início', shortLabel: 'Início' },
-        { id: 'orcamento-eng', icon: '??', label: 'Orçamento de Engenharia', shortLabel: 'Orçamento' },
+        { id: 'home', icon: '??', label: 'Inï¿½cio', shortLabel: 'Inï¿½cio' },
+        { id: 'orcamento-eng', icon: '??', label: 'Orï¿½amento de Engenharia', shortLabel: 'Orï¿½amento' },
         { id: 'cronograma-obra', icon: '??', label: 'Cronograma de Obras', shortLabel: 'Cronograma' },
         { id: 'financeiro', icon: '??', label: 'Cronograma Financeiro', shortLabel: 'Financeiro' },
-        { id: 'boletos', icon: '??', label: 'Gestão de Boletos', shortLabel: 'Boletos' },
-        { id: 'relatorios', icon: '??', label: 'Relatórios', shortLabel: 'Relatórios' },
-        { id: 'orcamentos', icon: '??', label: 'Solicitações', shortLabel: 'Solicitações', adminOnly: true },
-        { id: 'diario', icon: '??', label: 'Diário de Obras', shortLabel: 'Diário' },
+        { id: 'boletos', icon: '??', label: 'Gestï¿½o de Boletos', shortLabel: 'Boletos' },
+        { id: 'relatorios', icon: '??', label: 'Relatï¿½rios', shortLabel: 'Relatï¿½rios' },
+        { id: 'orcamentos', icon: '??', label: 'Solicitaï¿½ï¿½es', shortLabel: 'Solicitaï¿½ï¿½es', adminOnly: true },
+        { id: 'diario', icon: '??', label: 'Diï¿½rio de Obras', shortLabel: 'Diï¿½rio' },
         { id: 'agenda', icon: '??', label: 'Agenda de Demandas', shortLabel: 'Agenda' },
         { id: 'caixa', icon: '??', label: 'Caixa de Obra', shortLabel: 'Caixa' },
     ];
 
     const bottomItems = [
         { id: 'obras', icon: '???', label: 'Minhas Obras', shortLabel: 'Obras' },
-        { id: 'usuarios', icon: '??', label: 'Gerenciar Usuários', shortLabel: 'Usuários', masterOnly: true },
+        { id: 'usuarios', icon: '??', label: 'Gerenciar Usuï¿½rios', shortLabel: 'Usuï¿½rios', masterOnly: true },
     ];
 
     const handleItemClick = (item) => {
         if (item.id === 'obras') {
             setObraSelecionada(null);
         }
-        // Usar navigateTo para atualizar histórico do browser
+        // Usar navigateTo para atualizar histï¿½rico do browser
         if (typeof window.navigateTo === 'function') {
             window.navigateTo(item.id, item.id !== 'obras' ? obraSelecionada?.id : null);
         } else {
@@ -1330,7 +1331,7 @@ const Sidebar = ({
                 <nav className="sidebar-nav">
                     <ul className="sidebar-menu">
                         {menuItems.map(item => {
-                            // Verificar permissões
+                            // Verificar permissï¿½es
                             if (item.adminOnly && user.role !== 'administrador' && user.role !== 'master') {
                                 return null;
                             }
@@ -1362,7 +1363,7 @@ const Sidebar = ({
                                 return null;
                             }
                             
-                            // Mostrar "Minhas Obras" apenas quando há obra selecionada
+                            // Mostrar "Minhas Obras" apenas quando hï¿½ obra selecionada
                             if (item.id === 'obras' && !obraSelecionada) {
                                 return null;
                             }
@@ -1385,7 +1386,7 @@ const Sidebar = ({
                     </ul>
                 </nav>
 
-                {/* Footer com usuário */}
+                {/* Footer com usuï¿½rio */}
                 <div className="sidebar-footer">
                     <div className="user-info">
                         <div className="user-avatar">
@@ -1393,10 +1394,10 @@ const Sidebar = ({
                         </div>
                         {!isCollapsed && (
                             <div className="user-details">
-                                <span className="user-name">{user.nome || 'Usuário'}</span>
+                                <span className="user-name">{user.nome || 'Usuï¿½rio'}</span>
                                 <span className="user-role">
                                     {user.role === 'master' ? '?? Master' : 
-                                     user.role === 'administrador' ? '? Admin' : '?? Usuário'}
+                                     user.role === 'administrador' ? '? Admin' : '?? Usuï¿½rio'}
                                 </span>
                             </div>
                         )}
@@ -1568,7 +1569,7 @@ const SidebarStyles = () => (
             transform: rotate(180deg);
         }
         
-        /* Navegação */
+        /* Navegaï¿½ï¿½o */
         .sidebar-nav {
             flex: 1;
             overflow-y: auto;
@@ -1813,7 +1814,7 @@ const SidebarStyles = () => (
 );
 
 
-// --- CONTEXTO DE AUTENTICAÇÃO + FETCH ---
+// --- CONTEXTO DE AUTENTICAï¿½ï¿½O + FETCH ---
 // fetchWithAuth, fetchWithAuthTimeout ? src/auth/fetchWithAuth.js
 // AuthContext, useAuth              ? src/auth/AuthContext.jsx
 
@@ -1846,7 +1847,7 @@ const LoginScreen = ({ onBack }) => {
         })
         .catch(err => {
             logger.error("Erro no login:", err);
-            setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
+            setError(err.message || "Credenciais invï¿½lidas. Verifique seu usuï¿½rio e senha.");
             setIsLoading(false);
         });
     };
@@ -1861,7 +1862,7 @@ const LoginScreen = ({ onBack }) => {
             <div className="floating-shape square-1"></div>
             <div className="floating-shape triangle-1"></div>
             
-            {/* Botão Voltar */}
+            {/* Botï¿½o Voltar */}
             {onBack && (
                 <button
                     onClick={onBack}
@@ -1905,7 +1906,7 @@ const LoginScreen = ({ onBack }) => {
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input
                         type="text"
-                        placeholder="Usuário"
+                        placeholder="Usuï¿½rio"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         style={{ 
@@ -1961,10 +1962,10 @@ const LoginScreen = ({ onBack }) => {
     );
 };
 
-// Gráfico de Pizza
+// Grï¿½fico de Pizza
 const GastosPorSegmentoChart = ({ data }) => {
     if (!data || Object.keys(data).length === 0) {
-        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no gráfico.</p>;
+        return <p style={{textAlign: 'center', padding: '20px'}}>Sem dados para exibir no grï¿½fico.</p>;
     }
 
     const chartData = {
@@ -1975,8 +1976,8 @@ const GastosPorSegmentoChart = ({ data }) => {
                 data: Object.values(data),
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.7)', // Vermelho (Material)
-                    'rgba(54, 162, 235, 0.7)', // Azul (Mão de Obra)
-                    'rgba(255, 206, 86, 0.7)', // Amarelo (Serviço)
+                    'rgba(54, 162, 235, 0.7)', // Azul (Mï¿½o de Obra)
+                    'rgba(255, 206, 86, 0.7)', // Amarelo (Serviï¿½o)
                     'rgba(75, 192, 192, 0.7)', // Verde (Equipamentos)
                     'rgba(153, 102, 255, 0.7)', // Roxo
                 ],
@@ -2014,7 +2015,7 @@ const GastosPorSegmentoChart = ({ data }) => {
 // ---------------------------------
 
 
-// --- COMPONENTE: HISTÓRICO DE PAGAMENTOS (Card para Home) ---
+// --- COMPONENTE: HISTï¿½RICO DE PAGAMENTOS (Card para Home) ---
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
     const [editandoItem, setEditandoItem] = useState(null);
@@ -2040,7 +2041,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             // Filtro por tipo
             const tipoItem = (item.tipo || item.tipo_pagamento || '').toLowerCase();
             const matchTipo = filtroTipo === 'todos' || 
-                (filtroTipo === 'mao_de_obra' && (tipoItem.includes('mão') || tipoItem.includes('mao') || tipoItem === 'mao_de_obra')) ||
+                (filtroTipo === 'mao_de_obra' && (tipoItem.includes('mï¿½o') || tipoItem.includes('mao') || tipoItem === 'mao_de_obra')) ||
                 (filtroTipo === 'material' && tipoItem.includes('material')) ||
                 (filtroTipo === 'equipamento' && (tipoItem.includes('equipamento') || tipoItem.includes('despesa')));
             
@@ -2052,7 +2053,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         });
     }, [itemsPagos, busca, filtroTipo, filtroFornecedor]);
     
-    // Lista de fornecedores únicos para o filtro
+    // Lista de fornecedores ï¿½nicos para o filtro
     const fornecedoresUnicos = useMemo(() => {
         const fornecedores = [...new Set(itemsPagos.map(item => item.fornecedor).filter(Boolean))];
         return fornecedores.sort();
@@ -2065,7 +2066,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
     const isMaster = user && user.role === 'master';
     
-    // Buscar itens do orçamento quando abrir modal de edição
+    // Buscar itens do orï¿½amento quando abrir modal de ediï¿½ï¿½o
     const fetchItensOrcamento = async () => {
         if (!obraId) return;
         setLoadingItens(true);
@@ -2076,17 +2077,17 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 setItensOrcamento(data);
             }
         } catch (err) {
-            logger.error('Erro ao buscar itens do orçamento:', err);
+            logger.error('Erro ao buscar itens do orï¿½amento:', err);
         } finally {
             setLoadingItens(false);
         }
     };
     
-    // Abrir modal de edição
+    // Abrir modal de ediï¿½ï¿½o
     const handleEditarItem = (item) => {
-        // Normalizar o tipo para 'Mão de Obra' ou 'Material'
+        // Normalizar o tipo para 'Mï¿½o de Obra' ou 'Material'
         let tipoNorm = item.tipo || item.segmento || item.tipo_pagamento || 'Material';
-        if (tipoNorm === 'mao_de_obra' || tipoNorm === 'mao_obra') tipoNorm = 'Mão de Obra';
+        if (tipoNorm === 'mao_de_obra' || tipoNorm === 'mao_obra') tipoNorm = 'Mï¿½o de Obra';
         if (tipoNorm === 'material') tipoNorm = 'Material';
         setEditandoItem({
             ...item,
@@ -2096,7 +2097,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         fetchItensOrcamento();
     };
     
-    // Salvar edição (vincular item do orçamento)
+    // Salvar ediï¿½ï¿½o (vincular item do orï¿½amento)
     const handleSalvarEdicao = async () => {
         if (!editandoItem) return;
         
@@ -2109,9 +2110,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 orcamento_item_id: editandoItem.orcamento_item_id || null
             };
             
-            // Extrair ID numérico
+            // Extrair ID numï¿½rico
             const tipoEdit = editandoItem.tipo_edit || 'Material';
-            const tipoMaoDeObra = tipoEdit === 'Mão de Obra';
+            const tipoMaoDeObra = tipoEdit === 'Mï¿½o de Obra';
 
             if (strId.startsWith('lanc-')) {
                 numericId = strId.replace('lanc-', '');
@@ -2142,7 +2143,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         segmento: tipoEdit
                     };
                 } else {
-                    throw new Error('ID do pagamento parcelado não encontrado');
+                    throw new Error('ID do pagamento parcelado nï¿½o encontrado');
                 }
             } else {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
@@ -2166,20 +2167,20 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao atualizar');
             }
         } catch (err) {
-            logger.error('Erro ao salvar edição:', err);
+            logger.error('Erro ao salvar ediï¿½ï¿½o:', err);
             notify.error(`Erro ao salvar: ${err.message}`);
         }
     };
     
-    // Função para exportar CSV
+    // Funï¿½ï¿½o para exportar CSV
     const exportarCSV = () => {
         if (itemsPagos.length === 0) {
             notify.info('Nenhum pagamento para exportar');
             return;
         }
         
-        // Cabeçalho CSV
-        const headers = ['Data', 'Descrição', 'Fornecedor', 'Serviço', 'Valor', 'Status'];
+        // Cabeï¿½alho CSV
+        const headers = ['Data', 'Descriï¿½ï¿½o', 'Fornecedor', 'Serviï¿½o', 'Valor', 'Status'];
         
         // Linhas de dados
         const rows = itemsPagos.map(item => {
@@ -2217,9 +2218,9 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         URL.revokeObjectURL(url);
     };
     
-    // Função para reverter parcela paga (voltar para pendente)
+    // Funï¿½ï¿½o para reverter parcela paga (voltar para pendente)
     const handleRevertParcela = async (item) => {
-        if (!await confirmDialog(`Deseja reverter o pagamento "${item.descricao}"? A parcela voltará ao status "Pendente".`, { confirmText: 'Reverter' })) return;
+        if (!await confirmDialog(`Deseja reverter o pagamento "${item.descricao}"? A parcela voltarï¿½ ao status "Pendente".`, { confirmText: 'Reverter' })) return;
         
         try {
             const response = await fetchWithAuth(
@@ -2252,19 +2253,19 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         try {
             let endpoint = '';
             
-            // Extrair ID numérico (remover prefixos como "lanc-", "serv-pag-")
+            // Extrair ID numï¿½rico (remover prefixos como "lanc-", "serv-pag-")
             const extractNumericId = (id) => {
                 const strId = String(id);
                 if (strId.startsWith('lanc-')) return strId.replace('lanc-', '');
                 if (strId.startsWith('serv-pag-')) return strId.replace('serv-pag-', '');
-                if (strId.startsWith('parcela-')) return null; // Parcelas não podem ser deletadas
+                if (strId.startsWith('parcela-')) return null; // Parcelas nï¿½o podem ser deletadas
                 return strId;
             };
             
             const numericId = extractNumericId(item.id);
             
             if (!numericId) {
-                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados nï¿½o podem ser excluï¿½das individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             }
             
@@ -2274,7 +2275,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             } else if (item.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
-                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados nï¿½o podem ser excluï¿½das individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             } else {
                 // Tentar identificar pelo prefixo do ID
@@ -2289,7 +2290,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
             
             if (response.ok) {
-                notify.success('Item excluído com sucesso!');
+                notify.success('Item excluï¿½do com sucesso!');
                 if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
@@ -2301,7 +2302,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         }
     };
     
-    // Helper para verificar se é parcela
+    // Helper para verificar se ï¿½ parcela
     const isParcela = (item) => {
         return item.tipo_registro === 'parcela_individual' || String(item.id).startsWith('parcela-');
     };
@@ -2338,7 +2339,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 gap: '10px',
                 flexWrap: 'wrap'
             }}>
-                ?? Histórico de Pagamentos
+                ?? Histï¿½rico de Pagamentos
                 <span style={{ 
                     fontSize: '0.6em', 
                     backgroundColor: '#4CAF50', 
@@ -2365,7 +2366,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             gap: '5px',
                             fontWeight: '500'
                         }}
-                        title="Exportar histórico para CSV"
+                        title="Exportar histï¿½rico para CSV"
                     >
                         ?? Exportar CSV
                     </button>
@@ -2391,7 +2392,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             backgroundColor: '#6366f1',
                             display: 'inline-block'
                         }}></span>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Mão de Obra</span>
+                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Mï¿½o de Obra</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ 
@@ -2419,14 +2420,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             {/* Barra de Busca e Filtros */}
             {itemsPagos.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
-                    {/* Linha principal: Busca + Botão Filtros */}
+                    {/* Linha principal: Busca + Botï¿½o Filtros */}
                     <div style={{ 
                         display: 'flex', 
                         gap: '12px', 
                         alignItems: 'center',
                         flexWrap: 'wrap'
                     }}>
-                        {/* Campo de Busca Rápida */}
+                        {/* Campo de Busca Rï¿½pida */}
                         <div style={{ 
                             flex: '1', 
                             minWidth: '250px',
@@ -2442,7 +2443,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             }}>??</span>
                             <input
                                 type="text"
-                                placeholder="Buscar por descrição, fornecedor ou serviço..."
+                                placeholder="Buscar por descriï¿½ï¿½o, fornecedor ou serviï¿½o..."
                                 value={busca}
                                 onChange={(e) => setBusca(e.target.value)}
                                 style={{
@@ -2480,7 +2481,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             )}
                         </div>
                         
-                        {/* Botão Filtros */}
+                        {/* Botï¿½o Filtros */}
                         <button
                             onClick={() => setMostrarFiltros(!mostrarFiltros)}
                             style={{
@@ -2559,7 +2560,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         }}
                                     >
                                         <option value="todos">Todos os tipos</option>
-                                        <option value="mao_de_obra">?? Mão de Obra</option>
+                                        <option value="mao_de_obra">?? Mï¿½o de Obra</option>
                                         <option value="material">?? Material</option>
                                         <option value="equipamento">?? Equipamento</option>
                                     </select>
@@ -2599,7 +2600,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 </div>
                             </div>
                             
-                            {/* Botão Limpar Filtros */}
+                            {/* Botï¿½o Limpar Filtros */}
                             {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
                                 <div style={{ 
                                     borderTop: '1px solid #e2e8f0', 
@@ -2651,7 +2652,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <span>??</span>
                             Exibindo <strong>{pagamentosFiltrados.length}</strong> de <strong>{itemsPagos.length}</strong> pagamentos
                             {busca && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Busca: "{busca}"</span>}
-                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'Mão de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
+                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'Mï¿½o de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
                             {filtroFornecedor && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Fornecedor: {filtroFornecedor}</span>}
                         </div>
                     )}
@@ -2676,12 +2677,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <thead>
                                 <tr>
                                     <th>Data</th>
-                                    <th>Descrição</th>
+                                    <th>Descriï¿½ï¿½o</th>
                                     <th>Fornecedor</th>
                                     <th>Valor</th>
                                     <th>Status</th>
                                     <th style={{width: '50px', textAlign: 'center'}}>NF</th>
-                                    {isAdmin && <th style={{width: '50px'}}>Ações</th>}
+                                    {isAdmin && <th style={{width: '50px'}}>Aï¿½ï¿½es</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -2690,10 +2691,10 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     const getTipoColor = () => {
                                         const tipo = item.tipo || item.tipo_pagamento || '';
                                         const tipoLower = tipo.toLowerCase();
-                                        if (tipoLower.includes('mão') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1'; // Indigo
+                                        if (tipoLower.includes('mï¿½o') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1'; // Indigo
                                         if (tipoLower.includes('material')) return '#10b981'; // Verde
                                         if (tipoLower.includes('equipamento')) return '#f59e0b'; // Laranja
-                                        return '#94a3b8'; // Cinza padrão
+                                        return '#94a3b8'; // Cinza padrï¿½o
                                     };
                                     const tipoColor = getTipoColor();
                                     
@@ -2753,7 +2754,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         </td>
                                         {isAdmin && (
                                             <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
-                                                {/* Botão de editar (vincular serviço) */}
+                                                {/* Botï¿½o de editar (vincular serviï¿½o) */}
                                                 <button 
                                                     onClick={() => handleEditarItem(item)}
                                                     style={{ 
@@ -2764,12 +2765,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                         padding: '3px', 
                                                         color: '#1976d2' 
                                                     }}
-                                                    title="Editar / Vincular a serviço"
+                                                    title="Editar / Vincular a serviï¿½o"
                                                 >
                                                     ??
                                                 </button>
                                                 {isParcela(item) ? (
-                                                    /* Para parcelas: botão de reverter pagamento (admin e master) */
+                                                    /* Para parcelas: botï¿½o de reverter pagamento (admin e master) */
                                                     <button 
                                                         onClick={() => handleRevertParcela(item)}
                                                         style={{ 
@@ -2785,7 +2786,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                         ??
                                                     </button>
                                                 ) : (
-                                                    /* Para outros itens: botão de excluir */
+                                                    /* Para outros itens: botï¿½o de excluir */
                                                     <button 
                                                         onClick={() => handleDelete(item)}
                                                         style={{ 
@@ -2851,7 +2852,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 </>
             )}
             
-            {/* Modal de Edição - Vincular Serviço */}
+            {/* Modal de Ediï¿½ï¿½o - Vincular Serviï¿½o */}
             {editandoItem && (
                 <div style={{
                     position: 'fixed',
@@ -2878,7 +2879,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         </h3>
                         
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descrição:</label>
+                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descriï¿½ï¿½o:</label>
                             <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px' }}>
                                 {editandoItem.descricao}
                             </div>
@@ -2896,7 +2897,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 ??? Tipo:
                             </label>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                {['Mão de Obra', 'Material'].map(opcao => (
+                                {['Mï¿½o de Obra', 'Material'].map(opcao => (
                                     <button
                                         key={opcao}
                                         onClick={() => setEditandoItem({...editandoItem, tipo_edit: opcao})}
@@ -2905,16 +2906,16 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             padding: '10px',
                                             borderRadius: '8px',
                                             border: '2px solid',
-                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
-                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
-                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
+                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mï¿½o de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
+                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mï¿½o de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
+                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'Mï¿½o de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
                                             fontWeight: editandoItem.tipo_edit === opcao ? '700' : '400',
                                             cursor: 'pointer',
                                             fontSize: '0.9em',
                                             transition: 'all 0.15s'
                                         }}
                                     >
-                                        {opcao === 'Mão de Obra' ? '?? Mão de Obra' : '?? Material'}
+                                        {opcao === 'Mï¿½o de Obra' ? '?? Mï¿½o de Obra' : '?? Material'}
                                     </button>
                                 ))}
                             </div>
@@ -2922,7 +2923,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                ?? Vincular a Item do Orçamento:
+                                ?? Vincular a Item do Orï¿½amento:
                             </label>
                             {loadingItens ? (
                                 <div style={{ color: '#666' }}>Carregando itens...</div>
@@ -2945,7 +2946,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                 </select>
                             )}
                             <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                                ?? Vincular a um item faz o valor contar no orçamento
+                                ?? Vincular a um item faz o valor contar no orï¿½amento
                             </small>
                         </div>
 
@@ -3026,12 +3027,12 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
 
 
 // --- COMPONENTES DE MODAL (Existentes) ---
-// <--- MUDANÇA: Modal de Edição (com valor_total e valor_pago) -->
-// --- MODAIS DE ADMINISTRAÇÃO ---
+// <--- MUDANï¿½A: Modal de Ediï¿½ï¿½o (com valor_total e valor_pago) -->
+// --- MODAIS DE ADMINISTRAï¿½ï¿½O ---
 
 // ----------------------------------------------------
 
-// Modal "Exportar Relatório Geral"
+// Modal "Exportar Relatï¿½rio Geral"
 // ----------------------------------------------------
 
 
@@ -3042,647 +3043,6 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
 // ----------------------------------------------------
 
 
-
-// MUDANÇA 3: NOVO Modal "Inserir Pagamento" - COM SUPORTE A PARCELAMENTO E BOLETO
-const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [pix, setPix] = useState('');
-    const [codigoBarras, setCodigoBarras] = useState('');
-    const [valor, setValor] = useState('');
-    const [tipo, setTipo] = useState('Material'); // Material, Mão de Obra, Serviço
-    const [status, setStatus] = useState('A Pagar'); // Pago ou A Pagar
-    const [orcamentoItemId, setOrcamentoItemId] = useState('');
-    
-    // ?? NOVOS ESTADOS PARA PARCELAMENTO
-    const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista'); // 'avista' ou 'parcelado'
-    const [meioPagamento, setMeioPagamento] = useState('PIX'); // PIX, Boleto, Transferência
-    const [numeroParcelas, setNumeroParcelas] = useState('');
-    const [periodicidade, setPeriodicidade] = useState('Mensal'); // Semanal, Quinzenal, Mensal
-    const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
-    
-    // ?? NOVOS ESTADOS PARA ENTRADA
-    const [temEntrada, setTemEntrada] = useState(false);
-    const [percentualEntrada, setPercentualEntrada] = useState(30);
-    const [dataEntrada, setDataEntrada] = useState(getTodayString());
-    
-    // Estados para boletos parcelados (valores diferentes)
-    const [valoresIguais, setValoresIguais] = useState(true);
-    const [boletosConfig, setBoletosConfig] = useState([]);
-    
-    // ?? ESTADOS PARA "SALVAR E NOVO"
-    const [contadorInseridos, setContadorInseridos] = useState(0);
-    const [toastMsg, setToastMsg] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // ?? Cálculos de entrada e parcelas
-    const valorTotal = parseFloat(valor) || 0;
-    const valorEntrada = temEntrada ? (valorTotal * percentualEntrada / 100) : 0;
-    const valorRestante = valorTotal - valorEntrada;
-    const numParcelas = parseInt(numeroParcelas) || 1;
-    const valorParcela = numParcelas > 0 ? valorRestante / numParcelas : 0;
-    
-    // Gerar configuração de boletos quando mudar número de parcelas
-    useEffect(() => {
-        if (tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas) {
-            const dataInicial = dataPrimeiraParcela ? new Date(dataPrimeiraParcela + 'T12:00:00') : new Date();
-            
-            const novosBoletos = [];
-            for (let i = 0; i < numParcelas; i++) {
-                const dataVenc = new Date(dataInicial);
-                if (periodicidade === 'Semanal') {
-                    dataVenc.setDate(dataVenc.getDate() + (i * 7));
-                } else if (periodicidade === 'Quinzenal') {
-                    dataVenc.setDate(dataVenc.getDate() + (i * 15));
-                } else {
-                    dataVenc.setMonth(dataVenc.getMonth() + i);
-                }
-                
-                novosBoletos.push({
-                    numero: i + 1,
-                    valor: valoresIguais ? valorParcela.toFixed(2) : (boletosConfig[i]?.valor || valorParcela.toFixed(2)),
-                    data_vencimento: dataVenc.toISOString().split('T')[0],
-                    codigo_barras: boletosConfig[i]?.codigo_barras || ''
-                });
-            }
-            setBoletosConfig(novosBoletos);
-        }
-    }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
-    
-    // ?? Função para limpar campos (mantém alguns que repetem)
-    const limparCamposParaNovo = () => {
-        setDescricao('');
-        setValor('');
-        setCodigoBarras('');
-        setDataVencimento(getTodayString());
-        setNumeroParcelas('');
-        setTemEntrada(false);
-        setBoletosConfig([]);
-        // Mantém: fornecedor, pix, tipo, orcamentoItemId, meioPagamento, tipoFormaPagamento, periodicidade
-    };
-    
-    // ?? Mostrar toast temporário
-    const mostrarToast = (msg) => {
-        setToastMsg(msg);
-        setTimeout(() => setToastMsg(''), 3000);
-    };
-
-    // Atualizar boleto específico
-    const handleBoletoChange = (index, field, value) => {
-        const novosBoletos = [...boletosConfig];
-        novosBoletos[index] = { ...novosBoletos[index], [field]: value };
-        setBoletosConfig(novosBoletos);
-    };
-
-    // Copiar código de barras
-    const copiarCodigo = (codigo) => {
-        navigator.clipboard.writeText(codigo);
-        notify.success('Código copiado!');
-    };
-
-    const handleSubmit = async (e, salvarENovo = false) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        
-        const dadosPagamento = {
-            data,
-            data_vencimento: dataVencimento,
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: meioPagamento === 'PIX' ? pix : null,
-            codigo_barras: meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' ? codigoBarras : null,
-            valor: parseFloat(valor) || 0,
-            tipo,
-            status,
-            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
-            tipo_forma_pagamento: tipoFormaPagamento,
-            meio_pagamento: meioPagamento
-        };
-        
-        // Adicionar campos de parcelamento se aplicável
-        if (tipoFormaPagamento === 'parcelado') {
-            dadosPagamento.numero_parcelas = parseInt(numeroParcelas);
-            dadosPagamento.periodicidade = periodicidade;
-            dadosPagamento.data_primeira_parcela = dataPrimeiraParcela;
-            
-            // ?? Adicionar dados de entrada
-            if (temEntrada) {
-                dadosPagamento.tem_entrada = true;
-                dadosPagamento.percentual_entrada = percentualEntrada;
-                dadosPagamento.valor_entrada = valorEntrada;
-                dadosPagamento.data_entrada = dataEntrada;
-                dadosPagamento.valor_parcela = valorParcela; // Valor de cada parcela após entrada
-                logger.debug("?? DEBUG ENTRADA (frontend):", {
-                    temEntrada,
-                    percentualEntrada,
-                    valorEntrada,
-                    dataEntrada,
-                    valorParcela
-                });
-            }
-            
-            logger.debug("?? Dados de parcelamento a enviar:", dadosPagamento);
-            
-            // Se for boleto parcelado, incluir configuração dos boletos
-            if (meioPagamento === 'Boleto') {
-                dadosPagamento.parcelas_customizadas = boletosConfig;
-            }
-        }
-        
-        try {
-            await onSave(dadosPagamento, salvarENovo); // Passa flag para callback
-            
-            if (salvarENovo) {
-                // Incrementa contador e limpa campos para próximo
-                setContadorInseridos(prev => prev + 1);
-                mostrarToast(`? Pagamento "${descricao}" inserido com sucesso!`);
-                limparCamposParaNovo();
-            }
-            // Se não for salvarENovo, o onSave vai fechar o modal
-        } catch (error) {
-            logger.error('Erro ao salvar:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>?? Inserir Pagamento</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
-            </p>
-            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-                
-                <div className="form-group">
-                    <label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                {/* ?? TIPO DE FORMA DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Forma de Pagamento</label>
-                    <div style={{display: 'flex', gap: '20px', marginTop: '8px'}}>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="avista" 
-                                checked={tipoFormaPagamento === 'avista'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            À vista
-                        </label>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                            <input 
-                                type="radio" 
-                                value="parcelado" 
-                                checked={tipoFormaPagamento === 'parcelado'} 
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
-                            />
-                            Parcelado
-                        </label>
-                    </div>
-                </div>
-
-                {/* ?? MEIO DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Meio de Pagamento</label>
-                    <select value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
-                        <option value="PIX">PIX</option>
-                        <option value="Boleto">Boleto</option>
-                        <option value="Transferência">Transferência</option>
-                        <option value="Dinheiro">Dinheiro</option>
-                    </select>
-                </div>
-                
-                {/* ?? CAMPOS CONDICIONAIS PARA PARCELAMENTO */}
-                {tipoFormaPagamento === 'parcelado' && (
-                    <>
-                        {/* ?? SEÇÃO DE ENTRADA */}
-                        <div style={{
-                            background: '#e8f5e9',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #a5d6a7'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#2e7d32' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={temEntrada}
-                                        onChange={(e) => setTemEntrada(e.target.checked)}
-                                        style={{ width: '18px', height: '18px' }}
-                                    />
-                                    ?? Tem entrada?
-                                </label>
-                            </div>
-                            
-                            {temEntrada && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Percentual de Entrada (%)</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="99"
-                                                value={percentualEntrada}
-                                                onChange={(e) => setPercentualEntrada(parseFloat(e.target.value) || 0)}
-                                                style={{ width: '80px' }}
-                                            />
-                                            <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                                                = {formatCurrency(valorEntrada)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Data da Entrada</label>
-                                        <input
-                                            type="date"
-                                            value={dataEntrada}
-                                            onChange={(e) => setDataEntrada(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {temEntrada && valor && (
-                                <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em',
-                                    color: '#666'
-                                }}>
-                                    Valor restante para parcelar: <strong style={{ color: '#1976d2' }}>{formatCurrency(valorRestante)}</strong>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* CONFIGURAÇÃO DAS PARCELAS */}
-                        <div style={{
-                            background: '#f0f8ff',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #b3d9ff'
-                        }}>
-                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>?? Configuração das Parcelas</h4>
-                            
-                            <div className="form-group">
-                                <label>Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
-                                <input 
-                                    type="number" 
-                                    min="1" 
-                                    max="60" 
-                                    value={numeroParcelas} 
-                                    onChange={(e) => setNumeroParcelas(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Periodicidade</label>
-                                <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
-                                    <option value="Semanal">Semanal (7 dias)</option>
-                                    <option value="Quinzenal">Quinzenal (15 dias)</option>
-                                    <option value="Mensal">Mensal (30 dias)</option>
-                                </select>
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Data da 1ª Parcela</label>
-                                <input 
-                                    type="date" 
-                                    value={dataPrimeiraParcela} 
-                                    onChange={(e) => setDataPrimeiraParcela(e.target.value)} 
-                                    required 
-                                />
-                            </div>
-                            
-                            {numeroParcelas && valor && (
-                                <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em'
-                                }}>
-                                    <strong>Valor por parcela:</strong> {formatCurrency(valorParcela)}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ?? RESUMO DO PARCELAMENTO */}
-                        {numeroParcelas && valor && (
-                            <div style={{
-                                background: '#fff3e0',
-                                padding: '15px',
-                                borderRadius: '8px',
-                                marginBottom: '15px',
-                                border: '1px solid #ffcc80'
-                            }}>
-                                <h4 style={{margin: '0 0 12px 0', color: '#e65100'}}>?? Resumo do Parcelamento</h4>
-                                
-                                <div style={{ fontSize: '0.95em' }}>
-                                    {temEntrada && (
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            justifyContent: 'space-between', 
-                                            padding: '8px 0',
-                                            borderBottom: '2px solid #ffcc80',
-                                            marginBottom: '8px',
-                                            color: '#2e7d32',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            <span>?? ENTRADA ({percentualEntrada}%)</span>
-                                            <span>{formatCurrency(valorEntrada)} - {new Date(dataEntrada + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
-                                        </div>
-                                    )}
-                                    
-                                    {Array.from({ length: Math.min(numParcelas, 5) }, (_, i) => {
-                                        const dataBase = new Date(dataPrimeiraParcela + 'T12:00:00');
-                                        if (periodicidade === 'Semanal') {
-                                            dataBase.setDate(dataBase.getDate() + (i * 7));
-                                        } else if (periodicidade === 'Quinzenal') {
-                                            dataBase.setDate(dataBase.getDate() + (i * 15));
-                                        } else {
-                                            dataBase.setMonth(dataBase.getMonth() + i);
-                                        }
-                                        return (
-                                            <div key={i} style={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'space-between', 
-                                                padding: '6px 0',
-                                                borderBottom: '1px solid #ffe0b2'
-                                            }}>
-                                                <span>Parcela {i + 1}/{numParcelas}</span>
-                                                <span>{formatCurrency(valorParcela)} - {dataBase.toLocaleDateString('pt-BR')}</span>
-                                            </div>
-                                        );
-                                    })}
-                                    
-                                    {numParcelas > 5 && (
-                                        <div style={{ padding: '6px 0', color: '#999', fontStyle: 'italic' }}>
-                                            ... e mais {numParcelas - 5} parcela(s)
-                                        </div>
-                                    )}
-                                    
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        padding: '10px 0 0 0',
-                                        marginTop: '8px',
-                                        borderTop: '2px solid #e65100',
-                                        fontWeight: 'bold',
-                                        color: '#e65100'
-                                    }}>
-                                        <span>TOTAL ({temEntrada ? numParcelas + 1 : numParcelas} pagamentos)</span>
-                                        <span>{formatCurrency(valorTotal)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {/* ?? CONFIGURAÇÃO DE BOLETOS PARCELADOS */}
-                {tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas && (
-                    <div style={{
-                        background: '#fff8e1',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        marginBottom: '15px',
-                        border: '1px solid #ffcc80',
-                        maxHeight: '300px',
-                        overflowY: 'auto'
-                    }}>
-                        <h4 style={{margin: '0 0 12px 0', color: '#f57c00'}}>?? Códigos de Barras dos Boletos</h4>
-                        
-                        <div style={{ marginBottom: '10px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={valoresIguais}
-                                    onChange={(e) => setValoresIguais(e.target.checked)}
-                                />
-                                Valores iguais
-                            </label>
-                        </div>
-                        
-                        {boletosConfig.map((boleto, index) => (
-                            <div key={index} style={{
-                                background: '#fff',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '5px',
-                                padding: '10px',
-                                marginBottom: '8px'
-                            }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    marginBottom: '8px',
-                                    fontWeight: 'bold',
-                                    color: '#555'
-                                }}>
-                                    <span>Boleto {boleto.numero}/{numeroParcelas}</span>
-                                    <span style={{ fontSize: '12px', color: '#888' }}>
-                                        Venc: {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
-                                    </span>
-                                </div>
-                                
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {!valoresIguais && (
-                                        <div style={{ flex: '1', minWidth: '100px' }}>
-                                            <label style={{ fontSize: '11px', color: '#666' }}>Valor:</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={boleto.valor}
-                                                onChange={(e) => handleBoletoChange(index, 'valor', e.target.value)}
-                                                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                            />
-                                        </div>
-                                    )}
-                                    <div style={{ flex: '3', minWidth: '200px' }}>
-                                        <label style={{ fontSize: '11px', color: '#666' }}>Código de Barras:</label>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
-                                            <input
-                                                type="text"
-                                                value={boleto.codigo_barras}
-                                                onChange={(e) => handleBoletoChange(index, 'codigo_barras', e.target.value)}
-                                                placeholder="Cole a linha digitável"
-                                                style={{ flex: '1', padding: '5px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
-                                            />
-                                            {boleto.codigo_barras && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => copiarCodigo(boleto.codigo_barras)}
-                                                    style={{
-                                                        padding: '5px 10px',
-                                                        background: '#4CAF50',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '4px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    title="Copiar código"
-                                                >
-                                                    ??
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                
-                {/* CAMPOS ORIGINAIS CONTINUAM */}
-                {tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Data de Vencimento</label>
-                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                    </div>
-                )}
-                
-                {/* Campo de PIX - só aparece se meio for PIX */}
-                {meioPagamento === 'PIX' && (
-                    <div className="form-group">
-                        <label>Chave PIX (Opcional)</label>
-                        <input 
-                            type="text" 
-                            value={pix} 
-                            onChange={(e) => setPix(e.target.value)} 
-                            placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
-                        />
-                    </div>
-                )}
-
-                {/* Campo de Código de Barras - só aparece se meio for Boleto e À vista */}
-                {meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Código de Barras do Boleto</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <input 
-                                type="text" 
-                                value={codigoBarras} 
-                                onChange={(e) => setCodigoBarras(e.target.value)} 
-                                placeholder="Cole a linha digitável do boleto"
-                                style={{ flex: 1 }}
-                            />
-                            {codigoBarras && (
-                                <button
-                                    type="button"
-                                    onClick={() => copiarCodigo(codigoBarras)}
-                                    style={{
-                                        padding: '8px 15px',
-                                        background: '#4CAF50',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                    title="Copiar código"
-                                >
-                                    ?? Copiar
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
-                
-                <div className="form-group">
-                    <label>Tipo</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                        <option value="Serviço">Serviço</option>
-                        <option value="Equipamentos">Equipamentos</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-                        <option value="Pago">Pago</option>
-                        <option value="A Pagar">A Pagar</option>
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
-                        <option value="">Nenhum</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isSubmitting}>
-                        {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
-                    </button>
-                    <button 
-                        type="button" 
-                        onClick={(e) => handleSubmit(e, true)} 
-                        className="submit-btn"
-                        style={{ backgroundColor: '#17a2b8', flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '?...' : '? Salvar e Novo'}
-                    </button>
-                    <button 
-                        type="submit" 
-                        className="submit-btn"
-                        style={{ flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '?...' : (tipoFormaPagamento === 'parcelado' ? '?? Salvar e Fechar' : '?? Salvar e Fechar')}
-                    </button>
-                </div>
-                
-                {/* ?? Toast de sucesso */}
-                {toastMsg && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: '20px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                        zIndex: 10000,
-                        animation: 'fadeIn 0.3s ease',
-                        fontWeight: 'bold'
-                    }}>
-                        {toastMsg}
-                    </div>
-                )}
-            </form>
-        </Modal>
-    );
-};
 
 
 // --- NOVO MODAL PARA VER ANEXOS ---
@@ -3698,7 +3058,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
 
 
-// --- FIM DO MODAL DE RELATÓRIOS ---
+// --- FIM DO MODAL DE RELATï¿½RIOS ---
 
 
 
@@ -3710,18 +3070,18 @@ function Dashboard() {
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
     const [servicos, setServicos] = useState([]); // Mantido para compatibilidade
-    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
+    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orï¿½amento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     
-    // CORREÇÃO: Verificar URL uma única vez no início
+    // CORREï¿½ï¿½O: Verificar URL uma ï¿½nica vez no inï¿½cio
     const urlParamsInicial = new URLSearchParams(window.location.search);
     const obraIdDaUrl = urlParamsInicial.get('obra');
     const temObraNaUrl = !!obraIdDaUrl;
     
-    // CORREÇÃO: Iniciar loading se tiver obra na URL
+    // CORREï¿½ï¿½O: Iniciar loading se tiver obra na URL
     const [isLoading, setIsLoading] = useState(temObraNaUrl);
-    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para não causar re-render)
+    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para nï¿½o causar re-render)
     const [carregandoObraDaUrl, setCarregandoObraDaUrl] = useState(temObraNaUrl);
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
@@ -3739,7 +3099,7 @@ function Dashboard() {
     const [editingOrcamento, setEditingOrcamento] = useState(null);
     const [viewingAnexos, setViewingAnexos] = useState(null);
     
-    // <--- MUDANÇA: Novo estado para o modal de pagamento -->
+    // <--- MUDANï¿½A: Novo estado para o modal de pagamento -->
     const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
@@ -3749,34 +3109,34 @@ function Dashboard() {
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
     const [uploadingNFFor, setUploadingNFFor] = useState(null);
-    const isLoadingNotasFiscais = React.useRef(false); // Proteção contra múltiplas requisições
+    const isLoadingNotasFiscais = React.useRef(false); // Proteï¿½ï¿½o contra mï¿½ltiplas requisiï¿½ï¿½es
     
     // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
-    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
+    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que estï¿½ recebendo upload
     
-    // <--- NOVO: Estado para modal de relatórios -->
+    // <--- NOVO: Estado para modal de relatï¿½rios -->
     const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
     
-    // <--- NOVO: Estado para modal de orçamentos -->
+    // <--- NOVO: Estado para modal de orï¿½amentos -->
     const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
     
     // <--- NOVO: Estado para modal do Cronograma Financeiro -->
     const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
     
-    // MUDANÇA 2: Estado para modal do Diário de Obras
+    // MUDANï¿½A 2: Estado para modal do Diï¿½rio de Obras
     const [isDiarioVisible, setDiarioVisible] = useState(false);
     
-    // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
+    // MUDANï¿½A 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
     
     // NOVO: Estado para modal do Caixa de Obra
     const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
     
-    // NOVO: Estado para mostrar obras concluídas
+    // NOVO: Estado para mostrar obras concluï¿½das
     const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
     
     // === NOVO: Estados para Sidebar ===
-    // CORREÇÃO: Iniciar como null para não piscar na tela de obras
+    // CORREï¿½ï¿½O: Iniciar como null para nï¿½o piscar na tela de obras
     const [currentPage, setCurrentPage] = useState(() => {
         // Ler da URL imediatamente para evitar flash
         const urlParams = new URLSearchParams(window.location.search);
@@ -3788,8 +3148,8 @@ function Dashboard() {
     });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
-    // Função para navegar COM histórico do browser (botão voltar funciona)
+    // === NAVEGAï¿½ï¿½O COM HISTï¿½RICO DO BROWSER ===
+    // Funï¿½ï¿½o para navegar COM histï¿½rico do browser (botï¿½o voltar funciona)
     const navigateTo = (page, obraId = null) => {
         const state = { page, obraId };
         const url = obraId ? `?obra=${obraId}&page=${page}` : `?page=${page}`;
@@ -3800,17 +3160,17 @@ function Dashboard() {
     // Expor navigateTo globalmente para uso no Sidebar
     window.navigateTo = navigateTo;
     
-    // Estado para controlar se a URL inicial já foi processada
+    // Estado para controlar se a URL inicial jï¿½ foi processada
     const [urlProcessada, setUrlProcessada] = useState(false);
 
-    // Escutar botão voltar do navegador
+    // Escutar botï¿½o voltar do navegador
     useEffect(() => {
         const handlePopState = (event) => {
             logger.debug('PopState event:', event.state);
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
-                    // fetchObraData será chamado pelo useEffect abaixo
+                    // fetchObraData serï¿½ chamado pelo useEffect abaixo
                     const obraId = event.state.obraId;
                     setIsLoading(true);
                     fetchWithAuth(`${API_URL}/obras/${obraId}`)
@@ -3833,7 +3193,7 @@ function Dashboard() {
                     setObraSelecionada(null);
                 }
             } else {
-                // Se não tem estado, voltar para lista de obras
+                // Se nï¿½o tem estado, voltar para lista de obras
                 setCurrentPage('obras');
                 setObraSelecionada(null);
             }
@@ -3847,14 +3207,14 @@ function Dashboard() {
     }, []);
 
 const totalOrcamentosPendentes = useMemo(() => {
-        // A variável 'orcamentos' já contém
-        // apenas os orçamentos com status 'Pendente' vindos do backend.
+        // A variï¿½vel 'orcamentos' jï¿½ contï¿½m
+        // apenas os orï¿½amentos com status 'Pendente' vindos do backend.
         return (Array.isArray(orcamentos) ? orcamentos : [])
             .reduce((total, orc) => total + (orc.valor || 0), 0);
     }, [orcamentos]);
 
    const itemsAPagar = useMemo(() => {
-    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
+    // <--- MUDANï¿½A: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     return (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item =>
         (item.valor_total || 0) > (item.valor_pago || 0)
     )
@@ -3877,7 +3237,7 @@ const totalOrcamentosPendentes = useMemo(() => {
  // --- NOVO BLOCO DO CRONOGRAMA (LUGAR CORRETO) ---
     const cronogramaPagamentos = useMemo(() => {
         const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
+        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparaï¿½ï¿½o de datas
 
         const data7Dias = new Date(hoje);
         data7Dias.setDate(hoje.getDate() + 7);
@@ -3893,10 +3253,10 @@ const totalOrcamentosPendentes = useMemo(() => {
             totalAPagar: 0
         };
 
-        // Usa a variável 'itemsAPagar' que já foi definida ANTES
+        // Usa a variï¿½vel 'itemsAPagar' que jï¿½ foi definida ANTES
         (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
             const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            // Usa data_vencimento se existir, senão usa data como fallback
+            // Usa data_vencimento se existir, senï¿½o usa data como fallback
             const dataParaUsar = item.data_vencimento || item.data;
             const dataVencimento = new Date(dataParaUsar + 'T00:00:00'); 
             
@@ -3914,7 +3274,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         });
 
         return totais;
-    }, [itemsAPagar]); // A dependência é 'itemsAPagar'
+    }, [itemsAPagar]); // A dependï¿½ncia ï¿½ 'itemsAPagar'
     // --- FIM DO NOVO BLOCO ---
 
 
@@ -3925,7 +3285,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         [historicoUnificado]
     );
     
-    // <--- NOVO: Função para agrupar pagamentos por mês -->
+    // <--- NOVO: Funï¿½ï¿½o para agrupar pagamentos por mï¿½s -->
     const pagamentosPorMes = useMemo(() => {
         const grupos = {};
         
@@ -3940,7 +3300,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     label: mesAnoLabel,
                     items: [],
                     total: 0,
-                    dataOrdem: dataItem // Para ordenação
+                    dataOrdem: dataItem // Para ordenaï¿½ï¿½o
                 };
             }
             
@@ -3954,7 +3314,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .map(([mesAno, dados]) => ({ mesAno, ...dados }));
     }, [itemsPagos]);
     
-    // <--- NOVO: Função para toggle de expandir/recolher mês -->
+    // <--- NOVO: Funï¿½ï¿½o para toggle de expandir/recolher mï¿½s -->
     const toggleMes = (mesAno) => {
         setMesesExpandidos(prev => ({
             ...prev,
@@ -3975,7 +3335,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .catch(error => { logger.error("Erro ao buscar obras:", error); setObras([]); });
     }, [mostrarConcluidas]); 
     
-    // Callback para abrir modal de orçamentos
+    // Callback para abrir modal de orï¿½amentos
     useEffect(() => {
         window.abrirModalOrcamentos = () => {
             setOrcamentosModalVisible(true);
@@ -3989,7 +3349,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         setIsLoading(true);
         logger.debug(`Buscando dados da obra ID: ${obraId}`);
         
-        // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
+        // OTIMIZAï¿½ï¿½O: Carregar dados principais primeiro, secundï¿½rios em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
@@ -4006,22 +3366,22 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // Carregar dados secundários (não bloqueia a tela principal)
+                // Carregar dados secundï¿½rios (nï¿½o bloqueia a tela principal)
                 fetchCronogramaObras(obraId);
                 fetchItensOrcamento(obraId);
                 
-                // Notas fiscais - tentar carregar mas não falhar se não existir
+                // Notas fiscais - tentar carregar mas nï¿½o falhar se nï¿½o existir
                 try {
                     fetchNotasFiscais(obraId);
                 } catch (error) {
-                    logger.debug("Notas fiscais não disponíveis");
+                    logger.debug("Notas fiscais nï¿½o disponï¿½veis");
                 }
             })
             .catch(error => { logger.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
-    // NOVO: Buscar itens do orçamento para dropdown
+    // NOVO: Buscar itens do orï¿½amento para dropdown
     const fetchItensOrcamento = async (obraId) => {
         try {
             const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
@@ -4030,12 +3390,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setItensOrcamento(data);
             }
         } catch (error) {
-            logger.debug("Itens do orçamento não disponíveis:", error);
+            logger.debug("Itens do orï¿½amento nï¿½o disponï¿½veis:", error);
             setItensOrcamento([]);
         }
     };
     
-    // CORREÇÃO: Processar URL inicial ao montar o componente
+    // CORREï¿½ï¿½O: Processar URL inicial ao montar o componente
     useEffect(() => {
         if (urlProcessada) return;
         
@@ -4043,7 +3403,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
         
-        logger.debug("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
+        logger.debug("[URL INIT] Parï¿½metros:", { page: pageFromUrl, obra: obraFromUrl });
         
         if (obraFromUrl) {
             const obraId = parseInt(obraFromUrl);
@@ -4071,11 +3431,11 @@ const totalOrcamentosPendentes = useMemo(() => {
         setUrlProcessada(true);
     }, [urlProcessada]);
     
-    // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
+    // NOVO: Funï¿½ï¿½o para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
         try {
-            // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
-            // As etapas já vêm incluídas na resposta do backend via to_dict()
+            // Buscar cronogramas da obra (CronogramaObra = serviï¿½os com cronograma)
+            // As etapas jï¿½ vï¿½m incluï¿½das na resposta do backend via to_dict()
             const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
             if (!response.ok) {
                 setCronogramaObras([]);
@@ -4090,12 +3450,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return;
             }
             
-            // As etapas já vêm na resposta do backend, não precisa buscar separadamente
+            // As etapas jï¿½ vï¿½m na resposta do backend, nï¿½o precisa buscar separadamente
             const cronogramasFormatados = cronogramasData.map((cron) => ({
                 servico_id: cron.servico_id,
                 servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
                 cronograma_id: cron.id,
-                // Usar diretamente as etapas que já vieram na resposta
+                // Usar diretamente as etapas que jï¿½ vieram na resposta
                 etapas: Array.isArray(cron.etapas) ? cron.etapas : [],
                 // Incluir dados adicionais do cronograma para o Gantt
                 data_inicio: cron.data_inicio,
@@ -4106,28 +3466,28 @@ const totalOrcamentosPendentes = useMemo(() => {
             logger.debug("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
-            // Silencioso — cronograma de obras é feature secundária
+            // Silencioso ï¿½ cronograma de obras ï¿½ feature secundï¿½ria
             setCronogramaObras([]);
         }
     };
     
-    // <--- NOVO: Função para buscar notas fiscais -->
+    // <--- NOVO: Funï¿½ï¿½o para buscar notas fiscais -->
     const fetchNotasFiscais = (obraId) => {
-        // Proteção contra múltiplas requisições simultâneas
+        // Proteï¿½ï¿½o contra mï¿½ltiplas requisiï¿½ï¿½es simultï¿½neas
         if (isLoadingNotasFiscais.current) {
-            logger.debug("Já está carregando notas fiscais, ignorando requisição duplicada");
+            logger.debug("Jï¿½ estï¿½ carregando notas fiscais, ignorando requisiï¿½ï¿½o duplicada");
             return;
         }
         
         isLoadingNotasFiscais.current = true;
         
-        // CORREÇÃO: Verificar se a rota existe antes de fazer a requisição
+        // CORREï¿½ï¿½O: Verificar se a rota existe antes de fazer a requisiï¿½ï¿½o
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
             .then(res => {
                 if (!res.ok) {
-                    // Se for 404, significa que a rota não existe - ignorar silenciosamente
+                    // Se for 404, significa que a rota nï¿½o existe - ignorar silenciosamente
                     if (res.status === 404) {
-                        logger.debug("Rota de notas fiscais não disponível (404) - ignorando");
+                        logger.debug("Rota de notas fiscais nï¿½o disponï¿½vel (404) - ignorando");
                         throw new Error('NOT_FOUND');
                     }
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -4139,13 +3499,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
-                // CORREÇÃO: Não logar erro se for NOT_FOUND ou erro de rede
+                // CORREï¿½ï¿½O: Nï¿½o logar erro se for NOT_FOUND ou erro de rede
                 if (error.message === 'NOT_FOUND') {
-                    // Silencioso - rota não implementada ainda
+                    // Silencioso - rota nï¿½o implementada ainda
                     setNotasFiscais([]);
                 } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    // Erro de rede - não logar (evita spam no console)
-                    logger.warn("Notas fiscais: rota não disponível");
+                    // Erro de rede - nï¿½o logar (evita spam no console)
+                    logger.warn("Notas fiscais: rota nï¿½o disponï¿½vel");
                     setNotasFiscais([]);
                 } else {
                     // Outros erros - logar normalmente
@@ -4160,7 +3520,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     
     // <--- NOVO: Helper para verificar se item tem nota fiscal -->
     const itemHasNotaFiscal = (item) => {
-        // <-- CORREÇÃO: Usar o ID correto baseado no tipo de registro
+        // <-- CORREï¿½ï¿½O: Usar o ID correto baseado no tipo de registro
         const realItemId = item.tipo_registro === 'lancamento' 
             ? item.lancamento_id 
             : item.pagamento_id;
@@ -4170,9 +3530,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         );
     };
 
-    // --- FUNÇÕES DE AÇÃO (CRUD) ---
+    // --- FUNï¿½ï¿½ES DE Aï¿½ï¿½O (CRUD) ---
     const handleAddObra = (e) => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
@@ -4182,14 +3542,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => logger.error('Erro ao deletar obra:', error));
     };
     
-    // NOVO: Função para marcar obra como concluída/reabrir
+    // NOVO: Funï¿½ï¿½o para marcar obra como concluï¿½da/reabrir
     const handleConcluirObra = async (obraId, concluida) => {
         const acao = concluida ? 'reabrir' : 'concluir';
         if (!await confirmDialog(`Deseja ${acao} esta obra?`, { confirmText: 'Confirmar' })) return;
@@ -4209,7 +3569,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
-    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
+    // <--- MUDANï¿½A: Esta funï¿½ï¿½o (marcar pago 100%) serï¿½ chamada pelo modal de ediï¿½ï¿½o, nï¿½o mais pelo botï¿½o -->
     const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
@@ -4232,15 +3592,15 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
 
     const handleDeletarLancamento = (itemId) => {
-         // ... (código inalterado)
+         // ... (cï¿½digo inalterado)
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
-            logger.debug("Deletando lançamento geral:", actualId);
+            logger.debug("Deletando lanï¿½amento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => logger.error('Erro ao deletar lançamento:', error));
+                .catch(error => logger.error('Erro ao deletar lanï¿½amento:', error));
         }
     };
     
@@ -4248,12 +3608,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // <--- MUDANÇA: Atualizado para enviar valor_total e valor_pago -->
+    // <--- MUDANï¿½A: Atualizado para enviar valor_total e valor_pago -->
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
-            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANÇA
-            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANÇA
+            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANï¿½A
+            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANï¿½A
             servico_id: updatedLancamento.servico_id || null 
         };
         // Remove 'valor' se existir por acidente
@@ -4264,23 +3624,23 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar edição:", error));
+        .catch(error => logger.error("Erro ao salvar ediï¿½ï¿½o:", error));
     };
     
-    // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
+    // <--- MUDANï¿½A: handleSaveLancamento (o 'valor' do formulï¿½rio ï¿½ o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
-        logger.debug("Salvando novo lançamento:", lancamentoData);
-        // O formulário envia 'valor', mas o backend espera 'valor'
-        // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
+        logger.debug("Salvando novo lanï¿½amento:", lancamentoData);
+        // O formulï¿½rio envia 'valor', mas o backend espera 'valor'
+        // A lï¿½gica do backend jï¿½ converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar lançamento:", error));
+        .catch(error => logger.error("Erro ao salvar lanï¿½amento:", error));
     };
     
-    // MUDANÇA 3: NOVO handler para Inserir Pagamento
+    // MUDANï¿½A 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
         logger.debug("Inserindo novo pagamento:", pagamentoData);
         
@@ -4296,14 +3656,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         
         await response.json();
         fetchObraData(obraSelecionada.id); // Atualiza dados em background
-        // Não mostra alert - o modal cuida do toast
-        // Não fecha modal - isso é controlado pelo callback onSave
+        // Nï¿½o mostra alert - o modal cuida do toast
+        // Nï¿½o fecha modal - isso ï¿½ controlado pelo callback onSave
     };
 
-    // --- Handlers de Orçamento (inalterados) ---
+    // --- Handlers de Orï¿½amento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
-        // ... (código inalterado)
-        logger.debug("Salvando novo orçamento...");
+        // ... (cï¿½digo inalterado)
+        logger.debug("Salvando novo orï¿½amento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
             body: formData
@@ -4313,13 +3673,13 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => {
-            logger.error("Erro ao salvar orçamento:", error);
-            notify.error(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+            logger.error("Erro ao salvar orï¿½amento:", error);
+            notify.error(`Erro ao salvar orï¿½amento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
-        // ... (código inalterado)
-        logger.debug("Salvando edição do orçamento:", orcamentoId);
+        // ... (cï¿½digo inalterado)
+        logger.debug("Salvando ediï¿½ï¿½o do orï¿½amento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
@@ -4350,32 +3710,32 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar edição do orçamento:", error);
-            notify.error(`Erro ao salvar edição: ${error.message}`);
+            logger.error("Erro ao salvar ediï¿½ï¿½o do orï¿½amento:", error);
+            notify.error(`Erro ao salvar ediï¿½ï¿½o: ${error.message}`);
         });
     };
     const handleAprovarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao aprovar orçamento:", error));
+        .catch(error => logger.error("Erro ao aprovar orï¿½amento:", error));
     };
     const handleRejeitarOrcamento = (orcamentoId) => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
+        .catch(error => logger.error("Erro ao rejeitar solicitaï¿½ï¿½o:", error));
     };
 
     // Handler do PDF da Obra
     const handleExportObraPDF = () => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         if (!obraSelecionada) return;
         
         setIsExportingPDF(true);
@@ -4395,14 +3755,14 @@ const totalOrcamentosPendentes = useMemo(() => {
             })
             .catch(err => {
                 logger.error("Erro ao gerar PDF da obra:", err);
-                notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
+                notify.error("Nï¿½o foi possï¿½vel gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
     };
 
     // Handler de Prioridade
     const handleSaveServicoPrioridade = (novaPrioridade) => {
-        // ... (código inalterado)
+        // ... (cï¿½digo inalterado)
         if (!editingServicoPrioridade) return;
 
         const pagamentoId = editingServicoPrioridade.pagamento_id;
@@ -4417,12 +3777,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar prioridade do serviço:", error);
+            logger.error("Erro ao salvar prioridade do serviï¿½o:", error);
             notify.error(`Erro ao salvar prioridade: ${error.message}`);
         });
     };
 
-    // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
+    // <--- MUDANï¿½A: NOVA FUNï¿½ï¿½O HANDLER PARA PAGAMENTO PARCIAL ---
     const handleSavePartialPayment = (valor_a_pagar) => {
         if (!payingItem) return;
 
@@ -4447,22 +3807,22 @@ const totalOrcamentosPendentes = useMemo(() => {
         })
         .catch(error => {
             logger.error("Erro ao registrar pagamento parcial:", error);
-            // Mostra o erro de validação (ex: "valor maior que o restante")
+            // Mostra o erro de validaï¿½ï¿½o (ex: "valor maior que o restante")
             // Precisamos garantir que o modal esteja aberto para mostrar o erro
             if (payingItem) {
                 notify.error(`Erro: ${error.message}`);
             }
         });
     };
-    // <--- FIM DA NOVA FUNÇÃO ---
+    // <--- FIM DA NOVA FUNï¿½ï¿½O ---
 
 
-    // --- RENDERIZAÇÃO ---
+    // --- RENDERIZAï¿½ï¿½O ---
     
-    // Função para selecionar obra e ir para cronograma financeiro
+    // Funï¿½ï¿½o para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        // Usar navigateTo para atualizar histórico do browser
+        // Usar navigateTo para atualizar histï¿½rico do browser
         if (typeof window.navigateTo === 'function') {
             window.navigateTo('home', obraId);
         } else {
@@ -4474,7 +3834,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     window.handleSelectObra = handleSelectObra;
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
-    // CORREÇÃO: Se estiver carregando obra da URL, mostrar loading
+    // CORREï¿½ï¿½O: Se estiver carregando obra da URL, mostrar loading
     if (carregandoObraDaUrl) {
         return (
             <div style={{ 
@@ -4502,7 +3862,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     }
 
     if (!obraSelecionada) {
-        // ?? Se estiver na página de BI, mostrar dashboard
+        // ?? Se estiver na pï¿½gina de BI, mostrar dashboard
         if (currentPage === 'bi') {
             return (
                 <BiDashboard
@@ -4528,7 +3888,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
-                        {/* ?? Botão BI Dashboard */}
+                        {/* ?? Botï¿½o BI Dashboard */}
                         <button 
                             onClick={() => setCurrentPage('bi')} 
                             className="export-btn" 
@@ -4542,12 +3902,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                             className="export-btn pdf" 
                             style={{marginRight: '10px'}}
                         >
-                            ?? Relatório Financeiro
+                            ?? Relatï¿½rio Financeiro
                         </button>
                         
                         {user.role === 'master' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
-                                Gerenciar Usuários
+                                Gerenciar Usuï¿½rios
                             </button>
                         )}
                         <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
@@ -4565,7 +3925,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 )}
                 
-                {/* Toggle para mostrar obras concluídas */}
+                {/* Toggle para mostrar obras concluï¿½das */}
                 <div style={{ 
                     display: 'flex', 
                     justifyContent: 'flex-end', 
@@ -4587,7 +3947,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             onChange={(e) => setMostrarConcluidas(e.target.checked)}
                             style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
-                        Mostrar obras concluídas
+                        Mostrar obras concluï¿½das
                     </label>
                 </div>
                 
@@ -4615,7 +3975,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         fontSize: '0.75em',
                                         fontWeight: 'bold'
                                     }}>
-                                        ? CONCLUÍDA
+                                        ? CONCLUï¿½DA
                                     </div>
                                 )}
                                 
@@ -4624,7 +3984,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleConcluirObra(obra.id, obra.concluida); }}
                                             className="card-obra-action-btn"
-                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Concluída'}
+                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Concluï¿½da'}
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
@@ -4653,7 +4013,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     
                                     <div className="obra-kpi-summary">
                                         <div>
-                                            <span>Orçamento Total</span>
+                                            <span>Orï¿½amento Total</span>
                                             <strong style={{ color: 'var(--cor-vermelho)' }}>
                                                 {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
@@ -4681,7 +4041,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             </div>
                         ))
                     ) : (
-                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
+                        <p>Nenhuma obra cadastrada ou vocï¿½ ainda nï¿½o tem permissï¿½o para ver nenhuma.</p>
                     )}
                 </div>
             </div>
@@ -4693,12 +4053,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         return <div className="loading-screen">Carregando dados da obra...</div>;
     }
 
-    // === LAYOUT COM NAVEGAÇÃO WINDOWS (OBRA SELECIONADA) ===
+    // === LAYOUT COM NAVEGAï¿½ï¿½O WINDOWS (OBRA SELECIONADA) ===
     return (
         <>
             <WindowsNavStyles />
             <div className="app-layout-windows">
-                {/* Navegação Windows */}
+                {/* Navegaï¿½ï¿½o Windows */}
                 <WindowsNavBar 
                     user={user}
                     currentPage={currentPage}
@@ -4709,14 +4069,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                     onLogout={logout}
                 />
                 
-                {/* Conteúdo Principal */}
+                {/* Conteï¿½do Principal */}
                 <main className="main-content-windows">
 
-                    {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
+                    {/* === Pï¿½GINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
-                            {/* Header com Título + Cards de Resumo */}
-                           {/* Header com Título + Cards de Resumo */}
+                            {/* Header com Tï¿½tulo + Cards de Resumo */}
+                           {/* Header com Tï¿½tulo + Cards de Resumo */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -4729,7 +4089,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 flexWrap: 'wrap',
                                 gap: '16px'
                             }}>
-                                {/* Título */}
+                                {/* Tï¿½tulo */}
                                 <h1 style={{ 
                                     margin: 0,
                                     fontSize: '1.4rem',
@@ -4738,7 +4098,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     gap: '10px',
                                     color: '#1e293b'
                                 }}>
-                                    ?? Início - {obraSelecionada.nome}
+                                    ?? Inï¿½cio - {obraSelecionada.nome}
                                 </h1>
 
                                 {/* Cards de Resumo - Usando valores do backend (sumarios) */}
@@ -4754,7 +4114,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         borderLeft: '4px solid #ef4444',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orï¿½amento Total</div>
                                         <div style={{ fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
                                             {formatCurrency(sumarios?.orcamento_total || 0)}
                                         </div>
@@ -4801,7 +4161,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 </div>
                             </div>
                             
-                            {/* Dashboard com Gráficos */}
+                            {/* Dashboard com Grï¿½ficos */}
                             <DashboardObra 
                                 obraId={obraSelecionada.id}
                                 obraNome={obraSelecionada.nome}
@@ -4822,7 +4182,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 simplified={true}
                             />
                             
-                            {/* Histórico de Pagamentos */}
+                            {/* Histï¿½rico de Pagamentos */}
                             <HistoricoPagamentosCard 
                                 itemsPagos={itemsPagos}
                                 itemsAPagar={itemsAPagar}
@@ -4833,7 +4193,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         </div>
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
+                    {/* === Pï¿½GINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
                     {currentPage === 'cronograma-obra' && (
                         <CronogramaObra 
                             obraId={obraSelecionada.id}
@@ -4843,7 +4203,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: ORÇAMENTO DE ENGENHARIA === */}
+                    {/* === Pï¿½GINA: ORï¿½AMENTO DE ENGENHARIA === */}
                     {currentPage === 'orcamento-eng' && (
                         <OrcamentoEngenharia 
                             obraId={obraSelecionada.id}
@@ -4853,7 +4213,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Completo) === */}
+                    {/* === Pï¿½GINA: CRONOGRAMA FINANCEIRO (Completo) === */}
                     {currentPage === 'financeiro' && (
                         <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
@@ -4867,7 +4227,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
+                    {/* === Pï¿½GINA: INSERIR PAGAMENTO === */}
                     {currentPage === 'pagamento' && (
                         <InserirPagamentoModal
                             obraId={obraSelecionada.id}
@@ -4884,7 +4244,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: RELATÓRIOS === */}
+                    {/* === Pï¿½GINA: RELATï¿½RIOS === */}
                     {currentPage === 'relatorios' && (
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
@@ -4895,7 +4255,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: ORÇAMENTOS === */}
+                    {/* === Pï¿½GINA: ORï¿½AMENTOS === */}
                     {currentPage === 'orcamentos' && (
                         <OrcamentosModal
                             obraId={obraSelecionada.id}
@@ -4905,7 +4265,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: DIÁRIO DE OBRAS === */}
+                    {/* === Pï¿½GINA: DIï¿½RIO DE OBRAS === */}
                     {currentPage === 'diario' && (
                         <DiarioObras 
                             obraId={obraSelecionada.id}
@@ -4915,7 +4275,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: AGENDA DE DEMANDAS === */}
+                    {/* === Pï¿½GINA: AGENDA DE DEMANDAS === */}
                     {currentPage === 'agenda' && (
                         <AgendaDemandas 
                             obraId={obraSelecionada.id}
@@ -4926,7 +4286,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: CAIXA DE OBRA === */}
+                    {/* === Pï¿½GINA: CAIXA DE OBRA === */}
                     {currentPage === 'caixa' && (
                         <CaixaObraModal
                             obraId={obraSelecionada.id}
@@ -4936,7 +4296,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: GESTÃO DE BOLETOS === */}
+                    {/* === Pï¿½GINA: GESTï¿½O DE BOLETOS === */}
                     {currentPage === 'boletos' && (
                         <GestaoBoletos
                             obraId={obraSelecionada.id}
@@ -4945,7 +4305,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
+                    {/* === Pï¿½GINA: GERENCIAR USUï¿½RIOS === */}
                     {currentPage === 'usuarios' && (
                         <AdminPanelModal 
                             allObras={obras}
@@ -4989,12 +4349,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <div className="windows-status-bar">
                     <div className="status-bar-left">
                         <span className="status-bar-item">?? {obraSelecionada.nome}</span>
-                        <span className="status-bar-item">•</span>
-                        <span className="status-bar-item">Página: {currentPage}</span>
+                        <span className="status-bar-item">ï¿½</span>
+                        <span className="status-bar-item">Pï¿½gina: {currentPage}</span>
                     </div>
                     <div className="status-bar-right">
                         <span className="status-bar-item">?? {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
-                        <span className="status-bar-item">•</span>
+                        <span className="status-bar-item">ï¿½</span>
                         <span className="status-bar-item">{new Date().toLocaleDateString('pt-BR')}</span>
                     </div>
                 </div>
@@ -5030,8 +4390,8 @@ const totalOrcamentosPendentes = useMemo(() => {
 // COMPONENTE CRONOGRAMA FINANCEIRO
 // ===================================
 
-// Modal para Cadastrar Pagamento Futuro (Único)
-// ===== COMPONENTE: GESTÃO DE BOLETOS =====
+// Modal para Cadastrar Pagamento Futuro (ï¿½nico)
+// ===== COMPONENTE: GESTï¿½O DE BOLETOS =====
 const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     const [boletos, setBoletos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -5148,10 +4508,10 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
         }
     };
     
-    // Copiar código de barras
+    // Copiar cï¿½digo de barras
     const copiarCodigo = (codigo) => {
         navigator.clipboard.writeText(codigo);
-        notify.success('Código de barras copiado!');
+        notify.success('Cï¿½digo de barras copiado!');
     };
     
     // Ver preview do PDF
@@ -5166,14 +4526,14 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 const data = await response.json();
                 setModalPreview(data);
             } else {
-                notify.info('Boleto não possui arquivo anexado');
+                notify.info('Boleto nï¿½o possui arquivo anexado');
             }
         } catch (error) {
             logger.error('Erro ao buscar arquivo:', error);
         }
     };
     
-    // Agrupar boletos por urgência
+    // Agrupar boletos por urgï¿½ncia
     const boletosVencidos = boletos.filter(b => b.status === 'Vencido' || (b.status === 'Pendente' && b.dias_para_vencer < 0));
     const boletosUrgentes = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer >= 0 && b.dias_para_vencer <= 3);
     const boletosProximos = boletos.filter(b => b.status === 'Pendente' && b.dias_para_vencer > 3 && b.dias_para_vencer <= 7);
@@ -5206,7 +4566,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         </h4>
                         {boleto.beneficiario && (
                             <span style={{ fontSize: '0.85em', color: '#666' }}>
-                                Beneficiário: {boleto.beneficiario}
+                                Beneficiï¿½rio: {boleto.beneficiario}
                             </span>
                         )}
                         {boleto.servico_nome && (
@@ -5231,7 +4591,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         fontWeight: 'bold'
                     }}>
                         {boleto.status === 'Pago' ? '? Pago' : 
-                         boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
+                         boleto.dias_para_vencer < 0 ? `Vencido hï¿½ ${Math.abs(boleto.dias_para_vencer)}d` :
                          boleto.dias_para_vencer === 0 ? '?? Vence HOJE' :
                          `${boleto.dias_para_vencer}d para vencer`}
                     </span>
@@ -5271,7 +4631,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         wordBreak: 'break-all'
                     }}>
                         <span style={{ fontSize: '0.8em', color: '#666', display: 'block', marginBottom: '5px' }}>
-                            Código de Barras:
+                            Cï¿½digo de Barras:
                         </span>
                         {boleto.codigo_barras}
                     </div>
@@ -5291,7 +4651,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 fontSize: '0.85em'
                             }}
                         >
-                            ?? Copiar Código
+                            ?? Copiar Cï¿½digo
                         </button>
                     )}
                     
@@ -5359,7 +4719,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 flexWrap: 'wrap',
                 gap: '10px'
             }}>
-                <h2 style={{ margin: 0 }}>?? Gestão de Boletos</h2>
+                <h2 style={{ margin: 0 }}>?? Gestï¿½o de Boletos</h2>
                 <button
                     onClick={() => setModalCadastro(true)}
                     style={{
@@ -5473,17 +4833,17 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {boletosUrgentes.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#f57c00', marginBottom: '10px' }}>
-                                ?? URGENTE - Vence em até 3 dias ({boletosUrgentes.length})
+                                ?? URGENTE - Vence em atï¿½ 3 dias ({boletosUrgentes.length})
                             </h3>
                             {boletosUrgentes.map(b => renderBoletoCard(b, 'urgente'))}
                         </div>
                     )}
                     
-                    {/* Próximos (4-7 dias) */}
+                    {/* Prï¿½ximos (4-7 dias) */}
                     {boletosProximos.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#ffa000', marginBottom: '10px' }}>
-                                ?? Vence em até 7 dias ({boletosProximos.length})
+                                ?? Vence em atï¿½ 7 dias ({boletosProximos.length})
                             </h3>
                             {boletosProximos.map(b => renderBoletoCard(b, 'proximo'))}
                         </div>
@@ -5493,7 +4853,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {boletosNormais.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
                             <h3 style={{ color: '#666', marginBottom: '10px' }}>
-                                ?? Próximos vencimentos ({boletosNormais.length})
+                                ?? Prï¿½ximos vencimentos ({boletosNormais.length})
                             </h3>
                             {boletosNormais.map(b => renderBoletoCard(b, 'normal'))}
                         </div>
@@ -5530,7 +4890,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 <Modal onClose={() => setModalPreview(null)}>
                     <h2>?? {modalPreview.arquivo_nome || 'Boleto'}</h2>
                     <div style={{ height: '70vh', marginTop: '15px', position: 'relative' }}>
-                        {/* Usar object em vez de iframe para evitar disparo de impressão */}
+                        {/* Usar object em vez de iframe para evitar disparo de impressï¿½o */}
                         <object
                             data={`data:application/pdf;base64,${modalPreview.arquivo_base64}#toolbar=1&navpanes=0&scrollbar=1`}
                             type="application/pdf"
@@ -5545,7 +4905,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: '#f5f5f5',
                                 borderRadius: '5px'
                             }}>
-                                <p>Seu navegador não suporta visualização de PDF.</p>
+                                <p>Seu navegador nï¿½o suporta visualizaï¿½ï¿½o de PDF.</p>
                                 <a 
                                     href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
                                     download={modalPreview.arquivo_nome || 'boleto.pdf'}
@@ -5667,7 +5027,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         },
         {
             key: 'vence_amanha',
-            titulo: 'Vence Amanhã',
+            titulo: 'Vence Amanhï¿½',
             icon: '??',
             cor: 'var(--cor-info)',
             corLight: 'var(--cor-info-light)',
@@ -5676,7 +5036,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         },
         {
             key: 'vence_7_dias',
-            titulo: 'Próximos 7 dias',
+            titulo: 'Prï¿½ximos 7 dias',
             icon: '??',
             cor: 'var(--cor-purple)',
             corLight: 'var(--cor-purple-light)',
@@ -5763,7 +5123,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                                 <div className="cf-pagamento-futuro-info">
                                     <div className="cf-pagamento-futuro-desc">{item.descricao}</div>
                                     <div className="cf-pagamento-futuro-meta">
-                                        {item.fornecedor || 'Sem fornecedor'} • {new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                        {item.fornecedor || 'Sem fornecedor'} ï¿½ {new Date(item.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                                     </div>
                                 </div>
                                 <div className="cf-pagamento-futuro-valor">{formatCurrency(item.valor)}</div>
@@ -5797,14 +5157,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [previsoes, setPrevisoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // NOVO: Itens do orçamento para dropdown de vinculação
+    // NOVO: Itens do orï¿½amento para dropdown de vinculaï¿½ï¿½o
     const [itensOrcamento, setItensOrcamento] = useState([]);
     
-    // NOVO: Estados para Expandir/Recolher seções
+    // NOVO: Estados para Expandir/Recolher seï¿½ï¿½es
     const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
     const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
     
-    // MUDANÇA 5: Estados para seleção múltipla
+    // MUDANï¿½A 5: Estados para seleï¿½ï¿½o mï¿½ltipla
     const [itensSelecionados, setItensSelecionados] = useState([]); // [{tipo: 'futuro'|'parcela'|'servico', id: X}]
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
@@ -5839,18 +5199,18 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [isEditarFuturoVisible, setEditarFuturoVisible] = useState(false);
     const [pagamentoFuturoSelecionado, setPagamentoFuturoSelecionado] = useState(null);
     
-    // MUDANÇA 5: Funções de seleção
+    // MUDANï¿½A 5: Funï¿½ï¿½es de seleï¿½ï¿½o
     const toggleSelecao = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-71" e converter
+        // CORREï¿½ï¿½O CRï¿½TICA: Detectar IDs tipo "servico-71" e converter
         let tipoFinal = tipo;
         let idFinal = id;
         
-        // Se o ID é uma string tipo "servico-X", extrair o ID numérico
+        // Se o ID ï¿½ uma string tipo "servico-X", extrair o ID numï¿½rico
         if (typeof id === 'string' && id.startsWith('servico-')) {
             const idNumerico = parseInt(id.split('-')[1], 10);
             tipoFinal = 'servico';
             idFinal = idNumerico;
-            logger.debug(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
+            logger.debug(`[CORREï¿½ï¿½O] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
         }
         
         setItensSelecionados(prev => {
@@ -5864,7 +5224,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     };
     
     const isItemSelecionado = (tipo, id) => {
-        // CORREÇÃO CRÍTICA: Verificar com conversão também
+        // CORREï¿½ï¿½O CRï¿½TICA: Verificar com conversï¿½o tambï¿½m
         let tipoCheck = tipo;
         let idCheck = id;
         
@@ -5883,7 +5243,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         // Pagamentos Futuros
         pagamentosFuturos.forEach(pag => {
             if (pag.status === 'Previsto') {
-                // CORREÇÃO CRÍTICA: Detectar IDs tipo "servico-X"
+                // CORREï¿½ï¿½O CRï¿½TICA: Detectar IDs tipo "servico-X"
                 if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
                     const idNumerico = parseInt(pag.id.split('-')[1], 10);
                     todos.push({ tipo: 'servico', id: idNumerico });
@@ -5894,7 +5254,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
         });
         
-        // Pagamentos de Serviço Pendentes
+        // Pagamentos de Serviï¿½o Pendentes
         pagamentosServicoPendentes.forEach(pag => {
             todos.push({ tipo: 'servico', id: pag.id });
         });
@@ -5915,7 +5275,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         setItensSelecionados([]);
     };
     
-    // MUDANÇA 5: Handler para marcar múltiplos como pagos
+    // MUDANï¿½A 5: Handler para marcar mï¿½ltiplos como pagos
     const handleMarcarMultiplosComoPago = async () => {
         if (itensSelecionados.length === 0) {
             notify.warning('Selecione pelo menos um item para marcar como pago.');
@@ -5956,7 +5316,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // <--- MUDANÇA: Carregar dados principais primeiro (rápido) -->
+            // <--- MUDANï¿½A: Carregar dados principais primeiro (rï¿½pido) -->
             const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes, itensOrcRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
@@ -5980,7 +5340,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await previsoesRes.json();
                     setPrevisoes(data);
                 } catch (e) {
-                    logger.error('Erro ao processar previsões:', e);
+                    logger.error('Erro ao processar previsï¿½es:', e);
                 }
             }
             
@@ -5993,26 +5353,26 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 }
             }
             
-            // NOVO: Carregar itens do orçamento para dropdown
+            // NOVO: Carregar itens do orï¿½amento para dropdown
             if (itensOrcRes.ok) {
                 try {
                     const data = await itensOrcRes.json();
                     setItensOrcamento(data);
                 } catch (e) {
-                    logger.error('Erro ao processar itens do orçamento:', e);
+                    logger.error('Erro ao processar itens do orï¿½amento:', e);
                 }
             }
 
-            // <--- MUDANÇA: Processar parcelados SEM bloquear a tela -->
+            // <--- MUDANï¿½A: Processar parcelados SEM bloquear a tela -->
             if (parceladoRes.ok) {
                 try {
                     const data = await parceladoRes.json();
                     
-                    // Mostrar dados básicos imediatamente (sem parcelas)
+                    // Mostrar dados bï¿½sicos imediatamente (sem parcelas)
                     setPagamentosParcelados(data.map(p => ({ ...p, parcelas: [] })));
                     setIsLoading(false); // <-- Libera a tela AQUI
                     
-                    // Buscar parcelas em background (não bloqueia mais!)
+                    // Buscar parcelas em background (nï¿½o bloqueia mais!)
                     const parceladosComParcelas = await Promise.all(
                         data.map(async (pagParcelado) => {
                             try {
@@ -6030,7 +5390,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         })
                     );
                     
-                    // Atualiza com parcelas quando disponíveis
+                    // Atualiza com parcelas quando disponï¿½veis
                     const parceladosComCamposCalculados = parceladosComParcelas.map(pag => {
                         const parcelas = pag.parcelas || [];
                         const proxima = parcelas.find(p => p.status !== 'Pago');
@@ -6139,9 +5499,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const handleDeletePagamentoFuturo = async (id) => {
         const idStr = String(id);
 
-        // Se for um pagamento de serviço (id começa com "servico-"), não pode deletar daqui
+        // Se for um pagamento de serviï¿½o (id comeï¿½a com "servico-"), nï¿½o pode deletar daqui
         if (idStr.startsWith('servico-')) {
-            notify.warning('?? Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
+            notify.warning('?? Este pagamento estï¿½ vinculado a um serviï¿½o.\n\nPara excluï¿½-lo, acesse a pï¿½gina do serviï¿½o correspondente.');
             return;
         }
 
@@ -6159,7 +5519,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosFuturos(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('??? Pagamento futuro excluído!');
+                showCronogramaToast('??? Pagamento futuro excluï¿½do!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -6168,7 +5528,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao deletar pagamento futuro:', error);
             if (error.name === 'AbortError') {
-                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclusï¿½o demorou demais. Verifique a conexï¿½o e recarregue a tela.');
             } else {
                 notify.error('Erro ao deletar pagamento futuro: ' + error.message);
             }
@@ -6191,7 +5551,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (idStr.startsWith('servico-')) {
                 const servPagId = parseInt(idStr.split('-').pop(), 10);
-                logger.debug("Marcando pagamento de serviço futuro como pago:", servPagId);
+                logger.debug("Marcando pagamento de serviï¿½o futuro como pago:", servPagId);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
                     {
@@ -6231,7 +5591,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao marcar pagamento como pago:', error);
             if (error.name === 'AbortError') {
-                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A operaï¿½ï¿½o demorou demais. Verifique a conexï¿½o e recarregue a tela.');
             } else {
                 notify.error('Erro ao processar: ' + error.message);
             }
@@ -6257,7 +5617,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosParcelados(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('??? Pagamento parcelado excluído!');
+                showCronogramaToast('??? Pagamento parcelado excluï¿½do!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 notify.error('Erro ao excluir pagamento parcelado');
@@ -6265,7 +5625,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao deletar pagamento parcelado:', error);
             if (error.name === 'AbortError') {
-                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclusï¿½o demorou demais. Verifique a conexï¿½o e recarregue a tela.');
             } else {
                 notify.error('Erro ao deletar pagamento parcelado');
             }
@@ -6276,7 +5636,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Marcar parcela como paga
     const handleMarcarParcelaPaga = async (pagamento) => {
-        if (!await confirmDialog(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`, { confirmText: 'Confirmar pagamento' })) {
+        if (!await confirmDialog(`Confirma o pagamento da prï¿½xima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`, { confirmText: 'Confirmar pagamento' })) {
             return;
         }
 
@@ -6297,15 +5657,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             const parcelas = await resListaParcelas.json();
 
-            // 2. Encontrar a próxima parcela não paga
+            // 2. Encontrar a prï¿½xima parcela nï¿½o paga
             const proximaParcela = parcelas.find(p => p.status !== 'Pago');
 
             if (!proximaParcela) {
-                notify.warning('Todas as parcelas já foram pagas!');
+                notify.warning('Todas as parcelas jï¿½ foram pagas!');
                 return;
             }
 
-            // 3. Marcar a parcela como paga (isso criará o lançamento no backend)
+            // 3. Marcar a parcela como paga (isso criarï¿½ o lanï¿½amento no backend)
             const res = await fetchWithAuthTimeout(
                 `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados/${pagamento.id}/parcelas/${proximaParcela.id}/pagar`,
                 {
@@ -6336,7 +5696,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 parcelas: parcelasAtualizadas,
                                 proxima_parcela_numero: numeroProxima,
                                 proxima_parcela_vencimento: vencimentoProximo,
-                                status: todasPagas ? 'Concluído' : 'Ativo'
+                                status: todasPagas ? 'Concluï¿½do' : 'Ativo'
                             };
                         }
                         return pag;
@@ -6352,7 +5712,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao marcar parcela:', error);
             if (error.name === 'AbortError') {
-                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A operaï¿½ï¿½o demorou demais. Verifique a conexï¿½o e recarregue a tela.');
             } else {
                 notify.error('Erro ao marcar parcela como paga');
             }
@@ -6370,19 +5730,19 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
-    // Conteúdo do cronograma (usado tanto em embedded quanto em modal)
+    // Conteï¿½do do cronograma (usado tanto em embedded quanto em modal)
     const cronogramaContent = (
         <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>{simplified ? '??' : '??'} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
+            <h2>{simplified ? '??' : '??'} {simplified ? 'Inï¿½cio' : 'Cronograma Financeiro'} - {obraNome}</h2>
             <QuadroAlertasVencimento obraId={obraId} /> 
-            {/* Botões de Exportação */}
+            {/* Botï¿½es de Exportaï¿½ï¿½o */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                {/* REMOVIDO: Botões de cadastro movidos para o dashboard principal
+                {/* REMOVIDO: Botï¿½es de cadastro movidos para o dashboard principal
                 <button 
                     onClick={() => setCadastrarFuturoVisible(true)} 
                     className="submit-btn"
                 >
-                    ? Cadastrar Pagamento Futuro (Único)
+                    ? Cadastrar Pagamento Futuro (ï¿½nico)
                 </button>
                 <button 
                     onClick={() => setCadastrarParceladoVisible(true)} 
@@ -6393,7 +5753,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 </button>
                 */}
                 
-                {/* NOVO: Botão Gerar PDF - apenas no modo completo */}
+                {/* NOVO: Botï¿½o Gerar PDF - apenas no modo completo */}
                 {!simplified && (
                 <button 
                     onClick={async () => {
@@ -6418,13 +5778,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             }
                         }} 
                         className="export-btn pdf"
-                        title="Gerar relatório PDF do cronograma financeiro"
+                        title="Gerar relatï¿½rio PDF do cronograma financeiro"
                     >
                         ?? Gerar PDF
                     </button>
                 )}
 
-                {/* Botão WhatsApp - apenas no modo completo */}
+                {/* Botï¿½o WhatsApp - apenas no modo completo */}
                 {!simplified && (
                     <button
                         type="button"
@@ -6447,12 +5807,12 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     )}
                 </div>
 
-                {/* Previsão de Fluxo de Caixa - NOVO DESIGN */}
+                {/* Previsï¿½o de Fluxo de Caixa - NOVO DESIGN */}
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
-                            <div className="cf-section-title">?? Previsão de Fluxo de Caixa</div>
-                            <div className="cf-section-subtitle">Soma automática de pagamentos futuros e parcelados</div>
+                            <div className="cf-section-title">?? Previsï¿½o de Fluxo de Caixa</div>
+                            <div className="cf-section-subtitle">Soma automï¿½tica de pagamentos futuros e parcelados</div>
                         </div>
                         <button 
                             onClick={async () => {
@@ -6481,7 +5841,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     
                     {previsoes.length > 0 ? (
                         <>
-                            {/* Gráfico de Barras */}
+                            {/* Grï¿½fico de Barras */}
                             <div className="cf-chart-container">
                                 {previsoes.slice(0, 6).map((prev, index) => {
                                     const maxValor = Math.max(...previsoes.map(p => p.valor));
@@ -6510,24 +5870,24 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         </>
                     ) : (
                         <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
-                            Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.
+                            Nenhuma previsï¿½o calculada. Cadastre pagamentos futuros ou parcelados.
                         </p>
                     )}
                 </div>
 
-                {/* NOVO: Listagem de Pagamentos de Serviço Pendentes */}
+                {/* NOVO: Listagem de Pagamentos de Serviï¿½o Pendentes */}
                 {pagamentosServicoPendentes.length > 0 && (
                     <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--cor-warning-bg)', border: '2px solid var(--cor-warning-light)' }}>
-                        <h3>?? Pagamentos de Serviço Pendentes</h3>
+                        <h3>?? Pagamentos de Serviï¿½o Pendentes</h3>
                         <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
-                            Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
+                            Estes sï¿½o pagamentos vinculados a serviï¿½os que ainda nï¿½o foram quitados totalmente.
                         </p>
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
                                     <th style={{width: '40px'}}>?</th>
-                                    <th>Serviço</th>
-                                    <th>Descrição</th>
+                                    <th>Serviï¿½o</th>
+                                    <th>Descriï¿½ï¿½o</th>
                                     <th>Tipo</th>
                                     <th>Valor Total</th>
                                     <th>Pago</th>
@@ -6553,7 +5913,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 padding: '3px 8px',
                                                 borderRadius: '12px',
                                                 fontSize: '0.85em',
-                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
+                                                backgroundColor: pag.tipo_pagamento === 'Mï¿½o de Obra' ? '#007bff' : '#28a745',
                                                 color: 'white'
                                             }}>
                                                 {pag.tipo_pagamento}
@@ -6572,17 +5932,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     </div>
                 )}
 
-                {/* Pagamentos Futuros (Únicos) - NOVO DESIGN */}
+                {/* Pagamentos Futuros (ï¿½nicos) - NOVO DESIGN */}
                 {!simplified && (
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
                             <div className="cf-section-title">
                                 ?? Pagamentos Futuros
-                                <span className="cf-badge cf-badge-info">Únicos</span>
+                                <span className="cf-badge cf-badge-info">ï¿½nicos</span>
                             </div>
                             <div className="cf-section-subtitle">
-                                Clique na descrição para editar ou no badge para marcar como pago
+                                Clique na descriï¿½ï¿½o para editar ou no badge para marcar como pago
                             </div>
                         </div>
                         <button 
@@ -6623,7 +5983,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         />
                                     )}
                                     
-                                    {/* Ícone */}
+                                    {/* ï¿½cone */}
                                     <div className="cf-pagamento-futuro-icon">
                                         {String(pag.id).startsWith('servico-') ? '??' : '??'}
                                     </div>
@@ -6647,7 +6007,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             {pag.descricao}
                                         </div>
                                         <div className="cf-pagamento-futuro-meta">
-                                            {pag.fornecedor || 'Sem fornecedor'} • {new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                            {pag.fornecedor || 'Sem fornecedor'} ï¿½ {new Date(pag.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                                         </div>
                                     </div>
                                     
@@ -6680,7 +6040,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         );
                                     })()}
 
-                                    {/* Ações */}
+                                    {/* Aï¿½ï¿½es */}
                                     <div className="cf-pagamento-futuro-actions">
                                         {pag.status === 'Previsto' && !String(pag.id).startsWith('servico-') && (
                                             <button
@@ -6727,7 +6087,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 </span>
                             </div>
                             <div className="cf-section-subtitle">
-                                Clique no card para editar • Bolinhas = parcelas (? paga ? pendente)
+                                Clique no card para editar ï¿½ Bolinhas = parcelas (? paga ? pendente)
                             </div>
                         </div>
                         <button 
@@ -6743,7 +6103,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
                         <div className="parcelas-cards-grid">
                             {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
-                                // CORREÇÃO: Usar parcelas_pagas do backend, não calcular por proxima_parcela_numero
+                                // CORREï¿½ï¿½O: Usar parcelas_pagas do backend, nï¿½o calcular por proxima_parcela_numero
                                 const parcelasPagas = pag.parcelas_pagas || 0;
                                 const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
                                 
@@ -6791,7 +6151,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             </div>
                                         </div>
 
-                                        {/* Conteúdo */}
+                                        {/* Conteï¿½do */}
                                         <div className="parcela-popup-content">
                                             {/* Valor Total */}
                                             <div className="parcela-popup-valor">
@@ -6917,7 +6277,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                 <div className="modal-footer" style={{ marginTop: '20px' }}>
                     <button onClick={onClose} className="voltar-btn">
-                        {embedded ? '? Voltar às Obras' : 'Fechar'}
+                        {embedded ? '? Voltar ï¿½s Obras' : 'Fechar'}
                     </button>
                 </div>
             </div>
@@ -7056,7 +6416,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
 
 // --- COMPONENTE PRINCIPAL (ROTEADOR) ---
-// --- TELA DE SELEÇÃO DE MÓDULO ---
+// --- TELA DE SELEï¿½ï¿½O DE Mï¿½DULO ---
 const ModuleSelectorScreen = ({ onSelectModule }) => {
     const [hoveredModule, setHoveredModule] = useState(null);
     
@@ -7065,17 +6425,17 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
             id: 'obras',
             icon: '???',
             title: 'Obras',
-            subtitle: 'Gestão de Construções',
-            description: 'Gerencie obras, orçamentos, cronogramas, pagamentos e equipes.',
+            subtitle: 'Gestï¿½o de Construï¿½ï¿½es',
+            description: 'Gerencie obras, orï¿½amentos, cronogramas, pagamentos e equipes.',
             color: '#6366f1',
             gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
         },
         {
             id: 'admin',
             icon: '??',
-            title: 'Administração',
-            subtitle: 'Gestão Patrimonial',
-            description: 'Controle custos de imóveis, aluguéis, despesas e receitas.',
+            title: 'Administraï¿½ï¿½o',
+            subtitle: 'Gestï¿½o Patrimonial',
+            description: 'Controle custos de imï¿½veis, aluguï¿½is, despesas e receitas.',
             color: '#10b981',
             gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
         }
@@ -7112,11 +6472,11 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                     color: 'rgba(255,255,255,0.7)',
                     marginTop: '8px'
                 }}>
-                    Selecione o módulo para continuar
+                    Selecione o mï¿½dulo para continuar
                 </p>
             </div>
             
-            {/* Cards de Módulos */}
+            {/* Cards de Mï¿½dulos */}
             <div style={{
                 display: 'flex',
                 gap: '30px',
@@ -7149,7 +6509,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                                 : '0 10px 30px rgba(0,0,0,0.2)'
                         }}
                     >
-                        {/* Ícone */}
+                        {/* ï¿½cone */}
                         <div style={{
                             width: '80px',
                             height: '80px',
@@ -7165,7 +6525,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.icon}
                         </div>
                         
-                        {/* Título */}
+                        {/* Tï¿½tulo */}
                         <h2 style={{
                             fontSize: '28px',
                             fontWeight: '700',
@@ -7175,7 +6535,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.title}
                         </h2>
                         
-                        {/* Subtítulo */}
+                        {/* Subtï¿½tulo */}
                         <p style={{
                             fontSize: '14px',
                             color: module.color,
@@ -7187,7 +6547,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.subtitle}
                         </p>
                         
-                        {/* Descrição */}
+                        {/* Descriï¿½ï¿½o */}
                         <p style={{
                             fontSize: '14px',
                             color: 'rgba(255,255,255,0.6)',
@@ -7197,7 +6557,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                             {module.description}
                         </p>
                         
-                        {/* Botão */}
+                        {/* Botï¿½o */}
                         <div style={{
                             marginTop: '24px',
                             padding: '12px 24px',
@@ -7221,7 +6581,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                 fontSize: '13px',
                 color: 'rgba(255,255,255,0.4)'
             }}>
-                © 2026 Obraly - Sistema de Gestão
+                ï¿½ 2026 Obraly - Sistema de Gestï¿½o
             </p>
         </div>
     );
@@ -7245,7 +6605,7 @@ function App() {
                 setSelectedModule(savedModule || 'obras');
             }
         } catch (error) {
-            logger.error("Falha ao carregar dados de autenticação:", error);
+            logger.error("Falha ao carregar dados de autenticaï¿½ï¿½o:", error);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('selectedModule');
@@ -7283,7 +6643,7 @@ function App() {
         return <div className="loading-screen">Carregando...</div>;
     }
 
-    // Se não há módulo selecionado e não está logado, mostrar seletor
+    // Se nï¿½o hï¿½ mï¿½dulo selecionado e nï¿½o estï¿½ logado, mostrar seletor
     if (!selectedModule && !user) {
         return <ModuleSelectorScreen onSelectModule={handleSelectModule} />;
     }
@@ -7293,7 +6653,7 @@ function App() {
         return <AppAdmin onBack={handleBackToSelector} />;
     }
 
-    // Se selecionou Obras ou já está logado
+    // Se selecionou Obras ou jï¿½ estï¿½ logado
     return (
         <>
             <ToastContainer />
