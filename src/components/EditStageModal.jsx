@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { notify } from '../utils/notify';
 import './EditStageModal.css';
 
 const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
@@ -116,7 +117,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
             onClose();
         } catch (error) {
             console.error('Erro ao salvar etapa:', error);
-            alert('Erro ao salvar as alterações. Tente novamente.');
+            notify.error('Erro ao salvar as alterações. Tente novamente.');
         }
     };
 
