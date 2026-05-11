@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
@@ -25,10 +26,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     useEffect(() => {
         const fetchServicos = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/obras/${obraId}/servicos`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/servicos`);
                 if (response.ok) {
                     const data = await response.json();
                     setServicos(data || []);
@@ -64,14 +62,9 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const extrairDadosPDF = async (base64) => {
         try {
             setExtraindo(true);
-            const token = localStorage.getItem('token');
-
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/extrair-pdf`, {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos/extrair-pdf`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ arquivo_base64: base64 })
             });
 
@@ -131,7 +124,6 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         setSalvandoTodos(true);
 
         try {
-            const token = localStorage.getItem('token');
             let sucessos = 0;
             let erros = 0;
 
@@ -150,12 +142,9 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 };
 
                 try {
-                    const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
+                    const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos`, {
                         method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -205,14 +194,9 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
 
         try {
             setSalvando(true);
-            const token = localStorage.getItem('token');
-
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos`, {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
                     valor: parseFloat(formData.valor),
