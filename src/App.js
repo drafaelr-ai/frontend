@@ -7193,7 +7193,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
     
     // NOVO: Função para marcar obra como concluída/reabrir
-    const handleConcluirObra = (obraId, concluida) => {
+    const handleConcluirObra = async (obraId, concluida) => {
         const acao = concluida ? 'reabrir' : 'concluir';
         if (!await confirmDialog(`Deseja ${acao} esta obra?`, { confirmText: 'Confirmar' })) return;
         

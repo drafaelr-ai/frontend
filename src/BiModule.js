@@ -19,10 +19,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-import { logger } from './utils/logger';
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, Area, AreaChart, ComposedChart
 } from 'recharts';
+import { logger } from './utils/logger';
 
 // =====================================================
 // CONSTANTES E CONFIGURAÇÕES
