@@ -87,7 +87,9 @@ Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fa
 ### Modais que NÃO usam fetchWithAuth (regressão da fase 1)
 
 - `src/components/modals/CadastrarBoletoModal.jsx`: usa `fetch()` direto + `localStorage.getItem('token')` manual em vez de `fetchWithAuth` do `auth/` — todos os requests (carregar serviços, extrair PDF, salvar boleto)
-- Verificar nos modais 27 e 28 quando extraídos se há mais casos
+- Modal 27 (`EditarParcelasModal`): usa `fetchWithAuth` corretamente — OK
+- Modal 28 (`InserirPagamentoModal`): **nenhuma chamada de API direta** — delega tudo via callback `onSave` — OK
+- Verificar nos modais já extraídos (1–26) se há mais casos passados
 - Verificar nos modais já extraídos (1–26) se há mais casos passados
 
 **Risco:** requests que bypassam `fetchWithAuth` podem quebrar silenciosamente em cenários de token expirado, refresh automático, ou qualquer mudança futura no mecanismo de auth.
@@ -107,4 +109,56 @@ Substituir todas as ocorrências por `fetchWithAuth` de `auth/fetchWithAuth`.
 ### Estado complexo (candidatos a useReducer — fase 5)
 - `CadastrarBoletoModal`: 8 useStates (formData, arquivo, arquivoBase64, extraindo, salvando, multiplosboletos, salvandoTodos, servicos)
 - `CaixaObraModal`: 8 useStates (caixa, movimentacoes, isLoading, modalAberto, mesAno, filtroTipo, reanexandoId, deletandoId)
-- Ambos são candidatos a `useReducer` na fase 5 (performance/legibilidade)
+- `EditarParcelasModal`: 7 useStates (parcelas, isLoading, error, parcelaEditando, observacaoEditando, editandoDadosGerais, dadosGerais)
+- `InserirPagamentoModal`: **23 useStates** — caso extremo, prioritário para useReducer na fase 5
+  - data, dataVencimento, descricao, fornecedor, pix, codigoBarras, valor, tipo, status, orcamentoItemId
+  - tipoFormaPagamento, meioPagamento, numeroParcelas, periodicidade, dataPrimeiraParcela
+  - temEntrada, percentualEntrada, dataEntrada, valoresIguais, boletosConfig
+  - contadorInseridos, toastMsg, isSubmitting
+  - Múltiplos "passos" implícitos: avista / parcelado / boleto (muda campos renderizados)
+  - Valores derivados calculados inline: valor por parcela, valor entrada, boletos config — candidatos a useMemo
+  - Feature "Salvar e Novo": incrementa contadorInseridos para forçar re-mount (workaround técnico)
+
+### Padrão de toast — 3 abordagens distintas (fase 6)
+- `notify()` do utils/notify — padrão correto, usado na maioria dos modais
+- `document.createElement('div')` inline — `EditarParcelasModal` (função `showToast`)
+- useState + JSX condicional — `InserirPagamentoModal` (estado `toastMsg`)
+- Consolidar todas as instâncias para `notify()` na fase 6
+
+---
+
+## Fase 2 — COMPLETA
+
+28 modais extraídos de App.js para `src/components/modals/`.
+App.js final: 6.666 linhas (era ~10.500 no início da fase 2).
+
+### Candidatos a refactor futuro — mapa consolidado
+
+#### Fase 1.5 hotfix (urgente se houver mudança de auth)
+- `CadastrarBoletoModal`: migrar `fetch()` + `localStorage.getItem('token')` → `fetchWithAuth`
+
+#### Fase 3.5 / início fase 6 — consolidar utils
+- Todos os modais com formatação inline → importar de `utils/format.js` (`formatCurrency`, `getTodayString`)
+- Casos identificados: `ModalWhatsAppCronograma` (formatVal/formatDate inline), `ModalOrcamentos` (Intl.NumberFormat inline), `CadastrarBoletoModal` (toLocaleString inline), `RelatoriosModal`
+
+#### Fase 5 — performance / legibilidade
+- `InserirPagamentoModal` (23 useStates) → useReducer, prioridade máxima
+- `CadastrarBoletoModal` (8 useStates) → useReducer
+- `CaixaObraModal` (8 useStates) → useReducer
+- `EditarParcelasModal` (7 useStates) → useReducer (borderline)
+- `InserirPagamentoModal` — valores derivados (parcelas, entrada) → useMemo
+
+#### Fase 6 — design system
+- Toast: unificar 3 padrões → tudo via `notify()` (`EditarParcelasModal`, `InserirPagamentoModal`, outros)
+- Modal sem `onClose`: `ModalNovaMovimentacaoCaixa`, `CaixaObraModal` → padronizar
+- `ModalWhatsAppCronograma`: overlay próprio → usar componente Modal genérico
+- `CaixaObraModal`: `compressImage` inline → importar `compressImages` de `utils/imageCompression.js`
+- `ModalOrcamentos`: `Intl.NumberFormat` inline → `formatCurrency`
+- AppAdmin.js, BiModule.js: `formatCurrency` local → importar de utils
+
+#### Após fase 3 — extrair formulários compartilhados
+- `CadastrarPagamentoFuturoModal` + `EditarPagamentoFuturoModal` → `PagamentoFuturoForm` em `src/components/forms/`
+- `AddOrcamentoModal` + `EditOrcamentoModal` → `OrcamentoForm` em `src/components/forms/`
+
+#### Nota fiscal — helper (pode ser feito a qualquer momento)
+- `VisualizarNotaFiscalModal` + `UploadNotaFiscalModal` → extrair `getRealItemId(item)` em `utils/notaFiscal.js`
