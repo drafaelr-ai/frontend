@@ -48,6 +48,7 @@ import VisualizarNotaFiscalModal from './components/modals/VisualizarNotaFiscalM
 import CadastrarPagamentoFuturoModal from './components/modals/CadastrarPagamentoFuturoModal';
 import EditarPagamentoFuturoModal from './components/modals/EditarPagamentoFuturoModal';
 import ModalAprovarOrcamento from './components/modals/ModalAprovarOrcamento';
+import AddLancamentoModal from './components/modals/AddLancamentoModal';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -3513,104 +3514,6 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
 // Modal para Editar Prioridade
 // ----------------------------------------------------
 
-// <--- MUDANÇA: Modal "Adicionar Gasto Geral" (usa 'valor' para 'valor_total') -->
-const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString()); // NOVO campo
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState(''); 
-    const [pix, setPix] = useState('');
-    const [valor, setValor] = useState(''); // Este 'valor' será enviado como 'valor_total'
-    const [tipo, setTipo] = useState('Material');
-    // MUDANÇA 2: Status sempre será "Pago" para gastos avulsos do histórico
-    const status = 'Pago';
-    const [orcamentoItemId, setOrcamentoItemId] = useState('');
-    const [prioridade, setPrioridade] = useState(0); 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            data,
-            data_vencimento: dataVencimento, // NOVO campo
-            descricao,
-            fornecedor: fornecedor || null,
-            pix: pix || null,
-            valor: parseFloat(valor) || 0, // O handler 'handleSaveLancamento' espera 'valor'
-            tipo,
-            status: 'Pago', // MUDANÇA 2: Sempre "Pago"
-            prioridade: parseInt(prioridade, 10) || 0,
-            orcamento_item_id: orcamentoItemId ? parseInt(orcamentoItemId, 10) : null,
-            is_gasto_avulso_historico: true // MUDANÇA 2: Flag para backend
-        });
-    };
-
-    return (
-        <Modal onClose={onClose}>
-            <h2>💵 Adicionar Gasto Avulso (Pago)</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Este gasto será automaticamente marcado como <strong>PAGO</strong> e adicionado ao histórico.
-            </p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
-                </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-                
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
-                </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-                
-                {/* O usuário insere 'valor', mas o backend salvará em 'valor_total' */}
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
-                </div>
-                
-                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
-                        <option value="">Nenhum (Despesa Geral)</option>
-                        {(itensOrcamento || []).map(item => (
-                            <option key={item.id} value={item.id}>{item.nome_completo}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-                {/* MUDANÇA 2: Campo Status removido - sempre será Pago */}
-                <div style={{padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', marginBottom: '15px'}}>
-                    <strong>Status: PAGO</strong> (automático)
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
-            </form>
-        </Modal>
-    );
-};
 
 // Modal "Adicionar Orçamento"
 const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
