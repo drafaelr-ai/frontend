@@ -38,6 +38,14 @@ ou incluir no início da fase 6 (design system) — momento natural para padroni
 - Solução futura: extrair OrcamentoForm em src/components/forms/ (mais complexo que o par PagamentoFuturo por causa das diferenças maiores)
 - Quando: após fase 3 (telas grandes extraídas), consolidar todos os pares Add/Edit juntos
 
+### Relatórios: ModalRelatorioCronograma vs RelatoriosModal (endpoint compartilhado)
+- Arquivos: src/components/modals/ModalRelatorioCronograma.jsx, RelatoriosModal.jsx
+- Duplicação: ambos chamam `/relatorio-cronograma-pdf` para download de PDF
+- Diferença de escopo: ModalRelatorioCronograma é global (sidebar, permite escolher qualquer obra); RelatoriosModal é per-obra (dentro da tela da obra, já tem obraId)
+- NÃO são pares estruturais — responsabilidades e contextos distintos
+- Nota: se o endpoint de download de PDF for centralizado no futuro, seria natural extrair um helper `downloadCronogramaPDF(obraId, obraNome)` em src/utils/
+- Quando: fase 6 (design system) ou quando surgir terceiro caller
+
 ## Padrão observado
 
 Modais "Add X" / "Edit X" sempre têm essa duplicação. Confirmado em 2 pares:
