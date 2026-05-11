@@ -52,3 +52,19 @@ Modais "Add X" / "Edit X" sempre têm essa duplicação. Confirmado em 2 pares:
 1. CadastrarPagamentoFuturoModal vs EditarPagamentoFuturoModal
 2. AddOrcamentoModal vs EditOrcamentoModal
 Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fase específica.
+
+---
+
+## Inconsistências arquiteturais identificadas durante fase 2
+
+### Modais que não usam o Modal genérico
+- `src/components/modals/ModalWhatsAppCronograma.jsx`: tem overlay e backdrop próprios em vez de usar o componente Modal genérico
+- `src/components/NotaFiscalIcon.jsx`: é componente que ABRE modais, mas tem renderização própria — verificar na fase 6
+- Possíveis outros nos lotes restantes
+
+**Ação:** padronizar todos os modais para usar o Modal genérico na fase 6 (junto com aplicação do design system v2.0). Documento: `_refactor/design-system/04-modal-crud.md`
+
+### Helpers de formatação inline (não importados de utils/)
+- `ModalWhatsAppCronograma` usa `formatVal`/`formatDate` inline em vez de importar de `utils/format.js`
+- Verificar nos próximos lotes se outros modais fazem o mesmo
+- Consolidar todos juntos na fase 6 antes de aplicar design tokens
