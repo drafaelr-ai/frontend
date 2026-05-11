@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext, createContext } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 
 // Imports do Chart.js
@@ -33,52 +33,15 @@ import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
 import { ToastContainer, notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
+import { formatCurrency, getTodayString } from './utils/format';
+import PrioridadeBadge from './components/PrioridadeBadge';
+import { AuthContext, useAuth } from './auth/AuthContext';
+import { fetchWithAuth, fetchWithAuthTimeout } from './auth/fetchWithAuth';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // --- CONFIGURAÇÃO INICIAL ---
-
-// Helper para exibir a prioridade
-const PrioridadeBadge = ({ prioridade }) => {
-    let p = parseInt(prioridade, 10) || 0;
-    if (p === 0) {
-        return <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>;
-    }
-    
-    let color = '#6c757d'; // 1-2 (Baixa)
-    if (p === 3) color = '#007bff'; // 3 (Média)
-    if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Urgente)
-
-    const style = {
-        backgroundColor: color,
-        color: 'white',
-        padding: '3px 8px',
-        borderRadius: '12px',
-        fontSize: '0.8em',
-        fontWeight: 'bold',
-        display: 'inline-block',
-        minWidth: '10px',
-        textAlign: 'center'
-    };
-    return <span style={style}>{p}</span>;
-};
-
-
-// Helper para formatar BRL
-const formatCurrency = (value) => {
-    if (typeof value !== 'number') { value = 0; }
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
-
-// Helper para pegar a data de hoje (para novos lançamentos)
-const getTodayString = () => {
-    const today = new Date();
-    const offset = today.getTimezoneOffset();
-    const todayWithOffset = new Date(today.getTime() - (offset * 60 * 1000));
-    return todayWithOffset.toISOString().split('T')[0];
-};
 
 // --- COMPONENTE SIDEBAR ---
 
@@ -1823,54 +1786,9 @@ const SidebarStyles = () => (
 );
 
 
-// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
-const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-
-    const headers = {
-        ...options.headers,
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-
-        notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
-
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-
-        throw new Error('Sessão expirada. Faça o login novamente.');
-    }
-
-    return response;
-};
-
-const fetchWithAuthTimeout = async (url, options = {}, timeoutMs = 30000) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        return await fetchWithAuth(url, { ...options, signal: controller.signal });
-    } finally {
-        clearTimeout(timer);
-    }
-};
-
-
-// --- CONTEXTO DE AUTENTICAÇÃO ---
-const AuthContext = createContext(null);
-const useAuth = () => useContext(AuthContext);
+// --- CONTEXTO DE AUTENTICAÇÃO + FETCH ---
+// fetchWithAuth, fetchWithAuthTimeout → src/auth/fetchWithAuth.js
+// AuthContext, useAuth              → src/auth/AuthContext.jsx
 
 // --- COMPONENTE DE LOGIN ---
 const LoginScreen = ({ onBack }) => {
