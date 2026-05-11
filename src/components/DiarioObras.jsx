@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO DE IMAGENS
 import { API_URL } from '../config';
+import { notify, confirmDialog } from '../utils/notify';
+import { logger } from '../utils/logger';
 
 // Helper para formatar datas
 const formatDate = (dateString) => {
@@ -56,7 +58,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
             const data = await response.json();
             setImageData(data.arquivo_base64);
         } catch (err) {
-            console.error('Erro ao carregar imagem:', err);
+            logger.error('Erro ao carregar imagem:', err);
             setError('Erro ao carregar');
         } finally {
             setLoading(false);
@@ -264,7 +266,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                 
                 try {
                     // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
-                    console.log('🔄 Comprimindo imagens...');
+                    logger.debug('🔄 Comprimindo imagens...');
                     const compressedFiles = await compressImages(arquivos, {
                         maxWidth: 1920,
                         maxHeight: 1920,
@@ -296,11 +298,11 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                         );
                         
                         if (!uploadResponse.ok) {
-                            console.error('Erro ao fazer upload de arquivo:', arquivo.name);
+                            logger.error('Erro ao fazer upload de arquivo:', arquivo.name);
                         }
                     }
                 } catch (uploadError) {
-                    console.error('Erro no upload de arquivos:', uploadError);
+                    logger.error('Erro no upload de arquivos:', uploadError);
                     // Continua mesmo se houver erro no upload de imagens
                 }
             }
@@ -616,14 +618,14 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
     const handleImageUpload = async () => {
         if (imageFiles.length === 0) {
-            alert('Selecione pelo menos um arquivo');
+            notify.warning('Selecione pelo menos um arquivo');
             return;
         }
 
         setIsUploading(true);
         try {
             // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
-            console.log('🔄 Comprimindo imagens...');
+            logger.debug('🔄 Comprimindo imagens...');
             const compressedFiles = await compressImages(imageFiles, {
                 maxWidth: 1920,
                 maxHeight: 1920,
@@ -655,18 +657,18 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                 }
             }
 
-            alert('Arquivos adicionados com sucesso!');
+            notify.success('Arquivos adicionados com sucesso!');
             setImageFiles([]);
             onAddImage(); // Recarrega os dados
         } catch (err) {
-            alert('Erro ao enviar arquivos: ' + err.message);
+            notify.error('Erro ao enviar arquivos: ' + err.message);
         } finally {
             setIsUploading(false);
         }
     };
 
     const handleDeleteImage = async (imagemId) => {
-        if (!window.confirm('Deseja realmente excluir esta imagem?')) return;
+        if (!await confirmDialog('Deseja realmente excluir esta imagem?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(`${API_URL}/diario/imagens/${imagemId}`, {
@@ -677,10 +679,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                 throw new Error('Erro ao excluir imagem');
             }
 
-            alert('Imagem excluída com sucesso!');
+            notify.success('Imagem excluída com sucesso!');
             onAddImage(); // Recarrega os dados
         } catch (err) {
-            alert('Erro ao excluir imagem: ' + err.message);
+            notify.error('Erro ao excluir imagem: ' + err.message);
         }
     };
 
@@ -902,14 +904,14 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     const carregarEntradas = async () => {
         // Verificar se obra existe antes de carregar
         if (!obraData?.id) {
-            console.log('Obra não disponível ainda');
+            logger.debug('Obra não disponível ainda');
             setIsLoading(false);
             return;
         }
         
         try {
             setIsLoading(true);
-            console.log('Carregando entradas da obra:', obraData.id);
+            logger.debug('Carregando entradas da obra:', obraData.id);
             const response = await fetchWithAuth(`${API_URL}/obras/${obraData.id}/diario`);
             
             if (!response.ok) {
@@ -917,7 +919,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             }
 
             const data = await response.json();
-            console.log('Entradas recebidas:', data);
+            logger.debug('Entradas recebidas:', data);
             
             // Garantir que data seja sempre um array
             // Backend pode retornar array direto ou objeto com propriedade 'entradas'
@@ -930,11 +932,11 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 entradasArray = data.data;
             }
             
-            console.log('Entradas processadas (array):', entradasArray);
+            logger.debug('Entradas processadas (array):', entradasArray);
             setEntradas(entradasArray);
         } catch (err) {
-            console.error('Erro ao carregar entradas:', err);
-            alert('Erro ao carregar o diário: ' + err.message);
+            logger.error('Erro ao carregar entradas:', err);
+            notify.error('Erro ao carregar o diário: ' + err.message);
             setEntradas([]); // Garantir que entradas seja um array vazio em caso de erro
         } finally {
             setIsLoading(false);
@@ -949,12 +951,12 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     }, [obraData?.id]);
 
     const handleSaveEntrada = async (novaEntrada) => {
-        console.log('Entrada salva, recarregando lista...', novaEntrada);
+        logger.debug('Entrada salva, recarregando lista...', novaEntrada);
         await carregarEntradas();
     };
 
     const handleDeleteEntrada = async (entradaId) => {
-        if (!window.confirm('Deseja realmente excluir esta entrada?')) return;
+        if (!await confirmDialog('Deseja realmente excluir esta entrada?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
             const response = await fetchWithAuth(`${API_URL}/diario/${entradaId}`, {
@@ -965,11 +967,11 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 throw new Error('Erro ao excluir entrada');
             }
 
-            alert('Entrada excluída com sucesso!');
+            notify.success('Entrada excluída com sucesso!');
             carregarEntradas();
             setIsDetalhesModalOpen(false);
         } catch (err) {
-            alert('Erro ao excluir entrada: ' + err.message);
+            notify.error('Erro ao excluir entrada: ' + err.message);
         }
     };
 
@@ -997,7 +999,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             window.URL.revokeObjectURL(downloadUrl);
             document.body.removeChild(a);
         } catch (err) {
-            alert('Erro ao gerar relatório: ' + err.message);
+            notify.error('Erro ao gerar relatório: ' + err.message);
         }
     };
 

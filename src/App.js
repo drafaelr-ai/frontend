@@ -31,6 +31,8 @@ import AgendaDemandas from './components/AgendaDemandas';
 // 🆕 MÓDULO ADMINISTRAÇÃO (Gestão Patrimonial)
 import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
+import { ToastContainer, notify, confirmDialog } from './utils/notify';
+import { logger } from './utils/logger';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -99,7 +101,7 @@ const NotificacoesDropdown = ({ user }) => {
                 setCount(data.count);
             }
         } catch (err) {
-            console.error('Erro ao buscar contador de notificações:', err);
+            logger.error('Erro ao buscar contador de notificações:', err);
         }
     };
     
@@ -116,7 +118,7 @@ const NotificacoesDropdown = ({ user }) => {
                 setNotificacoes(data);
             }
         } catch (err) {
-            console.error('Erro ao buscar notificações:', err);
+            logger.error('Erro ao buscar notificações:', err);
         } finally {
             setLoading(false);
         }
@@ -140,7 +142,7 @@ const NotificacoesDropdown = ({ user }) => {
             ));
             setCount(prev => lida ? prev + 1 : Math.max(0, prev - 1));
         } catch (err) {
-            console.error('Erro ao marcar notificação:', err);
+            logger.error('Erro ao marcar notificação:', err);
         }
     };
     
@@ -154,13 +156,13 @@ const NotificacoesDropdown = ({ user }) => {
             });
             setNotificacoes(prev => prev.filter(n => !n.lida));
         } catch (err) {
-            console.error('Erro ao limpar notificações:', err);
+            logger.error('Erro ao limpar notificações:', err);
         }
     };
 
     // Limpar TODAS as notificações
     const limparTodas = async () => {
-        if (!window.confirm('Limpar TODAS as notificações?')) return;
+        if (!await confirmDialog('Limpar TODAS as notificações?', { confirmText: 'Limpar tudo' })) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${API_URL}/notificacoes/limpar-todas`, {
@@ -171,7 +173,7 @@ const NotificacoesDropdown = ({ user }) => {
             setCount(0);
             setIsOpen(false);
         } catch (err) {
-            console.error('Erro ao limpar todas notificações:', err);
+            logger.error('Erro ao limpar todas notificações:', err);
         }
     };
     
@@ -186,7 +188,7 @@ const NotificacoesDropdown = ({ user }) => {
             setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
             setCount(0);
         } catch (err) {
-            console.error('Erro ao marcar todas como lidas:', err);
+            logger.error('Erro ao marcar todas como lidas:', err);
         }
     };
     
@@ -1821,36 +1823,63 @@ const SidebarStyles = () => (
 );
 
 
-// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
+// --- HELPER DA API ---
+let _isRefreshing = false;
+let _refreshQueue = [];
+
+const _doRefresh = async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) throw new Error('no_refresh_token');
+    const { API_URL: BASE } = await import('./config');
+    const res = await fetch(`${BASE}/refresh`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${refreshToken}`, 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('refresh_failed');
+    const data = await res.json();
+    localStorage.setItem('token', data.access_token);
+    return data.access_token;
+};
+
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
-    
-    const headers = {
-        ...options.headers,
-    };
+    const headers = { ...options.headers };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
+    let response = await fetch(url, { ...options, headers });
 
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401 || response.status === 422) {
+    if ((response.status === 401 || response.status === 422) && localStorage.getItem('refresh_token')) {
+        if (_isRefreshing) {
+            await new Promise((resolve, reject) => _refreshQueue.push({ resolve, reject }));
+            return fetchWithAuth(url, options);
+        }
+        _isRefreshing = true;
+        try {
+            const newToken = await _doRefresh();
+            _refreshQueue.forEach(({ resolve }) => resolve(newToken));
+            _refreshQueue = [];
+            headers['Authorization'] = `Bearer ${newToken}`;
+            response = await fetch(url, { ...options, headers });
+        } catch {
+            _refreshQueue.forEach(({ reject }) => reject());
+            _refreshQueue = [];
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            notify.warning('Sua sessão expirou. Faça login novamente.');
+            setTimeout(() => window.location.reload(), 500);
+            throw new Error('Sessão expirada.');
+        } finally {
+            _isRefreshing = false;
+        }
+    } else if (response.status === 401 || response.status === 422) {
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
-        
-        // Mostrar alerta antes de recarregar
-        alert('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
-        
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-        
-        throw new Error('Sessão expirada. Faça o login novamente.');
+        notify.warning('Sua sessão expirou. Faça login novamente.');
+        setTimeout(() => window.location.reload(), 500);
+        throw new Error('Sessão expirada.');
     }
 
     return response;
@@ -1899,7 +1928,7 @@ const LoginScreen = ({ onBack }) => {
             login(data); 
         })
         .catch(err => {
-            console.error("Erro no login:", err);
+            logger.error("Erro no login:", err);
             setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
             setIsLoading(false);
         });
@@ -2130,7 +2159,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 setItensOrcamento(data);
             }
         } catch (err) {
-            console.error('Erro ao buscar itens do orçamento:', err);
+            logger.error('Erro ao buscar itens do orçamento:', err);
         } finally {
             setLoadingItens(false);
         }
@@ -2220,15 +2249,15 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao atualizar');
             }
         } catch (err) {
-            console.error('Erro ao salvar edição:', err);
-            alert(`Erro ao salvar: ${err.message}`);
+            logger.error('Erro ao salvar edição:', err);
+            notify.error(`Erro ao salvar: ${err.message}`);
         }
     };
     
     // Função para exportar CSV
     const exportarCSV = () => {
         if (itemsPagos.length === 0) {
-            alert('Nenhum pagamento para exportar');
+            notify.info('Nenhum pagamento para exportar');
             return;
         }
         
@@ -2273,7 +2302,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     
     // Função para reverter parcela paga (voltar para pendente)
     const handleRevertParcela = async (item) => {
-        if (!window.confirm(`Deseja reverter o pagamento "${item.descricao}"?\n\nA parcela voltará ao status "Pendente".`)) return;
+        if (!await confirmDialog(`Deseja reverter o pagamento "${item.descricao}"? A parcela voltará ao status "Pendente".`, { confirmText: 'Reverter' })) return;
         
         try {
             const response = await fetchWithAuth(
@@ -2288,20 +2317,20 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             );
             
             if (response.ok) {
-                alert('Pagamento revertido com sucesso!');
+                notify.success('Pagamento revertido com sucesso!');
                 if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.erro || 'Erro ao reverter pagamento');
             }
         } catch (err) {
-            console.error('Erro ao reverter parcela:', err);
-            alert(`Erro ao reverter: ${err.message}`);
+            logger.error('Erro ao reverter parcela:', err);
+            notify.error(`Erro ao reverter: ${err.message}`);
         }
     };
     
     const handleDelete = async (item) => {
-        if (!window.confirm(`Deseja excluir "${item.descricao}"?`)) return;
+        if (!await confirmDialog(`Deseja excluir "${item.descricao}"?`, { danger: true, confirmText: 'Excluir' })) return;
         
         try {
             let endpoint = '';
@@ -2318,7 +2347,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             const numericId = extractNumericId(item.id);
             
             if (!numericId) {
-                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             }
             
@@ -2328,7 +2357,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             } else if (item.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
-                alert('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
+                notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
             } else {
                 // Tentar identificar pelo prefixo do ID
@@ -2339,19 +2368,19 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 }
             }
             
-            console.log('Deletando:', endpoint);
+            logger.debug('Deletando:', endpoint);
             const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
             
             if (response.ok) {
-                alert('Item excluído com sucesso!');
+                notify.success('Item excluído com sucesso!');
                 if (fetchObraData && obraId) fetchObraData(obraId);
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.erro || 'Erro ao excluir');
             }
         } catch (err) {
-            console.error('Erro ao excluir:', err);
-            alert(`Erro ao excluir: ${err.message}`);
+            logger.error('Erro ao excluir:', err);
+            notify.error(`Erro ao excluir: ${err.message}`);
         }
     };
     
@@ -3126,7 +3155,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
                  try {
                      initialData.data = new Date(initialData.data + 'T00:00:00').toISOString().split('T')[0];
                  } catch (e) {
-                     console.error("Erro ao formatar data para edição:", e);
+                     logger.error("Erro ao formatar data para edição:", e);
                      initialData.data = '';
                  }
              }
@@ -3135,7 +3164,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
                  try {
                      initialData.data_vencimento = new Date(initialData.data_vencimento + 'T00:00:00').toISOString().split('T')[0];
                  } catch (e) {
-                     console.error("Erro ao formatar data_vencimento para edição:", e);
+                     logger.error("Erro ao formatar data_vencimento para edição:", e);
                      initialData.data_vencimento = '';
                  }
              } else {
@@ -3264,7 +3293,7 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                     setIsLoading(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar permissões:", err);
+                    logger.error("Erro ao buscar permissões:", err);
                     setIsLoading(false);
                 });
         }
@@ -3339,7 +3368,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                 setIsLoading(false);
             })
             .catch(err => {
-                console.error("Erro ao buscar usuários:", err);
+                logger.error("Erro ao buscar usuários:", err);
                 setError("Falha ao carregar usuários.");
                 setIsLoading(false);
             });
@@ -3347,7 +3376,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
     // ... (depois da função handleCreateUser)
 
     const handleChangeRole = async (userId, novoRole) => {
-        if (!window.confirm(`Deseja alterar o nível deste usuário para "${novoRole}"?`)) {
+        if (!await confirmDialog(`Deseja alterar o nível deste usuário para "${novoRole}"?`, { confirmText: 'Alterar nível' })) {
             return;
         }
         
@@ -3373,15 +3402,15 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             ));
             
         } catch (err) {
-            console.error("Erro ao alterar nível:", err);
+            logger.error("Erro ao alterar nível:", err);
             setError(err.message);
         } finally {
             setChangingRole(null);
         }
     };
 
-    const handleDeleteUser = (user) => {
-        if (!window.confirm(`Tem certeza que deseja excluir o usuário ${user.username}? Esta ação não pode ser desfeita.`)) {
+    const handleDeleteUser = async (user) => {
+        if (!await confirmDialog(`Tem certeza que deseja excluir o usuário ${user.username}? Esta ação não pode ser desfeita.`, { danger: true, confirmText: 'Excluir' })) {
             return;
         }
         
@@ -3399,7 +3428,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
         })
         .catch(err => {
-            console.error("Erro ao deletar usuário:", err);
+            logger.error("Erro ao deletar usuário:", err);
             setError(err.message);
         });
     };
@@ -3428,7 +3457,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setNewRole('comum');
         })
         .catch(err => {
-            console.error("Erro ao criar usuário:", err);
+            logger.error("Erro ao criar usuário:", err);
             setError(err.message);
         });
     };
@@ -3445,7 +3474,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setUserToEdit(null); 
         })
         .catch(err => {
-            console.error("Erro ao salvar permissões:", err);
+            logger.error("Erro ao salvar permissões:", err);
             setError(err.message); 
         });
     };
@@ -3604,7 +3633,7 @@ const ExportReportModal = ({ onClose }) => {
                 onClose();
             })
             .catch(err => {
-                console.error("Erro ao gerar PDF:", err);
+                logger.error("Erro ao gerar PDF:", err);
                 setError(err.message || "Não foi possível gerar o PDF.");
                 setIsLoading(false);
             });
@@ -3649,7 +3678,7 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
 
     const handleGerarRelatorio = async () => {
         if (!obraSelecionada) {
-            alert('Por favor, selecione uma obra primeiro.');
+            notify.warning('Por favor, selecione uma obra primeiro.');
             return;
         }
 
@@ -3676,10 +3705,10 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
-            alert('Relatório gerado com sucesso!');
+            notify.success('Relatório gerado com sucesso!');
             onClose();
         } catch (err) {
-            console.error("Erro ao gerar relatório:", err);
+            logger.error("Erro ao gerar relatório:", err);
             setError(err.message || "Não foi possível gerar o relatório.");
         } finally {
             setIsLoading(false);
@@ -4213,7 +4242,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
     // Copiar código de barras
     const copiarCodigo = (codigo) => {
         navigator.clipboard.writeText(codigo);
-        alert('Código copiado!');
+        notify.success('Código copiado!');
     };
 
     const handleSubmit = async (e, salvarENovo = false) => {
@@ -4248,7 +4277,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 dadosPagamento.valor_entrada = valorEntrada;
                 dadosPagamento.data_entrada = dataEntrada;
                 dadosPagamento.valor_parcela = valorParcela; // Valor de cada parcela após entrada
-                console.log("🔍 DEBUG ENTRADA (frontend):", {
+                logger.debug("🔍 DEBUG ENTRADA (frontend):", {
                     temEntrada,
                     percentualEntrada,
                     valorEntrada,
@@ -4257,7 +4286,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 });
             }
             
-            console.log("📤 Dados de parcelamento a enviar:", dadosPagamento);
+            logger.debug("📤 Dados de parcelamento a enviar:", dadosPagamento);
             
             // Se for boleto parcelado, incluir configuração dos boletos
             if (meioPagamento === 'Boleto') {
@@ -4276,7 +4305,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
             }
             // Se não for salvarENovo, o onSave vai fechar o modal
         } catch (error) {
-            console.error('Erro ao salvar:', error);
+            logger.error('Erro ao salvar:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -4782,7 +4811,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                     setIsLoadingAnexos(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
+                    logger.error("Erro ao buscar anexos:", err);
                     setIsLoadingAnexos(false);
                 });
         }
@@ -4814,21 +4843,21 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                 const fileURL = URL.createObjectURL(blob);
                 window.open(fileURL, '_blank');
             })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+            .catch(err => notify.error(`Erro ao abrir anexo: ${err.message}`));
     };
 
-    const handleDeleteAnexo = (anexoId, e) => {
+    const handleDeleteAnexo = async (anexoId, e) => {
         e.preventDefault();
-        e.stopPropagation(); 
-        
-        if (window.confirm("Tem certeza que deseja excluir este anexo?")) {
-            fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) throw new Error('Falha ao deletar');
-                    setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
-                })
-                .catch(err => alert(`Erro ao deletar anexo: ${err.message}`));
-        }
+        e.stopPropagation();
+
+        if (!await confirmDialog('Tem certeza que deseja excluir este anexo?', { danger: true, confirmText: 'Excluir' })) return;
+
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Falha ao deletar');
+                setExistingAnexos(prev => prev.filter(a => a.id !== anexoId));
+            })
+            .catch(err => notify.error(`Erro ao deletar anexo: ${err.message}`));
     };
 
     const handleSubmit = (e) => {
@@ -4959,7 +4988,7 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
                     setIsLoading(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
+                    logger.error("Erro ao buscar anexos:", err);
                     setIsLoading(false);
                 });
         }
@@ -4975,7 +5004,7 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
                 const fileURL = URL.createObjectURL(blob);
                 window.open(fileURL, '_blank');
             })
-            .catch(err => alert(`Erro ao abrir anexo: ${err.message}`));
+            .catch(err => notify.error(`Erro ao abrir anexo: ${err.message}`));
     };
 
     if (!orcamento) return null;
@@ -5147,7 +5176,7 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
             onClose();
         })
         .catch(err => {
-            console.error("Erro ao fazer upload:", err);
+            logger.error("Erro ao fazer upload:", err);
             setError(err.message);
         })
         .finally(() => {
@@ -5201,7 +5230,7 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
     const { user } = useAuth();
     
     const handleDelete = async () => {
-        if (!window.confirm('Tem certeza que deseja excluir esta nota fiscal?')) {
+        if (!await confirmDialog('Tem certeza que deseja excluir esta nota fiscal?', { danger: true, confirmText: 'Excluir' })) {
             return;
         }
         
@@ -5218,8 +5247,8 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
             onDelete();
             onClose();
         } catch (error) {
-            console.error('Erro ao excluir nota fiscal:', error);
-            alert('Erro ao excluir nota fiscal');
+            logger.error('Erro ao excluir nota fiscal:', error);
+            notify.error('Erro ao excluir nota fiscal');
         } finally {
             setIsDeleting(false);
         }
@@ -5353,7 +5382,7 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
             
             setNota(notaDoItem || null);
         } catch (error) {
-            console.error('Erro ao carregar nota fiscal:', error);
+            logger.error('Erro ao carregar nota fiscal:', error);
         } finally {
             setIsLoading(false);
         }
@@ -5365,12 +5394,12 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
         
         const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
         if (!allowedTypes.includes(file.type)) {
-            alert('Apenas arquivos PDF, PNG ou JPG são permitidos');
+            notify.warning('Apenas arquivos PDF, PNG ou JPG são permitidos');
             return;
         }
         
         if (file.size > 10 * 1024 * 1024) {
-            alert('Arquivo muito grande. Tamanho máximo: 10MB');
+            notify.warning('Arquivo muito grande. Tamanho máximo: 10MB');
             return;
         }
         
@@ -5398,8 +5427,8 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
                 onNotaAdded();
             }
         } catch (error) {
-            console.error('Erro ao fazer upload:', error);
-            alert('Erro ao anexar nota fiscal');
+            logger.error('Erro ao fazer upload:', error);
+            notify.error('Erro ao anexar nota fiscal');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) {
@@ -5516,7 +5545,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 setOrcamentos(data);
             })
             .catch(err => {
-                console.error('Erro ao carregar solicitações:', err);
+                logger.error('Erro ao carregar solicitações:', err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5881,8 +5910,8 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
             link.click();
             document.body.removeChild(link);
         } catch (err) {
-            console.error('Erro ao gerar mensagem WhatsApp:', err);
-            alert('Erro ao gerar mensagem do WhatsApp. Tente novamente.');
+            logger.error('Erro ao gerar mensagem WhatsApp:', err);
+            notify.error('Erro ao gerar mensagem do WhatsApp. Tente novamente.');
         } finally {
             setIsSharingWhatsApp(false);
         }
@@ -5912,7 +5941,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 document.body.removeChild(a);
             })
             .catch(err => {
-                console.error("Erro ao baixar relatório financeiro:", err);
+                logger.error("Erro ao baixar relatório financeiro:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5944,7 +5973,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 document.body.removeChild(a);
             })
             .catch(err => {
-                console.error("Erro ao baixar notas fiscais:", err);
+                logger.error("Erro ao baixar notas fiscais:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5977,7 +6006,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 }, 1000);
             })
             .catch(err => {
-                console.error("Erro ao gerar relatório:", err);
+                logger.error("Erro ao gerar relatório:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -6315,7 +6344,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             setOrcamentos(Array.isArray(orcData) ? orcData : []);
             setServicos(Array.isArray(servData) ? servData : []);
         } catch (err) {
-            console.error('Erro:', err);
+            logger.error('Erro:', err);
         } finally {
             setIsLoading(false);
         }
@@ -6345,11 +6374,11 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     const handleAprovarSelecionados = async () => {
         if (selecionados.length === 0) {
-            alert('Selecione pelo menos uma solicitação para aprovar.');
+            notify.warning('Selecione pelo menos uma solicitação para aprovar.');
             return;
         }
 
-        if (!window.confirm(`Confirma a aprovação de ${selecionados.length} solicitação(ões)?`)) {
+        if (!await confirmDialog(`Confirma a aprovação de ${selecionados.length} solicitação(ões)?`, { confirmText: 'Aprovar' })) {
             return;
         }
 
@@ -6382,9 +6411,9 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
         setSelecionados([]);
 
         if (erros.length > 0) {
-            alert(`✅ ${aprovados} aprovado(s)\n❌ ${erros.length} erro(s):\n${erros.join('\n')}`);
+            notify.success(`✅ ${aprovados} aprovado(s)\n❌ ${erros.length} erro(s):\n${erros.join('\n')}`);
         } else {
-            alert(`✅ ${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
+            notify.success(`✅ ${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
         }
 
         if (onSave) onSave();
@@ -6393,7 +6422,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     const handleConfirmarAprovacao = async () => {
         try {
-            console.log('Enviando aprovação para:', aprovandoOrcamento.id);
+            logger.debug('Enviando aprovação para:', aprovandoOrcamento.id);
 
             const response = await fetchWithAuth(
                 `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
@@ -6409,17 +6438,17 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 throw new Error(data.erro || data.error || 'Erro ao aprovar solicitação');
             }
 
-            alert(data.sucesso || '✅ Solicitação aprovada com sucesso!');
+            notify.success(data.sucesso || '✅ Solicitação aprovada com sucesso!');
             setAprovandoOrcamento(null);
             if (onSave) onSave();
         } catch (err) {
-            console.error('Erro ao aprovar:', err);
-            alert(`Erro ao aprovar solicitação: ${err.message}`);
+            logger.error('Erro ao aprovar:', err);
+            notify.error(`Erro ao aprovar solicitação: ${err.message}`);
         }
     };
 
     const handleRejeitar = async (orcamentoId) => {
-        if (!window.confirm('Confirma a rejeição deste orçamento?')) return;
+        if (!await confirmDialog('Confirma a rejeição deste orçamento?', { danger: true, confirmText: 'Rejeitar' })) return;
 
         try {
             const response = await fetchWithAuth(
@@ -6429,18 +6458,18 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
             if (!response.ok) throw new Error('Erro ao rejeitar solicitação');
 
-            alert('✅ Solicitação rejeitada!');
+            notify.success('✅ Solicitação rejeitada!');
             // OTIMIZAÇÃO: Removido carregarDados() para evitar requisições duplicadas
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
     // CORREÇÃO: Função para salvar novo orçamento
     const handleSaveOrcamento = async (formData) => {
         try {
-            console.log("Salvando novo orçamento...");
+            logger.debug("Salvando novo orçamento...");
             const response = await fetchWithAuth(
                 `${API_URL}/obras/${obraId}/orcamentos`,
                 {
@@ -6454,20 +6483,20 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 throw new Error(error.erro || 'Erro ao salvar orçamento');
             }
 
-            alert('✅ Solicitação enviada com sucesso!');
+            notify.success('✅ Solicitação enviada com sucesso!');
             setAddModalVisible(false);
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
         } catch (err) {
-            console.error("Erro ao salvar orçamento:", err);
-            alert(`Erro ao salvar orçamento: ${err.message}`);
+            logger.error("Erro ao salvar orçamento:", err);
+            notify.error(`Erro ao salvar orçamento: ${err.message}`);
         }
     };
 
     // CORREÇÃO: Função para editar orçamento
     const handleEditOrcamento = async (orcamentoId, formData, newFiles) => {
         try {
-            console.log("Salvando edição do orçamento:", orcamentoId);
+            logger.debug("Salvando edição do orçamento:", orcamentoId);
             
             // 1. Atualizar dados do orçamento
             const response = await fetchWithAuth(
@@ -6504,13 +6533,13 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 }
             }
 
-            alert('✅ Solicitação atualizada com sucesso!');
+            notify.success('✅ Solicitação atualizada com sucesso!');
             setEditingOrcamento(null);
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
         } catch (err) {
-            console.error("Erro ao salvar edição do orçamento:", err);
-            alert(`Erro ao salvar edição: ${err.message}`);
+            logger.error("Erro ao salvar edição do orçamento:", err);
+            notify.error(`Erro ao salvar edição: ${err.message}`);
         }
     };
 
@@ -6808,7 +6837,7 @@ function Dashboard() {
     // Escutar botão voltar do navegador
     useEffect(() => {
         const handlePopState = (event) => {
-            console.log('PopState event:', event.state);
+            logger.debug('PopState event:', event.state);
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
@@ -6829,7 +6858,7 @@ function Dashboard() {
                             setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                             setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                         })
-                        .catch(error => console.error('Erro popstate:', error))
+                        .catch(error => logger.error('Erro popstate:', error))
                         .finally(() => setIsLoading(false));
                 } else {
                     setObraSelecionada(null);
@@ -6967,14 +6996,14 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     // Efeito para buscar obras
     useEffect(() => {
-        console.log("Buscando lista de obras...");
+        logger.debug("Buscando lista de obras...");
         const url = mostrarConcluidas 
             ? `${API_URL}/obras?mostrar_concluidas=true` 
             : `${API_URL}/obras`;
         fetchWithAuth(url)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
-            .then(data => { console.log("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
-            .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
+            .then(data => { logger.debug("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
+            .catch(error => { logger.error("Erro ao buscar obras:", error); setObras([]); });
     }, [mostrarConcluidas]); 
     
     // Callback para abrir modal de orçamentos
@@ -6989,13 +7018,13 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     const fetchObraData = (obraId) => {
         setIsLoading(true);
-        console.log(`Buscando dados da obra ID: ${obraId}`);
+        logger.debug(`Buscando dados da obra ID: ${obraId}`);
         
         // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
-                console.log("Dados da obra recebidos:", data);
+                logger.debug("Dados da obra recebidos:", data);
                 
                 setObraSelecionada(data.obra || null);
                 setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
@@ -7016,10 +7045,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                 try {
                     fetchNotasFiscais(obraId);
                 } catch (error) {
-                    console.log("Notas fiscais não disponíveis");
+                    logger.debug("Notas fiscais não disponíveis");
                 }
             })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
+            .catch(error => { logger.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
@@ -7032,7 +7061,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setItensOrcamento(data);
             }
         } catch (error) {
-            console.log("Itens do orçamento não disponíveis:", error);
+            logger.debug("Itens do orçamento não disponíveis:", error);
             setItensOrcamento([]);
         }
     };
@@ -7045,12 +7074,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
         
-        console.log("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
+        logger.debug("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
         
         if (obraFromUrl) {
             const obraId = parseInt(obraFromUrl);
             if (!isNaN(obraId)) {
-                console.log("[URL INIT] Carregando obra:", obraId);
+                logger.debug("[URL INIT] Carregando obra:", obraId);
                 fetchObraData(obraId);
                 setCurrentPage(pageFromUrl || 'home');
             } else {
@@ -7085,7 +7114,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             }
             
             const cronogramasData = await response.json();
-            console.log("Cronogramas da obra (raw):", cronogramasData);
+            logger.debug("Cronogramas da obra (raw):", cronogramasData);
             
             if (!Array.isArray(cronogramasData) || cronogramasData.length === 0) {
                 setCronogramaObras([]);
@@ -7105,7 +7134,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 percentual_conclusao: cron.percentual_conclusao || 0
             }));
             
-            console.log("Cronogramas de obras carregados:", cronogramasFormatados);
+            logger.debug("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
             // Silencioso — cronograma de obras é feature secundária
@@ -7117,7 +7146,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     const fetchNotasFiscais = (obraId) => {
         // Proteção contra múltiplas requisições simultâneas
         if (isLoadingNotasFiscais.current) {
-            console.log("Já está carregando notas fiscais, ignorando requisição duplicada");
+            logger.debug("Já está carregando notas fiscais, ignorando requisição duplicada");
             return;
         }
         
@@ -7129,7 +7158,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 if (!res.ok) {
                     // Se for 404, significa que a rota não existe - ignorar silenciosamente
                     if (res.status === 404) {
-                        console.log("Rota de notas fiscais não disponível (404) - ignorando");
+                        logger.debug("Rota de notas fiscais não disponível (404) - ignorando");
                         throw new Error('NOT_FOUND');
                     }
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -7137,7 +7166,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return res.json();
             })
             .then(data => {
-                console.log("Notas fiscais recebidas:", data);
+                logger.debug("Notas fiscais recebidas:", data);
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
@@ -7147,11 +7176,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                     setNotasFiscais([]);
                 } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
                     // Erro de rede - não logar (evita spam no console)
-                    console.warn("Notas fiscais: rota não disponível");
+                    logger.warn("Notas fiscais: rota não disponível");
                     setNotasFiscais([]);
                 } else {
                     // Outros erros - logar normalmente
-                    console.error("Erro ao buscar notas fiscais:", error);
+                    logger.error("Erro ao buscar notas fiscais:", error);
                     setNotasFiscais([]);
                 }
             })
@@ -7181,20 +7210,20 @@ const totalOrcamentosPendentes = useMemo(() => {
         fetchWithAuth(`${API_URL}/obras`, { method: 'POST', body: JSON.stringify({ nome, cliente }) })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); })
-        .catch(error => console.error('Erro ao adicionar obra:', error));
+        .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
         // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
-        .catch(error => console.error('Erro ao deletar obra:', error));
+        .catch(error => logger.error('Erro ao deletar obra:', error));
     };
     
     // NOVO: Função para marcar obra como concluída/reabrir
     const handleConcluirObra = (obraId, concluida) => {
         const acao = concluida ? 'reabrir' : 'concluir';
-        if (!window.confirm(`Deseja ${acao} esta obra?`)) return;
+        if (!await confirmDialog(`Deseja ${acao} esta obra?`, { confirmText: 'Confirmar' })) return;
         
         fetchWithAuth(`${API_URL}/obras/${obraId}/concluir`, { 
             method: 'PATCH',
@@ -7202,13 +7231,13 @@ const totalOrcamentosPendentes = useMemo(() => {
         })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then((data) => { 
-            alert(data.sucesso);
+            notify.success(data.sucesso);
             // Atualiza a lista de obras
             setObras(prevObras => prevObras.map(o => 
                 o.id === obraId ? { ...o, concluida: !concluida } : o
             ).filter(o => mostrarConcluidas || !o.concluida));
         })
-        .catch(error => { console.error('Erro ao concluir obra:', error); alert('Erro: ' + error.message); });
+        .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
     // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
@@ -7226,11 +7255,11 @@ const totalOrcamentosPendentes = useMemo(() => {
             return; 
         }
 
-        console.log("Alternando status para:", itemId);
+        logger.debug("Alternando status para:", itemId);
         fetchWithAuth(url, { method: 'PATCH' })
              .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
              .then(() => fetchObraData(obraSelecionada.id))
-             .catch(error => console.error("Erro ao marcar como pago:", error));
+             .catch(error => logger.error("Erro ao marcar como pago:", error));
     };
 
     const handleDeletarLancamento = (itemId) => {
@@ -7238,11 +7267,11 @@ const totalOrcamentosPendentes = useMemo(() => {
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
-            console.log("Deletando lançamento geral:", actualId);
+            logger.debug("Deletando lançamento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => console.error('Erro ao deletar lançamento:', error));
+                .catch(error => logger.error('Erro ao deletar lançamento:', error));
         }
     };
     
@@ -7266,12 +7295,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar edição:", error));
+        .catch(error => logger.error("Erro ao salvar edição:", error));
     };
     
     // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
-        console.log("Salvando novo lançamento:", lancamentoData);
+        logger.debug("Salvando novo lançamento:", lancamentoData);
         // O formulário envia 'valor', mas o backend espera 'valor'
         // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
@@ -7279,12 +7308,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(lancamentoData)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar lançamento:", error));
+        .catch(error => logger.error("Erro ao salvar lançamento:", error));
     };
     
     // MUDANÇA 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
-        console.log("Inserindo novo pagamento:", pagamentoData);
+        logger.debug("Inserindo novo pagamento:", pagamentoData);
         
         const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
             method: 'POST',
@@ -7305,7 +7334,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     // --- Handlers de Orçamento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
         // ... (código inalterado)
-        console.log("Salvando novo orçamento...");
+        logger.debug("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
             body: formData
@@ -7315,13 +7344,13 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => {
-            console.error("Erro ao salvar orçamento:", error);
-            alert(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+            logger.error("Erro ao salvar orçamento:", error);
+            notify.error(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
         // ... (código inalterado)
-        console.log("Salvando edição do orçamento:", orcamentoId);
+        logger.debug("Salvando edição do orçamento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
@@ -7352,8 +7381,8 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            console.error("Erro ao salvar edição do orçamento:", error);
-            alert(`Erro ao salvar edição: ${error.message}`);
+            logger.error("Erro ao salvar edição do orçamento:", error);
+            notify.error(`Erro ao salvar edição: ${error.message}`);
         });
     };
     const handleAprovarOrcamento = (orcamentoId) => {
@@ -7363,7 +7392,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao aprovar orçamento:", error));
+        .catch(error => logger.error("Erro ao aprovar orçamento:", error));
     };
     const handleRejeitarOrcamento = (orcamentoId) => {
         // ... (código inalterado)
@@ -7372,7 +7401,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao rejeitar solicitação:", error));
+        .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
     };
 
     // Handler do PDF da Obra
@@ -7396,8 +7425,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setIsExportingPDF(false);
             })
             .catch(err => {
-                console.error("Erro ao gerar PDF da obra:", err);
-                alert("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
+                logger.error("Erro ao gerar PDF da obra:", err);
+                notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
     };
@@ -7419,8 +7448,8 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            console.error("Erro ao salvar prioridade do serviço:", error);
-            alert(`Erro ao salvar prioridade: ${error.message}`);
+            logger.error("Erro ao salvar prioridade do serviço:", error);
+            notify.error(`Erro ao salvar prioridade: ${error.message}`);
         });
     };
 
@@ -7433,7 +7462,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const item_type = tipo_registro === 'lancamento' ? 'lancamento' : 'pagamento_servico';
         const item_id = id.split('-').pop();
 
-        console.log(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
+        logger.debug(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
 
         fetchWithAuth(`${API_URL}/pagamentos/${item_type}/${item_id}/pagar`, {
             method: 'PATCH',
@@ -7448,11 +7477,11 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); // Recarrega os dados
         })
         .catch(error => {
-            console.error("Erro ao registrar pagamento parcial:", error);
+            logger.error("Erro ao registrar pagamento parcial:", error);
             // Mostra o erro de validação (ex: "valor maior que o restante")
             // Precisamos garantir que o modal esteja aberto para mostrar o erro
             if (payingItem) {
-                alert(`Erro: ${error.message}`);
+                notify.error(`Erro: ${error.message}`);
             }
         });
     };
@@ -8302,7 +8331,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 setBoletos(data);
             }
         } catch (error) {
-            console.error('Erro ao buscar boletos:', error);
+            logger.error('Erro ao buscar boletos:', error);
         } finally {
             setLoading(false);
         }
@@ -8321,7 +8350,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 setResumo(data);
             }
         } catch (error) {
-            console.error('Erro ao buscar resumo:', error);
+            logger.error('Erro ao buscar resumo:', error);
         }
     };
     
@@ -8334,7 +8363,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
         } catch (error) {
-            console.error('Erro ao verificar alertas:', error);
+            logger.error('Erro ao verificar alertas:', error);
         }
     };
     
@@ -8346,7 +8375,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     
     // Marcar como pago
     const marcarPago = async (boletoId) => {
-        if (!window.confirm('Confirma que este boleto foi pago?')) return;
+        if (!await confirmDialog('Confirma que este boleto foi pago?', { confirmText: 'Confirmar pagamento' })) return;
         
         try {
             const token = localStorage.getItem('token');
@@ -8363,17 +8392,17 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 fetchBoletos();
                 fetchResumo();
                 if (onUpdate) onUpdate(); // Atualizar tela principal
-                alert('✅ Boleto marcado como pago!');
+                notify.success('✅ Boleto marcado como pago!');
             }
         } catch (error) {
-            console.error('Erro ao marcar como pago:', error);
-            alert('Erro ao marcar como pago');
+            logger.error('Erro ao marcar como pago:', error);
+            notify.error('Erro ao marcar como pago');
         }
     };
     
     // Deletar boleto
     const deletarBoleto = async (boletoId) => {
-        if (!window.confirm('Tem certeza que deseja excluir este boleto?')) return;
+        if (!await confirmDialog('Tem certeza que deseja excluir este boleto?', { danger: true, confirmText: 'Excluir' })) return;
         
         try {
             const token = localStorage.getItem('token');
@@ -8387,15 +8416,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 fetchResumo();
             }
         } catch (error) {
-            console.error('Erro ao deletar:', error);
-            alert('Erro ao excluir boleto');
+            logger.error('Erro ao deletar:', error);
+            notify.error('Erro ao excluir boleto');
         }
     };
     
     // Copiar código de barras
     const copiarCodigo = (codigo) => {
         navigator.clipboard.writeText(codigo);
-        alert('Código de barras copiado!');
+        notify.success('Código de barras copiado!');
     };
     
     // Ver preview do PDF
@@ -8410,10 +8439,10 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 const data = await response.json();
                 setModalPreview(data);
             } else {
-                alert('Boleto não possui arquivo anexado');
+                notify.info('Boleto não possui arquivo anexado');
             }
         } catch (error) {
-            console.error('Erro ao buscar arquivo:', error);
+            logger.error('Erro ao buscar arquivo:', error);
         }
     };
     
@@ -8873,7 +8902,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     setServicos(data || []);
                 }
             } catch (error) {
-                console.error('Erro ao carregar serviços:', error);
+                logger.error('Erro ao carregar serviços:', error);
             }
         };
         fetchServicos();
@@ -8885,7 +8914,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         if (!file) return;
         
         if (file.type !== 'application/pdf') {
-            alert('Por favor, selecione um arquivo PDF');
+            notify.warning('Por favor, selecione um arquivo PDF');
             return;
         }
         
@@ -8921,13 +8950,13 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             
             if (response.ok) {
                 const dados = await response.json();
-                console.log('Dados extraídos:', dados);
+                logger.debug('Dados extraídos:', dados);
                 
                 if (dados.sucesso) {
                     // Verificar se há múltiplos boletos
                     if (dados.multiplos && dados.quantidade > 1) {
                         setMultiplosBoletos(dados.boletos);
-                        alert(`📄 Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
+                        notify.info(`📄 Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
                     } else {
                         // Boleto único - preencher formulário
                         const dadosExtraidos = [];
@@ -8949,19 +8978,19 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             dadosExtraidos.push('Beneficiário');
                         }
                         
-                        alert(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
+                        notify.success(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
                     }
                 } else {
-                    alert('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
+                    notify.error('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
                 }
             } else {
                 const erro = await response.json();
-                console.error('Erro na API:', erro);
-                alert('⚠️ Erro ao processar PDF. Preencha manualmente.');
+                logger.error('Erro na API:', erro);
+                notify.error('⚠️ Erro ao processar PDF. Preencha manualmente.');
             }
         } catch (error) {
-            console.error('Erro ao extrair dados:', error);
-            alert('⚠️ Erro de conexão. Preencha manualmente.');
+            logger.error('Erro ao extrair dados:', error);
+            notify.error('⚠️ Erro de conexão. Preencha manualmente.');
         } finally {
             setExtraindo(false);
         }
@@ -9011,7 +9040,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         sucessos++;
                     } else if (response.status === 409) {
                         // Boleto duplicado - ignorar silenciosamente
-                        console.log(`Boleto ${i + 1} já existe, ignorando...`);
+                        logger.debug(`Boleto ${i + 1} já existe, ignorando...`);
                     } else {
                         erros++;
                     }
@@ -9020,14 +9049,14 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 }
             }
             
-            alert(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
+            notify.error(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
             setMultiplosBoletos(null); // Limpar lista para evitar duplicação
             onSave();
             onClose();
             
         } catch (error) {
-            console.error('Erro ao cadastrar boletos:', error);
-            alert('Erro ao cadastrar boletos');
+            logger.error('Erro ao cadastrar boletos:', error);
+            notify.error('Erro ao cadastrar boletos');
         } finally {
             setSalvandoTodos(false);
         }
@@ -9050,7 +9079,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         e.preventDefault();
         
         if (!formData.descricao || !formData.valor || !formData.data_vencimento) {
-            alert('Preencha os campos obrigatórios');
+            notify.warning('Preencha os campos obrigatórios');
             return;
         }
         
@@ -9074,15 +9103,15 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             });
             
             if (response.ok) {
-                alert('✅ Boleto cadastrado com sucesso!');
+                notify.success('✅ Boleto cadastrado com sucesso!');
                 onSave();
             } else {
                 const error = await response.json();
-                alert(`Erro: ${error.erro}`);
+                notify.error(`Erro: ${error.erro}`);
             }
         } catch (error) {
-            console.error('Erro ao salvar:', error);
-            alert('Erro ao salvar boleto');
+            logger.error('Erro ao salvar:', error);
+            notify.error('Erro ao salvar boleto');
         } finally {
             setSalvando(false);
         }
@@ -9092,7 +9121,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const copiarCodigo = () => {
         if (formData.codigo_barras) {
             navigator.clipboard.writeText(formData.codigo_barras);
-            alert('Código copiado!');
+            notify.success('Código copiado!');
         }
     };
     
@@ -9455,7 +9484,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
     // Copiar código de barras
     const copiarCodigo = (codigo) => {
         navigator.clipboard.writeText(codigo);
-        alert('Código copiado!');
+        notify.success('Código copiado!');
     };
 
     const valor_parcela = formData.valor_total && formData.numero_parcelas 
@@ -9471,7 +9500,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
         e.preventDefault();
         
         if (!valoresValidos) {
-            alert('A soma dos valores das parcelas deve ser igual ao valor total!');
+            notify.warning('A soma dos valores das parcelas deve ser igual ao valor total!');
             return;
         }
         
@@ -9793,7 +9822,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
 
     // Função para deletar movimentação
     const handleDeletarMovimentacao = async (movId, descricao) => {
-        if (!window.confirm(`Tem certeza que deseja apagar a movimentação "${descricao}"?\n\nEssa ação não pode ser desfeita e o saldo será ajustado automaticamente.`)) {
+        if (!await confirmDialog(`Tem certeza que deseja apagar a movimentação "${descricao}"? Essa ação não pode ser desfeita e o saldo será ajustado automaticamente.`, { danger: true, confirmText: 'Apagar' })) {
             return;
         }
         
@@ -9810,11 +9839,11 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 throw new Error(err.erro || 'Erro ao deletar movimentação');
             }
             
-            alert('✅ Movimentação apagada com sucesso!');
+            notify.success('✅ Movimentação apagada com sucesso!');
             carregarDados(); // Recarregar dados para atualizar saldo
         } catch (err) {
-            console.error('Erro ao deletar movimentação:', err);
-            alert('Erro ao apagar movimentação: ' + err.message);
+            logger.error('Erro ao deletar movimentação:', err);
+            notify.error('Erro ao apagar movimentação: ' + err.message);
         } finally {
             setDeletandoId(null);
         }
@@ -9875,11 +9904,11 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             
             if (!response.ok) throw new Error('Erro ao atualizar comprovante');
             
-            alert('✅ Comprovante atualizado com sucesso!');
+            notify.success('✅ Comprovante atualizado com sucesso!');
             carregarDados(); // Recarregar dados
         } catch (err) {
-            console.error('Erro ao reanexar comprovante:', err);
-            alert('Erro ao atualizar comprovante');
+            logger.error('Erro ao reanexar comprovante:', err);
+            notify.error('Erro ao atualizar comprovante');
         } finally {
             setReanexandoId(null);
         }
@@ -9907,8 +9936,8 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             const dataMovs = await resMovs.json();
             setMovimentacoes(dataMovs);
         } catch (err) {
-            console.error('Erro ao carregar dados do caixa:', err);
-            alert('Erro ao carregar dados do caixa');
+            logger.error('Erro ao carregar dados do caixa:', err);
+            notify.error('Erro ao carregar dados do caixa');
         } finally {
             setIsLoading(false);
         }
@@ -9932,7 +9961,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 // Tentar pegar mensagem de erro do servidor
                 try {
                     const errorData = await response.json();
-                    console.error('Erro do servidor:', errorData);
+                    logger.error('Erro do servidor:', errorData);
                     throw new Error(errorData.mensagem || errorData.erro || 'Erro ao gerar relatório');
                 } catch (jsonErr) {
                     throw new Error('Erro ao gerar relatório');
@@ -9949,8 +9978,8 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (err) {
-            console.error('Erro ao gerar relatório:', err);
-            alert('Erro ao gerar relatório PDF: ' + err.message);
+            logger.error('Erro ao gerar relatório:', err);
+            notify.error('Erro ao gerar relatório PDF: ' + err.message);
         }
     };
 
@@ -10302,7 +10331,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
         if (file.type.startsWith('image/')) {
             try {
                 setIsCompressing(true);
-                console.log('🔄 Comprimindo imagem do comprovante...');
+                logger.debug('🔄 Comprimindo imagem do comprovante...');
                 
                 const compressedImages = await compressImages([file]);
                 
@@ -10310,10 +10339,10 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                     const compressed = compressedImages[0];
                     setComprovante(compressed.base64);
                     setPreviewComprovante(compressed.base64);
-                    console.log('✅ Imagem comprimida com sucesso');
+                    logger.debug('✅ Imagem comprimida com sucesso');
                 }
             } catch (err) {
-                console.error('Erro ao comprimir imagem:', err);
+                logger.error('Erro ao comprimir imagem:', err);
                 // Fallback: usar imagem original
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -10329,12 +10358,12 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
 
     const handleSubmit = async () => {
         if (!valor || parseFloat(valor) <= 0) {
-            alert('Por favor, informe um valor válido');
+            notify.warning('Por favor, informe um valor válido');
             return;
         }
 
         if (!descricao.trim()) {
-            alert('Por favor, informe uma descrição');
+            notify.warning('Por favor, informe uma descrição');
             return;
         }
 
@@ -10376,11 +10405,11 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
 
             if (!response.ok) throw new Error('Erro ao salvar movimentação');
 
-            alert('✅ Movimentação registrada com sucesso!');
+            notify.success('✅ Movimentação registrada com sucesso!');
             onSave();
         } catch (err) {
-            console.error('Erro ao salvar movimentação:', err);
-            alert('Erro ao salvar movimentação');
+            logger.error('Erro ao salvar movimentação:', err);
+            notify.error('Erro ao salvar movimentação');
         } finally {
             setIsSubmitting(false);
         }
@@ -10599,12 +10628,12 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             // Notificar pai para atualizar cards (mas sem fechar o modal)
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
     const handleMarcarPaga = async (parcela) => {
-        if (!window.confirm(`Confirma o pagamento da parcela ${parcela.numero_parcela}?`)) return;
+        if (!await confirmDialog(`Confirma o pagamento da parcela ${parcela.numero_parcela}?`, { confirmText: 'Confirmar pagamento' })) return;
 
         try {
             const response = await fetchWithAuth(
@@ -10625,13 +10654,13 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
     // NOVO: Desfazer pagamento
     const handleDesfazerPagamento = async (parcela) => {
-        if (!window.confirm(`Deseja desfazer o pagamento da parcela ${parcela.numero_parcela}? O lançamento associado será removido.`)) return;
+        if (!await confirmDialog(`Deseja desfazer o pagamento da parcela ${parcela.numero_parcela}? O lançamento associado será removido.`, { danger: true, confirmText: 'Desfazer' })) return;
 
         try {
             const response = await fetchWithAuth(
@@ -10649,12 +10678,12 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
     const handleRecriarLancamentos = async () => {
-        if (!window.confirm('Deseja recriar os lançamentos de todas as parcelas pagas? Isso é útil se os lançamentos não foram criados corretamente.')) {
+        if (!await confirmDialog('Deseja recriar os lançamentos de todas as parcelas pagas? Isso é útil se os lançamentos não foram criados corretamente.', { confirmText: 'Recriar' })) {
             return;
         }
 
@@ -10662,7 +10691,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             const parcelasPagas = parcelas.filter(p => p.status === 'Pago');
             
             if (parcelasPagas.length === 0) {
-                alert('Não há parcelas pagas para reprocessar.');
+                notify.warning('Não há parcelas pagas para reprocessar.');
                 return;
             }
 
@@ -10695,7 +10724,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
@@ -10717,7 +10746,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             
             if (onSave) onSave();
         } catch (err) {
-            alert(`Erro: ${err.message}`);
+            notify.error(`Erro: ${err.message}`);
         }
     };
 
@@ -11153,7 +11182,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
             const data = await response.json();
             setAlertas(data);
         } catch (err) {
-            console.error('Erro ao carregar alertas:', err);
+            logger.error('Erro ao carregar alertas:', err);
         } finally {
             setIsLoading(false);
         }
@@ -11601,7 +11630,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             const idNumerico = parseInt(id.split('-')[1], 10);
             tipoFinal = 'servico';
             idFinal = idNumerico;
-            console.log(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
+            logger.debug(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
         }
         
         setItensSelecionados(prev => {
@@ -11638,7 +11667,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
                     const idNumerico = parseInt(pag.id.split('-')[1], 10);
                     todos.push({ tipo: 'servico', id: idNumerico });
-                    console.log(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
+                    logger.debug(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
                 } else {
                     todos.push({ tipo: 'futuro', id: pag.id });
                 }
@@ -11669,7 +11698,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     // MUDANÇA 5: Handler para marcar múltiplos como pagos
     const handleMarcarMultiplosComoPago = async () => {
         if (itensSelecionados.length === 0) {
-            alert('Selecione pelo menos um item para marcar como pago.');
+            notify.warning('Selecione pelo menos um item para marcar como pago.');
             return;
         }
         
@@ -11690,16 +11719,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 const sucessos = data.resultados.filter(r => r.status === 'success').length;
                 const erros = data.resultados.filter(r => r.status === 'error').length;
                 
-                alert(`${sucessos} item(ns) marcado(s) como pago. ${erros > 0 ? erros + ' erro(s).' : ''}`);
+                notify.success(`${sucessos} item(ns) marcado(s) como pago. ${erros > 0 ? erros + ' erro(s).' : ''}`);
                 setItensSelecionados([]);
                 fetchData();
             } else {
                 const errorData = await res.json();
-                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao marcar itens como pagos:', error);
-            alert('Erro ao processar pagamentos');
+            logger.error('Erro ao marcar itens como pagos:', error);
+            notify.error('Erro ao processar pagamentos');
         }
     };
 
@@ -11722,7 +11751,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await futuroRes.json();
                     setPagamentosFuturos(data);
                 } catch (e) {
-                    console.error('Erro ao processar pagamentos futuros:', e);
+                    logger.error('Erro ao processar pagamentos futuros:', e);
                 }
             }
 
@@ -11731,7 +11760,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await previsoesRes.json();
                     setPrevisoes(data);
                 } catch (e) {
-                    console.error('Erro ao processar previsões:', e);
+                    logger.error('Erro ao processar previsões:', e);
                 }
             }
             
@@ -11740,7 +11769,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await servicoPendentesRes.json();
                     setPagamentosServicoPendentes(data);
                 } catch (e) {
-                    console.error('Erro ao processar pagamentos pendentes:', e);
+                    logger.error('Erro ao processar pagamentos pendentes:', e);
                 }
             }
             
@@ -11750,7 +11779,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await itensOrcRes.json();
                     setItensOrcamento(data);
                 } catch (e) {
-                    console.error('Erro ao processar itens do orçamento:', e);
+                    logger.error('Erro ao processar itens do orçamento:', e);
                 }
             }
 
@@ -11775,7 +11804,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                     return { ...pagParcelado, parcelas };
                                 }
                             } catch (err) {
-                                console.error('Erro ao buscar parcelas:', err);
+                                logger.error('Erro ao buscar parcelas:', err);
                             }
                             return { ...pagParcelado, parcelas: [] };
                         })
@@ -11794,14 +11823,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     });
                     setPagamentosParcelados(parceladosComCamposCalculados);
                 } catch (e) {
-                    console.error('Erro ao processar parcelados:', e);
+                    logger.error('Erro ao processar parcelados:', e);
                     setIsLoading(false);
                 }
             } else {
                 setIsLoading(false);
             }
         } catch (error) {
-            console.error('Erro ao carregar cronograma financeiro:', error);
+            logger.error('Erro ao carregar cronograma financeiro:', error);
             setIsLoading(false);
         }
     };
@@ -11822,16 +11851,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             );
 
             if (res.ok) {
-                alert('Pagamento futuro cadastrado com sucesso!');
+                notify.success('Pagamento futuro cadastrado com sucesso!');
                 setCadastrarFuturoVisible(false);
                 fetchData();
             } else {
                 const errorData = await res.json();
-                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao salvar pagamento futuro:', error);
-            alert('Erro ao salvar pagamento futuro');
+            logger.error('Erro ao salvar pagamento futuro:', error);
+            notify.error('Erro ao salvar pagamento futuro');
         }
     };
 
@@ -11847,17 +11876,17 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             );
 
             if (res.ok) {
-                alert('Pagamento futuro atualizado com sucesso!');
+                notify.success('Pagamento futuro atualizado com sucesso!');
                 setEditarFuturoVisible(false);
                 setPagamentoFuturoSelecionado(null);
                 fetchData();
             } else {
                 const errorData = await res.json();
-                alert('Erro ao atualizar: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro ao atualizar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao editar pagamento futuro:', error);
-            alert('Erro ao editar pagamento futuro');
+            logger.error('Erro ao editar pagamento futuro:', error);
+            notify.error('Erro ao editar pagamento futuro');
         }
     };
 
@@ -11873,16 +11902,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             );
 
             if (res.ok) {
-                alert('Pagamento parcelado cadastrado com sucesso!');
+                notify.success('Pagamento parcelado cadastrado com sucesso!');
                 setCadastrarParceladoVisible(false);
                 fetchData();
             } else {
                 const errorData = await res.json();
-                alert('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao salvar pagamento parcelado:', error);
-            alert('Erro ao salvar pagamento parcelado');
+            logger.error('Erro ao salvar pagamento parcelado:', error);
+            notify.error('Erro ao salvar pagamento parcelado');
         }
     };
 
@@ -11892,11 +11921,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
         // Se for um pagamento de serviço (id começa com "servico-"), não pode deletar daqui
         if (idStr.startsWith('servico-')) {
-            alert('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
+            notify.warning('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
             return;
         }
 
-        if (!window.confirm('Deseja realmente excluir este pagamento futuro?')) return;
+        if (!await confirmDialog('Deseja realmente excluir este pagamento futuro?', { danger: true, confirmText: 'Excluir' })) return;
 
         const lockKey = `futuro-${id}`;
         if (isProcessing(lockKey)) return;
@@ -11914,14 +11943,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
-                alert('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao deletar pagamento futuro:', error);
+            logger.error('Erro ao deletar pagamento futuro:', error);
             if (error.name === 'AbortError') {
-                alert('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
-                alert('Erro ao deletar pagamento futuro: ' + error.message);
+                notify.error('Erro ao deletar pagamento futuro: ' + error.message);
             }
         } finally {
             stopProcessing(lockKey);
@@ -11930,7 +11959,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Marcar Pagamento Futuro Individual como Pago
     const handleMarcarPagamentoFuturoPago = async (id) => {
-        if (!window.confirm('Deseja marcar este pagamento como pago?')) return;
+        if (!await confirmDialog('Deseja marcar este pagamento como pago?', { confirmText: 'Confirmar pagamento' })) return;
 
         const idStr = String(id);
         const lockKey = `futuro-${id}`;
@@ -11942,7 +11971,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (idStr.startsWith('servico-')) {
                 const servPagId = parseInt(idStr.split('-').pop(), 10);
-                console.log("Marcando pagamento de serviço futuro como pago:", servPagId);
+                logger.debug("Marcando pagamento de serviço futuro como pago:", servPagId);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
                     {
@@ -11954,7 +11983,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     }
                 );
             } else {
-                console.log("Marcando pagamento futuro normal como pago:", id);
+                logger.debug("Marcando pagamento futuro normal como pago:", id);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
                     { method: 'POST' }
@@ -11977,14 +12006,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
-                alert('Erro: ' + (errorData.erro || 'Erro desconhecido'));
+                notify.error('Erro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao marcar pagamento como pago:', error);
+            logger.error('Erro ao marcar pagamento como pago:', error);
             if (error.name === 'AbortError') {
-                alert('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
-                alert('Erro ao processar: ' + error.message);
+                notify.error('Erro ao processar: ' + error.message);
             }
         } finally {
             stopProcessing(lockKey);
@@ -11993,7 +12022,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Deletar Pagamento Parcelado
     const handleDeletePagamentoParcelado = async (id) => {
-        if (!window.confirm('Deseja realmente excluir este pagamento parcelado?')) return;
+        if (!await confirmDialog('Deseja realmente excluir este pagamento parcelado?', { danger: true, confirmText: 'Excluir' })) return;
 
         const lockKey = `parcelado-${id}`;
         if (isProcessing(lockKey)) return;
@@ -12011,14 +12040,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 showCronogramaToast('🗑️ Pagamento parcelado excluído!');
                 setTimeout(() => fetchData(), 500);
             } else {
-                alert('Erro ao excluir pagamento parcelado');
+                notify.error('Erro ao excluir pagamento parcelado');
             }
         } catch (error) {
-            console.error('Erro ao deletar pagamento parcelado:', error);
+            logger.error('Erro ao deletar pagamento parcelado:', error);
             if (error.name === 'AbortError') {
-                alert('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
-                alert('Erro ao deletar pagamento parcelado');
+                notify.error('Erro ao deletar pagamento parcelado');
             }
         } finally {
             stopProcessing(lockKey);
@@ -12027,7 +12056,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     // Marcar parcela como paga
     const handleMarcarParcelaPaga = async (pagamento) => {
-        if (!window.confirm(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`)) {
+        if (!await confirmDialog(`Confirma o pagamento da próxima parcela (${pagamento.proxima_parcela_numero}/${pagamento.numero_parcelas})?`, { confirmText: 'Confirmar pagamento' })) {
             return;
         }
 
@@ -12042,7 +12071,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             );
 
             if (!resListaParcelas.ok) {
-                alert('Erro ao buscar parcelas');
+                notify.error('Erro ao buscar parcelas');
                 return;
             }
 
@@ -12052,7 +12081,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             const proximaParcela = parcelas.find(p => p.status !== 'Pago');
 
             if (!proximaParcela) {
-                alert('Todas as parcelas já foram pagas!');
+                notify.warning('Todas as parcelas já foram pagas!');
                 return;
             }
 
@@ -12098,14 +12127,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 setTimeout(() => fetchData(), 500);
             } else {
                 const erro = await res.json().catch(() => ({}));
-                alert(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
+                notify.error(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
             }
         } catch (error) {
-            console.error('Erro ao marcar parcela:', error);
+            logger.error('Erro ao marcar parcela:', error);
             if (error.name === 'AbortError') {
-                alert('A operação demorou demais. Verifique a conexão e recarregue a tela.');
+                notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
-                alert('Erro ao marcar parcela como paga');
+                notify.error('Erro ao marcar parcela como paga');
             }
         } finally {
             stopProcessing(lockKey);
@@ -12161,11 +12190,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                     window.URL.revokeObjectURL(url);
                                     document.body.removeChild(a);
                                 } else {
-                                    alert('Erro ao gerar PDF');
+                                    notify.error('Erro ao gerar PDF');
                                 }
                             } catch (error) {
-                                console.error('Erro ao exportar PDF:', error);
-                                alert('Erro ao gerar PDF do cronograma financeiro');
+                                logger.error('Erro ao exportar PDF:', error);
+                                notify.error('Erro ao gerar PDF do cronograma financeiro');
                             }
                         }} 
                         className="export-btn pdf"
@@ -12221,7 +12250,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         document.body.removeChild(a);
                                     }
                                 } catch (error) {
-                                    console.error('Erro ao exportar PDF:', error);
+                                    logger.error('Erro ao exportar PDF:', error);
                                 }
                             }} 
                             className="cf-btn cf-btn-outline"
@@ -12996,7 +13025,7 @@ function App() {
                 setSelectedModule(savedModule || 'obras');
             }
         } catch (error) {
-            console.error("Falha ao carregar dados de autenticação:", error);
+            logger.error("Falha ao carregar dados de autenticação:", error);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('selectedModule');
@@ -13018,6 +13047,7 @@ function App() {
         setToken(data.access_token);
         setUser(data.user);
         localStorage.setItem('token', data.access_token);
+        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
     };
 
@@ -13026,6 +13056,7 @@ function App() {
         setUser(null);
         setSelectedModule(null);
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         localStorage.removeItem('selectedModule');
     };
@@ -13046,9 +13077,12 @@ function App() {
 
     // Se selecionou Obras ou já está logado
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
-            {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
-        </AuthContext.Provider>
+        <>
+            <ToastContainer />
+            <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
+            </AuthContext.Provider>
+        </>
     );
 }
 

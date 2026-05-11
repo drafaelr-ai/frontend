@@ -11,6 +11,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { notify, confirmDialog } from '../utils/notify';
+import { logger } from '../utils/logger';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -681,7 +683,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             setError(null);
         } catch (err) {
             setError(err.message);
-            console.error('Erro ao carregar demandas:', err);
+            logger.error('Erro ao carregar demandas:', err);
         } finally {
             setLoading(false);
         }
@@ -696,13 +698,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             if (res.ok) {
                 const data = await res.json();
                 if (data.importados > 0) {
-                    console.log(`[SYNC] ${data.importados} serviços do cronograma importados automaticamente`);
+                    logger.debug(`[SYNC] ${data.importados} serviços do cronograma importados automaticamente`);
                     // Recarregar demandas após sincronização
                     carregarDemandas();
                 }
             }
         } catch (err) {
-            console.error('Erro ao sincronizar cronograma:', err);
+            logger.error('Erro ao sincronizar cronograma:', err);
         }
     }, [apiUrl, obraId, carregarDemandas]);
 
@@ -714,7 +716,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setPagamentosImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar pagamentos:', err);
+            logger.error('Erro ao carregar pagamentos:', err);
         }
     }, [apiUrl, obraId]);
 
@@ -726,7 +728,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setOrcamentoImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar orçamento:', err);
+            logger.error('Erro ao carregar orçamento:', err);
         }
     }, [apiUrl, obraId]);
 
@@ -738,7 +740,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setServicosImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar serviços:', err);
+            logger.error('Erro ao carregar serviços:', err);
         }
     }, [apiUrl, obraId]);
 
@@ -791,7 +793,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             });
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -830,22 +832,22 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             carregarOrcamentoImportar();
             carregarServicosImportar();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
     const excluirDemanda = async (demanda) => {
-        if (!window.confirm(`Excluir "${demanda.descricao}"?`)) return;
-        
+        if (!await confirmDialog(`Excluir "${demanda.descricao}"?`, { danger: true, confirmText: 'Excluir' })) return;
+
         try {
             const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}`, {
                 method: 'DELETE'
             });
-            
+
             if (!res.ok) throw new Error('Erro ao excluir demanda');
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -882,7 +884,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             setShowModalEditar(null);
             carregarDemandas();
         } catch (err) {
-            alert(err.message);
+            notify.error(err.message);
         }
     };
 
@@ -1867,8 +1869,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         <div style={styles.modalFooter}>
                             <button 
                                 style={{ ...styles.button, ...styles.buttonDanger }}
-                                onClick={() => {
-                                    if (window.confirm(`Excluir "${showModalEditar.descricao}"?`)) {
+                                onClick={async () => {
+                                    if (await confirmDialog(`Excluir "${showModalEditar.descricao}"?`, { danger: true, confirmText: 'Excluir' })) {
                                         excluirDemanda(showModalEditar);
                                         setShowModalEditar(null);
                                     }

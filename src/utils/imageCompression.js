@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /**
  * Utilitário para compressão de imagens
  * Usado no Diário de Obras e Caixa de Obra
@@ -59,10 +60,10 @@ export const compressImage = (file, options = {}) => {
                 // Converter para base64 com qualidade reduzida
                 const base64 = canvas.toDataURL('image/jpeg', quality);
                 
-                console.log(`📸 Imagem comprimida: ${file.name}`);
-                console.log(`   Original: ${(file.size / 1024).toFixed(1)}KB`);
-                console.log(`   Comprimida: ${(base64.length * 0.75 / 1024).toFixed(1)}KB`);
-                console.log(`   Dimensões: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}`);
+                logger.debug(`📸 Imagem comprimida: ${file.name}`);
+                logger.debug(`   Original: ${(file.size / 1024).toFixed(1)}KB`);
+                logger.debug(`   Comprimida: ${(base64.length * 0.75 / 1024).toFixed(1)}KB`);
+                logger.debug(`   Dimensões: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}`);
 
                 resolve({
                     base64,
@@ -91,7 +92,7 @@ export const compressImages = async (files, options = {}) => {
             const compressed = await compressImage(file, options);
             results.push(compressed);
         } catch (err) {
-            console.error(`Erro ao comprimir ${file.name}:`, err);
+            logger.error(`Erro ao comprimir ${file.name}:`, err);
             // Em caso de erro, tenta usar a imagem original
             try {
                 const reader = new FileReader();
@@ -102,7 +103,7 @@ export const compressImages = async (files, options = {}) => {
                 });
                 results.push({ base64, nome: file.name });
             } catch (fallbackErr) {
-                console.error(`Erro no fallback para ${file.name}:`, fallbackErr);
+                logger.error(`Erro no fallback para ${file.name}:`, fallbackErr);
             }
         }
     }

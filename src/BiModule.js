@@ -19,6 +19,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+import { logger } from './utils/logger';
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, Area, AreaChart, ComposedChart
 } from 'recharts';
@@ -1218,7 +1219,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                         resumoVencimentos = dataVenc.resumo || {};
                     }
                 } catch (e) {
-                    console.log('Vencimentos não disponível:', e);
+                    logger.debug('Vencimentos não disponível:', e);
                 }
                 
                 // Buscar histórico mensal
@@ -1226,19 +1227,19 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                 let resumoHistorico = {};
                 try {
                     const resHistorico = await fetchWithAuth(`${apiUrl}/bi/historico-mensal`);
-                    console.log('[BI] Resposta histórico:', resHistorico.status);
+                    logger.debug('[BI] Resposta histórico:', resHistorico.status);
                     if (resHistorico.ok) {
                         const dataHist = await resHistorico.json();
-                        console.log('[BI] Dados histórico:', dataHist);
+                        logger.debug('[BI] Dados histórico:', dataHist);
                         historicoMensal = dataHist.historico || [];
                         resumoHistorico = dataHist.resumo || {};
-                        console.log('[BI] Histórico mensal:', historicoMensal.length, 'meses');
+                        logger.debug('[BI] Histórico mensal:', historicoMensal.length, 'meses');
                     } else {
                         const errText = await resHistorico.text();
-                        console.log('[BI] Erro histórico:', errText);
+                        logger.debug('[BI] Erro histórico:', errText);
                     }
                 } catch (e) {
-                    console.log('Histórico não disponível:', e);
+                    logger.debug('Histórico não disponível:', e);
                 }
                 
                 // Buscar projeção
@@ -1250,7 +1251,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                         projecao = dataProj.projecao || [];
                     }
                 } catch (e) {
-                    console.log('Projeção não disponível:', e);
+                    logger.debug('Projeção não disponível:', e);
                 }
                 
                 setDados({
@@ -1264,7 +1265,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                     fluxoMensal: projecao // Usar projeção como fluxo
                 });
             } catch (err) {
-                console.error('Erro ao carregar dados do BI:', err);
+                logger.error('Erro ao carregar dados do BI:', err);
                 setError(err.message);
             } finally {
                 setIsLoading(false);

@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import { notify, confirmDialog } from './utils/notify';
+import { logger } from './utils/logger';
 
 // ===================================================================================
 // CONFIGURAÇÃO
@@ -298,7 +300,7 @@ const Dashboard = () => {
             const data = await response.json();
             setDados(data);
         } catch (err) {
-            console.error('Erro ao carregar dashboard:', err);
+            logger.error('Erro ao carregar dashboard:', err);
         } finally {
             setLoading(false);
         }
@@ -337,7 +339,7 @@ const Dashboard = () => {
                 ultimos_lancamentos: [...lancamentos].sort((a, b) => (b.data_lancamento || '').localeCompare(a.data_lancamento || '')).slice(0, 20),
             });
         } catch (err) {
-            console.error('Erro ao carregar acumulado:', err);
+            logger.error('Erro ao carregar acumulado:', err);
         }
     };
 
@@ -592,7 +594,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
         })
             .then(r => r.json())
             .then(d => setLancamentos(Array.isArray(d) ? d : []))
-            .catch(console.error)
+            .catch(logger.error)
             .finally(() => setLoading(false));
     }, [tipo, mes, ano, token]);
 
@@ -689,13 +691,13 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
             const r = await fetch(`${API_URL_ADMIN}/lancamentos?${params}`, { headers: { Authorization: `Bearer ${token}` } });
             const d = await r.json();
             setLancamentos(Array.isArray(d) ? d : []);
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { logger.error(e); } finally { setLoading(false); }
     };
 
     useEffect(() => { carregar(); }, [mes, ano, tipo]);
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Remover este lançamento?')) return;
+        if (!await confirmDialog('Remover este lançamento?', { danger: true, confirmText: 'Remover' })) return;
         await fetch(`${API_URL_ADMIN}/lancamentos/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
         carregar();
     };
@@ -1015,7 +1017,7 @@ const Imoveis = () => {
             const data = await response.json();
             setImoveis(data);
         } catch (err) {
-            console.error('Erro ao carregar imóveis:', err);
+            logger.error('Erro ao carregar imóveis:', err);
         } finally {
             setLoading(false);
         }
@@ -1046,12 +1048,12 @@ const Imoveis = () => {
                 closeModal();
             }
         } catch (err) {
-            console.error('Erro ao salvar imóvel:', err);
+            logger.error('Erro ao salvar imóvel:', err);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Tem certeza que deseja remover este imóvel?')) return;
+        if (!await confirmDialog('Tem certeza que deseja remover este imóvel?', { danger: true, confirmText: 'Remover' })) return;
         
         try {
             await fetch(`${API_URL_ADMIN}/imoveis/${id}`, {
@@ -1060,7 +1062,7 @@ const Imoveis = () => {
             });
             fetchImoveis();
         } catch (err) {
-            console.error('Erro ao deletar imóvel:', err);
+            logger.error('Erro ao deletar imóvel:', err);
         }
     };
 
@@ -1438,7 +1440,7 @@ const Lancamentos = () => {
             setImoveis(await imovRes.json());
             setCategorias(await catRes.json());
         } catch (err) {
-            console.error('Erro ao carregar dados:', err);
+            logger.error('Erro ao carregar dados:', err);
         } finally {
             setLoading(false);
         }
@@ -1464,7 +1466,7 @@ const Lancamentos = () => {
             if (response.ok) {
                 const data = await response.json();
                 const msg = data.message || 'Lançamento criado!';
-                alert(msg);
+                notify.success(msg);
                 fetchDados();
                 setShowModal(false);
                 setForm({
@@ -1484,7 +1486,7 @@ const Lancamentos = () => {
                 });
             }
         } catch (err) {
-            console.error('Erro ao salvar lançamento:', err);
+            logger.error('Erro ao salvar lançamento:', err);
         }
     };
 
@@ -1510,13 +1512,13 @@ const Lancamentos = () => {
 
         // Validar tipo
         if (!file.type.match(/image\/(jpeg|png|jpg)|application\/pdf/)) {
-            alert('Formato inválido. Use JPG, PNG ou PDF.');
+            notify.warning('Formato inválido. Use JPG, PNG ou PDF.');
             return;
         }
 
         // Validar tamanho (5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('Arquivo muito grande. Máximo 5MB.');
+            notify.warning('Arquivo muito grande. Máximo 5MB.');
             return;
         }
 
@@ -1551,7 +1553,7 @@ const Lancamentos = () => {
                 fetchDados();
             }
         } catch (err) {
-            console.error('Erro ao marcar como pago:', err);
+            logger.error('Erro ao marcar como pago:', err);
         }
     };
 
@@ -1559,8 +1561,8 @@ const Lancamentos = () => {
     const [editandoLanc, setEditandoLanc] = useState(null);
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Tem certeza que deseja remover este lançamento?')) return;
-        
+        if (!await confirmDialog('Tem certeza que deseja remover este lançamento?', { danger: true, confirmText: 'Remover' })) return;
+
         try {
             await fetch(`${API_URL_ADMIN}/lancamentos/${id}`, {
                 method: 'DELETE',
@@ -1568,7 +1570,7 @@ const Lancamentos = () => {
             });
             fetchDados();
         } catch (err) {
-            console.error('Erro ao deletar lançamento:', err);
+            logger.error('Erro ao deletar lançamento:', err);
         }
     };
 
@@ -2128,7 +2130,7 @@ const GestaoBoletos = () => {
     useEffect(() => {
         fetch(`${API_URL_ADMIN}/imoveis`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json()).then(d => { setImoveis(Array.isArray(d) ? d : []); })
-            .catch(console.error);
+            .catch(logger.error);
     }, [token]);
 
     const fetchBoletos = async (imovelId = imovelSelecionado) => {
@@ -2144,22 +2146,22 @@ const GestaoBoletos = () => {
             ]);
             if (bRes.ok) setBoletos(await bRes.json());
             if (rRes.ok) setResumo(await rRes.json());
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { logger.error(e); } finally { setLoading(false); }
     };
 
     useEffect(() => { if (imovelSelecionado) fetchBoletos(); }, [imovelSelecionado, filtroStatus]);
 
     const marcarPago = async (boletoId) => {
-        if (!window.confirm('Confirma que este boleto foi pago?')) return;
+        if (!await confirmDialog('Confirma que este boleto foi pago?', { confirmText: 'Confirmar pagamento' })) return;
         const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/pagar`, {
             method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
         });
-        if (r.ok) { fetchBoletos(); alert('✅ Boleto marcado como pago!'); }
+        if (r.ok) { fetchBoletos(); notify.success('Boleto marcado como pago!'); }
     };
 
     const deletarBoleto = async (boletoId) => {
-        if (!window.confirm('Excluir este boleto?')) return;
+        if (!await confirmDialog('Excluir este boleto?', { danger: true, confirmText: 'Excluir' })) return;
         const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}`, {
             method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
         });
@@ -2171,10 +2173,10 @@ const GestaoBoletos = () => {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (r.ok) setModalPreview(await r.json());
-        else alert('Boleto não possui arquivo anexado');
+        else notify.warning('Boleto não possui arquivo anexado');
     };
 
-    const copiarCodigo = (codigo) => { navigator.clipboard.writeText(codigo); alert('Código copiado!'); };
+    const copiarCodigo = (codigo) => { navigator.clipboard.writeText(codigo); notify.info('Código copiado!'); };
 
     const boletosVencidos = boletos.filter(b => b.urgencia === 'vencido');
     const boletosUrgentes = boletos.filter(b => b.urgencia === 'urgente' || b.urgencia === 'hoje');
@@ -2237,7 +2239,7 @@ const GestaoBoletos = () => {
         <div style={styles.content}>
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>📄 Boletos</h1>
-                <button onClick={() => imovelSelecionado ? setModalCadastro(true) : alert('Selecione um imóvel primeiro')} style={styles.primaryButton}>
+                <button onClick={() => imovelSelecionado ? setModalCadastro(true) : notify.warning('Selecione um imóvel primeiro')} style={styles.primaryButton}>
                     + Novo Boleto
                 </button>
             </div>
@@ -2345,7 +2347,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
 
     const handleFile = async (e) => {
         const file = e.target.files[0];
-        if (!file || file.type !== 'application/pdf') { alert('Selecione um arquivo PDF'); return; }
+        if (!file || file.type !== 'application/pdf') { notify.warning('Selecione um arquivo PDF'); return; }
         setArquivo(file);
         setMultiplos(null);
         const reader = new FileReader();
@@ -2363,19 +2365,19 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                     if (dados.sucesso) {
                         if (dados.multiplos && dados.quantidade > 1) {
                             setMultiplos(dados.boletos);
-                            alert(`📄 ${dados.quantidade} boletos encontrados! Você pode cadastrar todos de uma vez.`);
+                            notify.info(`${dados.quantidade} boletos encontrados! Você pode cadastrar todos de uma vez.`);
                         } else {
                             const campos = [];
                             if (dados.codigo_barras) { setForm(f => ({ ...f, codigo_barras: dados.codigo_barras })); campos.push('Código de barras'); }
                             if (dados.valor) { setForm(f => ({ ...f, valor: dados.valor.toString() })); campos.push('Valor'); }
                             if (dados.data_vencimento) { setForm(f => ({ ...f, data_vencimento: dados.data_vencimento })); campos.push('Vencimento'); }
                             if (dados.beneficiario) { setForm(f => ({ ...f, beneficiario: dados.beneficiario })); campos.push('Beneficiário'); }
-                            if (campos.length) alert(`✅ Extraídos: ${campos.join(', ')}. Confira e complete.`);
-                            else alert('⚠️ Não foi possível extrair dados. Preencha manualmente.');
+                            if (campos.length) notify.success(`Extraídos: ${campos.join(', ')}. Confira e complete.`);
+                            else notify.warning('Não foi possível extrair dados. Preencha manualmente.');
                         }
-                    } else { alert('⚠️ Não foi possível extrair dados. Preencha manualmente.'); }
+                    } else { notify.warning('Não foi possível extrair dados. Preencha manualmente.'); }
                 }
-            } catch (e) { console.error(e); } finally { setExtraindo(false); }
+            } catch (e) { logger.error(e); } finally { setExtraindo(false); }
         };
         reader.readAsDataURL(file);
     };
@@ -2394,7 +2396,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
             });
             if (r.ok) sucessos++; else if ((await r.json()).duplicado) {} else erros++;
         }
-        alert(`✅ ${sucessos} boletos cadastrados!${erros > 0 ? ` ⚠️ ${erros} falharam.` : ''}`);
+        notify.success(`${sucessos} boletos cadastrados!${erros > 0 ? ` ${erros} falharam.` : ''}`);
         setSalvandoTodos(false);
         setMultiplos(null);
         onSave();
@@ -2402,16 +2404,16 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!form.descricao || !form.valor || !form.data_vencimento) { alert('Preencha os campos obrigatórios'); return; }
+        if (!form.descricao || !form.valor || !form.data_vencimento) { notify.warning('Preencha os campos obrigatórios'); return; }
         setSalvando(true);
         try {
             const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
                 method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...form, valor: parseFloat(form.valor), arquivo_nome: arquivo?.name || null, arquivo_base64: arquivoBase64 })
             });
-            if (r.ok) { alert('✅ Boleto cadastrado!'); onSave(); }
-            else { const err = await r.json(); alert(`Erro: ${err.erro}`); }
-        } catch (e) { alert('Erro ao salvar'); } finally { setSalvando(false); }
+            if (r.ok) { notify.success('Boleto cadastrado!'); onSave(); }
+            else { const err = await r.json(); notify.error(`Erro: ${err.erro}`); }
+        } catch (e) { notify.error('Erro ao salvar'); } finally { setSalvando(false); }
     };
 
     return (
@@ -2497,7 +2499,7 @@ const Relatorios = () => {
         ]).then(([imov, lanc]) => {
             setImoveis(Array.isArray(imov) ? imov : []);
             setLancamentos(Array.isArray(lanc) ? lanc : []);
-        }).catch(console.error).finally(() => setLoading(false));
+        }).catch(logger.error).finally(() => setLoading(false));
     }, [token]);
 
     const lancamentosFiltrados = lancamentos.filter(l => {
@@ -2784,7 +2786,7 @@ const Relatorios = () => {
 
         const win = window.open('', '_blank', 'width=900,height=700');
         if (!win) {
-            alert('O bloqueador de pop-ups impediu a abertura da janela do PDF. Permita pop-ups para este site e tente novamente.');
+            notify.warning('O bloqueador de pop-ups impediu a abertura da janela do PDF. Permita pop-ups para este site e tente novamente.');
             setExportando(false);
             return;
         }
@@ -3057,7 +3059,7 @@ const Usuarios = () => {
                 setUsuarios(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar usuários:', err);
+            logger.error('Erro ao carregar usuários:', err);
         } finally {
             setLoading(false);
         }
@@ -3100,7 +3102,7 @@ const Usuarios = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Tem certeza que deseja desativar este usuário?')) return;
+        if (!await confirmDialog('Tem certeza que deseja desativar este usuário?', { danger: true, confirmText: 'Desativar' })) return;
         
         try {
             await fetch(`${API_URL_ADMIN}/usuarios/${id}`, {
@@ -3109,7 +3111,7 @@ const Usuarios = () => {
             });
             fetchUsuarios();
         } catch (err) {
-            console.error('Erro ao desativar usuário:', err);
+            logger.error('Erro ao desativar usuário:', err);
         }
     };
 
