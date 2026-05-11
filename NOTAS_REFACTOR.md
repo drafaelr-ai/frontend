@@ -84,10 +84,20 @@ Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fa
 - `CadastrarBoletoModal` usa `.toLocaleString('pt-BR', { minimumFractionDigits: 2 })` inline na lista de múltiplos boletos
 - Consolidar todos juntos na fase 6 antes de aplicar design tokens
 
-### fetch direto com localStorage (não usa fetchWithAuth)
-- `CadastrarBoletoModal`: usa `fetch` + `localStorage.getItem('token')` para TODOS os requests (carregar serviços, extrair PDF, salvar boleto) em vez de `fetchWithAuth`
-- Risco: se o mecanismo de auth mudar (ex: refresh token), este modal fica desatualizado silenciosamente
-- Consolidar na fase 6 ou antes se houver mudança de auth
+### Modais que NÃO usam fetchWithAuth (regressão da fase 1)
+
+- `src/components/modals/CadastrarBoletoModal.jsx`: usa `fetch()` direto + `localStorage.getItem('token')` manual em vez de `fetchWithAuth` do `auth/` — todos os requests (carregar serviços, extrair PDF, salvar boleto)
+- Verificar nos modais 27 e 28 quando extraídos se há mais casos
+- Verificar nos modais já extraídos (1–26) se há mais casos passados
+
+**Risco:** requests que bypassam `fetchWithAuth` podem quebrar silenciosamente em cenários de token expirado, refresh automático, ou qualquer mudança futura no mecanismo de auth.
+
+**Ação — fase 1.5 hotfix** (antes da fase 6, ou imediatamente se houver mudança de auth):
+```
+grep -rn "localStorage.getItem('token')" frontend/src/components/modals/
+grep -rn "fetch(" frontend/src/components/modals/ | grep -v "fetchWithAuth"
+```
+Substituir todas as ocorrências por `fetchWithAuth` de `auth/fetchWithAuth`.
 
 ### Lógica de compressão de imagem duplicada inline
 - `CaixaObraModal.handleReanexarComprovante`: tem função `compressImage` inline (canvas/FileReader) em vez de usar `compressImages` de `utils/imageCompression.js`
