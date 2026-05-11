@@ -72,12 +72,29 @@ Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fa
 
 ### Modais que não usam o Modal genérico
 - `src/components/modals/ModalWhatsAppCronograma.jsx`: tem overlay e backdrop próprios em vez de usar o componente Modal genérico
+- `src/components/modals/ModalNovaMovimentacaoCaixa.jsx`: usa `<Modal customWidth="600px">` SEM prop `onClose` — fecha só via botão interno
+- `src/components/modals/CaixaObraModal.jsx`: usa `<Modal customWidth="1200px">` SEM prop `onClose` — mesmo padrão
 - `src/components/NotaFiscalIcon.jsx`: é componente que ABRE modais, mas tem renderização própria — verificar na fase 6
-- Possíveis outros nos lotes restantes
 
 **Ação:** padronizar todos os modais para usar o Modal genérico na fase 6 (junto com aplicação do design system v2.0). Documento: `_refactor/design-system/04-modal-crud.md`
 
 ### Helpers de formatação inline (não importados de utils/)
 - `ModalWhatsAppCronograma` usa `formatVal`/`formatDate` inline em vez de importar de `utils/format.js`
-- Verificar nos próximos lotes se outros modais fazem o mesmo
+- `ModalOrcamentos` usa `new Intl.NumberFormat('pt-BR', ...)` inline em vez de `formatCurrency`
+- `CadastrarBoletoModal` usa `.toLocaleString('pt-BR', { minimumFractionDigits: 2 })` inline na lista de múltiplos boletos
 - Consolidar todos juntos na fase 6 antes de aplicar design tokens
+
+### fetch direto com localStorage (não usa fetchWithAuth)
+- `CadastrarBoletoModal`: usa `fetch` + `localStorage.getItem('token')` para TODOS os requests (carregar serviços, extrair PDF, salvar boleto) em vez de `fetchWithAuth`
+- Risco: se o mecanismo de auth mudar (ex: refresh token), este modal fica desatualizado silenciosamente
+- Consolidar na fase 6 ou antes se houver mudança de auth
+
+### Lógica de compressão de imagem duplicada inline
+- `CaixaObraModal.handleReanexarComprovante`: tem função `compressImage` inline (canvas/FileReader) em vez de usar `compressImages` de `utils/imageCompression.js`
+- Já existe a util — só não foi importada. Risco de divergência de parâmetros (quality, MAX_WIDTH)
+- Candidato a fix rápido em qualquer fase; registrado aqui para fase 6
+
+### Estado complexo (candidatos a useReducer — fase 5)
+- `CadastrarBoletoModal`: 8 useStates (formData, arquivo, arquivoBase64, extraindo, salvando, multiplosboletos, salvandoTodos, servicos)
+- `CaixaObraModal`: 8 useStates (caixa, movimentacoes, isLoading, modalAberto, mesAno, filtroTipo, reanexandoId, deletandoId)
+- Ambos são candidatos a `useReducer` na fase 5 (performance/legibilidade)
