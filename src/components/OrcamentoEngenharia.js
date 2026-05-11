@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { notify, confirmDialog } from '../utils/notify';
+import { logger } from '../utils/logger';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -778,7 +779,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                 });
             }
         } catch (e) {
-            console.error('Erro no autocomplete:', e);
+            logger.error('Erro no autocomplete:', e);
         }
         setBuscando(false);
     }, [apiUrl]);
@@ -1759,7 +1760,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             
             // Comprimir imagem se não for PDF (para acelerar a análise)
             if (imagem.type !== 'application/pdf') {
-                console.log('[IA] Comprimindo imagem...');
+                logger.debug('[IA] Comprimindo imagem...');
                 
                 // Criar canvas para compressão
                 const img = new Image();
@@ -1800,7 +1801,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                 mediaType = 'image/jpeg';
                 
                 URL.revokeObjectURL(img.src);
-                console.log(`[IA] Imagem comprimida: ${imagem.size} -> ${blob.size} bytes`);
+                logger.debug(`[IA] Imagem comprimida: ${imagem.size} -> ${blob.size} bytes`);
             }
             
             // Converter para base64
@@ -1854,7 +1855,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             
         } catch (err) {
             clearInterval(stepInterval);
-            console.error('Erro:', err);
+            logger.error('Erro:', err);
             setErro(err.message || 'Erro ao processar planta');
             setEtapa('upload');
         }
@@ -1976,7 +1977,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             onClose();
             
         } catch (err) {
-            console.error('Erro:', err);
+            logger.error('Erro:', err);
             setErro(err.message || 'Erro ao importar orçamento');
         }
     };
@@ -2446,7 +2447,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             }
         } catch (e) {
             setError('Erro ao carregar orçamento');
-            console.error(e);
+            logger.error(e);
         }
         setLoading(false);
     }, [apiUrl, obraId]);
@@ -2476,7 +2477,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 carregarDados();
             }
         } catch (e) {
-            console.error(e);
+            logger.error(e);
         }
     };
 
@@ -2512,7 +2513,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             }
             return false;
         } catch (e) {
-            console.error(e);
+            logger.error(e);
             return false;
         }
     };
@@ -2542,7 +2543,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 carregarDados();
             }
         } catch (e) {
-            console.error(e);
+            logger.error(e);
         }
     };
 
@@ -2558,7 +2559,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 carregarDados();
             }
         } catch (e) {
-            console.error(e);
+            logger.error(e);
         }
     };
 
@@ -2593,7 +2594,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 carregarDados();
             }
         } catch (e) {
-            console.error(e);
+            logger.error(e);
         }
     };
     
@@ -2735,7 +2736,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 notify.error(data.erro || 'Erro ao apagar orçamento');
             }
         } catch (e) {
-            console.error('Erro ao apagar:', e);
+            logger.error('Erro ao apagar:', e);
             notify.error('Erro ao apagar orçamento');
         }
     };

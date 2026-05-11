@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { notify, confirmDialog } from '../utils/notify';
+import { logger } from '../utils/logger';
 
 // =====================================================
 // FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
@@ -682,7 +683,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             setError(null);
         } catch (err) {
             setError(err.message);
-            console.error('Erro ao carregar demandas:', err);
+            logger.error('Erro ao carregar demandas:', err);
         } finally {
             setLoading(false);
         }
@@ -697,13 +698,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             if (res.ok) {
                 const data = await res.json();
                 if (data.importados > 0) {
-                    console.log(`[SYNC] ${data.importados} serviços do cronograma importados automaticamente`);
+                    logger.debug(`[SYNC] ${data.importados} serviços do cronograma importados automaticamente`);
                     // Recarregar demandas após sincronização
                     carregarDemandas();
                 }
             }
         } catch (err) {
-            console.error('Erro ao sincronizar cronograma:', err);
+            logger.error('Erro ao sincronizar cronograma:', err);
         }
     }, [apiUrl, obraId, carregarDemandas]);
 
@@ -715,7 +716,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setPagamentosImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar pagamentos:', err);
+            logger.error('Erro ao carregar pagamentos:', err);
         }
     }, [apiUrl, obraId]);
 
@@ -727,7 +728,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setOrcamentoImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar orçamento:', err);
+            logger.error('Erro ao carregar orçamento:', err);
         }
     }, [apiUrl, obraId]);
 
@@ -739,7 +740,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 setServicosImportar(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar serviços:', err);
+            logger.error('Erro ao carregar serviços:', err);
         }
     }, [apiUrl, obraId]);
 

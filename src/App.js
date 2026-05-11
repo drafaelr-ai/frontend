@@ -32,6 +32,7 @@ import AgendaDemandas from './components/AgendaDemandas';
 import AppAdmin from './AppAdmin';
 import { API_URL } from './config';
 import { ToastContainer, notify, confirmDialog } from './utils/notify';
+import { logger } from './utils/logger';
 
 // Registrar os componentes do Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -100,7 +101,7 @@ const NotificacoesDropdown = ({ user }) => {
                 setCount(data.count);
             }
         } catch (err) {
-            console.error('Erro ao buscar contador de notificações:', err);
+            logger.error('Erro ao buscar contador de notificações:', err);
         }
     };
     
@@ -117,7 +118,7 @@ const NotificacoesDropdown = ({ user }) => {
                 setNotificacoes(data);
             }
         } catch (err) {
-            console.error('Erro ao buscar notificações:', err);
+            logger.error('Erro ao buscar notificações:', err);
         } finally {
             setLoading(false);
         }
@@ -141,7 +142,7 @@ const NotificacoesDropdown = ({ user }) => {
             ));
             setCount(prev => lida ? prev + 1 : Math.max(0, prev - 1));
         } catch (err) {
-            console.error('Erro ao marcar notificação:', err);
+            logger.error('Erro ao marcar notificação:', err);
         }
     };
     
@@ -155,7 +156,7 @@ const NotificacoesDropdown = ({ user }) => {
             });
             setNotificacoes(prev => prev.filter(n => !n.lida));
         } catch (err) {
-            console.error('Erro ao limpar notificações:', err);
+            logger.error('Erro ao limpar notificações:', err);
         }
     };
 
@@ -172,7 +173,7 @@ const NotificacoesDropdown = ({ user }) => {
             setCount(0);
             setIsOpen(false);
         } catch (err) {
-            console.error('Erro ao limpar todas notificações:', err);
+            logger.error('Erro ao limpar todas notificações:', err);
         }
     };
     
@@ -187,7 +188,7 @@ const NotificacoesDropdown = ({ user }) => {
             setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
             setCount(0);
         } catch (err) {
-            console.error('Erro ao marcar todas como lidas:', err);
+            logger.error('Erro ao marcar todas como lidas:', err);
         }
     };
     
@@ -1900,7 +1901,7 @@ const LoginScreen = ({ onBack }) => {
             login(data); 
         })
         .catch(err => {
-            console.error("Erro no login:", err);
+            logger.error("Erro no login:", err);
             setError(err.message || "Credenciais inválidas. Verifique seu usuário e senha.");
             setIsLoading(false);
         });
@@ -2131,7 +2132,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 setItensOrcamento(data);
             }
         } catch (err) {
-            console.error('Erro ao buscar itens do orçamento:', err);
+            logger.error('Erro ao buscar itens do orçamento:', err);
         } finally {
             setLoadingItens(false);
         }
@@ -2221,7 +2222,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao atualizar');
             }
         } catch (err) {
-            console.error('Erro ao salvar edição:', err);
+            logger.error('Erro ao salvar edição:', err);
             notify.error(`Erro ao salvar: ${err.message}`);
         }
     };
@@ -2296,7 +2297,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao reverter pagamento');
             }
         } catch (err) {
-            console.error('Erro ao reverter parcela:', err);
+            logger.error('Erro ao reverter parcela:', err);
             notify.error(`Erro ao reverter: ${err.message}`);
         }
     };
@@ -2340,7 +2341,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 }
             }
             
-            console.log('Deletando:', endpoint);
+            logger.debug('Deletando:', endpoint);
             const response = await fetchWithAuth(endpoint, { method: 'DELETE' });
             
             if (response.ok) {
@@ -2351,7 +2352,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 throw new Error(errorData.erro || 'Erro ao excluir');
             }
         } catch (err) {
-            console.error('Erro ao excluir:', err);
+            logger.error('Erro ao excluir:', err);
             notify.error(`Erro ao excluir: ${err.message}`);
         }
     };
@@ -3127,7 +3128,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
                  try {
                      initialData.data = new Date(initialData.data + 'T00:00:00').toISOString().split('T')[0];
                  } catch (e) {
-                     console.error("Erro ao formatar data para edição:", e);
+                     logger.error("Erro ao formatar data para edição:", e);
                      initialData.data = '';
                  }
              }
@@ -3136,7 +3137,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
                  try {
                      initialData.data_vencimento = new Date(initialData.data_vencimento + 'T00:00:00').toISOString().split('T')[0];
                  } catch (e) {
-                     console.error("Erro ao formatar data_vencimento para edição:", e);
+                     logger.error("Erro ao formatar data_vencimento para edição:", e);
                      initialData.data_vencimento = '';
                  }
              } else {
@@ -3265,7 +3266,7 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                     setIsLoading(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar permissões:", err);
+                    logger.error("Erro ao buscar permissões:", err);
                     setIsLoading(false);
                 });
         }
@@ -3340,7 +3341,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                 setIsLoading(false);
             })
             .catch(err => {
-                console.error("Erro ao buscar usuários:", err);
+                logger.error("Erro ao buscar usuários:", err);
                 setError("Falha ao carregar usuários.");
                 setIsLoading(false);
             });
@@ -3374,7 +3375,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             ));
             
         } catch (err) {
-            console.error("Erro ao alterar nível:", err);
+            logger.error("Erro ao alterar nível:", err);
             setError(err.message);
         } finally {
             setChangingRole(null);
@@ -3400,7 +3401,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setUsers(prevUsers => prevUsers.filter(u => u.id !== user.id));
         })
         .catch(err => {
-            console.error("Erro ao deletar usuário:", err);
+            logger.error("Erro ao deletar usuário:", err);
             setError(err.message);
         });
     };
@@ -3429,7 +3430,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setNewRole('comum');
         })
         .catch(err => {
-            console.error("Erro ao criar usuário:", err);
+            logger.error("Erro ao criar usuário:", err);
             setError(err.message);
         });
     };
@@ -3446,7 +3447,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
             setUserToEdit(null); 
         })
         .catch(err => {
-            console.error("Erro ao salvar permissões:", err);
+            logger.error("Erro ao salvar permissões:", err);
             setError(err.message); 
         });
     };
@@ -3605,7 +3606,7 @@ const ExportReportModal = ({ onClose }) => {
                 onClose();
             })
             .catch(err => {
-                console.error("Erro ao gerar PDF:", err);
+                logger.error("Erro ao gerar PDF:", err);
                 setError(err.message || "Não foi possível gerar o PDF.");
                 setIsLoading(false);
             });
@@ -3680,7 +3681,7 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
             notify.success('Relatório gerado com sucesso!');
             onClose();
         } catch (err) {
-            console.error("Erro ao gerar relatório:", err);
+            logger.error("Erro ao gerar relatório:", err);
             setError(err.message || "Não foi possível gerar o relatório.");
         } finally {
             setIsLoading(false);
@@ -4249,7 +4250,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 dadosPagamento.valor_entrada = valorEntrada;
                 dadosPagamento.data_entrada = dataEntrada;
                 dadosPagamento.valor_parcela = valorParcela; // Valor de cada parcela após entrada
-                console.log("🔍 DEBUG ENTRADA (frontend):", {
+                logger.debug("🔍 DEBUG ENTRADA (frontend):", {
                     temEntrada,
                     percentualEntrada,
                     valorEntrada,
@@ -4258,7 +4259,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 });
             }
             
-            console.log("📤 Dados de parcelamento a enviar:", dadosPagamento);
+            logger.debug("📤 Dados de parcelamento a enviar:", dadosPagamento);
             
             // Se for boleto parcelado, incluir configuração dos boletos
             if (meioPagamento === 'Boleto') {
@@ -4277,7 +4278,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
             }
             // Se não for salvarENovo, o onSave vai fechar o modal
         } catch (error) {
-            console.error('Erro ao salvar:', error);
+            logger.error('Erro ao salvar:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -4783,7 +4784,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                     setIsLoadingAnexos(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
+                    logger.error("Erro ao buscar anexos:", err);
                     setIsLoadingAnexos(false);
                 });
         }
@@ -4960,7 +4961,7 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
                     setIsLoading(false);
                 })
                 .catch(err => {
-                    console.error("Erro ao buscar anexos:", err);
+                    logger.error("Erro ao buscar anexos:", err);
                     setIsLoading(false);
                 });
         }
@@ -5148,7 +5149,7 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
             onClose();
         })
         .catch(err => {
-            console.error("Erro ao fazer upload:", err);
+            logger.error("Erro ao fazer upload:", err);
             setError(err.message);
         })
         .finally(() => {
@@ -5219,7 +5220,7 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
             onDelete();
             onClose();
         } catch (error) {
-            console.error('Erro ao excluir nota fiscal:', error);
+            logger.error('Erro ao excluir nota fiscal:', error);
             notify.error('Erro ao excluir nota fiscal');
         } finally {
             setIsDeleting(false);
@@ -5354,7 +5355,7 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
             
             setNota(notaDoItem || null);
         } catch (error) {
-            console.error('Erro ao carregar nota fiscal:', error);
+            logger.error('Erro ao carregar nota fiscal:', error);
         } finally {
             setIsLoading(false);
         }
@@ -5399,7 +5400,7 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
                 onNotaAdded();
             }
         } catch (error) {
-            console.error('Erro ao fazer upload:', error);
+            logger.error('Erro ao fazer upload:', error);
             notify.error('Erro ao anexar nota fiscal');
         } finally {
             setIsUploading(false);
@@ -5517,7 +5518,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 setOrcamentos(data);
             })
             .catch(err => {
-                console.error('Erro ao carregar solicitações:', err);
+                logger.error('Erro ao carregar solicitações:', err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5882,7 +5883,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
             link.click();
             document.body.removeChild(link);
         } catch (err) {
-            console.error('Erro ao gerar mensagem WhatsApp:', err);
+            logger.error('Erro ao gerar mensagem WhatsApp:', err);
             notify.error('Erro ao gerar mensagem do WhatsApp. Tente novamente.');
         } finally {
             setIsSharingWhatsApp(false);
@@ -5913,7 +5914,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 document.body.removeChild(a);
             })
             .catch(err => {
-                console.error("Erro ao baixar relatório financeiro:", err);
+                logger.error("Erro ao baixar relatório financeiro:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5945,7 +5946,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 document.body.removeChild(a);
             })
             .catch(err => {
-                console.error("Erro ao baixar notas fiscais:", err);
+                logger.error("Erro ao baixar notas fiscais:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -5978,7 +5979,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                 }, 1000);
             })
             .catch(err => {
-                console.error("Erro ao gerar relatório:", err);
+                logger.error("Erro ao gerar relatório:", err);
                 setError(err.message);
             })
             .finally(() => {
@@ -6316,7 +6317,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             setOrcamentos(Array.isArray(orcData) ? orcData : []);
             setServicos(Array.isArray(servData) ? servData : []);
         } catch (err) {
-            console.error('Erro:', err);
+            logger.error('Erro:', err);
         } finally {
             setIsLoading(false);
         }
@@ -6394,7 +6395,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     const handleConfirmarAprovacao = async () => {
         try {
-            console.log('Enviando aprovação para:', aprovandoOrcamento.id);
+            logger.debug('Enviando aprovação para:', aprovandoOrcamento.id);
 
             const response = await fetchWithAuth(
                 `${API_URL}/orcamentos/${aprovandoOrcamento.id}/aprovar`,
@@ -6414,7 +6415,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             setAprovandoOrcamento(null);
             if (onSave) onSave();
         } catch (err) {
-            console.error('Erro ao aprovar:', err);
+            logger.error('Erro ao aprovar:', err);
             notify.error(`Erro ao aprovar solicitação: ${err.message}`);
         }
     };
@@ -6441,7 +6442,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     // CORREÇÃO: Função para salvar novo orçamento
     const handleSaveOrcamento = async (formData) => {
         try {
-            console.log("Salvando novo orçamento...");
+            logger.debug("Salvando novo orçamento...");
             const response = await fetchWithAuth(
                 `${API_URL}/obras/${obraId}/orcamentos`,
                 {
@@ -6460,7 +6461,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
         } catch (err) {
-            console.error("Erro ao salvar orçamento:", err);
+            logger.error("Erro ao salvar orçamento:", err);
             notify.error(`Erro ao salvar orçamento: ${err.message}`);
         }
     };
@@ -6468,7 +6469,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     // CORREÇÃO: Função para editar orçamento
     const handleEditOrcamento = async (orcamentoId, formData, newFiles) => {
         try {
-            console.log("Salvando edição do orçamento:", orcamentoId);
+            logger.debug("Salvando edição do orçamento:", orcamentoId);
             
             // 1. Atualizar dados do orçamento
             const response = await fetchWithAuth(
@@ -6510,7 +6511,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
             carregarDados(); // Recarrega a lista de orçamentos
             if (onSave) onSave(); // Notifica o Dashboard também
         } catch (err) {
-            console.error("Erro ao salvar edição do orçamento:", err);
+            logger.error("Erro ao salvar edição do orçamento:", err);
             notify.error(`Erro ao salvar edição: ${err.message}`);
         }
     };
@@ -6809,7 +6810,7 @@ function Dashboard() {
     // Escutar botão voltar do navegador
     useEffect(() => {
         const handlePopState = (event) => {
-            console.log('PopState event:', event.state);
+            logger.debug('PopState event:', event.state);
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
@@ -6830,7 +6831,7 @@ function Dashboard() {
                             setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                             setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                         })
-                        .catch(error => console.error('Erro popstate:', error))
+                        .catch(error => logger.error('Erro popstate:', error))
                         .finally(() => setIsLoading(false));
                 } else {
                     setObraSelecionada(null);
@@ -6968,14 +6969,14 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     // Efeito para buscar obras
     useEffect(() => {
-        console.log("Buscando lista de obras...");
+        logger.debug("Buscando lista de obras...");
         const url = mostrarConcluidas 
             ? `${API_URL}/obras?mostrar_concluidas=true` 
             : `${API_URL}/obras`;
         fetchWithAuth(url)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
-            .then(data => { console.log("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
-            .catch(error => { console.error("Erro ao buscar obras:", error); setObras([]); });
+            .then(data => { logger.debug("Obras recebidas:", data); setObras(Array.isArray(data) ? data : []); })
+            .catch(error => { logger.error("Erro ao buscar obras:", error); setObras([]); });
     }, [mostrarConcluidas]); 
     
     // Callback para abrir modal de orçamentos
@@ -6990,13 +6991,13 @@ const totalOrcamentosPendentes = useMemo(() => {
 
     const fetchObraData = (obraId) => {
         setIsLoading(true);
-        console.log(`Buscando dados da obra ID: ${obraId}`);
+        logger.debug(`Buscando dados da obra ID: ${obraId}`);
         
         // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
-                console.log("Dados da obra recebidos:", data);
+                logger.debug("Dados da obra recebidos:", data);
                 
                 setObraSelecionada(data.obra || null);
                 setLancamentos(Array.isArray(data.lancamentos) ? data.lancamentos : []);
@@ -7017,10 +7018,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                 try {
                     fetchNotasFiscais(obraId);
                 } catch (error) {
-                    console.log("Notas fiscais não disponíveis");
+                    logger.debug("Notas fiscais não disponíveis");
                 }
             })
-            .catch(error => { console.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
+            .catch(error => { logger.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
@@ -7033,7 +7034,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setItensOrcamento(data);
             }
         } catch (error) {
-            console.log("Itens do orçamento não disponíveis:", error);
+            logger.debug("Itens do orçamento não disponíveis:", error);
             setItensOrcamento([]);
         }
     };
@@ -7046,12 +7047,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
         
-        console.log("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
+        logger.debug("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
         
         if (obraFromUrl) {
             const obraId = parseInt(obraFromUrl);
             if (!isNaN(obraId)) {
-                console.log("[URL INIT] Carregando obra:", obraId);
+                logger.debug("[URL INIT] Carregando obra:", obraId);
                 fetchObraData(obraId);
                 setCurrentPage(pageFromUrl || 'home');
             } else {
@@ -7086,7 +7087,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             }
             
             const cronogramasData = await response.json();
-            console.log("Cronogramas da obra (raw):", cronogramasData);
+            logger.debug("Cronogramas da obra (raw):", cronogramasData);
             
             if (!Array.isArray(cronogramasData) || cronogramasData.length === 0) {
                 setCronogramaObras([]);
@@ -7106,7 +7107,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 percentual_conclusao: cron.percentual_conclusao || 0
             }));
             
-            console.log("Cronogramas de obras carregados:", cronogramasFormatados);
+            logger.debug("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
             // Silencioso — cronograma de obras é feature secundária
@@ -7118,7 +7119,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     const fetchNotasFiscais = (obraId) => {
         // Proteção contra múltiplas requisições simultâneas
         if (isLoadingNotasFiscais.current) {
-            console.log("Já está carregando notas fiscais, ignorando requisição duplicada");
+            logger.debug("Já está carregando notas fiscais, ignorando requisição duplicada");
             return;
         }
         
@@ -7130,7 +7131,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 if (!res.ok) {
                     // Se for 404, significa que a rota não existe - ignorar silenciosamente
                     if (res.status === 404) {
-                        console.log("Rota de notas fiscais não disponível (404) - ignorando");
+                        logger.debug("Rota de notas fiscais não disponível (404) - ignorando");
                         throw new Error('NOT_FOUND');
                     }
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -7138,7 +7139,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return res.json();
             })
             .then(data => {
-                console.log("Notas fiscais recebidas:", data);
+                logger.debug("Notas fiscais recebidas:", data);
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
@@ -7148,11 +7149,11 @@ const totalOrcamentosPendentes = useMemo(() => {
                     setNotasFiscais([]);
                 } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
                     // Erro de rede - não logar (evita spam no console)
-                    console.warn("Notas fiscais: rota não disponível");
+                    logger.warn("Notas fiscais: rota não disponível");
                     setNotasFiscais([]);
                 } else {
                     // Outros erros - logar normalmente
-                    console.error("Erro ao buscar notas fiscais:", error);
+                    logger.error("Erro ao buscar notas fiscais:", error);
                     setNotasFiscais([]);
                 }
             })
@@ -7182,14 +7183,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         fetchWithAuth(`${API_URL}/obras`, { method: 'POST', body: JSON.stringify({ nome, cliente }) })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); })
-        .catch(error => console.error('Erro ao adicionar obra:', error));
+        .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
         // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
-        .catch(error => console.error('Erro ao deletar obra:', error));
+        .catch(error => logger.error('Erro ao deletar obra:', error));
     };
     
     // NOVO: Função para marcar obra como concluída/reabrir
@@ -7209,7 +7210,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 o.id === obraId ? { ...o, concluida: !concluida } : o
             ).filter(o => mostrarConcluidas || !o.concluida));
         })
-        .catch(error => { console.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
+        .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
     // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
@@ -7227,11 +7228,11 @@ const totalOrcamentosPendentes = useMemo(() => {
             return; 
         }
 
-        console.log("Alternando status para:", itemId);
+        logger.debug("Alternando status para:", itemId);
         fetchWithAuth(url, { method: 'PATCH' })
              .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
              .then(() => fetchObraData(obraSelecionada.id))
-             .catch(error => console.error("Erro ao marcar como pago:", error));
+             .catch(error => logger.error("Erro ao marcar como pago:", error));
     };
 
     const handleDeletarLancamento = (itemId) => {
@@ -7239,11 +7240,11 @@ const totalOrcamentosPendentes = useMemo(() => {
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
-            console.log("Deletando lançamento geral:", actualId);
+            logger.debug("Deletando lançamento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => console.error('Erro ao deletar lançamento:', error));
+                .catch(error => logger.error('Erro ao deletar lançamento:', error));
         }
     };
     
@@ -7267,12 +7268,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar edição:", error));
+        .catch(error => logger.error("Erro ao salvar edição:", error));
     };
     
     // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
-        console.log("Salvando novo lançamento:", lancamentoData);
+        logger.debug("Salvando novo lançamento:", lancamentoData);
         // O formulário envia 'valor', mas o backend espera 'valor'
         // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
@@ -7280,12 +7281,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(lancamentoData)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => console.error("Erro ao salvar lançamento:", error));
+        .catch(error => logger.error("Erro ao salvar lançamento:", error));
     };
     
     // MUDANÇA 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
-        console.log("Inserindo novo pagamento:", pagamentoData);
+        logger.debug("Inserindo novo pagamento:", pagamentoData);
         
         const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
             method: 'POST',
@@ -7306,7 +7307,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     // --- Handlers de Orçamento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
         // ... (código inalterado)
-        console.log("Salvando novo orçamento...");
+        logger.debug("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
             body: formData
@@ -7316,13 +7317,13 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => {
-            console.error("Erro ao salvar orçamento:", error);
+            logger.error("Erro ao salvar orçamento:", error);
             notify.error(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
         // ... (código inalterado)
-        console.log("Salvando edição do orçamento:", orcamentoId);
+        logger.debug("Salvando edição do orçamento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
@@ -7353,7 +7354,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            console.error("Erro ao salvar edição do orçamento:", error);
+            logger.error("Erro ao salvar edição do orçamento:", error);
             notify.error(`Erro ao salvar edição: ${error.message}`);
         });
     };
@@ -7364,7 +7365,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao aprovar orçamento:", error));
+        .catch(error => logger.error("Erro ao aprovar orçamento:", error));
     };
     const handleRejeitarOrcamento = (orcamentoId) => {
         // ... (código inalterado)
@@ -7373,7 +7374,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => console.error("Erro ao rejeitar solicitação:", error));
+        .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
     };
 
     // Handler do PDF da Obra
@@ -7397,7 +7398,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setIsExportingPDF(false);
             })
             .catch(err => {
-                console.error("Erro ao gerar PDF da obra:", err);
+                logger.error("Erro ao gerar PDF da obra:", err);
                 notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
@@ -7420,7 +7421,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            console.error("Erro ao salvar prioridade do serviço:", error);
+            logger.error("Erro ao salvar prioridade do serviço:", error);
             notify.error(`Erro ao salvar prioridade: ${error.message}`);
         });
     };
@@ -7434,7 +7435,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const item_type = tipo_registro === 'lancamento' ? 'lancamento' : 'pagamento_servico';
         const item_id = id.split('-').pop();
 
-        console.log(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
+        logger.debug(`Registrando pagamento de ${valor_a_pagar} para ${item_type} ${item_id}`);
 
         fetchWithAuth(`${API_URL}/pagamentos/${item_type}/${item_id}/pagar`, {
             method: 'PATCH',
@@ -7449,7 +7450,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); // Recarrega os dados
         })
         .catch(error => {
-            console.error("Erro ao registrar pagamento parcial:", error);
+            logger.error("Erro ao registrar pagamento parcial:", error);
             // Mostra o erro de validação (ex: "valor maior que o restante")
             // Precisamos garantir que o modal esteja aberto para mostrar o erro
             if (payingItem) {
@@ -8303,7 +8304,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 setBoletos(data);
             }
         } catch (error) {
-            console.error('Erro ao buscar boletos:', error);
+            logger.error('Erro ao buscar boletos:', error);
         } finally {
             setLoading(false);
         }
@@ -8322,7 +8323,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 setResumo(data);
             }
         } catch (error) {
-            console.error('Erro ao buscar resumo:', error);
+            logger.error('Erro ao buscar resumo:', error);
         }
     };
     
@@ -8335,7 +8336,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
         } catch (error) {
-            console.error('Erro ao verificar alertas:', error);
+            logger.error('Erro ao verificar alertas:', error);
         }
     };
     
@@ -8367,7 +8368,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 notify.success('✅ Boleto marcado como pago!');
             }
         } catch (error) {
-            console.error('Erro ao marcar como pago:', error);
+            logger.error('Erro ao marcar como pago:', error);
             notify.error('Erro ao marcar como pago');
         }
     };
@@ -8388,7 +8389,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 fetchResumo();
             }
         } catch (error) {
-            console.error('Erro ao deletar:', error);
+            logger.error('Erro ao deletar:', error);
             notify.error('Erro ao excluir boleto');
         }
     };
@@ -8414,7 +8415,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 notify.info('Boleto não possui arquivo anexado');
             }
         } catch (error) {
-            console.error('Erro ao buscar arquivo:', error);
+            logger.error('Erro ao buscar arquivo:', error);
         }
     };
     
@@ -8874,7 +8875,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     setServicos(data || []);
                 }
             } catch (error) {
-                console.error('Erro ao carregar serviços:', error);
+                logger.error('Erro ao carregar serviços:', error);
             }
         };
         fetchServicos();
@@ -8922,7 +8923,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             
             if (response.ok) {
                 const dados = await response.json();
-                console.log('Dados extraídos:', dados);
+                logger.debug('Dados extraídos:', dados);
                 
                 if (dados.sucesso) {
                     // Verificar se há múltiplos boletos
@@ -8957,11 +8958,11 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 }
             } else {
                 const erro = await response.json();
-                console.error('Erro na API:', erro);
+                logger.error('Erro na API:', erro);
                 notify.error('⚠️ Erro ao processar PDF. Preencha manualmente.');
             }
         } catch (error) {
-            console.error('Erro ao extrair dados:', error);
+            logger.error('Erro ao extrair dados:', error);
             notify.error('⚠️ Erro de conexão. Preencha manualmente.');
         } finally {
             setExtraindo(false);
@@ -9012,7 +9013,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         sucessos++;
                     } else if (response.status === 409) {
                         // Boleto duplicado - ignorar silenciosamente
-                        console.log(`Boleto ${i + 1} já existe, ignorando...`);
+                        logger.debug(`Boleto ${i + 1} já existe, ignorando...`);
                     } else {
                         erros++;
                     }
@@ -9027,7 +9028,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             onClose();
             
         } catch (error) {
-            console.error('Erro ao cadastrar boletos:', error);
+            logger.error('Erro ao cadastrar boletos:', error);
             notify.error('Erro ao cadastrar boletos');
         } finally {
             setSalvandoTodos(false);
@@ -9082,7 +9083,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 notify.error(`Erro: ${error.erro}`);
             }
         } catch (error) {
-            console.error('Erro ao salvar:', error);
+            logger.error('Erro ao salvar:', error);
             notify.error('Erro ao salvar boleto');
         } finally {
             setSalvando(false);
@@ -9814,7 +9815,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             notify.success('✅ Movimentação apagada com sucesso!');
             carregarDados(); // Recarregar dados para atualizar saldo
         } catch (err) {
-            console.error('Erro ao deletar movimentação:', err);
+            logger.error('Erro ao deletar movimentação:', err);
             notify.error('Erro ao apagar movimentação: ' + err.message);
         } finally {
             setDeletandoId(null);
@@ -9879,7 +9880,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             notify.success('✅ Comprovante atualizado com sucesso!');
             carregarDados(); // Recarregar dados
         } catch (err) {
-            console.error('Erro ao reanexar comprovante:', err);
+            logger.error('Erro ao reanexar comprovante:', err);
             notify.error('Erro ao atualizar comprovante');
         } finally {
             setReanexandoId(null);
@@ -9908,7 +9909,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             const dataMovs = await resMovs.json();
             setMovimentacoes(dataMovs);
         } catch (err) {
-            console.error('Erro ao carregar dados do caixa:', err);
+            logger.error('Erro ao carregar dados do caixa:', err);
             notify.error('Erro ao carregar dados do caixa');
         } finally {
             setIsLoading(false);
@@ -9933,7 +9934,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 // Tentar pegar mensagem de erro do servidor
                 try {
                     const errorData = await response.json();
-                    console.error('Erro do servidor:', errorData);
+                    logger.error('Erro do servidor:', errorData);
                     throw new Error(errorData.mensagem || errorData.erro || 'Erro ao gerar relatório');
                 } catch (jsonErr) {
                     throw new Error('Erro ao gerar relatório');
@@ -9950,7 +9951,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (err) {
-            console.error('Erro ao gerar relatório:', err);
+            logger.error('Erro ao gerar relatório:', err);
             notify.error('Erro ao gerar relatório PDF: ' + err.message);
         }
     };
@@ -10303,7 +10304,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
         if (file.type.startsWith('image/')) {
             try {
                 setIsCompressing(true);
-                console.log('🔄 Comprimindo imagem do comprovante...');
+                logger.debug('🔄 Comprimindo imagem do comprovante...');
                 
                 const compressedImages = await compressImages([file]);
                 
@@ -10311,10 +10312,10 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                     const compressed = compressedImages[0];
                     setComprovante(compressed.base64);
                     setPreviewComprovante(compressed.base64);
-                    console.log('✅ Imagem comprimida com sucesso');
+                    logger.debug('✅ Imagem comprimida com sucesso');
                 }
             } catch (err) {
-                console.error('Erro ao comprimir imagem:', err);
+                logger.error('Erro ao comprimir imagem:', err);
                 // Fallback: usar imagem original
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -10380,7 +10381,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
             notify.success('✅ Movimentação registrada com sucesso!');
             onSave();
         } catch (err) {
-            console.error('Erro ao salvar movimentação:', err);
+            logger.error('Erro ao salvar movimentação:', err);
             notify.error('Erro ao salvar movimentação');
         } finally {
             setIsSubmitting(false);
@@ -11154,7 +11155,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
             const data = await response.json();
             setAlertas(data);
         } catch (err) {
-            console.error('Erro ao carregar alertas:', err);
+            logger.error('Erro ao carregar alertas:', err);
         } finally {
             setIsLoading(false);
         }
@@ -11602,7 +11603,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             const idNumerico = parseInt(id.split('-')[1], 10);
             tipoFinal = 'servico';
             idFinal = idNumerico;
-            console.log(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
+            logger.debug(`[CORREÇÃO] Convertido de tipo="${tipo}" id="${id}" para tipo="${tipoFinal}" id=${idFinal}`);
         }
         
         setItensSelecionados(prev => {
@@ -11639,7 +11640,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 if (typeof pag.id === 'string' && pag.id.startsWith('servico-')) {
                     const idNumerico = parseInt(pag.id.split('-')[1], 10);
                     todos.push({ tipo: 'servico', id: idNumerico });
-                    console.log(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
+                    logger.debug(`[SELECIONAR TODOS] Convertido ${pag.id} para tipo=servico, id=${idNumerico}`);
                 } else {
                     todos.push({ tipo: 'futuro', id: pag.id });
                 }
@@ -11699,7 +11700,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao marcar itens como pagos:', error);
+            logger.error('Erro ao marcar itens como pagos:', error);
             notify.error('Erro ao processar pagamentos');
         }
     };
@@ -11723,7 +11724,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await futuroRes.json();
                     setPagamentosFuturos(data);
                 } catch (e) {
-                    console.error('Erro ao processar pagamentos futuros:', e);
+                    logger.error('Erro ao processar pagamentos futuros:', e);
                 }
             }
 
@@ -11732,7 +11733,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await previsoesRes.json();
                     setPrevisoes(data);
                 } catch (e) {
-                    console.error('Erro ao processar previsões:', e);
+                    logger.error('Erro ao processar previsões:', e);
                 }
             }
             
@@ -11741,7 +11742,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await servicoPendentesRes.json();
                     setPagamentosServicoPendentes(data);
                 } catch (e) {
-                    console.error('Erro ao processar pagamentos pendentes:', e);
+                    logger.error('Erro ao processar pagamentos pendentes:', e);
                 }
             }
             
@@ -11751,7 +11752,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     const data = await itensOrcRes.json();
                     setItensOrcamento(data);
                 } catch (e) {
-                    console.error('Erro ao processar itens do orçamento:', e);
+                    logger.error('Erro ao processar itens do orçamento:', e);
                 }
             }
 
@@ -11776,7 +11777,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                     return { ...pagParcelado, parcelas };
                                 }
                             } catch (err) {
-                                console.error('Erro ao buscar parcelas:', err);
+                                logger.error('Erro ao buscar parcelas:', err);
                             }
                             return { ...pagParcelado, parcelas: [] };
                         })
@@ -11795,14 +11796,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     });
                     setPagamentosParcelados(parceladosComCamposCalculados);
                 } catch (e) {
-                    console.error('Erro ao processar parcelados:', e);
+                    logger.error('Erro ao processar parcelados:', e);
                     setIsLoading(false);
                 }
             } else {
                 setIsLoading(false);
             }
         } catch (error) {
-            console.error('Erro ao carregar cronograma financeiro:', error);
+            logger.error('Erro ao carregar cronograma financeiro:', error);
             setIsLoading(false);
         }
     };
@@ -11831,7 +11832,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao salvar pagamento futuro:', error);
+            logger.error('Erro ao salvar pagamento futuro:', error);
             notify.error('Erro ao salvar pagamento futuro');
         }
     };
@@ -11857,7 +11858,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro ao atualizar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao editar pagamento futuro:', error);
+            logger.error('Erro ao editar pagamento futuro:', error);
             notify.error('Erro ao editar pagamento futuro');
         }
     };
@@ -11882,7 +11883,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao salvar pagamento parcelado:', error);
+            logger.error('Erro ao salvar pagamento parcelado:', error);
             notify.error('Erro ao salvar pagamento parcelado');
         }
     };
@@ -11918,7 +11919,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro ao excluir pagamento futuro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao deletar pagamento futuro:', error);
+            logger.error('Erro ao deletar pagamento futuro:', error);
             if (error.name === 'AbortError') {
                 notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
@@ -11943,7 +11944,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (idStr.startsWith('servico-')) {
                 const servPagId = parseInt(idStr.split('-').pop(), 10);
-                console.log("Marcando pagamento de serviço futuro como pago:", servPagId);
+                logger.debug("Marcando pagamento de serviço futuro como pago:", servPagId);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/obras/${obraId}/cronograma/marcar-multiplos-pagos`,
                     {
@@ -11955,7 +11956,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     }
                 );
             } else {
-                console.log("Marcando pagamento futuro normal como pago:", id);
+                logger.debug("Marcando pagamento futuro normal como pago:", id);
                 res = await fetchWithAuthTimeout(
                     `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${id}/marcar-pago`,
                     { method: 'POST' }
@@ -11981,7 +11982,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro: ' + (errorData.erro || 'Erro desconhecido'));
             }
         } catch (error) {
-            console.error('Erro ao marcar pagamento como pago:', error);
+            logger.error('Erro ao marcar pagamento como pago:', error);
             if (error.name === 'AbortError') {
                 notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
@@ -12015,7 +12016,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error('Erro ao excluir pagamento parcelado');
             }
         } catch (error) {
-            console.error('Erro ao deletar pagamento parcelado:', error);
+            logger.error('Erro ao deletar pagamento parcelado:', error);
             if (error.name === 'AbortError') {
                 notify.error('A exclusão demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
@@ -12102,7 +12103,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 notify.error(`Erro: ${erro.erro || 'Erro ao marcar parcela como paga'}`);
             }
         } catch (error) {
-            console.error('Erro ao marcar parcela:', error);
+            logger.error('Erro ao marcar parcela:', error);
             if (error.name === 'AbortError') {
                 notify.error('A operação demorou demais. Verifique a conexão e recarregue a tela.');
             } else {
@@ -12165,7 +12166,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                     notify.error('Erro ao gerar PDF');
                                 }
                             } catch (error) {
-                                console.error('Erro ao exportar PDF:', error);
+                                logger.error('Erro ao exportar PDF:', error);
                                 notify.error('Erro ao gerar PDF do cronograma financeiro');
                             }
                         }} 
@@ -12222,7 +12223,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         document.body.removeChild(a);
                                     }
                                 } catch (error) {
-                                    console.error('Erro ao exportar PDF:', error);
+                                    logger.error('Erro ao exportar PDF:', error);
                                 }
                             }} 
                             className="cf-btn cf-btn-outline"
@@ -12997,7 +12998,7 @@ function App() {
                 setSelectedModule(savedModule || 'obras');
             }
         } catch (error) {
-            console.error("Falha ao carregar dados de autenticação:", error);
+            logger.error("Falha ao carregar dados de autenticação:", error);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('selectedModule');

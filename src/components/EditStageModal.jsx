@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { notify } from '../utils/notify';
 import './EditStageModal.css';
+import { logger } from '../utils/logger';
 
 const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
     const [formData, setFormData] = useState({
@@ -116,7 +117,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
             await onSave(formData);
             onClose();
         } catch (error) {
-            console.error('Erro ao salvar etapa:', error);
+            logger.error('Erro ao salvar etapa:', error);
             notify.error('Erro ao salvar as alterações. Tente novamente.');
         }
     };

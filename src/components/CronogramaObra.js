@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './CronogramaObra.css';
 import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
+import { logger } from '../utils/logger';
 
 // Helper para formatar datas
 const formatDate = (dateStr) => {
@@ -161,7 +162,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 setEvmData(prev => ({ ...prev, [servicoNome]: data }));
             }
         } catch (err) {
-            console.log('EVM não disponível para:', servicoNome);
+            logger.debug('EVM não disponível para:', servicoNome);
         }
     };
 
@@ -180,7 +181,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 setServicosDisponiveis(disponiveis);
             }
         } catch (err) {
-            console.error('Erro ao buscar serviços:', err);
+            logger.error('Erro ao buscar serviços:', err);
         }
     };
 
@@ -297,7 +298,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 setEtapasOrcamento([]);
             }
         } catch (err) {
-            console.error('Erro ao buscar etapas do orçamento:', err);
+            logger.error('Erro ao buscar etapas do orçamento:', err);
             setEtapasOrcamento([]);
         }
     };

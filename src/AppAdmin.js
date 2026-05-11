@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { notify, confirmDialog } from './utils/notify';
+import { logger } from './utils/logger';
 
 // ===================================================================================
 // CONFIGURAÇÃO
@@ -299,7 +300,7 @@ const Dashboard = () => {
             const data = await response.json();
             setDados(data);
         } catch (err) {
-            console.error('Erro ao carregar dashboard:', err);
+            logger.error('Erro ao carregar dashboard:', err);
         } finally {
             setLoading(false);
         }
@@ -338,7 +339,7 @@ const Dashboard = () => {
                 ultimos_lancamentos: [...lancamentos].sort((a, b) => (b.data_lancamento || '').localeCompare(a.data_lancamento || '')).slice(0, 20),
             });
         } catch (err) {
-            console.error('Erro ao carregar acumulado:', err);
+            logger.error('Erro ao carregar acumulado:', err);
         }
     };
 
@@ -593,7 +594,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
         })
             .then(r => r.json())
             .then(d => setLancamentos(Array.isArray(d) ? d : []))
-            .catch(console.error)
+            .catch(logger.error)
             .finally(() => setLoading(false));
     }, [tipo, mes, ano, token]);
 
@@ -690,7 +691,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
             const r = await fetch(`${API_URL_ADMIN}/lancamentos?${params}`, { headers: { Authorization: `Bearer ${token}` } });
             const d = await r.json();
             setLancamentos(Array.isArray(d) ? d : []);
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { logger.error(e); } finally { setLoading(false); }
     };
 
     useEffect(() => { carregar(); }, [mes, ano, tipo]);
@@ -1016,7 +1017,7 @@ const Imoveis = () => {
             const data = await response.json();
             setImoveis(data);
         } catch (err) {
-            console.error('Erro ao carregar imóveis:', err);
+            logger.error('Erro ao carregar imóveis:', err);
         } finally {
             setLoading(false);
         }
@@ -1047,7 +1048,7 @@ const Imoveis = () => {
                 closeModal();
             }
         } catch (err) {
-            console.error('Erro ao salvar imóvel:', err);
+            logger.error('Erro ao salvar imóvel:', err);
         }
     };
 
@@ -1061,7 +1062,7 @@ const Imoveis = () => {
             });
             fetchImoveis();
         } catch (err) {
-            console.error('Erro ao deletar imóvel:', err);
+            logger.error('Erro ao deletar imóvel:', err);
         }
     };
 
@@ -1439,7 +1440,7 @@ const Lancamentos = () => {
             setImoveis(await imovRes.json());
             setCategorias(await catRes.json());
         } catch (err) {
-            console.error('Erro ao carregar dados:', err);
+            logger.error('Erro ao carregar dados:', err);
         } finally {
             setLoading(false);
         }
@@ -1485,7 +1486,7 @@ const Lancamentos = () => {
                 });
             }
         } catch (err) {
-            console.error('Erro ao salvar lançamento:', err);
+            logger.error('Erro ao salvar lançamento:', err);
         }
     };
 
@@ -1552,7 +1553,7 @@ const Lancamentos = () => {
                 fetchDados();
             }
         } catch (err) {
-            console.error('Erro ao marcar como pago:', err);
+            logger.error('Erro ao marcar como pago:', err);
         }
     };
 
@@ -1569,7 +1570,7 @@ const Lancamentos = () => {
             });
             fetchDados();
         } catch (err) {
-            console.error('Erro ao deletar lançamento:', err);
+            logger.error('Erro ao deletar lançamento:', err);
         }
     };
 
@@ -2129,7 +2130,7 @@ const GestaoBoletos = () => {
     useEffect(() => {
         fetch(`${API_URL_ADMIN}/imoveis`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json()).then(d => { setImoveis(Array.isArray(d) ? d : []); })
-            .catch(console.error);
+            .catch(logger.error);
     }, [token]);
 
     const fetchBoletos = async (imovelId = imovelSelecionado) => {
@@ -2145,7 +2146,7 @@ const GestaoBoletos = () => {
             ]);
             if (bRes.ok) setBoletos(await bRes.json());
             if (rRes.ok) setResumo(await rRes.json());
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { logger.error(e); } finally { setLoading(false); }
     };
 
     useEffect(() => { if (imovelSelecionado) fetchBoletos(); }, [imovelSelecionado, filtroStatus]);
@@ -2376,7 +2377,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                         }
                     } else { notify.warning('Não foi possível extrair dados. Preencha manualmente.'); }
                 }
-            } catch (e) { console.error(e); } finally { setExtraindo(false); }
+            } catch (e) { logger.error(e); } finally { setExtraindo(false); }
         };
         reader.readAsDataURL(file);
     };
@@ -2498,7 +2499,7 @@ const Relatorios = () => {
         ]).then(([imov, lanc]) => {
             setImoveis(Array.isArray(imov) ? imov : []);
             setLancamentos(Array.isArray(lanc) ? lanc : []);
-        }).catch(console.error).finally(() => setLoading(false));
+        }).catch(logger.error).finally(() => setLoading(false));
     }, [token]);
 
     const lancamentosFiltrados = lancamentos.filter(l => {
@@ -3058,7 +3059,7 @@ const Usuarios = () => {
                 setUsuarios(data);
             }
         } catch (err) {
-            console.error('Erro ao carregar usuários:', err);
+            logger.error('Erro ao carregar usuários:', err);
         } finally {
             setLoading(false);
         }
@@ -3110,7 +3111,7 @@ const Usuarios = () => {
             });
             fetchUsuarios();
         } catch (err) {
-            console.error('Erro ao desativar usuário:', err);
+            logger.error('Erro ao desativar usuário:', err);
         }
     };
 
