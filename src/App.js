@@ -1823,63 +1823,35 @@ const SidebarStyles = () => (
 );
 
 
-// --- HELPER DA API ---
-let _isRefreshing = false;
-let _refreshQueue = [];
-
-const _doRefresh = async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) throw new Error('no_refresh_token');
-    const { API_URL: BASE } = await import('./config');
-    const res = await fetch(`${BASE}/refresh`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${refreshToken}`, 'Content-Type': 'application/json' },
-    });
-    if (!res.ok) throw new Error('refresh_failed');
-    const data = await res.json();
-    localStorage.setItem('token', data.access_token);
-    return data.access_token;
-};
-
+// --- HELPER DA API (ATUALIZADO PARA FORMDATA) ---
 const fetchWithAuth = async (url, options = {}) => {
     const token = localStorage.getItem('token');
-    const headers = { ...options.headers };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
 
-    let response = await fetch(url, { ...options, headers });
+    const headers = {
+        ...options.headers,
+    };
 
-    if ((response.status === 401 || response.status === 422) && localStorage.getItem('refresh_token')) {
-        if (_isRefreshing) {
-            await new Promise((resolve, reject) => _refreshQueue.push({ resolve, reject }));
-            return fetchWithAuth(url, options);
-        }
-        _isRefreshing = true;
-        try {
-            const newToken = await _doRefresh();
-            _refreshQueue.forEach(({ resolve }) => resolve(newToken));
-            _refreshQueue = [];
-            headers['Authorization'] = `Bearer ${newToken}`;
-            response = await fetch(url, { ...options, headers });
-        } catch {
-            _refreshQueue.forEach(({ reject }) => reject());
-            _refreshQueue = [];
-            localStorage.removeItem('token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user');
-            notify.warning('Sua sessão expirou. Faça login novamente.');
-            setTimeout(() => window.location.reload(), 500);
-            throw new Error('Sessão expirada.');
-        } finally {
-            _isRefreshing = false;
-        }
-    } else if (response.status === 401 || response.status === 422) {
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401 || response.status === 422) {
         localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
-        notify.warning('Sua sessão expirou. Faça login novamente.');
-        setTimeout(() => window.location.reload(), 500);
-        throw new Error('Sessão expirada.');
+
+        notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+        throw new Error('Sessão expirada. Faça o login novamente.');
     }
 
     return response;
@@ -13047,7 +13019,6 @@ function App() {
         setToken(data.access_token);
         setUser(data.user);
         localStorage.setItem('token', data.access_token);
-        if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
     };
 
@@ -13056,7 +13027,6 @@ function App() {
         setUser(null);
         setSelectedModule(null);
         localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         localStorage.removeItem('selectedModule');
     };
