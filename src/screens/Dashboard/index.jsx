@@ -8,6 +8,7 @@ import AlertStatCard from './components/AlertStatCard';
 import ProgressBar from './components/ProgressBar';
 import ActivityItem from './components/ActivityItem';
 import DashboardHeader from './components/DashboardHeader';
+import ObraCardActions from './components/ObraCardActions';
 import './Dashboard.css';
 
 // --- helpers ---
@@ -39,6 +40,12 @@ function getObraProgressVariant(pct) {
     if (pct >= 70) return 'success';
     if (pct >= 30) return 'info';
     return 'warning';
+}
+
+function getPctColor(pct) {
+    if (pct >= 90) return 'var(--status-danger)';
+    if (pct >= 70) return 'var(--status-warning)';
+    return 'var(--text-primary)';
 }
 
 function ActivityIcon({ tipo }) {
@@ -341,14 +348,22 @@ export default function Dashboard() {
                                 >
                                     <div className="db-obra-tile-header">
                                         <span className="db-obra-tile-name">{obra.nome}</span>
-                                        {vencidos > 0 && (
-                                            <span className="db-obra-badge" style={{
-                                                background: 'var(--status-danger-bg)',
-                                                color: 'var(--status-danger)',
-                                            }}>
-                                                {vencidos} venc.
-                                            </span>
-                                        )}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                            {vencidos > 0 && (
+                                                <span className="db-obra-badge" style={{
+                                                    background: 'var(--status-danger-bg)',
+                                                    color: 'var(--status-danger)',
+                                                }}>
+                                                    {vencidos} venc.
+                                                </span>
+                                            )}
+                                            <ObraCardActions
+                                                obraId={id}
+                                                obraName={obra.nome}
+                                                onNavigate={() => navigateToObra(id)}
+                                                onDeleted={loadData}
+                                            />
+                                        </div>
                                     </div>
                                     {obra.cliente && (
                                         <div className="db-obra-tile-client">{obra.cliente}</div>
@@ -359,7 +374,7 @@ export default function Dashboard() {
                                             total={orcTotal}
                                             showLabels={false}
                                             variant={getObraProgressVariant(pct)}
-                                            height={3}
+                                            height={4}
                                         />
                                     )}
                                     <div className="db-obra-stats-row">
@@ -372,7 +387,12 @@ export default function Dashboard() {
                                         {orcTotal > 0 && (
                                             <div className="db-obra-stat">
                                                 <span className="db-obra-stat-label">Orçamento</span>
-                                                <span className="db-obra-stat-value">{pct.toFixed(0)}%</span>
+                                                <span
+                                                    className="db-obra-stat-value"
+                                                    style={{ color: getPctColor(pct), fontWeight: 700 }}
+                                                >
+                                                    {pct.toFixed(0)}%
+                                                </span>
                                             </div>
                                         )}
                                     </div>

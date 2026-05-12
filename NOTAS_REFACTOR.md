@@ -343,3 +343,24 @@ Dois modais tinham `customWidth` maiores que o máximo disponível (`xlarge` = 8
 - Não há token para cor de overlay/backdrop no design system v2.0.
 - Candidato a adicionar: `var(--overlay-bg)` = `rgba(0, 0, 0, 0.45)` em `tokens.css`.
 - Catalogado aqui para a revisão de tokens da fase 7.
+
+---
+
+## TODO Backend: endpoint PATCH /obras/<id>/arquivar ausente (descoberto em E5 AJUSTADO)
+
+- **Contexto**: Dashboard kebab menu "Arquivar" implementado como botão disabled (tooltip "Em breve") porque o endpoint não existe no backend.
+- **Frontend pronto**: `ObraCardActions.jsx` tem a estrutura (botão arquivar já presente, disabled).
+- **Backend necessário**: criar rota `PATCH /obras/<id>/arquivar` que seta `obra.concluida = True` (ou similar) sem apagar dados.
+- **Diferença de semântica**: `PATCH /obras/<id>/concluir` EXISTS mas tem conotação de "conclusão de obra" (com lógica de progresso). "Arquivar" é uma ação administrativa diferente — ocultar da listagem ativa sem alterar dados de execução.
+- **Alternativa simples**: adicionar campo `archived_at` (nullable datetime) na tabela obras + filtrar nas queries de listagem.
+- **Quando**: fase backend (após fase 6 frontend completa).
+
+---
+
+## Emojis residuais corrigidos em ObraDetalhe status bar (descoberto em E5)
+
+- **Arquivo**: `src/screens/ObraDetalhe/index.jsx` linhas 1312 e 1317
+- **Problema**: dois `??` literals na barra de status — prováveis emojis (🏗️ e 👤) que foram corrompidos em edição anterior.
+- **Fix aplicado em E5**: substituídos por Tabler icons `<i className="ti ti-building">` e `<i className="ti ti-user">`.
+- **Outros emojis no projeto**: `WindowsNavBar.jsx`, `BiModule.js`, `AppAdmin.js`, `ModuleSelectorScreen.jsx` ainda usam emojis nativos — funcionam em maioria dos browsers mas podem falhar em ambientes sem suporte a emoji (ex: status bars de sistemas operacionais, exports de relatório). Não é urgente — apenas documentar.
+- **Regra**: novas telas devem usar Tabler icons em vez de emojis nativos.

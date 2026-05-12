@@ -1309,12 +1309,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 {/* Barra de Status */}
                 <div className="windows-status-bar">
                     <div className="status-bar-left">
-                        <span className="status-bar-item">?? {obraSelecionada.nome}</span>
+                        <span className="status-bar-item"><i className="ti ti-building" aria-hidden="true" /> {obraSelecionada.nome}</span>
                         <span className="status-bar-item">•</span>
                         <span className="status-bar-item">Página: {currentPage}</span>
                     </div>
                     <div className="status-bar-right">
-                        <span className="status-bar-item">?? {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
+                        <span className="status-bar-item"><i className="ti ti-user" aria-hidden="true" /> {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
                         <span className="status-bar-item">•</span>
                         <span className="status-bar-item">{new Date().toLocaleDateString('pt-BR')}</span>
                     </div>

@@ -127,7 +127,7 @@
     background: var(--surface-card);
     border: 0.5px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: 14px;
+    padding: 20px;
     box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -147,7 +147,7 @@
 }
 
 .db-obra-tile-name {
-    font-size: var(--text-sm);
+    font-size: 17px;
     font-weight: var(--weight-semibold);
     color: var(--text-primary);
     line-height: 1.3;
@@ -169,9 +169,9 @@
 
 .db-obra-badge {
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: var(--weight-semibold);
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: var(--radius-sm);
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -190,7 +190,7 @@
 }
 
 .db-obra-stat-label {
-    font-size: 10px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: var(--tracking-wide);
     color: var(--text-muted);
@@ -198,9 +198,10 @@
 }
 
 .db-obra-stat-value {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
 }
 
 /* Activity feed */
@@ -264,6 +265,88 @@
 .db-empty p {
     font-size: var(--text-sm);
     margin: 0;
+}
+
+/* Obra tile kebab menu */
+.db-obra-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.db-obra-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 15px;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    opacity: 0;
+}
+
+.db-obra-tile:hover .db-obra-menu-btn {
+    opacity: 1;
+}
+
+.db-obra-menu-btn:hover {
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+}
+
+.db-obra-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 164px;
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-popup);
+    z-index: 100;
+    padding: 4px 0;
+}
+
+.db-obra-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition-fast);
+}
+
+.db-obra-menu-item:hover:not(:disabled) {
+    background: var(--surface-subtle);
+}
+
+.db-obra-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.db-obra-menu-item-danger {
+    color: var(--status-danger);
+}
+
+.db-obra-menu-item-danger:hover:not(:disabled) {
+    background: var(--status-danger-bg) !important;
+}
+
+.db-obra-menu-divider {
+    height: 0.5px;
+    background: var(--border-subtle);
+    margin: 4px 0;
 }
 
 /* Responsive */
