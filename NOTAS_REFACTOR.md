@@ -86,11 +86,11 @@ Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fa
 
 ### Modais que NÃO usam fetchWithAuth (regressão da fase 1)
 
-- `src/components/modals/CadastrarBoletoModal.jsx`: usa `fetch()` direto + `localStorage.getItem('token')` manual em vez de `fetchWithAuth` do `auth/` — todos os requests (carregar serviços, extrair PDF, salvar boleto)
+- `src/components/modals/CadastrarBoletoModal.jsx`: **CORRIGIDO na fase-2-hotfix** (`7bc754b`)
+- `src/layout/NotificacoesDropdown.jsx`: **5 fetch diretos** — fetchCount, fetchNotificacoes, toggleLida, limparLidas, limparTodas, marcarTodasLidas — identificado durante fase-3 sub-lote A, extraído como está
 - Modal 27 (`EditarParcelasModal`): usa `fetchWithAuth` corretamente — OK
 - Modal 28 (`InserirPagamentoModal`): **nenhuma chamada de API direta** — delega tudo via callback `onSave` — OK
-- Verificar nos modais já extraídos (1–26) se há mais casos passados
-- Verificar nos modais já extraídos (1–26) se há mais casos passados
+- Verificar nos componentes restantes de App.js (Dashboard, HistoricoPagamentosCard, GestaoBoletos, CronogramaFinanceiro) durante sub-lotes B/C
 
 **Risco:** requests que bypassam `fetchWithAuth` podem quebrar silenciosamente em cenários de token expirado, refresh automático, ou qualquer mudança futura no mecanismo de auth.
 
