@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { formatCurrency } from '../../utils/format';
 
 const PartialPaymentModal = ({ item, onClose, onSave }) => {
-
-    // Calcula o valor que ainda falta pagar
     const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-
-    // Define o valor inicial do input como o valor restante
     const [valorAPagar, setValorAPagar] = useState(valorRestante.toFixed(2));
     const [error, setError] = useState('');
 
@@ -28,32 +24,37 @@ const PartialPaymentModal = ({ item, onClose, onSave }) => {
             return;
         }
 
-        // Envia o valor para a função principal
         onSave(valorFloat);
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Registrar Pagamento</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Registrar Pagamento"
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-partial-payment" className="m-btn-primary">
+                        <i className="ti ti-check" aria-hidden="true"></i>
+                        Registrar Pagamento
+                    </button>
+                </>
+            }
+        >
+            <form id="form-partial-payment" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Item</label>
+                    <input className="m-input" type="text" value={item.descricao} readOnly disabled />
                 </div>
-
-                <div className="form-group">
-                    <label>Valor Restante</label>
-                    <input
-                        type="text"
-                        value={formatCurrency(valorRestante)}
-                        readOnly
-                        disabled
-                    />
+                <div className="m-field">
+                    <label className="m-label">Valor Restante</label>
+                    <input className="m-input" type="text" value={formatCurrency(valorRestante)} readOnly disabled />
                 </div>
-
-                <div className="form-group">
-                    <label>Valor a Pagar Hoje</label>
+                <div className="m-field">
+                    <label className="m-label">Valor a Pagar Hoje</label>
                     <input
+                        className="m-input"
                         type="number"
                         step="0.01"
                         value={valorAPagar}
@@ -62,15 +63,11 @@ const PartialPaymentModal = ({ item, onClose, onSave }) => {
                         autoFocus
                     />
                 </div>
-
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn" style={{backgroundColor: 'var(--cor-acento)'}}>
-                        Registrar Pagamento
-                    </button>
-                </div>
+                {error && (
+                    <p style={{ color: 'var(--status-danger-text)', textAlign: 'center', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+                        {error}
+                    </p>
+                )}
             </form>
         </Modal>
     );
