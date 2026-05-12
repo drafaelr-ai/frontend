@@ -163,3 +163,40 @@ App.js final: 6.666 linhas (era ~10.500 no início da fase 2).
 
 #### Nota fiscal — helper (pode ser feito a qualquer momento)
 - `VisualizarNotaFiscalModal` + `UploadNotaFiscalModal` → extrair `getRealItemId(item)` em `utils/notaFiscal.js`
+
+---
+
+## Aprendizado crítico: encoding do projeto
+
+### Descoberta
+Em 12/05/2026, durante smoke test da fase 3, identificado que o App.js original
+estava codificado em Windows-1252 (CP1252), não UTF-8. Quando o Dashboard foi
+extraído na fase 3 sub-lote D, os caracteres acentuados multibyte (\xc3\xa7 = ç,
+\xc3\xa3 = ã, etc.) foram corrompidos a U+FFFD na escrita do novo arquivo.
+
+### Sintomas
+- "Orçamento" → "Or?amento" / "Or◆amento" no display
+- "Início" → "In?cio"
+- "Página" → "P?gina"
+- Console: manifest.webmanifest com syntax error (efeito colateral do BOM)
+
+### Fix aplicado (commit b7e9b7c)
+- Leitura do App.js original como Win-1252
+- Indexação por ASCII skeleton (Or_amento → Orçamento via posição)
+- Reescrita do Dashboard/index.jsx em UTF-8 sem BOM
+- 134/134 linhas restauradas
+
+### Regra pra próximas extrações
+- Sempre ler arquivos antigos especificando encoding explicitamente
+- Quando o arquivo for ANCESTRAL (existe há tempo no projeto), tenta Win-1252 primeiro
+- Quando o arquivo for RECENTE (criado depois da fase 1), provavelmente é UTF-8
+- Sempre escrever novos arquivos como UTF-8 SEM BOM
+- Validar após escrita: grep -c $'�' arquivo.jsx → deve retornar 0
+
+### Arquivos verificados em 12/05/2026 (todos UTF-8 válido sem FFFD)
+- AgendaDemandas.js, CronogramaObra.js, DashboardObra.jsx, DiarioObras.jsx,
+  OrcamentoEngenharia.js, AppAdmin.js — limpos
+
+### Arquivos NÃO verificados
+- Demais arquivos em src/ — não verificados ainda. Podem ter o mesmo issue se
+  forem antigos. Considerar scan completo antes da fase 6 sub-lote A.
