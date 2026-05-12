@@ -38,7 +38,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     if (isLoading) {
         return (
             <div className="card-full">
-                <h3>📊 Status de Pagamentos</h3>
+                <h3><i className="ti ti-layout-dashboard" aria-hidden="true" /> Status de Pagamentos</h3>
                 <p>Carregando...</p>
             </div>
         );
@@ -50,46 +50,41 @@ const QuadroAlertasVencimento = ({ obraId }) => {
         {
             key: 'vencidos',
             titulo: 'Vencidos',
-            icon: '🔴',
-            cor: 'var(--cor-vermelho)',
-            corLight: 'var(--cor-vermelho-light)',
-            corBg: 'var(--cor-vermelho-bg)',
+            icon: 'ti-alert-circle',
+            cor: 'var(--status-danger)',
+            corBg: 'var(--status-danger-bg)',
             dados: alertas.vencidos
         },
         {
             key: 'vence_hoje',
             titulo: 'Vence Hoje',
-            icon: '🟡',
-            cor: 'var(--cor-warning)',
-            corLight: 'var(--cor-warning-light)',
-            corBg: 'var(--cor-warning-bg)',
+            icon: 'ti-clock',
+            cor: 'var(--status-warning)',
+            corBg: 'var(--status-warning-bg)',
             dados: alertas.vence_hoje
         },
         {
             key: 'vence_amanha',
             titulo: 'Vence Amanhã',
-            icon: '🟠',
-            cor: 'var(--cor-info)',
-            corLight: 'var(--cor-info-light)',
-            corBg: 'var(--cor-info-bg)',
+            icon: 'ti-clock-hour-4',
+            cor: 'var(--status-warning)',
+            corBg: 'var(--status-warning-bg)',
             dados: alertas.vence_amanha
         },
         {
             key: 'vence_7_dias',
             titulo: 'Próximos 7 dias',
-            icon: '🔵',
-            cor: 'var(--cor-purple)',
-            corLight: 'var(--cor-purple-light)',
-            corBg: 'var(--cor-purple-bg)',
+            icon: 'ti-calendar-week',
+            cor: 'var(--status-purple-text)',
+            corBg: 'var(--status-purple-bg)',
             dados: alertas.vence_7_dias
         },
         {
             key: 'futuros',
             titulo: 'Futuros (+7d)',
-            icon: '📅',
-            cor: 'var(--cor-acento)',
-            corLight: 'var(--cor-acento-light)',
-            corBg: 'var(--cor-acento-bg)',
+            icon: 'ti-calendar-event',
+            cor: 'var(--status-success)',
+            corBg: 'var(--status-success-bg)',
             dados: alertas.futuros
         }
     ];
@@ -97,7 +92,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
     return (
         <div className="cf-section" style={{ marginBottom: '24px' }}>
             <div className="cf-section-header">
-                <div className="cf-section-title">📊 Quadro Informativo - Cronograma Financeiro</div>
+                <div className="cf-section-title"><i className="ti ti-layout-dashboard" aria-hidden="true" /> Quadro Informativo - Cronograma Financeiro</div>
             </div>
 
             {/* Cards de Status */}
@@ -117,7 +112,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                                 className="status-card-icon"
                                 style={{ background: categoria.corBg }}
                             >
-                                {categoria.icon}
+                                <i className={`ti ${categoria.icon}`} aria-hidden="true" />
                             </div>
                             {categoria.dados.itens?.length > 0 && (
                                 <span style={{
@@ -146,19 +141,21 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                 <div style={{
                     marginTop: '20px',
                     padding: '20px',
-                    backgroundColor: 'var(--cor-fundo-secundario)',
+                    backgroundColor: 'var(--surface-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    border: `2px solid ${categorias.find(c => c.key === categoriaExpandida)?.corLight}`
+                    border: '1px solid var(--border-subtle)'
                 }}>
-                    <h4 style={{ margin: '0 0 16px 0', color: 'var(--cor-texto)', fontSize: '16px' }}>
-                        {categorias.find(c => c.key === categoriaExpandida)?.icon} {categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes
+                    <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)', fontSize: '16px' }}>
+                        <i className={`ti ${categorias.find(c => c.key === categoriaExpandida)?.icon ?? 'ti-info-circle'}`} aria-hidden="true" /> {categorias.find(c => c.key === categoriaExpandida)?.titulo} - Detalhes
                     </h4>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {alertas[categoriaExpandida]?.itens?.map((item, index) => (
                             <div key={index} className="cf-pagamento-futuro-item">
                                 <div className="cf-pagamento-futuro-icon">
-                                    {item.tipo === 'Parcela' ? '📦' : '💳'}
+                                    {item.tipo === 'Parcela'
+                                        ? <i className="ti ti-package" aria-hidden="true" />
+                                        : <i className="ti ti-credit-card" aria-hidden="true" />}
                                 </div>
                                 <div className="cf-pagamento-futuro-info">
                                     <div className="cf-pagamento-futuro-desc">{item.descricao}</div>

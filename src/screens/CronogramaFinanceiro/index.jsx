@@ -630,7 +630,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
-                            <div className="cf-section-title"><i className="ti ti-trending-up" aria-hidden="true" /> Previsão de Fluxo de Caixa</div>
+                            <div className="cf-section-title"><i className="ti ti-chart-line" aria-hidden="true" /> Previsão de Fluxo de Caixa</div>
                             <div className="cf-section-subtitle">Soma automática de pagamentos futuros e parcelados</div>
                         </div>
                         <button
@@ -1091,11 +1091,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 </div>
                 )}
 
-                {embedded && (
-                    <div className="modal-footer" style={{ marginTop: '20px' }}>
-                        <button onClick={onClose} className="voltar-btn">← Voltar às Obras</button>
-                    </div>
-                )}
             </div>
     );
 

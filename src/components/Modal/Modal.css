@@ -172,6 +172,24 @@
 
 .m-btn-cancel:hover { background: var(--surface-muted); }
 
+.m-btn-secondary {
+    height: 34px;
+    padding: 0 14px;
+    background: var(--surface-card);
+    color: var(--text-secondary);
+    border: 0.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition: background var(--transition-fast);
+}
+.m-btn-secondary:hover { background: var(--surface-muted); }
+
 .m-btn-primary {
     height: 34px;
     padding: 0 14px;

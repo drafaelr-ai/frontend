@@ -1036,33 +1036,56 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
-                            {/* Header com Título + Cards de Resumo */}
+                            {/* F0.4 — Voltar às Obras */}
+                            <button
+                                className="m-btn-secondary"
+                                style={{ marginBottom: '12px' }}
+                                onClick={() => { setObraSelecionada(null); setCurrentPage('obras'); }}
+                            >
+                                <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar às Obras
+                            </button>
+
                             {/* Header com Título + Cards de Resumo */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 padding: '16px 20px',
-                                background: '#fff',
-                                borderRadius: '12px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                                background: 'var(--surface-card)',
+                                borderRadius: 'var(--radius-xl)',
+                                boxShadow: 'var(--shadow-card)',
+                                border: '0.5px solid var(--border-subtle)',
                                 marginBottom: '20px',
                                 flexWrap: 'wrap',
                                 gap: '16px'
                             }}>
-                            {/* Título */}
-                                <h1 style={{ 
-                                    margin: 0,
-                                    fontSize: '1.4rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px',
-                                    color: '#1e293b'
-                                }}>
-                                    <i className="ti ti-home" aria-hidden="true" /> Início - {obraSelecionada.nome}
-                                </h1>
+                            {/* Título + Subtitle */}
+                                <div>
+                                    <h1 style={{
+                                        margin: 0,
+                                        fontSize: '20px',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        color: 'var(--text-primary)'
+                                    }}>
+                                        <i className="ti ti-home" aria-hidden="true" /> Início - {obraSelecionada.nome}
+                                    </h1>
+                                    <p style={{
+                                        margin: '4px 0 0 0',
+                                        fontSize: '13px',
+                                        color: 'var(--text-muted)',
+                                        paddingLeft: '28px'
+                                    }}>
+                                        Obra ativa
+                                        {sumarios?.orcamento_total > 0 && (
+                                            <> · {Math.round((sumarios.valores_pagos / sumarios.orcamento_total) * 100)}% pago</>
+                                        )}
+                                    </p>
+                                </div>
 
-                                {/* Cards de Resumo - Usando valores do backend (sumarios) */}
+                                {/* Cards de Resumo */}
                                 <div style={{
                                     display: 'flex',
                                     gap: '10px',
@@ -1070,52 +1093,52 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 }}>
                                     <div style={{
                                         padding: '8px 14px',
-                                        background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)',
-                                        borderRadius: '8px',
-                                        borderLeft: '4px solid #ef4444',
+                                        background: 'var(--status-danger-bg)',
+                                        borderRadius: 'var(--radius-md)',
+                                        borderLeft: '4px solid var(--status-danger)',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
-                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
+                                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '2px' }}>Orçamento Total</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--status-danger)' }}>
                                             {formatCurrency(sumarios?.orcamento_total || 0)}
                                         </div>
                                     </div>
 
                                     <div style={{
                                         padding: '8px 14px',
-                                        background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-                                        borderRadius: '8px',
-                                        borderLeft: '4px solid #3b82f6',
+                                        background: 'var(--status-info-bg)',
+                                        borderRadius: 'var(--radius-md)',
+                                        borderLeft: '4px solid var(--status-info)',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Valores Pagos</div>
-                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#3b82f6' }}>
+                                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '2px' }}>Valores Pagos</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--status-info)' }}>
                                             {formatCurrency(sumarios?.valores_pagos || 0)}
                                         </div>
                                     </div>
 
                                     <div style={{
                                         padding: '8px 14px',
-                                        background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                                        borderRadius: '8px',
-                                        borderLeft: '4px solid #22c55e',
+                                        background: 'var(--status-success-bg)',
+                                        borderRadius: 'var(--radius-md)',
+                                        borderLeft: '4px solid var(--status-success)',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Liberado (Fila)</div>
-                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#22c55e' }}>
+                                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '2px' }}>Liberado (Fila)</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--status-success)' }}>
                                             {formatCurrency(sumarios?.liberado_pagamento || 0)}
                                         </div>
                                     </div>
 
                                     <div style={{
                                         padding: '8px 14px',
-                                        background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-                                        borderRadius: '8px',
-                                        borderLeft: '4px solid #a855f7',
+                                        background: 'var(--status-purple-bg)',
+                                        borderRadius: 'var(--radius-md)',
+                                        borderLeft: '4px solid var(--status-purple-text)',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Despesas Extras</div>
-                                        <div style={{ fontSize: '15px', fontWeight: '700', color: '#a855f7' }}>
+                                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '2px' }}>Despesas Extras</div>
+                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--status-purple-text)' }}>
                                             {formatCurrency(sumarios?.despesas_extras || 0)}
                                         </div>
                                     </div>
