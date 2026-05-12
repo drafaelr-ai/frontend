@@ -1185,7 +1185,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {/* Esta Semana */}
             {estaSemana.length > 0 && (filtro === 'todos' || filtro === 'semana') && (
                 <div style={styles.section}>
-                    <h3 style={styles.sectionTitle}>📋 Esta Semana</h3>
+                    <h3 style={styles.sectionTitle}><i className="ti ti-clipboard-list" aria-hidden="true" /> Esta Semana</h3>
                     <div style={styles.card}>
                         {estaSemana.map(demanda => (
                             <div 
@@ -1224,7 +1224,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {/* Próxima Semana */}
             {proximaSemana.length > 0 && filtro === 'todos' && (
                 <div style={styles.section}>
-                    <h3 style={styles.sectionTitle}>📅 Próxima Semana</h3>
+                    <h3 style={styles.sectionTitle}><i className="ti ti-calendar" aria-hidden="true" /> Próxima Semana</h3>
                     <div style={styles.card}>
                         {proximaSemana.map(demanda => (
                             <div 
@@ -1611,7 +1611,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalConfirmar(null)}>
                     <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>📅 Adicionar à Agenda</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-calendar" aria-hidden="true" /> Adicionar à Agenda</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalConfirmar(null)}>×</button>
                         </div>
                         <div style={styles.modalBody}>

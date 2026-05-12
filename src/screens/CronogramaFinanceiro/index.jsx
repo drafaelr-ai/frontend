@@ -566,7 +566,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     const cronogramaContent = (
         <div>
-            {embedded && <h2>{simplified ? <i className="ti ti-clipboard-list" aria-hidden="true" /> : <i className="ti ti-cash" aria-hidden="true" />} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>}
+            {embedded && !simplified && <h2><i className="ti ti-cash" aria-hidden="true" /> Cronograma Financeiro - {obraNome}</h2>}
             <QuadroAlertasVencimento obraId={obraId} />
             {/* Botões de Exportação */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>

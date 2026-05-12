@@ -1306,7 +1306,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         <div className="cronograma-obra-container">
             {/* Header */}
             <div className="cronograma-header">
-                <h2>📅 Cronograma de Obras - {obraNome}</h2>
+                <h2><i className="ti ti-calendar" aria-hidden="true" /> Cronograma de Obras - {obraNome}</h2>
                 <div className="header-actions">
                     <div className="view-toggle">
                         <button 
@@ -1446,7 +1446,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showImportModal && (
                 <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>📋 Importar Serviços</h3>
+                        <h3><i className="ti ti-clipboard-list" aria-hidden="true" /> Importar Serviços</h3>
                         {servicosDisponiveis.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Todos os serviços já estão no cronograma.</div>
                         ) : (
@@ -1479,7 +1479,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showImportOrcamentoModal && (
                 <div className="modal-overlay" onClick={() => setShowImportOrcamentoModal(false)}>
                     <div className="modal-content large" onClick={e => e.stopPropagation()}>
-                        <h3>📊 Importar do Orçamento de Engenharia</h3>
+                        <h3><i className="ti ti-chart-bar" aria-hidden="true" /> Importar do Orçamento de Engenharia</h3>
                         <p style={{ color: '#666', marginBottom: '15px' }}>
                             Importe etapas do Orçamento de Engenharia diretamente para o Cronograma.
                         </p>
