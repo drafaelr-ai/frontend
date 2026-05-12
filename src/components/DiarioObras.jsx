@@ -3,40 +3,13 @@ import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO D
 import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 
 // Helper para formatar datas
 const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR');
-};
-
-// Helper para fetch com autenticação
-const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    
-    const headers = {
-        ...options.headers,
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.reload();
-        throw new Error('Sessão expirada. Faça o login novamente.');
-    }
-
-    return response;
 };
 
 // Componente para carregar imagem sob demanda

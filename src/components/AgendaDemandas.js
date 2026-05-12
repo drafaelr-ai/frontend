@@ -13,24 +13,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
-
-// =====================================================
-// FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
-// =====================================================
-const localFetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    const headers = { ...options.headers };
-    
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-    
-    return fetch(url, { ...options, headers });
-};
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 
 // =====================================================
 // ESTILOS
@@ -676,7 +659,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const carregarDemandas = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`);
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`);
             if (!res.ok) throw new Error('Erro ao carregar demandas');
             const data = await res.json();
             setDemandas(data);
@@ -692,7 +675,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     // Sincronizar cronograma automaticamente
     const sincronizarCronograma = useCallback(async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/sincronizar-cronograma`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/sincronizar-cronograma`, {
                 method: 'POST'
             });
             if (res.ok) {
@@ -710,7 +693,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const carregarPagamentosImportar = useCallback(async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/pagamentos`);
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/pagamentos`);
             if (res.ok) {
                 const data = await res.json();
                 setPagamentosImportar(data);
@@ -722,7 +705,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const carregarOrcamentoImportar = useCallback(async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/orcamento`);
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/orcamento`);
             if (res.ok) {
                 const data = await res.json();
                 setOrcamentoImportar(data);
@@ -734,7 +717,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const carregarServicosImportar = useCallback(async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/servicos`);
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/importar/servicos`);
             if (res.ok) {
                 const data = await res.json();
                 setServicosImportar(data);
@@ -766,7 +749,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     // =====================================================
     const criarDemandaManual = async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
                 method: 'POST',
                 body: JSON.stringify({
                     ...formManual,
@@ -799,7 +782,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
     const criarDemandaImportada = async () => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda`, {
                 method: 'POST',
                 body: JSON.stringify({
                     ...formImportar,
@@ -840,7 +823,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         if (!await confirmDialog(`Excluir "${demanda.descricao}"?`, { danger: true, confirmText: 'Excluir' })) return;
 
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${demanda.id}`, {
                 method: 'DELETE'
             });
 
@@ -862,7 +845,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         if (!showModalEditar) return;
         
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${showModalEditar.id}`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/agenda/${showModalEditar.id}`, {
                 method: 'PUT',
                 body: JSON.stringify({
                     descricao: showModalEditar.descricao,

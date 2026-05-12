@@ -12,24 +12,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
-
-// =====================================================
-// FUNÇÃO DE FETCH AUTENTICADO (LOCAL)
-// =====================================================
-const localFetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    const headers = { ...options.headers };
-    
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
-    }
-    
-    return fetch(url, { ...options, headers });
-};
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 
 // =====================================================
 // ESTILOS
@@ -767,7 +750,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         
         setBuscando(true);
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/servicos-autocomplete?q=${encodeURIComponent(termo)}`);
+            const res = await fetchWithAuth(`${apiUrl}/servicos-autocomplete?q=${encodeURIComponent(termo)}`);
             if (res.ok) {
                 const data = await res.json();
                 setAutocomplete({
@@ -1817,7 +1800,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
             const finalMediaType = header.match(/data:(.*?);/)?.[1] || mediaType;
             
             // Chamar API
-            const response = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/gerar-por-planta`, {
+            const response = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/gerar-por-planta`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1953,7 +1936,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
         if (!resultado) return;
         
         try {
-            const response = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/importar-gerado`, {
+            const response = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/importar-gerado`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2432,7 +2415,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const carregarDados = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng`);
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng`);
             if (res.ok) {
                 const data = await res.json();
                 setDados(data);
@@ -2467,7 +2450,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     // Criar etapa
     const criarEtapa = async (dados) => {
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
@@ -2488,7 +2471,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 ? `${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`
                 : `${apiUrl}/obras/${obraId}/orcamento-eng/itens`;
             
-            const res = await localFetchWithAuth(url, {
+            const res = await fetchWithAuth(url, {
                 method: isEdicao ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2536,7 +2519,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         if (!await confirmDialog('Excluir este item e o serviço vinculado?', { danger: true, confirmText: 'Excluir' })) return;
         
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -2552,7 +2535,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         if (!await confirmDialog('Excluir esta etapa e todos os seus itens?', { danger: true, confirmText: 'Excluir' })) return;
         
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
@@ -2585,7 +2568,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         }));
         
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/reordenar-etapas`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/reordenar-etapas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ etapas: etapasOrdem })
@@ -2666,7 +2649,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         etapaAtual = etapaExistente;
                     } else {
                         // Criar nova etapa
-                        const resEtapa = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
+                        const resEtapa = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ codigo, nome: descricao })
@@ -2723,7 +2706,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         }
 
         try {
-            const res = await localFetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/apagar-tudo`, {
+            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/apagar-tudo`, {
                 method: 'DELETE'
             });
 

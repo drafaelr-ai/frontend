@@ -1,17 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './DashboardObra.css';
 import { API_URL } from '../config';
-
-// Helper para fetch com autenticação
-const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers
-    };
-    return fetch(url, { ...options, headers });
-};
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 
 // Helper para formatar moeda
 const formatCurrency = (value) => {
