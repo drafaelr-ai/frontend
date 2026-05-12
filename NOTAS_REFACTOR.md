@@ -1,5 +1,29 @@
 # Notas de Refactor — Pendências Identificadas
 
+## E3 TODO: remover/modificar auto-redirect pra última obra após login (descoberto em E1)
+
+**Mecanismo atual (puro URL-based, sem localStorage):**
+- Não há "auto-redirect para última obra" persistido — nenhum `localStorage.setItem('lastObra', ...)`
+- O fluxo atual é: Login → `ObraDetalhe` que lê `window.location.search`
+  - Se URL tem `?obra=<id>&page=<pageName>` → carrega `fetchObraData(obraId)`, seta `currentPage`
+  - Se URL sem `?obra=` → `currentPage = 'obras'` (mostra lista de obras dentro do ObraDetalhe)
+- O "redirect" ocorre apenas se o usuário volta via URL bookmarked ou browser history com `?obra=X`
+- Arquivo: `src/screens/ObraDetalhe/index.jsx` — `useEffect` linha ~360, `currentPage` lazy init linha ~101
+
+**O que muda com o novo Dashboard panorâmico (E2):**
+- Fluxo novo: Login → Dashboard panorâmico (lista de obras, visão geral) → clica obra → ObraDetalhe
+- O `?obra=X` na URL continua funcional (deep link direto ainda é válido)
+- O "continuar onde parou" explícito seria um botão na tela nova que constrói a URL `?obra=X&page=home`
+  com o ID da última obra clicada (persistido via localStorage ou contexto)
+
+**Ação E3:**
+- Remover ou isolar a lógica de URL init em `ObraDetalhe` que chama `fetchObraData` no mount
+  (ou mantê-la para suportar deep links — decisão de produto)
+- Decidir se o "continuar onde parou" é: (a) restaurado automaticamente, (b) botão explícito, ou (c) removido
+- Avaliar se `?obra=X` deep link deve continuar funcionando independente do Dashboard novo
+
+---
+
 ## Utilitários duplicados (descoberto em fase 2, setup)
 
 Os seguintes arquivos têm cópias LOCAIS de funções já centralizadas em utils/:
