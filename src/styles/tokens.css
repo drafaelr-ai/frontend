@@ -1,0 +1,195 @@
+/*
+ * Obraly Design System — Tokens v2.0
+ *
+ * Como usar:
+ * 1. Coloca este arquivo em frontend/src/styles/tokens.css
+ * 2. Importa em frontend/src/index.js (ANTES do App.css):
+ *      import './styles/tokens.css';
+ * 3. Substitui as variáveis antigas do App.css linha 1-60 pelas referências
+ *    abaixo (ou apaga aquelas e usa só estas).
+ *
+ * REGRA: nenhum valor de cor, espaçamento ou tipografia hardcoded no código.
+ * Sempre usar as variáveis abaixo. PRs com cor hex fora deste arquivo são
+ * reprovados.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ============================================================
+     CORES — BRAND
+     ============================================================ */
+  --brand-primary:       #0b1220;   /* Slate 950 — nav, CTAs, headlines */
+  --brand-primary-soft:  #1e293b;   /* Slate 800 — hover de itens escuros */
+  --brand-accent:        #f59e0b;   /* Amber 500 — logo, atenção */
+  --brand-accent-soft:   #fef3c7;   /* Amber 100 — bg de badges/avisos */
+
+  /* ============================================================
+     CORES — SUPERFÍCIES
+     ============================================================ */
+  --surface-page:        #fafaf9;   /* fundo geral da página */
+  --surface-card:        #ffffff;   /* cards, modais */
+  --surface-muted:       #f1f5f9;   /* zebra, hover de linhas, headers de tabela */
+  --surface-subtle:      #f8fafc;   /* alternativa mais clara */
+  --surface-dark:        #0b1220;   /* navbar */
+  --surface-dark-soft:   #1e293b;   /* hover em dark */
+
+  /* ============================================================
+     CORES — TEXTO (todos passam WCAG AA em fundo branco)
+     ============================================================ */
+  --text-primary:        #0f172a;   /* títulos, números — contraste 17:1 */
+  --text-secondary:      #334155;   /* labels, hints de footer — contraste 11:1 */
+  --text-muted:          #475569;   /* timestamps, prefixos — contraste 8.6:1 */
+  --text-on-dark:        #ffffff;
+  --text-on-dark-muted:  rgba(255, 255, 255, 0.7);   /* mín pra contraste 5:1+ */
+
+  /* PROIBIDO em texto: slate-400 (#94a3b8) ou mais claro. Só em bordas decorativas. */
+
+  /* ============================================================
+     CORES — BORDAS
+     ============================================================ */
+  --border-subtle:       #e2e8f0;   /* divisões internas (cards, tabelas) */
+  --border-default:      #cbd5e1;   /* inputs, separadores principais */
+  --border-strong:       #94a3b8;   /* hover, ativos, dashed em drop zones */
+  --border-on-dark:      rgba(255, 255, 255, 0.08);
+
+  /* ============================================================
+     CORES — STATUS (semânticas)
+     ============================================================ */
+  /* Sucesso */
+  --status-success:        #10b981;   /* emerald 500 */
+  --status-success-bg:     #d1fae5;   /* emerald 100 */
+  --status-success-text:   #047857;   /* emerald 700 — pra texto em bg-success */
+
+  /* Erro / destrutivo */
+  --status-danger:         #dc2626;   /* red 600 */
+  --status-danger-bg:      #fee2e2;   /* red 100 */
+  --status-danger-text:    #b91c1c;   /* red 700 */
+
+  /* Aviso */
+  --status-warning:        #f59e0b;   /* amber 500 — mesma do brand-accent */
+  --status-warning-bg:     #fef3c7;   /* amber 100 */
+  --status-warning-text:   #b45309;   /* amber 700 */
+
+  /* Informativo */
+  --status-info:           #3b82f6;   /* blue 500 */
+  --status-info-bg:        #dbeafe;   /* blue 100 */
+  --status-info-text:      #1d4ed8;   /* blue 700 */
+
+  /* Neutro/cancelado */
+  --status-neutral:        #64748b;   /* slate 500 */
+  --status-neutral-bg:     #f1f5f9;   /* slate 100 */
+  --status-neutral-text:   #334155;   /* slate 700 */
+
+  /* Roxo (operacional/recorrente) */
+  --status-purple-bg:      #ede9fe;   /* violet 100 */
+  --status-purple-text:    #6b21a8;   /* violet 800 */
+
+  /* ============================================================
+     TIPOGRAFIA
+     ============================================================ */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+  /* Escala — só estes tamanhos */
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   16px;
+  --text-xl:   18px;
+  --text-2xl:  22px;
+  --text-3xl:  28px;
+
+  /* Pesos — APENAS dois */
+  --weight-normal: 400;
+  --weight-medium: 500;
+
+  /* Letter spacing */
+  --tracking-tight: -0.01em;
+  --tracking-wide:   0.04em;
+
+  /* Line height */
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-loose:  1.7;
+
+  /* ============================================================
+     ESPAÇAMENTO
+     ============================================================ */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ============================================================
+     BORDAS E RAIOS
+     ============================================================ */
+  --radius-sm: 4px;    /* badges, chips, pills */
+  --radius-md: 6px;    /* botões, inputs, cards compactos */
+  --radius-lg: 8px;    /* cards principais */
+  --radius-xl: 10px;   /* modais, painéis grandes */
+  --radius-full: 9999px;
+
+  /* ============================================================
+     SOMBRAS (uso restrito)
+     ============================================================ */
+  --shadow-card:  0 1px 2px rgba(15, 23, 42, 0.04),
+                  0 0 0 0.5px rgba(15, 23, 42, 0.06);
+  --shadow-popup: 0 4px 12px rgba(15, 23, 42, 0.08),
+                  0 0 0 0.5px rgba(15, 23, 42, 0.08);
+  --shadow-modal: 0 20px 60px rgba(15, 23, 42, 0.15),
+                  0 0 0 0.5px rgba(15, 23, 42, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(11, 18, 32, 0.12);
+
+  /* ============================================================
+     TRANSIÇÕES
+     ============================================================ */
+  --transition-fast:   0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow:   0.4s ease;
+}
+
+/* ============================================================
+   RESET LEVE — só o necessário pra design system funcionar
+   ============================================================ */
+
+html {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+
+/* Foco visível para acessibilidade (qualquer elemento focável via teclado) */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Números tabulares por padrão em qualquer .num */
+.num,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
