@@ -3,6 +3,7 @@ import './CronogramaObra.css';
 import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 
 // Helper para formatar datas
 const formatDate = (dateStr) => {
@@ -109,17 +110,6 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     // NOVO: Estado para modal de detalhes
     const [servicoDetalhes, setServicoDetalhes] = useState(null);
 
-    // Função para buscar com autenticação
-    const fetchWithAuth = useCallback(async (url, options = {}) => {
-        const token = localStorage.getItem('token');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
-        };
-        return fetch(url, { ...options, headers });
-    }, []);
-
     // Carregar cronograma
     const fetchCronograma = useCallback(async () => {
         try {
@@ -149,7 +139,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         } finally {
             setLoading(false);
         }
-    }, [obraId, fetchWithAuth]);
+    }, [obraId]);
 
     // Buscar dados EVM
     const fetchEVMData = async (servicoNome) => {
