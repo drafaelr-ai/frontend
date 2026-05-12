@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { notify, confirmDialog } from '../../utils/notify';
@@ -213,380 +213,383 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
         return 'pendente';
     };
 
-    if (isLoading) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center' }}>Carregando parcelas...</div></Modal>;
-    if (error) return <Modal customWidth="900px"><div style={{ padding: '40px', textAlign: 'center', color: 'var(--cor-vermelho)' }}>Erro: {error}</div></Modal>;
+    if (isLoading) return (
+        <Modal isOpen={true} onClose={onClose} title="Parcelas" subtitle={pagamentoParcelado.descricao} width="xlarge">
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando parcelas...</div>
+        </Modal>
+    );
+    if (error) return (
+        <Modal isOpen={true} onClose={onClose} title="Parcelas" subtitle={pagamentoParcelado.descricao} width="xlarge">
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--status-danger)' }}>Erro: {error}</div>
+        </Modal>
+    );
 
     const parcelasPagas = parcelas.filter(p => p.status === 'Pago').length;
     const progresso = Math.round((parcelasPagas / parcelas.length) * 100);
 
     return (
-        <Modal onClose={onClose} customWidth="900px">
-            <div style={{ maxHeight: '90vh', overflowY: 'auto' }}>
-                {/* Header */}
-                <div style={{
-                    padding: '20px 24px',
-                    background: 'var(--cor-purple-bg)',
-                    borderBottom: '3px solid var(--cor-purple-light)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start'
-                }}>
-                    <div style={{ flex: 1 }}>
-                        {editandoDadosGerais ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <input
-                                    type="text"
-                                    value={dadosGerais.descricao}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, descricao: e.target.value})}
-                                    style={{
-                                        fontSize: '18px',
-                                        fontWeight: '700',
-                                        padding: '8px 12px',
-                                        borderRadius: '8px',
-                                        border: '2px solid var(--cor-purple-light)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Descrição"
-                                />
-                                <input
-                                    type="text"
-                                    value={dadosGerais.fornecedor}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, fornecedor: e.target.value})}
-                                    style={{
-                                        fontSize: '14px',
-                                        padding: '6px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--cor-borda)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Fornecedor"
-                                />
-                                <input
-                                    type="text"
-                                    value={dadosGerais.pix}
-                                    onChange={(e) => setDadosGerais({...dadosGerais, pix: e.target.value})}
-                                    style={{
-                                        fontSize: '14px',
-                                        padding: '6px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--cor-borda)',
-                                        background: 'white'
-                                    }}
-                                    placeholder="Chave PIX (CPF, CNPJ, E-mail, Telefone ou Aleatória)"
-                                />
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    <select
-                                        value={dadosGerais.orcamento_item_id || ''}
-                                        onChange={(e) => setDadosGerais({...dadosGerais, orcamento_item_id: e.target.value || null})}
-                                        style={{
-                                            flex: 1,
-                                            minWidth: '200px',
-                                            fontSize: '14px',
-                                            padding: '6px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--cor-borda)',
-                                            background: 'white'
-                                        }}
-                                    >
-                                        <option value="">Sem vínculo (Despesa Geral)</option>
-                                        {itensOrcamento.map(item => (
-                                            <option key={item.id} value={String(item.id)}>{item.nome_completo}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        value={dadosGerais.segmento || 'Material'}
-                                        onChange={(e) => setDadosGerais({...dadosGerais, segmento: e.target.value})}
-                                        style={{
-                                            fontSize: '14px',
-                                            padding: '6px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid var(--cor-borda)',
-                                            background: 'white'
-                                        }}
-                                    >
-                                        <option value="Material">Material</option>
-                                        <option value="Mão de Obra">Mão de Obra</option>
-                                    </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                        ✓ Salvar
-                                    </button>
-                                    <button onClick={() => setEditandoDadosGerais(false)} className="cf-btn cf-btn-outline" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                        ✕ Cancelar
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                <h2 style={{
-                                    margin: 0,
-                                    fontSize: '20px',
-                                    fontWeight: '700',
-                                    color: 'var(--cor-texto)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px'
-                                }}>
-                                    📦 {pagamentoParcelado.descricao}
-                                    <button
-                                        onClick={() => setEditandoDadosGerais(true)}
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            fontSize: '14px',
-                                            color: 'var(--cor-purple)'
-                                        }}
-                                        title="Editar dados gerais"
-                                    >
-                                        ✏️
-                                    </button>
-                                </h2>
-                                <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--cor-texto-secundario)' }}>
-                                    Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
-                                    {pagamentoParcelado.pix && (
-                                        <span style={{ marginLeft: '8px' }}>
-                                            • PIX: {pagamentoParcelado.pix}
-                                        </span>
-                                    )}
-                                    {pagamentoParcelado.orcamento_item_id && (
-                                        <span style={{
-                                            marginLeft: '8px',
-                                            padding: '2px 8px',
-                                            backgroundColor: 'var(--cor-primaria-bg)',
-                                            color: 'var(--cor-primaria)',
-                                            borderRadius: '4px',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}>
-                                            📦 {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
-                                        </span>
-                                    )}
-                                </p>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Resumo */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '12px',
-                    padding: '20px 24px',
-                    background: 'var(--cor-fundo-secundario)',
-                    borderBottom: '1px solid var(--cor-borda)'
-                }}>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Total</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{formatCurrency(calcularValorTotal())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Pago</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-acento)' }}>{formatCurrency(calcularValorPago())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Restante</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-warning)' }}>{formatCurrency(calcularValorRestante())}</div>
-                    </div>
-                    <div style={{ background: 'var(--cor-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--cor-borda)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--cor-texto-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Parcelas</div>
-                        <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--cor-texto)' }}>{parcelasPagas} / {parcelas.length}</div>
-                    </div>
-                </div>
-
-                {/* Barra de Progresso */}
-                <div style={{ padding: '16px 24px', background: 'var(--cor-fundo-secundario)', borderBottom: '1px solid var(--cor-borda)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto-secundario)' }}>Progresso do pagamento</span>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--cor-purple)' }}>{progresso}%</span>
-                    </div>
-                    <div style={{ height: '8px', background: 'var(--cor-borda)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{
-                            width: `${progresso}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, var(--cor-purple-light) 0%, var(--cor-purple) 100%)',
-                            borderRadius: '4px',
-                            transition: 'width 0.4s ease'
-                        }} />
-                    </div>
-                </div>
-
-                {/* Lista de Parcelas */}
-                <div style={{ padding: '20px 24px', maxHeight: '350px', overflowY: 'auto' }}>
-                    <h4 style={{ margin: '0 0 16px', fontSize: '14px', color: 'var(--cor-texto-secundario)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Parcelas
-                        <span style={{ fontSize: '11px', background: 'var(--cor-fundo-secundario)', padding: '2px 8px', borderRadius: '10px' }}>
-                            Clique para editar
-                        </span>
-                    </h4>
-
-                    {parcelas.map(parcela => {
-                        const status = getStatusParcela(parcela);
-                        const isEditando = parcelaEditando === parcela.id;
-
-                        return (
-                            <div
-                                key={parcela.id}
-                                className={`parcela-item ${status}`}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '14px 16px',
-                                    background: status === 'paga' ? 'var(--cor-acento-bg)' :
-                                               status === 'vencida' ? 'var(--cor-vermelho-bg)' : 'var(--cor-fundo-secundario)',
-                                    borderRadius: '10px',
-                                    marginBottom: '10px',
-                                    border: `1px solid ${status === 'paga' ? 'var(--cor-acento-light)' :
-                                                        status === 'vencida' ? 'var(--cor-vermelho-light)' : 'var(--cor-borda)'}`,
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    {/* Número da Parcela */}
-                                    <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: '700',
-                                        fontSize: parcela.numero_parcela === 0 ? '10px' : '14px',
-                                        background: status === 'paga' ? 'var(--cor-acento)' :
-                                                   parcela.numero_parcela === 0 ? '#10b981' : 'var(--cor-card)',
-                                        color: status === 'paga' || parcela.numero_parcela === 0 ? 'white' : 'var(--cor-texto-muted)',
-                                        border: status !== 'paga' && parcela.numero_parcela !== 0 ? '2px solid var(--cor-borda)' : 'none'
-                                    }}>
-                                        {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
-                                    </div>
-
-                                    {/* Dados */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        {isEditando ? (
-                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    defaultValue={parcela.valor_parcela}
-                                                    id={`valor-${parcela.id}`}
-                                                    className="parcela-edit-input"
-                                                    style={{ width: '110px' }}
-                                                    placeholder="Valor"
-                                                />
-                                                <input
-                                                    type="date"
-                                                    defaultValue={parcela.data_vencimento}
-                                                    id={`data-${parcela.id}`}
-                                                    className="parcela-edit-input"
-                                                    style={{ width: '140px' }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--cor-texto)' }}>
-                                                    {formatCurrency(parcela.valor_parcela)}
-                                                </span>
-                                                <span style={{ fontSize: '12px', color: 'var(--cor-texto-secundario)' }}>
-                                                    {status === 'paga' && parcela.data_pagamento
-                                                        ? `Paga em ${new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}`
-                                                        : `Vence ${new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}`
-                                                    }
-                                                    {parcela.observacao && ` • ${parcela.observacao}`}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Ações */}
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    {/* Badge de Status */}
-                                    <span
-                                        className={`parcela-status-badge ${status}`}
-                                        style={parcela.numero_parcela === 0 && status !== 'paga' ? { background: '#10b981', color: 'white' } : {}}
-                                    >
-                                        {status === 'paga' ? 'Paga' :
-                                         status === 'vencida' ? 'Vencida' :
-                                         parcela.numero_parcela === 0 ? 'Entrada' : 'Pendente'}
-                                    </span>
-
-                                    {isEditando ? (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    const novoValor = document.getElementById(`valor-${parcela.id}`).value;
-                                                    const novaData = document.getElementById(`data-${parcela.id}`).value;
-                                                    handleEditarParcela(parcela, novoValor, novaData);
-                                                }}
-                                                className="parcela-action-btn primary"
-                                            >
-                                                ✓ Salvar
-                                            </button>
-                                            <button
-                                                onClick={() => setParcelaEditando(null)}
-                                                className="parcela-action-btn"
-                                            >
-                                                ✕
-                                            </button>
-                                        </>
-                                    ) : status === 'paga' ? (
-                                        <button
-                                            onClick={() => handleDesfazerPagamento(parcela)}
-                                            className="parcela-action-btn"
-                                            title="Desfazer pagamento"
-                                            style={{ color: 'var(--cor-vermelho)' }}
-                                        >
-                                            ↩️ Desfazer
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={() => setParcelaEditando(parcela.id)}
-                                                className="parcela-action-btn"
-                                                title="Editar valor e data"
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                onClick={() => handleMarcarPaga(parcela)}
-                                                className="parcela-action-btn success"
-                                                title="Marcar como paga"
-                                            >
-                                                💰 Pagar
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Footer */}
-                <div style={{
-                    padding: '16px 24px',
-                    borderTop: '1px solid var(--cor-borda)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: 'var(--cor-fundo-secundario)'
-                }}>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Parcelas"
+            subtitle={pagamentoParcelado.descricao}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <>
                     <button
+                        type="button"
+                        className="m-btn-cancel"
                         onClick={handleRecriarLancamentos}
-                        className="cf-btn cf-btn-outline"
                         title="Recria os lançamentos de parcelas já pagas (útil para corrigir dados)"
                     >
-                        🔄 Recriar Lançamentos
+                        Recriar Lançamentos
                     </button>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={onClose} className="cf-btn cf-btn-outline">
-                            Fechar
-                        </button>
-                    </div>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+                </>
+            }
+        >
+            {/* Header */}
+            <div style={{
+                padding: '20px 24px',
+                background: 'var(--status-info-bg)',
+                borderBottom: '3px solid var(--status-info)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start'
+            }}>
+                <div style={{ flex: 1 }}>
+                    {editandoDadosGerais ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <input
+                                type="text"
+                                value={dadosGerais.descricao}
+                                onChange={(e) => setDadosGerais({...dadosGerais, descricao: e.target.value})}
+                                style={{
+                                    fontSize: '18px',
+                                    fontWeight: '700',
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    border: '2px solid var(--status-info)',
+                                    background: 'var(--surface-card)'
+                                }}
+                                placeholder="Descrição"
+                            />
+                            <input
+                                type="text"
+                                value={dadosGerais.fornecedor}
+                                onChange={(e) => setDadosGerais({...dadosGerais, fornecedor: e.target.value})}
+                                style={{
+                                    fontSize: '14px',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-default)',
+                                    background: 'var(--surface-card)'
+                                }}
+                                placeholder="Fornecedor"
+                            />
+                            <input
+                                type="text"
+                                value={dadosGerais.pix}
+                                onChange={(e) => setDadosGerais({...dadosGerais, pix: e.target.value})}
+                                style={{
+                                    fontSize: '14px',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-default)',
+                                    background: 'var(--surface-card)'
+                                }}
+                                placeholder="Chave PIX (CPF, CNPJ, E-mail, Telefone ou Aleatória)"
+                            />
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <select
+                                    value={dadosGerais.orcamento_item_id || ''}
+                                    onChange={(e) => setDadosGerais({...dadosGerais, orcamento_item_id: e.target.value || null})}
+                                    style={{
+                                        flex: 1,
+                                        minWidth: '200px',
+                                        fontSize: '14px',
+                                        padding: '6px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-default)',
+                                        background: 'var(--surface-card)'
+                                    }}
+                                >
+                                    <option value="">Sem vínculo (Despesa Geral)</option>
+                                    {itensOrcamento.map(item => (
+                                        <option key={item.id} value={String(item.id)}>{item.nome_completo}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={dadosGerais.segmento || 'Material'}
+                                    onChange={(e) => setDadosGerais({...dadosGerais, segmento: e.target.value})}
+                                    style={{
+                                        fontSize: '14px',
+                                        padding: '6px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-default)',
+                                        background: 'var(--surface-card)'
+                                    }}
+                                >
+                                    <option value="Material">Material</option>
+                                    <option value="Mão de Obra">Mão de Obra</option>
+                                </select>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                    ✓ Salvar
+                                </button>
+                                <button onClick={() => setEditandoDadosGerais(false)} className="cf-btn cf-btn-outline" style={{ padding: '6px 12px', fontSize: '13px' }}>
+                                    ✕ Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <h2 style={{
+                                margin: 0,
+                                fontSize: '20px',
+                                fontWeight: '700',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                📦 {pagamentoParcelado.descricao}
+                                <button
+                                    onClick={() => setEditandoDadosGerais(true)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        color: 'var(--status-info)'
+                                    }}
+                                    title="Editar dados gerais"
+                                >
+                                    ✏️
+                                </button>
+                            </h2>
+                            <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                Fornecedor: {pagamentoParcelado.fornecedor || 'Não informado'} • {pagamentoParcelado.periodicidade || 'Mensal'}
+                                {pagamentoParcelado.pix && (
+                                    <span style={{ marginLeft: '8px' }}>
+                                        • PIX: {pagamentoParcelado.pix}
+                                    </span>
+                                )}
+                                {pagamentoParcelado.orcamento_item_id && (
+                                    <span style={{
+                                        marginLeft: '8px',
+                                        padding: '2px 8px',
+                                        backgroundColor: 'var(--status-info-bg)',
+                                        color: 'var(--status-info)',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        fontWeight: '500'
+                                    }}>
+                                        📦 {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
+                                    </span>
+                                )}
+                            </p>
+                        </>
+                    )}
                 </div>
+            </div>
+
+            {/* Resumo */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '12px',
+                padding: '20px 24px',
+                background: 'var(--surface-subtle)',
+                borderBottom: '1px solid var(--border-default)'
+            }}>
+                <div style={{ background: 'var(--surface-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Total</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>{formatCurrency(calcularValorTotal())}</div>
+                </div>
+                <div style={{ background: 'var(--surface-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Valor Pago</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--status-success)' }}>{formatCurrency(calcularValorPago())}</div>
+                </div>
+                <div style={{ background: 'var(--surface-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Restante</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--status-warning)' }}>{formatCurrency(calcularValorRestante())}</div>
+                </div>
+                <div style={{ background: 'var(--surface-card)', padding: '14px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600', marginBottom: '4px' }}>Parcelas</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>{parcelasPagas} / {parcelas.length}</div>
+                </div>
+            </div>
+
+            {/* Barra de Progresso */}
+            <div style={{ padding: '16px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-default)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Progresso do pagamento</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--status-info)' }}>{progresso}%</span>
+                </div>
+                <div style={{ height: '8px', background: 'var(--border-default)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                        width: `${progresso}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, var(--status-info) 0%, var(--brand-primary) 100%)',
+                        borderRadius: '4px',
+                        transition: 'width 0.4s ease'
+                    }} />
+                </div>
+            </div>
+
+            {/* Lista de Parcelas */}
+            <div style={{ padding: '20px 24px', maxHeight: '350px', overflowY: 'auto' }}>
+                <h4 style={{ margin: '0 0 16px', fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Parcelas
+                    <span style={{ fontSize: '11px', background: 'var(--surface-subtle)', padding: '2px 8px', borderRadius: '10px' }}>
+                        Clique para editar
+                    </span>
+                </h4>
+
+                {parcelas.map(parcela => {
+                    const status = getStatusParcela(parcela);
+                    const isEditando = parcelaEditando === parcela.id;
+
+                    return (
+                        <div
+                            key={parcela.id}
+                            className={`parcela-item ${status}`}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '14px 16px',
+                                background: status === 'paga' ? 'var(--status-success-bg)' :
+                                           status === 'vencida' ? 'var(--status-danger-bg)' : 'var(--surface-subtle)',
+                                borderRadius: '10px',
+                                marginBottom: '10px',
+                                border: `1px solid ${status === 'paga' ? 'var(--status-success)' :
+                                                    status === 'vencida' ? 'var(--status-danger)' : 'var(--border-default)'}`,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {/* Número da Parcela */}
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: '700',
+                                    fontSize: parcela.numero_parcela === 0 ? '10px' : '14px',
+                                    background: status === 'paga' ? 'var(--status-success)' :
+                                               parcela.numero_parcela === 0 ? 'var(--status-success)' : 'var(--surface-card)',
+                                    color: status === 'paga' || parcela.numero_parcela === 0 ? 'white' : 'var(--text-muted)',
+                                    border: status !== 'paga' && parcela.numero_parcela !== 0 ? '2px solid var(--border-default)' : 'none'
+                                }}>
+                                    {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
+                                </div>
+
+                                {/* Dados */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    {isEditando ? (
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                defaultValue={parcela.valor_parcela}
+                                                id={`valor-${parcela.id}`}
+                                                className="parcela-edit-input"
+                                                style={{ width: '110px' }}
+                                                placeholder="Valor"
+                                            />
+                                            <input
+                                                type="date"
+                                                defaultValue={parcela.data_vencimento}
+                                                id={`data-${parcela.id}`}
+                                                className="parcela-edit-input"
+                                                style={{ width: '140px' }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                                                {formatCurrency(parcela.valor_parcela)}
+                                            </span>
+                                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                                {status === 'paga' && parcela.data_pagamento
+                                                    ? `Paga em ${new Date(parcela.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR')}`
+                                                    : `Vence ${new Date(parcela.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}`
+                                                }
+                                                {parcela.observacao && ` • ${parcela.observacao}`}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Ações */}
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {/* Badge de Status */}
+                                <span
+                                    className={`parcela-status-badge ${status}`}
+                                    style={parcela.numero_parcela === 0 && status !== 'paga' ? { background: 'var(--status-success)', color: 'white' } : {}}
+                                >
+                                    {status === 'paga' ? 'Paga' :
+                                     status === 'vencida' ? 'Vencida' :
+                                     parcela.numero_parcela === 0 ? 'Entrada' : 'Pendente'}
+                                </span>
+
+                                {isEditando ? (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                const novoValor = document.getElementById(`valor-${parcela.id}`).value;
+                                                const novaData = document.getElementById(`data-${parcela.id}`).value;
+                                                handleEditarParcela(parcela, novoValor, novaData);
+                                            }}
+                                            className="parcela-action-btn primary"
+                                        >
+                                            ✓ Salvar
+                                        </button>
+                                        <button
+                                            onClick={() => setParcelaEditando(null)}
+                                            className="parcela-action-btn"
+                                        >
+                                            ✕
+                                        </button>
+                                    </>
+                                ) : status === 'paga' ? (
+                                    <button
+                                        onClick={() => handleDesfazerPagamento(parcela)}
+                                        className="parcela-action-btn"
+                                        title="Desfazer pagamento"
+                                        style={{ color: 'var(--status-danger)' }}
+                                    >
+                                        ↩️ Desfazer
+                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => setParcelaEditando(parcela.id)}
+                                            className="parcela-action-btn"
+                                            title="Editar valor e data"
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            onClick={() => handleMarcarPaga(parcela)}
+                                            className="parcela-action-btn success"
+                                            title="Marcar como paga"
+                                        >
+                                            💰 Pagar
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </Modal>
     );

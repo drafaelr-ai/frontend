@@ -252,3 +252,23 @@ handlers nunca executam).
 - **Problema**: `notify.error(\`✅ ${sucessos} boletos cadastrados com sucesso!...\`)` — usa `notify.error` para mensagem de sucesso. Deveria ser `notify.success`.
 - **Impacto**: mensagem exibida com ícone/cor de erro em vez de sucesso, confundindo o usuário
 - **Nota**: não corrigido em D2 (fora do escopo de D2 que é apenas wrapper + tokens). Corrigir: trocar `notify.error` por `notify.success` nessa linha.
+
+---
+
+## TODO: tabs sticky no Modal wrapper (descoberto na fase 6 D2 Batch 5)
+
+- **Contexto**: modais com layout em abas (RelatoriosModal, AdminPanelModal, OrcamentosModal) renderizam as abas DENTRO do `children` do `<Modal>`. Com `scrollBody={true}`, as abas scrollam junto com o conteúdo em vez de permanecerem fixas no topo da área de conteúdo.
+- **Impacto**: subótimo em UX — ao scrollar, o usuário perde o contexto das abas. Aceitável como estado atual.
+- **Solução futura**: adicionar suporte a `tabs` como prop do `<Modal>` wrapper, renderizando-as fora da área scrollável (sticky abaixo do header). Exemplo: `<Modal tabs={[...]} activeTab={tab} onTabChange={setTab}>...</Modal>`
+- **Quando**: futura melhoria do design system (fase 7 ou design system v2.1)
+
+---
+
+## Estreitamento de largura em modais migrados para xlarge (fase 6 D2 Batch 5)
+
+Dois modais tinham `customWidth` maiores que o máximo disponível (`xlarge` = 800px):
+
+- **CaixaObraModal**: `customWidth="1200px"` → `width="xlarge"` (800px). Perda de 400px de largura. Layout de dashboard cards (grid 3 colunas) e tabela de movimentações pode ficar comprimido em telas menores.
+- **OrcamentosModal**: `customWidth="96%"` → `width="xlarge"` (800px). Em telas grandes (>840px), o modal era quase fullscreen; agora é fixo em 800px. Tabela de solicitações pendentes pode precisar de scroll horizontal.
+
+**Ação futura**: se o feedback de UX indicar problemas, considerar adicionar `width="fullscreen"` ou `customWidth` como escape hatch no Modal wrapper.
