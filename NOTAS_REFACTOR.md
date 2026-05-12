@@ -255,6 +255,35 @@ handlers nunca executam).
 
 ---
 
+## TODO Sub-lote F (cleanup): Eliminar legacy Modal.jsx
+
+**Status pós-D2 (12/05/2026):**
+- 26 modais em `components/modals/` migrados pro novo wrapper `components/Modal/`
+- Legacy `components/modals/Modal.jsx` PRESERVADO porque:
+  - `src/screens/Dashboard/index.jsx` ainda importa
+  - `src/screens/CronogramaFinanceiro/index.jsx` ainda importa
+
+**Plano:**
+- Dashboard será REESCRITO no sub-lote E (novo Dashboard panorâmico).
+  Aproveita pra usar o novo Modal wrapper na reescrita.
+- CronogramaFinanceiro precisa swap dedicado: avaliar se é trocar
+  import simples ou se requer refactor da JSX.
+- Após ambos resolvidos: deletar `src/components/modals/Modal.jsx`
+
+---
+
+## Bug detectado em ModalOrcamentos (descoberto na fase 6 D2 Batch 6)
+
+- **Arquivo**: `src/components/modals/ModalOrcamentos.jsx`
+- **Função**: `handleDownloadAnexo`
+- **Problema**: `window.open(`${API_URL}/anexos/${anexoId}`, '_blank')` — chama a URL da API diretamente sem `fetchWithAuth`, sem token de autenticação
+- **Impacto**: download de anexo falha silenciosamente se a rota exigir auth (retorna 401 ou redireciona para login)
+- **Contraste**: `carregarOrcamentos` no mesmo arquivo usa `fetchWithAuth` corretamente
+- **Padrão**: mesmo bug de `VisualizarNotaFiscalModal.handleDownload` — catalogado em D2 Batch 3
+- **Nota**: não corrigido em D2 (fora do escopo). Corrigir: substituir `window.open` por `fetchWithAuth(...).then(res => res.blob()).then(blob => URL.createObjectURL(blob))` e abrir o blob URL com `window.open`
+
+---
+
 ## TODO: tabs sticky no Modal wrapper (descoberto na fase 6 D2 Batch 5)
 
 - **Contexto**: modais com layout em abas (RelatoriosModal, AdminPanelModal, OrcamentosModal) renderizam as abas DENTRO do `children` do `<Modal>`. Com `scrollBody={true}`, as abas scrollam junto com o conteúdo em vez de permanecerem fixas no topo da área de conteúdo.
