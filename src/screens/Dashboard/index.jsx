@@ -52,12 +52,7 @@ function ActivityIcon({ tipo }) {
 }
 
 function navigateToObra(obraId) {
-    if (typeof window.navigateTo === 'function') {
-        window.navigateTo('dashboard', obraId);
-    } else {
-        window.history.pushState({}, '', `?obra=${obraId}`);
-        window.location.reload();
-    }
+    window.location.href = `?obra=${obraId}`;
 }
 
 // --- loading skeleton ---

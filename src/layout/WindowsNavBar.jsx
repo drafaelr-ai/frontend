@@ -500,8 +500,7 @@ const WindowsNavBar = ({
     const handleObraChange = (e) => {
         const obraId = parseInt(e.target.value);
         if (obraId === 0) {
-            setObraSelecionada(null);
-            setCurrentPage('obras');
+            window.location.href = window.location.pathname;
         } else {
             if (typeof window.navigateTo === 'function') {
                 window.navigateTo('home', obraId);
@@ -529,7 +528,12 @@ const WindowsNavBar = ({
             {/* === NAVBAR === */}
             <nav className="wnb-bar" ref={menuRef}>
                 <div className="wnb-left">
-                    <div className="wnb-logo">
+                    <div
+                        className="wnb-logo"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => { window.location.href = window.location.pathname; }}
+                        title="Voltar ao Dashboard"
+                    >
                         <div className="wnb-logo-box">
                             <i className="ti ti-building-skyscraper" aria-hidden="true"></i>
                         </div>
