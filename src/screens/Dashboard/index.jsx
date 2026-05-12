@@ -7,6 +7,7 @@ import StatCard from './components/StatCard';
 import AlertStatCard from './components/AlertStatCard';
 import ProgressBar from './components/ProgressBar';
 import ActivityItem from './components/ActivityItem';
+import DashboardHeader from './components/DashboardHeader';
 import './Dashboard.css';
 
 // --- helpers ---
@@ -233,7 +234,8 @@ export default function Dashboard() {
 
     return (
         <div className="db-root">
-            {/* Header */}
+            <DashboardHeader />
+            {/* Hero header — greeting + period toggle */}
             <div className="db-header">
                 <div className="db-header-left">
                     <h1>{getGreeting()}{user?.nome ? `, ${user.nome.split(' ')[0]}` : ''}</h1>

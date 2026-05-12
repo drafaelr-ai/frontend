@@ -1,0 +1,125 @@
+/* DashboardHeader — top nav bar inside db-root */
+/* Uses negative margins to break out of db-root's 20px 16px padding */
+.dh-root {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    /* Break out of db-root padding (20px top/bottom, 16px sides) */
+    margin: -20px -16px 20px -16px;
+}
+
+.dh-logo {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+/* Right side: notif bell + avatar */
+.dh-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Avatar circle */
+.dh-avatar-wrap {
+    position: relative;
+}
+
+.dh-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+    line-height: 1;
+}
+
+.dh-avatar:hover,
+.dh-avatar:focus-visible {
+    opacity: 0.82;
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+/* Dropdown menu */
+.dh-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    z-index: 200;
+}
+
+.dh-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    text-align: left;
+    transition: background 0.1s;
+}
+
+.dh-dropdown-item:hover,
+.dh-dropdown-item:focus-visible {
+    background: var(--surface-muted);
+    outline: none;
+}
+
+.dh-dropdown-item .ti {
+    font-size: 16px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.dh-dropdown-item--danger {
+    color: var(--status-danger, #ef4444);
+}
+
+.dh-dropdown-item--danger .ti {
+    color: var(--status-danger, #ef4444);
+}
+
+.dh-dropdown-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 2px 0;
+}
+
+/* Mobile: adjust for 14px 12px padding on db-root */
+@media (max-width: 600px) {
+    .dh-root {
+        padding: 14px 16px;
+        margin: -14px -12px 14px -12px;
+    }
+
+    .dh-logo {
+        font-size: 16px;
+    }
+}
