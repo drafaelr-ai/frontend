@@ -138,9 +138,9 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 
     const getRoleBadge = (role) => {
         const styles = {
-            master: { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)', icon: '👑' },
-            administrador: { bg: 'var(--status-info-bg)', color: 'var(--status-info)', icon: '⭐' },
-            comum: { bg: 'var(--surface-muted)', color: 'var(--text-secondary)', icon: '👤' }
+            master: { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)', icon: 'ti-crown' },
+            administrador: { bg: 'var(--status-info-bg)', color: 'var(--status-info)', icon: 'ti-star' },
+            comum: { bg: 'var(--surface-muted)', color: 'var(--text-secondary)', icon: 'ti-user' }
         };
         const s = styles[role] || styles.comum;
         return (
@@ -155,7 +155,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                 alignItems: 'center',
                 gap: 'var(--space-1)'
             }}>
-                {s.icon} {role}
+                <i className={`ti ${s.icon}`} aria-hidden="true" /> {role}
             </span>
         );
     };
@@ -201,9 +201,9 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                             value={newRole}
                             onChange={(e) => setNewRole(e.target.value)}
                         >
-                            <option value="comum">👤 Operador (comum)</option>
-                            <option value="administrador">⭐ Administrador</option>
-                            <option value="master">👑 Master</option>
+                            <option value="comum">Operador (comum)</option>
+                            <option value="administrador">Administrador</option>
+                            <option value="master">Master</option>
                         </select>
                         <button type="submit" className="m-btn-primary" style={{ flexGrow: 0 }}>
                             <i className="ti ti-plus" aria-hidden="true"></i>
@@ -244,9 +244,9 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                                 width: '100%'
                                             }}
                                         >
-                                            <option value="comum">👤 Operador</option>
-                                            <option value="administrador">⭐ Admin</option>
-                                            <option value="master">👑 Master</option>
+                                            <option value="comum">Operador</option>
+                                            <option value="administrador">Admin</option>
+                                            <option value="master">Master</option>
                                         </select>
                                     </td>
                                     <td style={{ textAlign: 'center', display: 'flex', gap: 'var(--space-1)', justifyContent: 'center' }}>

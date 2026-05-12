@@ -622,7 +622,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                 transition: 'all 0.15s'
                                             }}
                                         >
-                                            {isMao ? '👷 Mão de Obra' : '🧱 Material'}
+                                            {isMao ? <><i className="ti ti-helmet" aria-hidden="true" /> Mão de Obra</> : <><i className="ti ti-wall" aria-hidden="true" /> Material</>}
                                         </button>
                                     );
                                 })}

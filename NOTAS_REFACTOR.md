@@ -364,3 +364,29 @@ Dois modais tinham `customWidth` maiores que o máximo disponível (`xlarge` = 8
 - **Fix aplicado em E5**: substituídos por Tabler icons `<i className="ti ti-building">` e `<i className="ti ti-user">`.
 - **Outros emojis no projeto**: `WindowsNavBar.jsx`, `BiModule.js`, `AppAdmin.js`, `ModuleSelectorScreen.jsx` ainda usam emojis nativos — funcionam em maioria dos browsers mas podem falhar em ambientes sem suporte a emoji (ex: status bars de sistemas operacionais, exports de relatório). Não é urgente — apenas documentar.
 - **Regra**: novas telas devem usar Tabler icons em vez de emojis nativos.
+
+---
+
+## TODO Refactor: DiarioObras weather select usa emojis
+
+- **Arquivo**: `src/components/DiarioObras.jsx` — 30+ emojis em `<option>` tags do `<select>` de condição climática (☀️ Ensolarado, ⛅ Parcialmente nublado, ☁️ Nublado, 🌧️ Chuvoso) e em section titles (📎 📝 ✅ 👷 🧱 🔧 💭 etc.)
+- **Problema**: HTML `<select>` não aceita JSX em `<option>`, portanto não é possível substituir emojis em option values com Tabler icons diretamente.
+- **Solução proposta**: substituir `<select>` por dropdown custom (pattern já existe em `NotificacoesDropdown` e `ObraCardActions`).
+- **Outros emojis no arquivo**: section titles e botões podem ser substituídos com Tabler icons normalmente.
+- **Defer**: refactor visual dedicado (não escopo da fase 6). Emojis de clima renderizam bem na maioria dos browsers (diferente de 🏠/🏗️ que têm fallback ruim em alguns ambientes).
+
+---
+
+## TODO Fase 8 (Patrimonial): AppAdmin.js emojis
+
+- **Arquivo**: `src/AppAdmin.js` — dezenas de emojis em sidebar (`🏠 Imóveis`, `💰 Lançamentos`), headers, cards, modals e relatórios HTML inline.
+- **Escopo**: fora da fase 6 (frontend main — módulo de obras).
+- **Quando**: tratar ao iniciar refactor visual do módulo patrimonial (Fase 8 planejada).
+
+---
+
+## TODO Futura: BiModule.js emojis
+
+- **Arquivo**: `src/BiModule.js` — emojis em tab labels (`💰 Financeiro`, `🏗️ Obras`, `📅 Calendário`), ChartCard titles e alert badges.
+- **Escopo**: módulo BI tem refactor visual próprio não planejado na fase 6.
+- **Quando**: ao dedicar sprint ao módulo BI (sem data definida).
