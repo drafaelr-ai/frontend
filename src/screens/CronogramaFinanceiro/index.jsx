@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../../components/modals/Modal';
+import Modal from '../../components/Modal/Modal';
 import CadastrarPagamentoFuturoModal from '../../components/modals/CadastrarPagamentoFuturoModal';
 import EditarPagamentoFuturoModal from '../../components/modals/EditarPagamentoFuturoModal';
 import CadastrarPagamentoParceladoModal from '../../components/modals/CadastrarPagamentoParceladoModal';
@@ -559,14 +559,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         if (embedded) {
             return <div className="loading-screen">Carregando cronograma...</div>;
         }
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando cronograma...</div></Modal>;
+        return <Modal isOpen={true} onClose={onClose} title="Cronograma Financeiro"><div className="loading-screen">Carregando cronograma...</div></Modal>;
     }
 
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
     const cronogramaContent = (
-        <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>{simplified ? <i className="ti ti-clipboard-list" aria-hidden="true" /> : <i className="ti ti-cash" aria-hidden="true" />} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
+        <div>
+            {embedded && <h2>{simplified ? <i className="ti ti-clipboard-list" aria-hidden="true" /> : <i className="ti ti-cash" aria-hidden="true" />} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>}
             <QuadroAlertasVencimento obraId={obraId} />
             {/* Botões de Exportação */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -1091,11 +1091,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 </div>
                 )}
 
-                <div className="modal-footer" style={{ marginTop: '20px' }}>
-                    <button onClick={onClose} className="voltar-btn">
-                        {embedded ? '← Voltar às Obras' : 'Fechar'}
-                    </button>
-                </div>
+                {embedded && (
+                    <div className="modal-footer" style={{ marginTop: '20px' }}>
+                        <button onClick={onClose} className="voltar-btn">← Voltar às Obras</button>
+                    </div>
+                )}
             </div>
     );
 
@@ -1165,7 +1165,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     }
 
     return (
-        <Modal onClose={onClose} customWidth="96%">
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title={`${simplified ? 'Início' : 'Cronograma Financeiro'} - ${obraNome}`}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
             {cronogramaContent}
 
             {/* Modais de Cadastro */}
