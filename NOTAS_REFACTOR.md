@@ -200,3 +200,33 @@ extraído na fase 3 sub-lote D, os caracteres acentuados multibyte (\xc3\xa7 = �
 ### Arquivos NÃO verificados
 - Demais arquivos em src/ — não verificados ainda. Podem ter o mesmo issue se
   forem antigos. Considerar scan completo antes da fase 6 sub-lote A.
+
+---
+
+## Features dormentes no Dashboard (descobertas em 12/05/2026)
+
+Durante a fase 6 sub-lote B, identificadas referências quebradas no Dashboard
+que serviam a 2 features nunca ativadas:
+
+### Feature: Pagamento parcial em pop-up
+- **Estado**: `payingItem` (useState)
+- **Setter**: `setPayingItem(servico)` — NUNCA é chamado em lugar algum
+- **Modal**: `<PartialPaymentModal item={payingItem} onClose onSave>` (após fix)
+- **Handler**: `handleSavePartialPayment` — implementado mas não testado
+- **Status**: código pronto, falta apenas o GATILHO UI (botão/ícone) que setaria payingItem
+- **Onde estaria o gatilho lógico**: linha de serviço em alguma lista do Dashboard — botão "Pagar parcial"
+
+### Feature: Editar prioridade de serviço em pop-up
+- **Estado**: `editingServicoPrioridade` (useState)
+- **Setter**: `setEditingServicoPrioridade(servico)` — NUNCA é chamado
+- **Modal**: `<EditPrioridadeModal item={editingServicoPrioridade} onClose onSave>` (após fix)
+- **Handler**: `handleSaveServicoPrioridade` — implementado
+- **Status**: pronto, falta gatilho UI
+
+### Recomendação
+Decidir caso a caso na fase 5 (review de funcionalidades) ou fase 7 (a11y/UX):
+- Manter código (caso a feature volte a ser priorizada)
+- Remover por completo (setter, handler, modal-call) se decidido que não é necessária
+
+Não é prioritário — código já funciona corretamente (modais nunca renderizam,
+handlers nunca executam).
