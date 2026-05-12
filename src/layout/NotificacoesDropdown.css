@@ -1,0 +1,231 @@
+/* NotificacoesDropdown — design system v2.0 */
+
+.nd-container {
+    position: relative;
+}
+
+.nd-bell {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background var(--transition-fast);
+    color: var(--text-on-dark-muted);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.nd-bell:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.nd-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    background: var(--brand-accent);
+    color: var(--surface-dark);
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
+    pointer-events: none;
+    font-family: var(--font-sans);
+}
+
+/* Overlay to close */
+.nd-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+}
+
+/* Dropdown panel */
+.nd-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: -8px;
+    width: 360px;
+    max-height: 480px;
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popup);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    animation: ndFadeIn 0.15s ease;
+}
+
+@keyframes ndFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.nd-header {
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.nd-header-title {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+}
+
+.nd-header-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.nd-action-btn {
+    background: transparent;
+    border: none;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.nd-action-btn:hover {
+    color: var(--text-primary);
+    background: var(--surface-muted);
+}
+
+.nd-action-btn.danger:hover {
+    color: var(--status-danger-text);
+    background: var(--status-danger-bg);
+}
+
+/* List */
+.nd-list {
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Item */
+.nd-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 16px;
+    border-bottom: 0.5px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    background: var(--surface-card);
+}
+
+.nd-item:last-child {
+    border-bottom: none;
+}
+
+.nd-item:hover {
+    background: var(--surface-muted);
+}
+
+.nd-item--unread {
+    background: var(--surface-subtle);
+}
+
+.nd-item--unread:hover {
+    background: var(--surface-muted);
+}
+
+/* Icon circle */
+.nd-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+}
+
+/* Text content */
+.nd-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.nd-text-main {
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.nd-text-meta {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.nd-obra-tag {
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-weight: var(--weight-medium);
+}
+
+/* Toggle read button */
+.nd-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: var(--text-muted);
+    font-size: var(--text-base);
+    flex-shrink: 0;
+    transition: color var(--transition-fast);
+}
+
+.nd-toggle-btn:hover {
+    color: var(--text-primary);
+}
+
+.nd-toggle-btn--unread {
+    color: var(--status-info);
+}
+
+/* Loading / Empty */
+.nd-loading,
+.nd-empty {
+    padding: 40px 20px;
+    text-align: center;
+    font-size: var(--text-base);
+    color: var(--text-muted);
+}
+
+.nd-loading {
+    padding: 20px;
+}

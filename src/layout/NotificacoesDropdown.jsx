@@ -3,6 +3,22 @@ import { API_URL } from '../config';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
 import { logger } from '../utils/logger';
 import { confirmDialog } from '../utils/notify';
+import './NotificacoesDropdown.css';
+
+const getNotifMeta = (tipo) => {
+    switch (tipo) {
+        case 'servico_criado':      return { icon: 'ti-tool',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
+        case 'pagamento_inserido':  return { icon: 'ti-cash',           bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
+        case 'orcamento_aprovado':  return { icon: 'ti-check',          bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
+        case 'orcamento_pendente':  return { icon: 'ti-clock',          bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' };
+        case 'orcamento_rejeitado': return { icon: 'ti-x',              bg: 'var(--status-danger-bg)',   color: 'var(--status-danger-text)'  };
+        case 'boleto_vencido':      return { icon: 'ti-alert-triangle', bg: 'var(--status-danger-bg)',   color: 'var(--status-danger-text)'  };
+        case 'boleto_hoje':         return { icon: 'ti-alert-triangle', bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' };
+        case 'boleto_3dias':        return { icon: 'ti-receipt',        bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' };
+        case 'boleto_7dias':        return { icon: 'ti-receipt',        bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
+        default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
+    }
+};
 
 const NotificacoesDropdown = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +26,6 @@ const NotificacoesDropdown = ({ user }) => {
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // Buscar contador de notificações não lidas
     const fetchCount = async () => {
         try {
             const response = await fetchWithAuth(`${API_URL}/notificacoes/count`);
@@ -23,7 +38,6 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Buscar notificações
     const fetchNotificacoes = async () => {
         try {
             setLoading(true);
@@ -39,7 +53,6 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Marcar como lida/não lida
     const toggleLida = async (notifId, lida) => {
         try {
             await fetchWithAuth(`${API_URL}/notificacoes/${notifId}/lida`, {
@@ -56,7 +69,6 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Limpar lidas
     const limparLidas = async () => {
         try {
             await fetchWithAuth(`${API_URL}/notificacoes/limpar-lidas`, { method: 'DELETE' });
@@ -66,7 +78,6 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Limpar TODAS as notificações
     const limparTodas = async () => {
         if (!await confirmDialog('Limpar TODAS as notificações?', { confirmText: 'Limpar tudo' })) return;
         try {
@@ -79,7 +90,6 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Marcar todas como lidas
     const marcarTodasLidas = async () => {
         try {
             await fetchWithAuth(`${API_URL}/notificacoes/marcar-todas-lidas`, { method: 'POST' });
@@ -90,21 +100,18 @@ const NotificacoesDropdown = ({ user }) => {
         }
     };
 
-    // Polling para atualizar contador a cada 30 segundos
+    // Polling a cada 30s
     useEffect(() => {
         fetchCount();
         const interval = setInterval(fetchCount, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    // Buscar notificações quando abrir dropdown
+    // Busca lista ao abrir
     useEffect(() => {
-        if (isOpen) {
-            fetchNotificacoes();
-        }
+        if (isOpen) fetchNotificacoes();
     }, [isOpen]);
 
-    // Formatar data relativa
     const formatRelativeTime = (dateStr) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
@@ -121,54 +128,17 @@ const NotificacoesDropdown = ({ user }) => {
         return date.toLocaleDateString('pt-BR');
     };
 
-    // Ícone por tipo
-    const getIconByType = (tipo) => {
-        switch(tipo) {
-            case 'servico_criado': return '🔧';
-            case 'pagamento_inserido': return '💰';
-            case 'orcamento_aprovado': return '✅';
-            case 'orcamento_pendente': return '⏳';
-            case 'orcamento_rejeitado': return '❌';
-            case 'boleto_vencido': return '🔴';
-            case 'boleto_hoje': return '🟡';
-            case 'boleto_3dias': return '🟠';
-            case 'boleto_7dias': return '🔵';
-            default: return '🔔';
-        }
-    };
-
     return (
-        <div className="notificacoes-container" style={{ position: 'relative' }}>
+        <div className="nd-container">
             <button
-                className="notif-bell-btn"
+                className="nd-bell"
                 onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1.3em',
-                    position: 'relative',
-                    padding: '8px',
-                    borderRadius: '8px',
-                    transition: 'background 0.2s'
-                }}
                 title="Notificações"
+                aria-label="Notificações"
             >
-                🔔
+                <i className="ti ti-bell" aria-hidden="true"></i>
                 {count > 0 && (
-                    <span style={{
-                        position: 'absolute',
-                        top: '2px',
-                        right: '2px',
-                        backgroundColor: '#ef4444',
-                        color: 'white',
-                        fontSize: '0.6em',
-                        fontWeight: 'bold',
-                        padding: '2px 5px',
-                        borderRadius: '10px',
-                        minWidth: '16px',
-                        textAlign: 'center'
-                    }}>
+                    <span className="nd-badge">
                         {count > 99 ? '99+' : count}
                     </span>
                 )}
@@ -176,195 +146,83 @@ const NotificacoesDropdown = ({ user }) => {
 
             {isOpen && (
                 <>
-                    {/* Overlay para fechar */}
-                    <div
-                        style={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            zIndex: 999
-                        }}
-                        onClick={() => setIsOpen(false)}
-                    />
+                    <div className="nd-overlay" onClick={() => setIsOpen(false)} />
 
-                    {/* Dropdown */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        right: 0,
-                        marginTop: '10px',
-                        width: '380px',
-                        maxHeight: '450px',
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        boxShadow: '0 5px 40px rgba(0,0,0,0.25)',
-                        zIndex: 1000,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        {/* Header */}
-                        <div style={{
-                            padding: '12px 15px',
-                            borderBottom: '1px solid #e5e7eb',
-                            backgroundColor: '#f8fafc'
-                        }}>
-                            <div style={{
-                                fontWeight: '600',
-                                color: '#1e293b',
-                                marginBottom: '10px',
-                                fontSize: '1em'
-                            }}>
-                                🔔 Notificações
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div className="nd-panel">
+                        <div className="nd-header">
+                            <span className="nd-header-title">Notificações</span>
+                            <div className="nd-header-actions">
                                 {count > 0 && (
                                     <button
+                                        className="nd-action-btn"
                                         onClick={marcarTodasLidas}
-                                        style={{
-                                            background: '#e0f2fe',
-                                            border: '1px solid #7dd3fc',
-                                            borderRadius: '4px',
-                                            color: '#0369a1',
-                                            cursor: 'pointer',
-                                            fontSize: '0.75em',
-                                            padding: '4px 8px'
-                                        }}
                                         title="Marcar todas como lidas"
                                     >
-                                        ✓ Marcar lidas
+                                        Marcar todas como lidas
                                     </button>
                                 )}
                                 <button
+                                    className="nd-action-btn"
                                     onClick={limparLidas}
-                                    style={{
-                                        background: '#f3f4f6',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '4px',
-                                        color: '#4b5563',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75em',
-                                        padding: '4px 8px'
-                                    }}
                                     title="Limpar notificações lidas"
                                 >
-                                    🗑️ Limpar lidas
+                                    Limpar lidas
                                 </button>
                                 <button
+                                    className="nd-action-btn danger"
                                     onClick={limparTodas}
-                                    style={{
-                                        background: '#fee2e2',
-                                        border: '1px solid #fca5a5',
-                                        borderRadius: '4px',
-                                        color: '#dc2626',
-                                        cursor: 'pointer',
-                                        fontSize: '0.75em',
-                                        padding: '4px 8px',
-                                        fontWeight: '600'
-                                    }}
                                     title="Limpar TODAS as notificações"
                                 >
-                                    🗑️ Limpar TODAS
+                                    Limpar todas
                                 </button>
                             </div>
                         </div>
 
-                        {/* Lista de notificações */}
-                        <div style={{
-                            overflowY: 'auto',
-                            flex: 1,
-                            maxHeight: '320px'
-                        }}>
+                        <div className="nd-list">
                             {loading ? (
-                                <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
-                                    Carregando...
-                                </div>
+                                <div className="nd-loading">Carregando...</div>
                             ) : notificacoes.length === 0 ? (
-                                <div style={{ padding: '30px', textAlign: 'center', color: '#6b7280' }}>
-                                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>🔔</div>
-                                    Nenhuma notificação
-                                </div>
+                                <div className="nd-empty">Nenhuma notificação</div>
                             ) : (
-                                notificacoes.map(notif => (
-                                    <div
-                                        key={notif.id}
-                                        style={{
-                                            padding: '12px 15px',
-                                            borderBottom: '1px solid #f1f5f9',
-                                            backgroundColor: notif.lida ? 'white' : '#eff6ff',
-                                            display: 'flex',
-                                            gap: '10px',
-                                            alignItems: 'flex-start',
-                                            transition: 'background 0.2s'
-                                        }}
-                                    >
-                                        <span style={{ fontSize: '1.3em' }}>
-                                            {getIconByType(notif.tipo)}
-                                        </span>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{
-                                                fontWeight: notif.lida ? '400' : '600',
-                                                color: '#1e293b',
-                                                fontSize: '0.9em',
-                                                marginBottom: '2px',
-                                                lineHeight: '1.3'
-                                            }}>
-                                                {notif.titulo}
-                                            </div>
-                                            {notif.mensagem && (
-                                                <div style={{
-                                                    color: '#64748b',
-                                                    fontSize: '0.8em',
-                                                    lineHeight: '1.4',
-                                                    wordBreak: 'break-word'
-                                                }}>
-                                                    {notif.mensagem}
-                                                </div>
-                                            )}
-                                            <div style={{
-                                                color: '#94a3b8',
-                                                fontSize: '0.75em',
-                                                marginTop: '4px',
-                                                display: 'flex',
-                                                flexWrap: 'wrap',
-                                                gap: '4px',
-                                                alignItems: 'center'
-                                            }}>
-                                                <span>{formatRelativeTime(notif.created_at)}</span>
-                                                {notif.obra_nome && (
-                                                    <span style={{
-                                                        backgroundColor: '#e0f2fe',
-                                                        color: '#0369a1',
-                                                        padding: '1px 6px',
-                                                        borderRadius: '4px',
-                                                        fontWeight: '500'
-                                                    }}>
-                                                        {notif.obra_nome}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleLida(notif.id, notif.lida);
-                                            }}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                padding: '4px',
-                                                color: notif.lida ? '#94a3b8' : '#3b82f6',
-                                                fontSize: '0.9em'
-                                            }}
-                                            title={notif.lida ? 'Marcar como não lida' : 'Marcar como lida'}
+                                notificacoes.map(notif => {
+                                    const { icon, bg, color } = getNotifMeta(notif.tipo);
+                                    return (
+                                        <div
+                                            key={notif.id}
+                                            className={`nd-item${notif.lida ? '' : ' nd-item--unread'}`}
                                         >
-                                            {notif.lida ? '○' : '●'}
-                                        </button>
-                                    </div>
-                                ))
+                                            <div
+                                                className="nd-icon"
+                                                style={{ background: bg, color }}
+                                            >
+                                                <i className={`ti ${icon}`} aria-hidden="true"></i>
+                                            </div>
+                                            <div className="nd-text">
+                                                <div className="nd-text-main">{notif.titulo}</div>
+                                                {notif.mensagem && (
+                                                    <div className="nd-text-meta">{notif.mensagem}</div>
+                                                )}
+                                                <div className="nd-text-meta">
+                                                    <span>{formatRelativeTime(notif.created_at)}</span>
+                                                    {notif.obra_nome && (
+                                                        <span className="nd-obra-tag">{notif.obra_nome}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <button
+                                                className={`nd-toggle-btn${notif.lida ? '' : ' nd-toggle-btn--unread'}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleLida(notif.id, notif.lida);
+                                                }}
+                                                title={notif.lida ? 'Marcar como não lida' : 'Marcar como lida'}
+                                                aria-label={notif.lida ? 'Marcar como não lida' : 'Marcar como lida'}
+                                            >
+                                                <i className={`ti ${notif.lida ? 'ti-circle' : 'ti-circle-filled'}`} aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
                     </div>
