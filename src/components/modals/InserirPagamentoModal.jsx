@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { formatCurrency, getTodayString } from '../../utils/format';
@@ -155,48 +155,66 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>💳 Inserir Pagamento</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço.
-            </p>
-            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Inserir Pagamento"
+            subtitle="Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço."
+            width="large"
+            scrollBody={true}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isSubmitting}>
+                        {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
+                    </button>
+                    <button type="button" className="m-btn-cancel" onClick={(e) => handleSubmit(e, true)} disabled={isSubmitting}>
+                        <i className="ti ti-plus" aria-hidden="true"></i>
+                        {isSubmitting ? '...' : 'Salvar e Novo'}
+                    </button>
+                    <button type="submit" form="form-inserir-pagamento" className="m-btn-primary" disabled={isSubmitting}>
+                        <i className="ti ti-device-floppy" aria-hidden="true"></i>
+                        {isSubmitting ? '...' : 'Salvar e Fechar'}
+                    </button>
+                </>
+            }
+        >
+            <form id="form-inserir-pagamento" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Descrição</label>
+                    <input className="m-input" type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
                 </div>
 
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                <div className="m-field">
+                    <label className="m-label">Fornecedor <span className="m-label-opt">(opcional)</span></label>
+                    <input className="m-input" type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
                 </div>
 
-                <div className="form-group">
-                    <label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                <div className="m-field">
+                    <label className="m-label">Valor Total (R$)</label>
+                    <input className="m-input" type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
                 </div>
 
                 {/* TIPO DE FORMA DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Forma de Pagamento</label>
-                    <div style={{display: 'flex', gap: '20px', marginTop: '8px'}}>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                <div className="m-field">
+                    <label className="m-label">Forma de Pagamento</label>
+                    <div style={{ display: 'flex', gap: 'var(--space-5)', marginTop: 'var(--space-1)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
                             <input
                                 type="radio"
                                 value="avista"
                                 checked={tipoFormaPagamento === 'avista'}
                                 onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
+                                style={{ marginRight: 'var(--space-2)' }}
                             />
                             À vista
                         </label>
-                        <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
                             <input
                                 type="radio"
                                 value="parcelado"
                                 checked={tipoFormaPagamento === 'parcelado'}
                                 onChange={(e) => setTipoFormaPagamento(e.target.value)}
-                                style={{marginRight: '8px'}}
+                                style={{ marginRight: 'var(--space-2)' }}
                             />
                             Parcelado
                         </label>
@@ -204,9 +222,9 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 </div>
 
                 {/* MEIO DE PAGAMENTO */}
-                <div className="form-group">
-                    <label>Meio de Pagamento</label>
-                    <select value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
+                <div className="m-field">
+                    <label className="m-label">Meio de Pagamento</label>
+                    <select className="m-select" value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
                         <option value="PIX">PIX</option>
                         <option value="Boleto">Boleto</option>
                         <option value="Transferência">Transferência</option>
@@ -219,30 +237,31 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                     <>
                         {/* SEÇÃO DE ENTRADA */}
                         <div style={{
-                            background: '#e8f5e9',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #a5d6a7'
+                            background: 'var(--status-success-bg)',
+                            padding: 'var(--space-3)',
+                            borderRadius: 'var(--radius-md)',
+                            marginBottom: 'var(--space-3)',
+                            border: '0.5px solid var(--status-success)'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#2e7d32' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontWeight: 'var(--weight-medium)', color: 'var(--status-success-text)', fontSize: 'var(--text-sm)' }}>
                                     <input
                                         type="checkbox"
                                         checked={temEntrada}
                                         onChange={(e) => setTemEntrada(e.target.checked)}
                                         style={{ width: '18px', height: '18px' }}
                                     />
-                                    💰 Tem entrada?
+                                    Tem entrada?
                                 </label>
                             </div>
 
                             {temEntrada && (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Percentual de Entrada (%)</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+                                    <div className="m-field" style={{ margin: 0 }}>
+                                        <label className="m-label" style={{ fontSize: 'var(--text-sm)' }}>Percentual de Entrada (%)</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                                             <input
+                                                className="m-input"
                                                 type="number"
                                                 min="1"
                                                 max="99"
@@ -250,14 +269,15 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                                 onChange={(e) => setPercentualEntrada(parseFloat(e.target.value) || 0)}
                                                 style={{ width: '80px' }}
                                             />
-                                            <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                            <span style={{ color: 'var(--status-success-text)', fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-sm)' }}>
                                                 = {formatCurrency(valorEntrada)}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="form-group" style={{ margin: 0 }}>
-                                        <label style={{ fontSize: '0.9em' }}>Data da Entrada</label>
+                                    <div className="m-field" style={{ margin: 0 }}>
+                                        <label className="m-label" style={{ fontSize: 'var(--text-sm)' }}>Data da Entrada</label>
                                         <input
+                                            className="m-input"
                                             type="date"
                                             value={dataEntrada}
                                             onChange={(e) => setDataEntrada(e.target.value)}
@@ -269,31 +289,32 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                             {temEntrada && valor && (
                                 <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em',
-                                    color: '#666'
+                                    marginTop: 'var(--space-3)',
+                                    padding: 'var(--space-2)',
+                                    background: 'var(--surface-card)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: 'var(--text-sm)',
+                                    color: 'var(--text-muted)'
                                 }}>
-                                    Valor restante para parcelar: <strong style={{ color: '#1976d2' }}>{formatCurrency(valorRestante)}</strong>
+                                    Valor restante para parcelar: <strong style={{ color: 'var(--status-info)' }}>{formatCurrency(valorRestante)}</strong>
                                 </div>
                             )}
                         </div>
 
                         {/* CONFIGURAÇÃO DAS PARCELAS */}
                         <div style={{
-                            background: '#f0f8ff',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            marginBottom: '15px',
-                            border: '1px solid #b3d9ff'
+                            background: 'var(--status-info-bg)',
+                            padding: 'var(--space-3)',
+                            borderRadius: 'var(--radius-md)',
+                            marginBottom: 'var(--space-3)',
+                            border: '0.5px solid var(--status-info)'
                         }}>
-                            <h4 style={{margin: '0 0 12px 0', color: '#0066cc'}}>📦 Configuração das Parcelas</h4>
+                            <h4 style={{ margin: '0 0 var(--space-3) 0', color: 'var(--status-info)', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)' }}>Configuração das Parcelas</h4>
 
-                            <div className="form-group">
-                                <label>Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
+                            <div className="m-field">
+                                <label className="m-label">Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
                                 <input
+                                    className="m-input"
                                     type="number"
                                     min="1"
                                     max="60"
@@ -303,18 +324,19 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label>Periodicidade</label>
-                                <select value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
+                            <div className="m-field">
+                                <label className="m-label">Periodicidade</label>
+                                <select className="m-select" value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
                                     <option value="Semanal">Semanal (7 dias)</option>
                                     <option value="Quinzenal">Quinzenal (15 dias)</option>
                                     <option value="Mensal">Mensal (30 dias)</option>
                                 </select>
                             </div>
 
-                            <div className="form-group">
-                                <label>Data da 1ª Parcela</label>
+                            <div className="m-field">
+                                <label className="m-label">Data da 1ª Parcela</label>
                                 <input
+                                    className="m-input"
                                     type="date"
                                     value={dataPrimeiraParcela}
                                     onChange={(e) => setDataPrimeiraParcela(e.target.value)}
@@ -324,11 +346,11 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                             {numeroParcelas && valor && (
                                 <div style={{
-                                    marginTop: '12px',
-                                    padding: '10px',
-                                    background: '#fff',
-                                    borderRadius: '6px',
-                                    fontSize: '0.9em'
+                                    marginTop: 'var(--space-3)',
+                                    padding: 'var(--space-2)',
+                                    background: 'var(--surface-card)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: 'var(--text-sm)'
                                 }}>
                                     <strong>Valor por parcela:</strong> {formatCurrency(valorParcela)}
                                 </div>
@@ -338,26 +360,26 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                         {/* RESUMO DO PARCELAMENTO */}
                         {numeroParcelas && valor && (
                             <div style={{
-                                background: '#fff3e0',
-                                padding: '15px',
-                                borderRadius: '8px',
-                                marginBottom: '15px',
-                                border: '1px solid #ffcc80'
+                                background: 'var(--status-warning-bg)',
+                                padding: 'var(--space-3)',
+                                borderRadius: 'var(--radius-md)',
+                                marginBottom: 'var(--space-3)',
+                                border: '0.5px solid var(--status-warning)'
                             }}>
-                                <h4 style={{margin: '0 0 12px 0', color: '#e65100'}}>📋 Resumo do Parcelamento</h4>
+                                <h4 style={{ margin: '0 0 var(--space-3) 0', color: 'var(--status-warning-text)', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)' }}>Resumo do Parcelamento</h4>
 
-                                <div style={{ fontSize: '0.95em' }}>
+                                <div style={{ fontSize: 'var(--text-sm)' }}>
                                     {temEntrada && (
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            padding: '8px 0',
-                                            borderBottom: '2px solid #ffcc80',
-                                            marginBottom: '8px',
-                                            color: '#2e7d32',
-                                            fontWeight: 'bold'
+                                            padding: 'var(--space-2) 0',
+                                            borderBottom: '2px solid var(--status-warning)',
+                                            marginBottom: 'var(--space-2)',
+                                            color: 'var(--status-success-text)',
+                                            fontWeight: 'var(--weight-medium)'
                                         }}>
-                                            <span>🟢 ENTRADA ({percentualEntrada}%)</span>
+                                            <span>ENTRADA ({percentualEntrada}%)</span>
                                             <span>{formatCurrency(valorEntrada)} - {new Date(dataEntrada + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                                         </div>
                                     )}
@@ -375,8 +397,8 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                             <div key={i} style={{
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
-                                                padding: '6px 0',
-                                                borderBottom: '1px solid #ffe0b2'
+                                                padding: 'var(--space-1) 0',
+                                                borderBottom: '0.5px solid var(--border-subtle)'
                                             }}>
                                                 <span>Parcela {i + 1}/{numParcelas}</span>
                                                 <span>{formatCurrency(valorParcela)} - {dataBase.toLocaleDateString('pt-BR')}</span>
@@ -385,7 +407,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                     })}
 
                                     {numParcelas > 5 && (
-                                        <div style={{ padding: '6px 0', color: '#999', fontStyle: 'italic' }}>
+                                        <div style={{ padding: 'var(--space-1) 0', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                                             ... e mais {numParcelas - 5} parcela(s)
                                         </div>
                                     )}
@@ -393,11 +415,11 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                     <div style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
-                                        padding: '10px 0 0 0',
-                                        marginTop: '8px',
-                                        borderTop: '2px solid #e65100',
-                                        fontWeight: 'bold',
-                                        color: '#e65100'
+                                        padding: 'var(--space-2) 0 0 0',
+                                        marginTop: 'var(--space-2)',
+                                        borderTop: '2px solid var(--status-warning)',
+                                        fontWeight: 'var(--weight-medium)',
+                                        color: 'var(--status-warning-text)'
                                     }}>
                                         <span>TOTAL ({temEntrada ? numParcelas + 1 : numParcelas} pagamentos)</span>
                                         <span>{formatCurrency(valorTotal)}</span>
@@ -411,18 +433,18 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 {/* CONFIGURAÇÃO DE BOLETOS PARCELADOS */}
                 {tipoFormaPagamento === 'parcelado' && meioPagamento === 'Boleto' && numeroParcelas && (
                     <div style={{
-                        background: '#fff8e1',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        marginBottom: '15px',
-                        border: '1px solid #ffcc80',
+                        background: 'var(--status-warning-bg)',
+                        padding: 'var(--space-3)',
+                        borderRadius: 'var(--radius-md)',
+                        marginBottom: 'var(--space-3)',
+                        border: '0.5px solid var(--status-warning)',
                         maxHeight: '300px',
                         overflowY: 'auto'
                     }}>
-                        <h4 style={{margin: '0 0 12px 0', color: '#f57c00'}}>🎫 Códigos de Barras dos Boletos</h4>
+                        <h4 style={{ margin: '0 0 var(--space-3) 0', color: 'var(--status-warning-text)', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)' }}>Códigos de Barras dos Boletos</h4>
 
-                        <div style={{ marginBottom: '10px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ marginBottom: 'var(--space-2)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
                                 <input
                                     type="checkbox"
                                     checked={valoresIguais}
@@ -434,63 +456,63 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                         {boletosConfig.map((boleto, index) => (
                             <div key={index} style={{
-                                background: '#fff',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '5px',
-                                padding: '10px',
-                                marginBottom: '8px'
+                                background: 'var(--surface-card)',
+                                border: '0.5px solid var(--border-subtle)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: 'var(--space-2)',
+                                marginBottom: 'var(--space-2)'
                             }}>
                                 <div style={{
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    marginBottom: '8px',
-                                    fontWeight: 'bold',
-                                    color: '#555'
+                                    marginBottom: 'var(--space-2)',
+                                    fontWeight: 'var(--weight-medium)',
+                                    color: 'var(--text-secondary)'
                                 }}>
                                     <span>Boleto {boleto.numero}/{numeroParcelas}</span>
-                                    <span style={{ fontSize: '12px', color: '#888' }}>
+                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
                                         Venc: {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                                     </span>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                                     {!valoresIguais && (
                                         <div style={{ flex: '1', minWidth: '100px' }}>
-                                            <label style={{ fontSize: '11px', color: '#666' }}>Valor:</label>
+                                            <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Valor:</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 value={boleto.valor}
                                                 onChange={(e) => handleBoletoChange(index, 'valor', e.target.value)}
-                                                style={{ width: '100%', padding: '5px', border: '1px solid #ccc', borderRadius: '4px' }}
+                                                style={{ width: '100%', padding: 'var(--space-1)', border: '0.5px solid var(--border-default)', borderRadius: 'var(--radius-sm)' }}
                                             />
                                         </div>
                                     )}
                                     <div style={{ flex: '3', minWidth: '200px' }}>
-                                        <label style={{ fontSize: '11px', color: '#666' }}>Código de Barras:</label>
-                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                        <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Código de Barras:</label>
+                                        <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
                                             <input
                                                 type="text"
                                                 value={boleto.codigo_barras}
                                                 onChange={(e) => handleBoletoChange(index, 'codigo_barras', e.target.value)}
                                                 placeholder="Cole a linha digitável"
-                                                style={{ flex: '1', padding: '5px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
+                                                style={{ flex: '1', padding: 'var(--space-1)', border: '0.5px solid var(--border-default)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-xs)' }}
                                             />
                                             {boleto.codigo_barras && (
                                                 <button
                                                     type="button"
                                                     onClick={() => copiarCodigo(boleto.codigo_barras)}
                                                     style={{
-                                                        padding: '5px 10px',
-                                                        background: '#4CAF50',
+                                                        padding: 'var(--space-1) var(--space-2)',
+                                                        background: 'var(--brand-primary)',
                                                         color: 'white',
                                                         border: 'none',
-                                                        borderRadius: '4px',
+                                                        borderRadius: 'var(--radius-sm)',
                                                         cursor: 'pointer'
                                                     }}
                                                     title="Copiar código"
                                                 >
-                                                    📋
+                                                    <i className="ti ti-copy" aria-hidden="true"></i>
                                                 </button>
                                             )}
                                         </div>
@@ -503,16 +525,17 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                 {/* CAMPOS ORIGINAIS */}
                 {tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Data de Vencimento</label>
-                        <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                    <div className="m-field">
+                        <label className="m-label">Data de Vencimento</label>
+                        <input className="m-input" type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
                     </div>
                 )}
 
                 {meioPagamento === 'PIX' && (
-                    <div className="form-group">
-                        <label>Chave PIX (Opcional)</label>
+                    <div className="m-field">
+                        <label className="m-label">Chave PIX <span className="m-label-opt">(opcional)</span></label>
                         <input
+                            className="m-input"
                             type="text"
                             value={pix}
                             onChange={(e) => setPix(e.target.value)}
@@ -522,10 +545,11 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 )}
 
                 {meioPagamento === 'Boleto' && tipoFormaPagamento === 'avista' && (
-                    <div className="form-group">
-                        <label>Código de Barras do Boleto</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                    <div className="m-field">
+                        <label className="m-label">Código de Barras do Boleto <span className="m-label-opt">(opcional)</span></label>
+                        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                             <input
+                                className="m-input"
                                 type="text"
                                 value={codigoBarras}
                                 onChange={(e) => setCodigoBarras(e.target.value)}
@@ -537,25 +561,28 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                     type="button"
                                     onClick={() => copiarCodigo(codigoBarras)}
                                     style={{
-                                        padding: '8px 15px',
-                                        background: '#4CAF50',
+                                        padding: 'var(--space-2) var(--space-3)',
+                                        background: 'var(--brand-primary)',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
+                                        borderRadius: 'var(--radius-sm)',
+                                        cursor: 'pointer',
+                                        fontSize: 'var(--text-sm)',
+                                        flexShrink: 0
                                     }}
                                     title="Copiar código"
                                 >
-                                    📋 Copiar
+                                    <i className="ti ti-copy" aria-hidden="true"></i>
+                                    Copiar
                                 </button>
                             )}
                         </div>
                     </div>
                 )}
 
-                <div className="form-group">
-                    <label>Tipo</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                <div className="m-field">
+                    <label className="m-label">Tipo</label>
+                    <select className="m-select" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
                         <option value="Material">Material</option>
                         <option value="Mão de Obra">Mão de Obra</option>
                         <option value="Serviço">Serviço</option>
@@ -563,67 +590,43 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                     </select>
                 </div>
 
-                <div className="form-group">
-                    <label>Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                <div className="m-field">
+                    <label className="m-label">Status</label>
+                    <select className="m-select" value={status} onChange={(e) => setStatus(e.target.value)} required>
                         <option value="Pago">Pago</option>
                         <option value="A Pagar">A Pagar</option>
                     </select>
                 </div>
 
-                <div className="form-group">
-                    <label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
+                <div className="m-field">
+                    <label className="m-label">Vincular ao Item do Orçamento <span className="m-label-opt">(opcional)</span></label>
+                    <select className="m-select" value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
                         <option value="">Nenhum</option>
                         {(itensOrcamento || []).map(item => (
                             <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
                 </div>
-
-                <div className="form-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isSubmitting}>
-                        {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => handleSubmit(e, true)}
-                        className="submit-btn"
-                        style={{ backgroundColor: '#17a2b8', flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳...' : '➕ Salvar e Novo'}
-                    </button>
-                    <button
-                        type="submit"
-                        className="submit-btn"
-                        style={{ flex: 1 }}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳...' : (tipoFormaPagamento === 'parcelado' ? '📦 Salvar e Fechar' : '💾 Salvar e Fechar')}
-                    </button>
-                </div>
-
-                {/* Toast de sucesso inline */}
-                {toastMsg && (
-                    <div style={{
-                        position: 'fixed',
-                        bottom: '20px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#28a745',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                        zIndex: 10000,
-                        animation: 'fadeIn 0.3s ease',
-                        fontWeight: 'bold'
-                    }}>
-                        {toastMsg}
-                    </div>
-                )}
             </form>
+
+            {/* Toast de sucesso — padrão useState catalogado em NOTAS_REFACTOR.md, não migrado em D2 */}
+            {toastMsg && (
+                <div style={{
+                    position: 'fixed',
+                    bottom: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'var(--status-success)',
+                    color: 'white',
+                    padding: 'var(--space-3) var(--space-6)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    zIndex: 10000,
+                    fontWeight: 'var(--weight-medium)'
+                }}>
+                    {toastMsg}
+                </div>
+            )}
         </Modal>
     );
 };

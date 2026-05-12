@@ -241,3 +241,14 @@ Decidir caso a caso na fase 5 (review de funcionalidades) ou fase 7 (a11y/UX):
 
 Não é prioritário — código já funciona corretamente (modais nunca renderizam,
 handlers nunca executam).
+
+---
+
+## Bug detectado em CadastrarBoletoModal (descoberto na fase 6 D2 Batch 4)
+
+- **Arquivo**: `src/components/modals/CadastrarBoletoModal.jsx`
+- **Função**: `cadastrarTodosBoletos`
+- **Linha**: ~163 (após D2, linha mantida com comentário)
+- **Problema**: `notify.error(\`✅ ${sucessos} boletos cadastrados com sucesso!...\`)` — usa `notify.error` para mensagem de sucesso. Deveria ser `notify.success`.
+- **Impacto**: mensagem exibida com ícone/cor de erro em vez de sucesso, confundindo o usuário
+- **Nota**: não corrigido em D2 (fora do escopo de D2 que é apenas wrapper + tokens). Corrigir: trocar `notify.error` por `notify.success` nessa linha.
