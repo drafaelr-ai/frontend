@@ -409,73 +409,73 @@ const WindowsNavBar = ({
             id: 'obra',
             label: 'Obra',
             items: [
-                { id: 'home',     label: 'Início',          icon: '🏠', shortcut: 'Alt+I' },
-                { id: 'obras',    label: 'Minhas Obras',    icon: '🏗️', shortcut: 'Alt+O' },
+                { id: 'home',     label: 'Início',          icon: 'ti-home',          shortcut: 'Alt+I' },
+                { id: 'obras',    label: 'Minhas Obras',    icon: 'ti-building',      shortcut: 'Alt+O' },
                 { type: 'separator' },
-                { id: 'exportar', label: 'Exportar Relatório...', icon: '📊', shortcut: 'Ctrl+E' },
+                { id: 'exportar', label: 'Exportar Relatório...', icon: 'ti-chart-bar', shortcut: 'Ctrl+E' },
                 { type: 'separator' },
-                { id: 'sair',     label: 'Sair',            icon: '🚪', shortcut: 'Alt+F4', action: 'logout' },
+                { id: 'sair',     label: 'Sair',            icon: 'ti-logout',        shortcut: 'Alt+F4', action: 'logout' },
             ]
         },
         {
             id: 'financeiro',
             label: 'Financeiro',
             items: [
-                { id: 'financeiro', label: 'Cronograma Financeiro', icon: '📅', shortcut: 'F2' },
-                { id: 'boletos',    label: 'Gestão de Boletos',     icon: '📄', shortcut: 'F3' },
-                { id: 'caixa',      label: 'Caixa de Obra',         icon: '💰', shortcut: 'F4' },
+                { id: 'financeiro', label: 'Cronograma Financeiro', icon: 'ti-calendar',       shortcut: 'F2' },
+                { id: 'boletos',    label: 'Gestão de Boletos',     icon: 'ti-file-text',      shortcut: 'F3' },
+                { id: 'caixa',      label: 'Caixa de Obra',         icon: 'ti-cash',           shortcut: 'F4' },
                 { type: 'separator' },
-                { id: 'pagamento',  label: 'Novo Pagamento...',     icon: '💳', shortcut: 'Ctrl+P' },
+                { id: 'pagamento',  label: 'Novo Pagamento...',     icon: 'ti-credit-card',    shortcut: 'Ctrl+P' },
             ]
         },
         {
             id: 'cronograma',
             label: 'Cronograma',
             items: [
-                { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: '📋', shortcut: 'F5' },
+                { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: 'ti-clipboard-list', shortcut: 'F5' },
             ]
         },
         {
             id: 'documentos',
             label: 'Documentos',
             items: [
-                { id: 'diario',    label: 'Diário de Obras',    icon: '📓', shortcut: 'F6' },
-                { id: 'agenda',    label: 'Agenda de Demandas', icon: '📆', shortcut: 'F9' },
-                { id: 'orcamentos',label: 'Solicitações',       icon: '📝', shortcut: 'F7', adminOnly: true },
-                { id: 'relatorios',label: 'Relatórios',         icon: '📊', shortcut: 'F8' },
+                { id: 'diario',    label: 'Diário de Obras',    icon: 'ti-notebook',       shortcut: 'F6' },
+                { id: 'agenda',    label: 'Agenda de Demandas', icon: 'ti-calendar-event', shortcut: 'F9' },
+                { id: 'orcamentos',label: 'Solicitações',       icon: 'ti-notes',          shortcut: 'F7', adminOnly: true },
+                { id: 'relatorios',label: 'Relatórios',         icon: 'ti-chart-bar',      shortcut: 'F8' },
             ]
         },
         {
             id: 'ferramentas',
             label: 'Ferramentas',
             items: [
-                { id: 'usuarios',       label: 'Gerenciar Usuários', icon: '👥', masterOnly: true },
+                { id: 'usuarios',       label: 'Gerenciar Usuários', icon: 'ti-users',    masterOnly: true },
                 { type: 'separator' },
-                { id: 'configuracoes',  label: 'Configurações',      icon: '⚙️' },
+                { id: 'configuracoes',  label: 'Configurações',      icon: 'ti-settings' },
             ]
         },
         {
             id: 'ajuda',
             label: 'Ajuda',
             items: [
-                { id: 'tutorial', label: 'Tutorial',            icon: '📖' },
-                { id: 'atalhos',  label: 'Atalhos de Teclado', icon: '⌨️' },
+                { id: 'tutorial', label: 'Tutorial',            icon: 'ti-book' },
+                { id: 'atalhos',  label: 'Atalhos de Teclado', icon: 'ti-keyboard' },
                 { type: 'separator' },
-                { id: 'sobre',    label: 'Sobre o Obraly',     icon: 'ℹ️' },
+                { id: 'sobre',    label: 'Sobre o Obraly',     icon: 'ti-info-circle' },
             ]
         },
     ];
 
     const toolbarItems = [
-        { id: 'home',          icon: '🏠', label: 'Início' },
-        { id: 'orcamento-eng', icon: '📐', label: 'Orçamento' },
-        { id: 'financeiro',    icon: '📅', label: 'Financeiro' },
-        { id: 'cronograma-obra',icon: '📋', label: 'Cronograma' },
-        { id: 'boletos',       icon: '📄', label: 'Boletos' },
-        { id: 'relatorios',    icon: '📊', label: 'Relatórios' },
-        { id: 'diario',        icon: '📓', label: 'Diário' },
-        { id: 'agenda',        icon: '📆', label: 'Agenda' },
-        { id: 'caixa',         icon: '💰', label: 'Caixa' },
+        { id: 'home',          icon: 'ti-home',           label: 'Início' },
+        { id: 'orcamento-eng', icon: 'ti-ruler-2',        label: 'Orçamento' },
+        { id: 'financeiro',    icon: 'ti-calendar',       label: 'Financeiro' },
+        { id: 'cronograma-obra',icon: 'ti-clipboard-list',label: 'Cronograma' },
+        { id: 'boletos',       icon: 'ti-file-text',      label: 'Boletos' },
+        { id: 'relatorios',    icon: 'ti-chart-bar',      label: 'Relatórios' },
+        { id: 'diario',        icon: 'ti-notebook',       label: 'Diário' },
+        { id: 'agenda',        icon: 'ti-calendar-event', label: 'Agenda' },
+        { id: 'caixa',         icon: 'ti-cash',           label: 'Caixa' },
     ];
 
     const handleMenuClick = (menuId) => {
@@ -572,7 +572,7 @@ const WindowsNavBar = ({
                                                         onTouchEnd={(e) => { e.preventDefault(); handleItemClick(item); }}
                                                     >
                                                         <span className="menu-item-left">
-                                                            <span className="menu-item-icon">{item.icon}</span>
+                                                            <span className="menu-item-icon"><i className={`ti ${item.icon}`} aria-hidden="true" /></span>
                                                             <span className="menu-item-label">{item.label}</span>
                                                         </span>
                                                         {item.shortcut && (
@@ -596,7 +596,7 @@ const WindowsNavBar = ({
                         onChange={handleObraChange}
                         title="Selecionar obra"
                     >
-                        <option value={0}>🏗️ Selecionar obra...</option>
+                        <option value={0}>Selecionar obra...</option>
                         {(obras || []).map(obra => (
                             <option key={obra.id} value={obra.id}>{obra.nome}</option>
                         ))}
@@ -622,7 +622,7 @@ const WindowsNavBar = ({
                                     onClick={() => setCurrentPage(item.id)}
                                     title={item.label}
                                 >
-                                    <span className="toolbar-icon">{item.icon}</span>
+                                    <span className="toolbar-icon"><i className={`ti ${item.icon}`} aria-hidden="true" /></span>
                                     <span className="toolbar-label">{item.label}</span>
                                 </button>
                             </React.Fragment>
@@ -635,7 +635,7 @@ const WindowsNavBar = ({
                                 className="toolbar-action-btn primary"
                                 onClick={() => setCurrentPage('pagamento')}
                             >
-                                💳 Novo Pagamento
+                                <i className="ti ti-credit-card" aria-hidden="true" /> Novo Pagamento
                             </button>
                         </div>
                     )}

@@ -360,7 +360,7 @@ const GanttChart = ({ cronograma }) => {
     if (todasEtapas.length === 0) {
         return (
             <div className="gantt-empty">
-                <p>📊 Nenhuma etapa cadastrada no cronograma.</p>
+                <p><i className="ti ti-chart-bar" aria-hidden="true" /> Nenhuma etapa cadastrada no cronograma.</p>
                 <p>Adicione etapas para visualizar o gráfico de Gantt.</p>
             </div>
         );
@@ -369,7 +369,7 @@ const GanttChart = ({ cronograma }) => {
     return (
         <div className="gantt-container">
             <div className="gantt-header">
-                <h4>📊 Gráfico de Gantt</h4>
+                <h4><i className="ti ti-chart-bar" aria-hidden="true" /> Gráfico de Gantt</h4>
                 <div className="gantt-controls">
                     <button 
                         className={zoomLevel === 'semana' ? 'active' : ''}
@@ -416,7 +416,7 @@ const GanttChart = ({ cronograma }) => {
                             return (
                                 <div key={etapa.id} className="gantt-row gantt-servico-header">
                                     <div className="gantt-label gantt-servico-label">
-                                        <span className="gantt-servico-icon">📋</span>
+                                        <span className="gantt-servico-icon"><i className="ti ti-clipboard-list" aria-hidden="true" /></span>
                                         <span className="gantt-servico-nome" title={etapa.nome}>
                                             {etapa.nome.length > 35 ? etapa.nome.substring(0, 35) + '...' : etapa.nome}
                                         </span>
@@ -515,7 +515,7 @@ const MaterialDetalhesModal = ({ material, lancamentos, onClose }) => {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content modal-material" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h3>📦 Detalhes: {material}</h3>
+                    <h3><i className="ti ti-package" aria-hidden="true" /> Detalhes: {material}</h3>
                     <button onClick={onClose} className="modal-close">✕</button>
                 </div>
                 
@@ -649,7 +649,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
     
     return (
         <div className="dashboard-obra">
-            <h2>📊 Dashboard - {obraNome}</h2>
+            <h2><i className="ti ti-layout-dashboard" aria-hidden="true" /> Dashboard - {obraNome}</h2>
             
             {/* Gráfico de Gantt */}
             <div className="dashboard-section gantt-section">
@@ -662,7 +662,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
                 <div className="dashboard-section chart-section">
                     <PieChart 
                         data={dadosCategorias}
-                        title="💰 Distribuição de Custos"
+                        title="Distribuição de Custos"
                     />
                 </div>
                 
@@ -670,7 +670,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
                 <div className="dashboard-section chart-section">
                     <PieChart 
                         data={dadosMateriais}
-                        title="📦 Materiais (clique para detalhes)"
+                        title="Materiais (clique para detalhes)"
                         onSegmentClick={handleMaterialClick}
                     />
                 </div>

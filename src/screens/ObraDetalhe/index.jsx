@@ -1059,7 +1059,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     gap: '10px',
                                     color: '#1e293b'
                                 }}>
-                                    ?? Início - {obraSelecionada.nome}
+                                    <i className="ti ti-home" aria-hidden="true" /> Início - {obraSelecionada.nome}
                                 </h1>
 
                                 {/* Cards de Resumo - Usando valores do backend (sumarios) */}
