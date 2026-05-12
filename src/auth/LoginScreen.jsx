@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
+import './LoginScreen.css';
 
 const LoginScreen = ({ onBack }) => {
     const { login } = useAuth();
@@ -37,110 +38,114 @@ const LoginScreen = ({ onBack }) => {
     };
 
     return (
-        <div className="login-screen">
-            {/* Overlay para profundidade */}
-            <div className="overlay"></div>
+        <div className="ls-wrapper">
+            {/* Painel escuro esquerdo — 42% */}
+            <div className="ls-dark">
+                <div className="ls-logo">
+                    <div className="ls-logo-box">
+                        <i className="ti ti-building-skyscraper" aria-hidden="true"></i>
+                    </div>
+                    <span className="ls-logo-text">Obraly</span>
+                </div>
 
-            {/* Elementos flutuantes decorativos */}
-            <div className="floating-shape circle-1"></div>
-            <div className="floating-shape square-1"></div>
-            <div className="floating-shape triangle-1"></div>
+                <div className="ls-dark-mid">
+                    <h1 className="ls-headline">
+                        Gestão de obras<br />de ponta a ponta.
+                    </h1>
+                    <p className="ls-subheadline">
+                        Orçamentos, pagamentos, cronogramas.<br />Tudo num só lugar.
+                    </p>
+                </div>
 
-            {/* Botão Voltar */}
-            {onBack && (
-                <button
-                    onClick={onBack}
-                    style={{
-                        position: 'absolute',
-                        top: '30px',
-                        left: '30px',
-                        background: 'rgba(255,255,255,0.2)',
-                        border: 'none',
-                        color: '#fff',
-                        padding: '10px 20px',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s ease',
-                        zIndex: 10
-                    }}
-                    onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.3)'}
-                    onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-                >
-                    ← Voltar
-                </button>
-            )}
+                <div className="ls-dark-stats">
+                    <div className="ls-stat">
+                        <span className="ls-stat-number">17</span>
+                        <span className="ls-stat-label">OBRAS ATIVAS</span>
+                    </div>
+                    <div className="ls-stat-divider"></div>
+                    <div className="ls-stat">
+                        <span className="ls-stat-number">v2.0</span>
+                        <span className="ls-stat-label">2026</span>
+                    </div>
+                </div>
+            </div>
 
-            {/* Card de login */}
-            <div className="login-card">
-                <h1 style={{
-                    color: '#4f46e5',
-                    textAlign: 'center',
-                    fontSize: '2.5em',
-                    marginBottom: '30px',
-                    fontWeight: '700',
-                    margin: '0 0 30px 0'
-                }}>
-                    Obraly
-                </h1>
-
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <input
-                        type="text"
-                        placeholder="Usuário"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        style={{
-                            padding: '12px',
-                            fontSize: '1em',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Senha"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{
-                            padding: '12px',
-                            fontSize: '1em',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={(e) => e.target.style.borderColor = '#ccc'}
-                        required
-                    />
-                    <button
-                        type="submit"
-                        style={{
-                            padding: '12px',
-                            fontSize: '1em',
-                            background: '#4f46e5',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            fontWeight: '600'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = '#4338ca'}
-                        onMouseLeave={(e) => e.target.style.background = '#4f46e5'}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? 'Entrando...' : 'Entrar'}
+            {/* Painel claro direito — 58% */}
+            <div className="ls-light">
+                {onBack && (
+                    <button className="ls-back" onClick={onBack} type="button">
+                        ← Voltar
                     </button>
-                    {error && <p style={{ color: '#ef4444', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
-                </form>
+                )}
+
+                <div className="ls-form-wrap">
+                    <div className="ls-form-header">
+                        <h2 className="ls-title">Bem-vindo de volta</h2>
+                        <p className="ls-subtitle">Entre com suas credenciais para continuar.</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="ls-form" noValidate>
+                        <div className="ls-field">
+                            <label className="ls-label" htmlFor="ls-username">Usuário</label>
+                            <div className="ls-input-wrap">
+                                <i className="ti ti-user ls-input-icon" aria-hidden="true"></i>
+                                <input
+                                    id="ls-username"
+                                    type="text"
+                                    className="ls-input"
+                                    placeholder="admin_principal"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    autoComplete="username"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ls-field">
+                            <label className="ls-label" htmlFor="ls-password">Senha</label>
+                            <div className="ls-input-wrap">
+                                <i className="ti ti-lock ls-input-icon" aria-hidden="true"></i>
+                                <input
+                                    id="ls-password"
+                                    type="password"
+                                    className="ls-input"
+                                    placeholder="••••••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="current-password"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ls-forgot-row">
+                            <span className="ls-forgot">Esqueci minha senha</span>
+                        </div>
+
+                        {error && (
+                            <div className="ls-error" role="alert">
+                                <i className="ti ti-alert-circle" aria-hidden="true"></i>
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="ls-btn-submit"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Entrando...' : (
+                                <>
+                                    Entrar
+                                    <i className="ti ti-arrow-right" aria-hidden="true"></i>
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <p className="ls-footer-hint">Problemas para entrar? Contate o admin.</p>
+                </div>
             </div>
         </div>
     );

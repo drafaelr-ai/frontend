@@ -1,0 +1,295 @@
+/* LoginScreen — design system v2.0 */
+
+.ls-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Dark panel (left, 42%) ─────────────────── */
+
+.ls-dark {
+    flex: 0 0 42%;
+    background-color: var(--surface-dark);
+    background-image:
+        linear-gradient(rgba(245, 158, 11, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 158, 11, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ls-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.ls-logo-box {
+    width: 32px;
+    height: 32px;
+    background: var(--brand-accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--surface-dark);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ls-logo-text {
+    font-size: 20px;
+    font-weight: var(--weight-medium);
+    color: var(--text-on-dark);
+    letter-spacing: var(--tracking-tight);
+}
+
+.ls-headline {
+    font-size: 24px;
+    font-weight: var(--weight-medium);
+    line-height: var(--leading-tight);
+    color: var(--text-on-dark);
+    margin: 0 0 var(--space-3) 0;
+}
+
+.ls-subheadline {
+    font-size: var(--text-base);
+    color: var(--text-on-dark-muted);
+    line-height: 1.55;
+    margin: 0;
+}
+
+.ls-dark-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    border-top: 0.5px solid var(--border-on-dark);
+    padding-top: var(--space-4);
+}
+
+.ls-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.ls-stat-number {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-medium);
+    color: var(--text-on-dark);
+    line-height: 1;
+}
+
+.ls-stat-label {
+    font-size: var(--text-xs);
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+}
+
+.ls-stat-divider {
+    width: 0.5px;
+    height: 28px;
+    background: var(--border-on-dark);
+}
+
+/* ── Light panel (right, 58%) ───────────────── */
+
+.ls-light {
+    flex: 0 0 58%;
+    background: var(--surface-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 48px;
+    position: relative;
+}
+
+.ls-back {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: var(--surface-muted);
+    border: 0.5px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    transition: background var(--transition-fast);
+}
+
+.ls-back:hover {
+    background: var(--border-subtle);
+}
+
+.ls-form-wrap {
+    width: 100%;
+    max-width: 320px;
+}
+
+.ls-form-header {
+    margin-bottom: var(--space-8);
+}
+
+.ls-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    letter-spacing: var(--tracking-tight);
+    margin: 0 0 var(--space-1) 0;
+}
+
+.ls-subtitle {
+    font-size: var(--text-base);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.ls-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.ls-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.ls-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.ls-input-wrap {
+    position: relative;
+}
+
+.ls-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: var(--border-strong);
+    pointer-events: none;
+}
+
+.ls-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px 0 36px;
+    font-size: var(--text-md);
+    font-family: var(--font-sans);
+    border: 0.5px solid var(--border-default);
+    border-radius: 7px;
+    background: var(--surface-card);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+}
+
+.ls-input:focus {
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-focus);
+}
+
+.ls-forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(var(--space-1) * -1);
+}
+
+.ls-forgot {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.ls-forgot:hover {
+    color: var(--text-secondary);
+    text-decoration: underline;
+}
+
+.ls-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--status-danger-text);
+    background: var(--status-danger-bg);
+    border: 0.5px solid var(--status-danger);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+}
+
+.ls-btn-submit {
+    width: 100%;
+    height: 42px;
+    background: var(--brand-primary);
+    color: var(--text-on-dark);
+    border: none;
+    border-radius: 7px;
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    transition: background var(--transition-fast);
+    margin-top: var(--space-1);
+}
+
+.ls-btn-submit:hover:not(:disabled) {
+    background: var(--brand-primary-soft);
+}
+
+.ls-btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.ls-footer-hint {
+    font-size: var(--text-xs);
+    color: var(--border-strong);
+    text-align: center;
+    margin: var(--space-6) 0 0 0;
+}
+
+/* ── Responsive ─────────────────────────────── */
+
+@media (max-width: 768px) {
+    .ls-wrapper {
+        flex-direction: column;
+    }
+
+    .ls-dark {
+        flex: none;
+        height: 200px;
+        padding: 20px 24px;
+    }
+
+    .ls-dark-mid {
+        display: none;
+    }
+
+    .ls-dark-stats {
+        display: none;
+    }
+
+    .ls-light {
+        flex: 1;
+        padding: 40px 24px;
+        align-items: flex-start;
+    }
+}
