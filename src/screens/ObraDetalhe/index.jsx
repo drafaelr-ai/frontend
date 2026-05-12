@@ -11,7 +11,6 @@ import AgendaDemandas from '../../components/AgendaDemandas';
 import DiarioObras from '../../components/DiarioObras';
 import CronogramaObra from '../../components/CronogramaObra';
 import DashboardObra from '../../components/DashboardObra';
-import Modal from '../../components/modals/Modal';
 import EditLancamentoModal from '../../components/modals/EditLancamentoModal';
 import AddLancamentoModal from '../../components/modals/AddLancamentoModal';
 import AdminPanelModal from '../../components/modals/AdminPanelModal';
@@ -26,8 +25,7 @@ import WindowsNavBar, { WindowsNavStyles } from '../../layout/WindowsNavBar';
 import HistoricoPagamentosCard from '../HistoricoPagamentosCard';
 import CronogramaFinanceiro from '../CronogramaFinanceiro';
 import GestaoBoletos from '../../components/GestaoBoletos';
-// --- COMPONENTE DO DASHBOARD (Atualizado) ---
-function Dashboard() {
+function ObraDetalhe() {
     const { user, logout } = useAuth();
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
@@ -1348,4 +1346,4 @@ const totalOrcamentosPendentes = useMemo(() => {
         </>
     );
 }
-export default Dashboard;
+export default ObraDetalhe;

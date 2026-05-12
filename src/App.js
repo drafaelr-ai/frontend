@@ -6,7 +6,7 @@ import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
 import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
-import Dashboard from './screens/Dashboard';
+import ObraDetalhe from './screens/ObraDetalhe';
 
 function App() {
     const [user, setUser] = useState(null);
@@ -76,7 +76,7 @@ function App() {
         <>
             <ToastContainer />
             <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
-                {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
+                {user ? <ObraDetalhe /> : <LoginScreen onBack={handleBackToSelector} />}
             </AuthContext.Provider>
         </>
     );
