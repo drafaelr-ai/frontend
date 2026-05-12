@@ -88,6 +88,7 @@ Aguardar para ver se aparece em mais pares, depois consolidar todos juntos em fa
 
 - `src/components/modals/CadastrarBoletoModal.jsx`: **CORRIGIDO na fase-2-hotfix** (`7bc754b`)
 - `src/layout/NotificacoesDropdown.jsx`: **5 fetch diretos** — fetchCount, fetchNotificacoes, toggleLida, limparLidas, limparTodas, marcarTodasLidas — identificado durante fase-3 sub-lote A, extraído como está
+- `src/components/GestaoBoletos/index.jsx`: **6 fetch diretos** — fetchBoletos, fetchResumo, verificarAlertas, marcarPago, deletarBoleto, verPreview — identificado durante fase-3 sub-lote B2, extraído como está
 - Modal 27 (`EditarParcelasModal`): usa `fetchWithAuth` corretamente — OK
 - Modal 28 (`InserirPagamentoModal`): **nenhuma chamada de API direta** — delega tudo via callback `onSave` — OK
 - Verificar nos componentes restantes de App.js (Dashboard, HistoricoPagamentosCard, GestaoBoletos, CronogramaFinanceiro) durante sub-lotes B/C
