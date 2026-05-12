@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { fetchWithAuth, fetchWithAuthTimeout } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
@@ -31,18 +31,18 @@ function Dashboard() {
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
     const [servicos, setServicos] = useState([]); // Mantido para compatibilidade
-    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do or�amento para dropdown
+    const [itensOrcamento, setItensOrcamento] = useState([]); // NOVO: Itens do orçamento para dropdown
     const [sumarios, setSumarios] = useState(null);
     const [historicoUnificado, setHistoricoUnificado] = useState([]);
     
-    // CORRE��O: Verificar URL uma �nica vez no in�cio
+    // CORREÇÃO: Verificar URL uma única vez no início
     const urlParamsInicial = new URLSearchParams(window.location.search);
     const obraIdDaUrl = urlParamsInicial.get('obra');
     const temObraNaUrl = !!obraIdDaUrl;
     
-    // CORRE��O: Iniciar loading se tiver obra na URL
+    // CORREÇÃO: Iniciar loading se tiver obra na URL
     const [isLoading, setIsLoading] = useState(temObraNaUrl);
-    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para n�o causar re-render)
+    // NOVO: Flag para saber se estamos carregando obra da URL (usar useRef para não causar re-render)
     const [carregandoObraDaUrl, setCarregandoObraDaUrl] = useState(temObraNaUrl);
     const [editingLancamento, setEditingLancamento] = useState(null);
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
@@ -60,7 +60,7 @@ function Dashboard() {
     const [editingOrcamento, setEditingOrcamento] = useState(null);
     const [viewingAnexos, setViewingAnexos] = useState(null);
     
-    // <--- MUDAN�A: Novo estado para o modal de pagamento -->
+    // <--- MUDANÇA: Novo estado para o modal de pagamento -->
     const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
@@ -70,34 +70,34 @@ function Dashboard() {
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
     const [uploadingNFFor, setUploadingNFFor] = useState(null);
-    const isLoadingNotasFiscais = React.useRef(false); // Prote��o contra m�ltiplas requisi��es
+    const isLoadingNotasFiscais = React.useRef(false); // Proteção contra múltiplas requisições
     
     // <--- NOVO: Estado para controlar meses expandidos/recolhidos -->
-    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que est� recebendo upload
+    const [mesesExpandidos, setMesesExpandidos] = useState({}); // Item que está recebendo upload
     
-    // <--- NOVO: Estado para modal de relat�rios -->
+    // <--- NOVO: Estado para modal de relatórios -->
     const [isRelatoriosModalVisible, setRelatoriosModalVisible] = useState(false);
     
-    // <--- NOVO: Estado para modal de or�amentos -->
+    // <--- NOVO: Estado para modal de orçamentos -->
     const [isOrcamentosModalVisible, setOrcamentosModalVisible] = useState(false);
     
     // <--- NOVO: Estado para modal do Cronograma Financeiro -->
     const [isCronogramaFinanceiroVisible, setCronogramaFinanceiroVisible] = useState(false);
     
-    // MUDAN�A 2: Estado para modal do Di�rio de Obras
+    // MUDANÇA 2: Estado para modal do Diário de Obras
     const [isDiarioVisible, setDiarioVisible] = useState(false);
     
-    // MUDAN�A 3: NOVO estado para modal de Inserir Pagamento
+    // MUDANÇA 3: NOVO estado para modal de Inserir Pagamento
     const [isInserirPagamentoModalVisible, setInserirPagamentoModalVisible] = useState(false);
     
     // NOVO: Estado para modal do Caixa de Obra
     const [isCaixaObraVisible, setCaixaObraVisible] = useState(false);
     
-    // NOVO: Estado para mostrar obras conclu�das
+    // NOVO: Estado para mostrar obras concluídas
     const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
     
     // === NOVO: Estados para Sidebar ===
-    // CORRE��O: Iniciar como null para n�o piscar na tela de obras
+    // CORREÇÃO: Iniciar como null para não piscar na tela de obras
     const [currentPage, setCurrentPage] = useState(() => {
         // Ler da URL imediatamente para evitar flash
         const urlParams = new URLSearchParams(window.location.search);
@@ -109,8 +109,8 @@ function Dashboard() {
     });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // === NAVEGA��O COM HIST�RICO DO BROWSER ===
-    // Fun��o para navegar COM hist�rico do browser (bot�o voltar funciona)
+    // === NAVEGAÇÃO COM HISTÓRICO DO BROWSER ===
+    // Função para navegar COM histórico do browser (botão voltar funciona)
     const navigateTo = (page, obraId = null) => {
         const state = { page, obraId };
         const url = obraId ? `?obra=${obraId}&page=${page}` : `?page=${page}`;
@@ -121,17 +121,17 @@ function Dashboard() {
     // Expor navigateTo globalmente para uso no Sidebar
     window.navigateTo = navigateTo;
     
-    // Estado para controlar se a URL inicial j� foi processada
+    // Estado para controlar se a URL inicial já foi processada
     const [urlProcessada, setUrlProcessada] = useState(false);
 
-    // Escutar bot�o voltar do navegador
+    // Escutar botão voltar do navegador
     useEffect(() => {
         const handlePopState = (event) => {
             logger.debug('PopState event:', event.state);
             if (event.state) {
                 setCurrentPage(event.state.page || 'obras');
                 if (event.state.obraId) {
-                    // fetchObraData ser� chamado pelo useEffect abaixo
+                    // fetchObraData será chamado pelo useEffect abaixo
                     const obraId = event.state.obraId;
                     setIsLoading(true);
                     fetchWithAuth(`${API_URL}/obras/${obraId}`)
@@ -154,7 +154,7 @@ function Dashboard() {
                     setObraSelecionada(null);
                 }
             } else {
-                // Se n�o tem estado, voltar para lista de obras
+                // Se não tem estado, voltar para lista de obras
                 setCurrentPage('obras');
                 setObraSelecionada(null);
             }
@@ -168,14 +168,14 @@ function Dashboard() {
     }, []);
 
 const totalOrcamentosPendentes = useMemo(() => {
-        // A vari�vel 'orcamentos' j� cont�m
-        // apenas os or�amentos com status 'Pendente' vindos do backend.
+        // A variável 'orcamentos' já contém
+        // apenas os orçamentos com status 'Pendente' vindos do backend.
         return (Array.isArray(orcamentos) ? orcamentos : [])
             .reduce((total, orc) => total + (orc.valor || 0), 0);
     }, [orcamentos]);
 
    const itemsAPagar = useMemo(() => {
-    // <--- MUDAN�A: Filtros de 'A Pagar' e 'Pagos' atualizados -->
+    // <--- MUDANÇA: Filtros de 'A Pagar' e 'Pagos' atualizados -->
     return (Array.isArray(historicoUnificado) ? historicoUnificado : []).filter(item =>
         (item.valor_total || 0) > (item.valor_pago || 0)
     )
@@ -198,7 +198,7 @@ const totalOrcamentosPendentes = useMemo(() => {
  // --- NOVO BLOCO DO CRONOGRAMA (LUGAR CORRETO) ---
     const cronogramaPagamentos = useMemo(() => {
         const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera a hora para compara��o de datas
+        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparação de datas
 
         const data7Dias = new Date(hoje);
         data7Dias.setDate(hoje.getDate() + 7);
@@ -214,10 +214,10 @@ const totalOrcamentosPendentes = useMemo(() => {
             totalAPagar: 0
         };
 
-        // Usa a vari�vel 'itemsAPagar' que j� foi definida ANTES
+        // Usa a variável 'itemsAPagar' que já foi definida ANTES
         (Array.isArray(itemsAPagar) ? itemsAPagar : []).forEach(item => {
             const valorRestante = (item.valor_total || 0) - (item.valor_pago || 0);
-            // Usa data_vencimento se existir, sen�o usa data como fallback
+            // Usa data_vencimento se existir, senão usa data como fallback
             const dataParaUsar = item.data_vencimento || item.data;
             const dataVencimento = new Date(dataParaUsar + 'T00:00:00'); 
             
@@ -235,7 +235,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         });
 
         return totais;
-    }, [itemsAPagar]); // A depend�ncia � 'itemsAPagar'
+    }, [itemsAPagar]); // A dependência é 'itemsAPagar'
     // --- FIM DO NOVO BLOCO ---
 
 
@@ -246,7 +246,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         [historicoUnificado]
     );
     
-    // <--- NOVO: Fun��o para agrupar pagamentos por m�s -->
+    // <--- NOVO: Função para agrupar pagamentos por mês -->
     const pagamentosPorMes = useMemo(() => {
         const grupos = {};
         
@@ -261,7 +261,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     label: mesAnoLabel,
                     items: [],
                     total: 0,
-                    dataOrdem: dataItem // Para ordena��o
+                    dataOrdem: dataItem // Para ordenação
                 };
             }
             
@@ -275,7 +275,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .map(([mesAno, dados]) => ({ mesAno, ...dados }));
     }, [itemsPagos]);
     
-    // <--- NOVO: Fun��o para toggle de expandir/recolher m�s -->
+    // <--- NOVO: Função para toggle de expandir/recolher mês -->
     const toggleMes = (mesAno) => {
         setMesesExpandidos(prev => ({
             ...prev,
@@ -296,7 +296,7 @@ const totalOrcamentosPendentes = useMemo(() => {
             .catch(error => { logger.error("Erro ao buscar obras:", error); setObras([]); });
     }, [mostrarConcluidas]); 
     
-    // Callback para abrir modal de or�amentos
+    // Callback para abrir modal de orçamentos
     useEffect(() => {
         window.abrirModalOrcamentos = () => {
             setOrcamentosModalVisible(true);
@@ -310,7 +310,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         setIsLoading(true);
         logger.debug(`Buscando dados da obra ID: ${obraId}`);
         
-        // OTIMIZA��O: Carregar dados principais primeiro, secund�rios em paralelo
+        // OTIMIZAÇÃO: Carregar dados principais primeiro, secundários em paralelo
         fetchWithAuth(`${API_URL}/obras/${obraId}`)
             .then(res => { if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); return res.json(); })
             .then(data => {
@@ -327,22 +327,22 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setHistoricoUnificado(Array.isArray(data.historico_unificado) ? data.historico_unificado : []);
                 setOrcamentos(Array.isArray(data.orcamentos) ? data.orcamentos : []);
                 
-                // Carregar dados secund�rios (n�o bloqueia a tela principal)
+                // Carregar dados secundários (não bloqueia a tela principal)
                 fetchCronogramaObras(obraId);
                 fetchItensOrcamento(obraId);
                 
-                // Notas fiscais - tentar carregar mas n�o falhar se n�o existir
+                // Notas fiscais - tentar carregar mas não falhar se não existir
                 try {
                     fetchNotasFiscais(obraId);
                 } catch (error) {
-                    logger.debug("Notas fiscais n�o dispon�veis");
+                    logger.debug("Notas fiscais não disponíveis");
                 }
             })
             .catch(error => { logger.error(`Erro ao buscar dados da obra ${obraId}:`, error); setObraSelecionada(null); setLancamentos([]); setServicos([]); setSumarios(null); setOrcamentos([]); setItensOrcamento([]); })
             .finally(() => { setIsLoading(false); setCarregandoObraDaUrl(false); });
     };
     
-    // NOVO: Buscar itens do or�amento para dropdown
+    // NOVO: Buscar itens do orçamento para dropdown
     const fetchItensOrcamento = async (obraId) => {
         try {
             const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
@@ -351,12 +351,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setItensOrcamento(data);
             }
         } catch (error) {
-            logger.debug("Itens do or�amento n�o dispon�veis:", error);
+            logger.debug("Itens do orçamento não disponíveis:", error);
             setItensOrcamento([]);
         }
     };
     
-    // CORRE��O: Processar URL inicial ao montar o componente
+    // CORREÇÃO: Processar URL inicial ao montar o componente
     useEffect(() => {
         if (urlProcessada) return;
         
@@ -364,7 +364,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
         
-        logger.debug("[URL INIT] Par�metros:", { page: pageFromUrl, obra: obraFromUrl });
+        logger.debug("[URL INIT] Parâmetros:", { page: pageFromUrl, obra: obraFromUrl });
         
         if (obraFromUrl) {
             const obraId = parseInt(obraFromUrl);
@@ -392,11 +392,11 @@ const totalOrcamentosPendentes = useMemo(() => {
         setUrlProcessada(true);
     }, [urlProcessada]);
     
-    // NOVO: Fun��o para buscar cronograma de obras (etapas para Gantt)
+    // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
         try {
-            // Buscar cronogramas da obra (CronogramaObra = servi�os com cronograma)
-            // As etapas j� v�m inclu�das na resposta do backend via to_dict()
+            // Buscar cronogramas da obra (CronogramaObra = serviços com cronograma)
+            // As etapas já vêm incluídas na resposta do backend via to_dict()
             const response = await fetchWithAuth(`${API_URL}/cronograma/${obraId}`);
             if (!response.ok) {
                 setCronogramaObras([]);
@@ -411,12 +411,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 return;
             }
             
-            // As etapas j� v�m na resposta do backend, n�o precisa buscar separadamente
+            // As etapas já vêm na resposta do backend, não precisa buscar separadamente
             const cronogramasFormatados = cronogramasData.map((cron) => ({
                 servico_id: cron.servico_id,
                 servico_nome: cron.servico_nome || cron.nome || `Cronograma ${cron.id}`,
                 cronograma_id: cron.id,
-                // Usar diretamente as etapas que j� vieram na resposta
+                // Usar diretamente as etapas que já vieram na resposta
                 etapas: Array.isArray(cron.etapas) ? cron.etapas : [],
                 // Incluir dados adicionais do cronograma para o Gantt
                 data_inicio: cron.data_inicio,
@@ -427,28 +427,28 @@ const totalOrcamentosPendentes = useMemo(() => {
             logger.debug("Cronogramas de obras carregados:", cronogramasFormatados);
             setCronogramaObras(cronogramasFormatados);
         } catch (error) {
-            // Silencioso � cronograma de obras � feature secund�ria
+            // Silencioso — cronograma de obras é feature secundária
             setCronogramaObras([]);
         }
     };
     
-    // <--- NOVO: Fun��o para buscar notas fiscais -->
+    // <--- NOVO: Função para buscar notas fiscais -->
     const fetchNotasFiscais = (obraId) => {
-        // Prote��o contra m�ltiplas requisi��es simult�neas
+        // Proteção contra múltiplas requisições simultâneas
         if (isLoadingNotasFiscais.current) {
-            logger.debug("J� est� carregando notas fiscais, ignorando requisi��o duplicada");
+            logger.debug("Já está carregando notas fiscais, ignorando requisição duplicada");
             return;
         }
         
         isLoadingNotasFiscais.current = true;
         
-        // CORRE��O: Verificar se a rota existe antes de fazer a requisi��o
+        // CORREÇÃO: Verificar se a rota existe antes de fazer a requisição
         fetchWithAuth(`${API_URL}/obras/${obraId}/notas-fiscais`)
             .then(res => {
                 if (!res.ok) {
-                    // Se for 404, significa que a rota n�o existe - ignorar silenciosamente
+                    // Se for 404, significa que a rota não existe - ignorar silenciosamente
                     if (res.status === 404) {
-                        logger.debug("Rota de notas fiscais n�o dispon�vel (404) - ignorando");
+                        logger.debug("Rota de notas fiscais não disponível (404) - ignorando");
                         throw new Error('NOT_FOUND');
                     }
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -460,13 +460,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                 setNotasFiscais(Array.isArray(data) ? data : []);
             })
             .catch(error => {
-                // CORRE��O: N�o logar erro se for NOT_FOUND ou erro de rede
+                // CORREÇÃO: Não logar erro se for NOT_FOUND ou erro de rede
                 if (error.message === 'NOT_FOUND') {
-                    // Silencioso - rota n�o implementada ainda
+                    // Silencioso - rota não implementada ainda
                     setNotasFiscais([]);
                 } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    // Erro de rede - n�o logar (evita spam no console)
-                    logger.warn("Notas fiscais: rota n�o dispon�vel");
+                    // Erro de rede - não logar (evita spam no console)
+                    logger.warn("Notas fiscais: rota não disponível");
                     setNotasFiscais([]);
                 } else {
                     // Outros erros - logar normalmente
@@ -481,7 +481,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     
     // <--- NOVO: Helper para verificar se item tem nota fiscal -->
     const itemHasNotaFiscal = (item) => {
-        // <-- CORRE��O: Usar o ID correto baseado no tipo de registro
+        // <-- CORREÇÃO: Usar o ID correto baseado no tipo de registro
         const realItemId = item.tipo_registro === 'lancamento' 
             ? item.lancamento_id 
             : item.pagamento_id;
@@ -491,9 +491,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         );
     };
 
-    // --- FUN��ES DE A��O (CRUD) ---
+    // --- FUNÇÕES DE AÇÃO (CRUD) ---
     const handleAddObra = (e) => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         e.preventDefault();
         const nome = e.target.nome.value;
         const cliente = e.target.cliente.value || null;
@@ -503,14 +503,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
     const handleDeletarObra = (obraId, obraNome) => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
         .catch(error => logger.error('Erro ao deletar obra:', error));
     };
     
-    // NOVO: Fun��o para marcar obra como conclu�da/reabrir
+    // NOVO: Função para marcar obra como concluída/reabrir
     const handleConcluirObra = async (obraId, concluida) => {
         const acao = concluida ? 'reabrir' : 'concluir';
         if (!await confirmDialog(`Deseja ${acao} esta obra?`, { confirmText: 'Confirmar' })) return;
@@ -530,7 +530,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
-    // <--- MUDAN�A: Esta fun��o (marcar pago 100%) ser� chamada pelo modal de edi��o, n�o mais pelo bot�o -->
+    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
     const handleMarcarComoPago = (itemId) => {
         const isLancamento = String(itemId).startsWith('lanc-');
         const isServicoPag = String(itemId).startsWith('serv-pag-');
@@ -553,15 +553,15 @@ const totalOrcamentosPendentes = useMemo(() => {
     };
 
     const handleDeletarLancamento = (itemId) => {
-         // ... (c�digo inalterado)
+        // ... (código inalterado)
          const isLancamento = String(itemId).startsWith('lanc-');
          const actualId = String(itemId).split('-').pop();
         if (isLancamento) {
-            logger.debug("Deletando lan�amento geral:", actualId);
+            logger.debug("Deletando lançamento geral:", actualId);
             fetchWithAuth(`${API_URL}/lancamentos/${actualId}`, { method: 'DELETE' })
                 .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
                 .then(() => { fetchObraData(obraSelecionada.id); })
-                .catch(error => logger.error('Erro ao deletar lan�amento:', error));
+                .catch(error => logger.error('Erro ao deletar lançamento:', error));
         }
     };
     
@@ -569,12 +569,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         if (item.tipo_registro === 'lancamento') { setEditingLancamento(item); }
     };
     
-    // <--- MUDAN�A: Atualizado para enviar valor_total e valor_pago -->
+    // <--- MUDANÇA: Atualizado para enviar valor_total e valor_pago -->
     const handleSaveEdit = (updatedLancamento) => {
         const dataToSend = { 
             ...updatedLancamento, 
-            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDAN�A
-            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDAN�A
+            valor_total: parseFloat(updatedLancamento.valor_total) || 0, // <-- MUDANÇA
+            valor_pago: parseFloat(updatedLancamento.valor_pago) || 0, // <-- MUDANÇA
             servico_id: updatedLancamento.servico_id || null 
         };
         // Remove 'valor' se existir por acidente
@@ -585,23 +585,23 @@ const totalOrcamentosPendentes = useMemo(() => {
             body: JSON.stringify(dataToSend)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setEditingLancamento(null); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar edi��o:", error));
+        .catch(error => logger.error("Erro ao salvar edição:", error));
     };
     
-    // <--- MUDAN�A: handleSaveLancamento (o 'valor' do formul�rio � o 'valor_total') -->
+    // <--- MUDANÇA: handleSaveLancamento (o 'valor' do formulário é o 'valor_total') -->
     const handleSaveLancamento = (lancamentoData) => {
-        logger.debug("Salvando novo lan�amento:", lancamentoData);
-        // O formul�rio envia 'valor', mas o backend espera 'valor'
-        // A l�gica do backend j� converte 'valor' para 'valor_total' e 'valor_pago'
+        logger.debug("Salvando novo lançamento:", lancamentoData);
+        // O formulário envia 'valor', mas o backend espera 'valor'
+        // A lógica do backend já converte 'valor' para 'valor_total' e 'valor_pago'
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/lancamentos`, {
             method: 'POST',
             body: JSON.stringify(lancamentoData)
         }).then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => { setAddLancamentoModalVisible(false); fetchObraData(obraSelecionada.id); })
-        .catch(error => logger.error("Erro ao salvar lan�amento:", error));
+        .catch(error => logger.error("Erro ao salvar lançamento:", error));
     };
     
-    // MUDAN�A 3: NOVO handler para Inserir Pagamento
+    // MUDANÇA 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
         logger.debug("Inserindo novo pagamento:", pagamentoData);
         
@@ -617,14 +617,14 @@ const totalOrcamentosPendentes = useMemo(() => {
         
         await response.json();
         fetchObraData(obraSelecionada.id); // Atualiza dados em background
-        // N�o mostra alert - o modal cuida do toast
-        // N�o fecha modal - isso � controlado pelo callback onSave
+        // Não mostra alert - o modal cuida do toast
+        // Não fecha modal - isso é controlado pelo callback onSave
     };
 
-    // --- Handlers de Or�amento (inalterados) ---
+    // --- Handlers de Orçamento (inalterados) ---
     const handleSaveOrcamento = (formData) => {
-        // ... (c�digo inalterado)
-        logger.debug("Salvando novo or�amento...");
+        // ... (código inalterado)
+        logger.debug("Salvando novo orçamento...");
         fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/orcamentos`, {
             method: 'POST',
             body: formData
@@ -634,13 +634,13 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id); 
         })
         .catch(error => {
-            logger.error("Erro ao salvar or�amento:", error);
-            notify.error(`Erro ao salvar or�amento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
+            logger.error("Erro ao salvar orçamento:", error);
+            notify.error(`Erro ao salvar orçamento: ${error.message}\n\nVerifique o console para mais detalhes (F12).`);
         });
     };
     const handleSaveEditOrcamento = (orcamentoId, formData, newFiles) => {
-        // ... (c�digo inalterado)
-        logger.debug("Salvando edi��o do or�amento:", orcamentoId);
+        // ... (código inalterado)
+        logger.debug("Salvando edição do orçamento:", orcamentoId);
         
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, {
             method: 'PUT',
@@ -671,32 +671,32 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar edi��o do or�amento:", error);
-            notify.error(`Erro ao salvar edi��o: ${error.message}`);
+            logger.error("Erro ao salvar edição do orçamento:", error);
+            notify.error(`Erro ao salvar edição: ${error.message}`);
         });
     };
     const handleAprovarOrcamento = (orcamentoId) => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}/aprovar`, { method: 'POST' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao aprovar or�amento:", error));
+        .catch(error => logger.error("Erro ao aprovar orçamento:", error));
     };
     const handleRejeitarOrcamento = (orcamentoId) => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         fetchWithAuth(`${API_URL}/orcamentos/${orcamentoId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
         .then(() => {
              fetchObraData(obraSelecionada.id); 
         })
-        .catch(error => logger.error("Erro ao rejeitar solicita��o:", error));
+        .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
     };
 
     // Handler do PDF da Obra
     const handleExportObraPDF = () => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         if (!obraSelecionada) return;
         
         setIsExportingPDF(true);
@@ -716,14 +716,14 @@ const totalOrcamentosPendentes = useMemo(() => {
             })
             .catch(err => {
                 logger.error("Erro ao gerar PDF da obra:", err);
-                notify.error("N�o foi poss�vel gerar o PDF. Verifique o console para mais detalhes.");
+                notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
                 setIsExportingPDF(false);
             });
     };
 
     // Handler de Prioridade
     const handleSaveServicoPrioridade = (novaPrioridade) => {
-        // ... (c�digo inalterado)
+        // ... (código inalterado)
         if (!editingServicoPrioridade) return;
 
         const pagamentoId = editingServicoPrioridade.pagamento_id;
@@ -738,12 +738,12 @@ const totalOrcamentosPendentes = useMemo(() => {
             fetchObraData(obraSelecionada.id);
         })
         .catch(error => {
-            logger.error("Erro ao salvar prioridade do servi�o:", error);
+            logger.error("Erro ao salvar prioridade do serviço:", error);
             notify.error(`Erro ao salvar prioridade: ${error.message}`);
         });
     };
 
-    // <--- MUDAN�A: NOVA FUN��O HANDLER PARA PAGAMENTO PARCIAL ---
+    // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
     const handleSavePartialPayment = (valor_a_pagar) => {
         if (!payingItem) return;
 
@@ -768,22 +768,22 @@ const totalOrcamentosPendentes = useMemo(() => {
         })
         .catch(error => {
             logger.error("Erro ao registrar pagamento parcial:", error);
-            // Mostra o erro de valida��o (ex: "valor maior que o restante")
+            // Mostra o erro de validação (ex: "valor maior que o restante")
             // Precisamos garantir que o modal esteja aberto para mostrar o erro
             if (payingItem) {
                 notify.error(`Erro: ${error.message}`);
             }
         });
     };
-    // <--- FIM DA NOVA FUN��O ---
+    // <--- FIM DA NOVA FUNÇÃO ---
 
 
-    // --- RENDERIZA��O ---
+    // --- RENDERIZAÇÃO ---
     
-    // Fun��o para selecionar obra e ir para cronograma financeiro
+    // Função para selecionar obra e ir para cronograma financeiro
     const handleSelectObra = (obraId) => {
         fetchObraData(obraId);
-        // Usar navigateTo para atualizar hist�rico do browser
+        // Usar navigateTo para atualizar histórico do browser
         if (typeof window.navigateTo === 'function') {
             window.navigateTo('home', obraId);
         } else {
@@ -795,7 +795,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     window.handleSelectObra = handleSelectObra;
 
     // === TELA INICIAL (SEM OBRA SELECIONADA) - SEM SIDEBAR ===
-    // CORRE��O: Se estiver carregando obra da URL, mostrar loading
+    // CORREÇÃO: Se estiver carregando obra da URL, mostrar loading
     if (carregandoObraDaUrl) {
         return (
             <div style={{ 
@@ -823,7 +823,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     }
 
     if (!obraSelecionada) {
-        // ?? Se estiver na p�gina de BI, mostrar dashboard
+        // ?? Se estiver na página de BI, mostrar dashboard
         if (currentPage === 'bi') {
             return (
                 <BiDashboard
@@ -849,7 +849,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
-                        {/* ?? Bot�o BI Dashboard */}
+                        {/* ?? Botão BI Dashboard */}
                         <button 
                             onClick={() => setCurrentPage('bi')} 
                             className="export-btn" 
@@ -863,12 +863,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                             className="export-btn pdf" 
                             style={{marginRight: '10px'}}
                         >
-                            ?? Relat�rio Financeiro
+                            ?? Relatório Financeiro
                         </button>
                         
                         {user.role === 'master' && (
                             <button onClick={() => setAdminPanelVisible(true)} className="submit-btn" style={{marginRight: '10px'}}>
-                                Gerenciar Usu�rios
+                                Gerenciar Usuários
                             </button>
                         )}
                         <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
@@ -886,7 +886,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     </div>
                 )}
                 
-                {/* Toggle para mostrar obras conclu�das */}
+                {/* Toggle para mostrar obras concluídas */}
                 <div style={{ 
                     display: 'flex', 
                     justifyContent: 'flex-end', 
@@ -908,7 +908,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             onChange={(e) => setMostrarConcluidas(e.target.checked)}
                             style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
-                        Mostrar obras conclu�das
+                        Mostrar obras concluídas
                     </label>
                 </div>
                 
@@ -936,7 +936,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         fontSize: '0.75em',
                                         fontWeight: 'bold'
                                     }}>
-                                        ? CONCLU�DA
+                                        ? CONCLUÍDA
                                     </div>
                                 )}
                                 
@@ -945,7 +945,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleConcluirObra(obra.id, obra.concluida); }}
                                             className="card-obra-action-btn"
-                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Conclu�da'}
+                                            title={obra.concluida ? 'Reabrir Obra' : 'Marcar como Concluída'}
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
@@ -974,7 +974,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     
                                     <div className="obra-kpi-summary">
                                         <div>
-                                            <span>Or�amento Total</span>
+                                            <span>Orçamento Total</span>
                                             <strong style={{ color: 'var(--cor-vermelho)' }}>
                                                 {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
@@ -1002,7 +1002,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             </div>
                         ))
                     ) : (
-                        <p>Nenhuma obra cadastrada ou voc� ainda n�o tem permiss�o para ver nenhuma.</p>
+                        <p>Nenhuma obra cadastrada ou você ainda não tem permissão para ver nenhuma.</p>
                     )}
                 </div>
             </div>
@@ -1014,12 +1014,12 @@ const totalOrcamentosPendentes = useMemo(() => {
         return <div className="loading-screen">Carregando dados da obra...</div>;
     }
 
-    // === LAYOUT COM NAVEGA��O WINDOWS (OBRA SELECIONADA) ===
+    // === LAYOUT COM NAVEGAÇÃO WINDOWS (OBRA SELECIONADA) ===
     return (
         <>
             <WindowsNavStyles />
             <div className="app-layout-windows">
-                {/* Navega��o Windows */}
+                {/* Navegação Windows */}
                 <WindowsNavBar 
                     user={user}
                     currentPage={currentPage}
@@ -1030,14 +1030,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                     onLogout={logout}
                 />
                 
-                {/* Conte�do Principal */}
+                {/* Conteúdo Principal */}
                 <main className="main-content-windows">
 
-                    {/* === P�GINA: HOME (Dashboard + Quadro Informativo) === */}
+                    {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
-                            {/* Header com T�tulo + Cards de Resumo */}
-                           {/* Header com T�tulo + Cards de Resumo */}
+                            {/* Header com Título + Cards de Resumo */}
+                            {/* Header com Título + Cards de Resumo */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1050,7 +1050,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 flexWrap: 'wrap',
                                 gap: '16px'
                             }}>
-                                {/* T�tulo */}
+                            {/* Título */}
                                 <h1 style={{ 
                                     margin: 0,
                                     fontSize: '1.4rem',
@@ -1059,7 +1059,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     gap: '10px',
                                     color: '#1e293b'
                                 }}>
-                                    ?? In�cio - {obraSelecionada.nome}
+                                    ?? Início - {obraSelecionada.nome}
                                 </h1>
 
                                 {/* Cards de Resumo - Usando valores do backend (sumarios) */}
@@ -1075,7 +1075,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         borderLeft: '4px solid #ef4444',
                                         minWidth: '130px'
                                     }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Or�amento Total</div>
+                                        <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>Orçamento Total</div>
                                         <div style={{ fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
                                             {formatCurrency(sumarios?.orcamento_total || 0)}
                                         </div>
@@ -1122,7 +1122,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 </div>
                             </div>
                             
-                            {/* Dashboard com Gr�ficos */}
+                            {/* Dashboard com Gráficos */}
                             <DashboardObra 
                                 obraId={obraSelecionada.id}
                                 obraNome={obraSelecionada.nome}
@@ -1143,7 +1143,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 simplified={true}
                             />
                             
-                            {/* Hist�rico de Pagamentos */}
+                            {/* Histórico de Pagamentos */}
                             <HistoricoPagamentosCard 
                                 itemsPagos={itemsPagos}
                                 itemsAPagar={itemsAPagar}
@@ -1154,7 +1154,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         </div>
                     )}
 
-                    {/* === P�GINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
+                    {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
                     {currentPage === 'cronograma-obra' && (
                         <CronogramaObra 
                             obraId={obraSelecionada.id}
@@ -1164,7 +1164,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: OR�AMENTO DE ENGENHARIA === */}
+                    {/* === PÁGINA: ORÇAMENTO DE ENGENHARIA === */}
                     {currentPage === 'orcamento-eng' && (
                         <OrcamentoEngenharia 
                             obraId={obraSelecionada.id}
@@ -1174,7 +1174,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: CRONOGRAMA FINANCEIRO (Completo) === */}
+                    {/* === PÁGINA: CRONOGRAMA FINANCEIRO (Completo) === */}
                     {currentPage === 'financeiro' && (
                         <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
@@ -1188,7 +1188,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: INSERIR PAGAMENTO === */}
+                    {/* === PÁGINA: INSERIR PAGAMENTO === */}
                     {currentPage === 'pagamento' && (
                         <InserirPagamentoModal
                             obraId={obraSelecionada.id}
@@ -1205,7 +1205,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: RELAT�RIOS === */}
+                    {/* === PÁGINA: RELATÓRIOS === */}
                     {currentPage === 'relatorios' && (
                         <RelatoriosModal
                             obraId={obraSelecionada.id}
@@ -1216,7 +1216,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: OR�AMENTOS === */}
+                    {/* === PÁGINA: ORÇAMENTOS === */}
                     {currentPage === 'orcamentos' && (
                         <OrcamentosModal
                             obraId={obraSelecionada.id}
@@ -1226,7 +1226,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: DI�RIO DE OBRAS === */}
+                    {/* === PÁGINA: DIÁRIO DE OBRAS === */}
                     {currentPage === 'diario' && (
                         <DiarioObras 
                             obraId={obraSelecionada.id}
@@ -1236,7 +1236,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: AGENDA DE DEMANDAS === */}
+                    {/* === PÁGINA: AGENDA DE DEMANDAS === */}
                     {currentPage === 'agenda' && (
                         <AgendaDemandas 
                             obraId={obraSelecionada.id}
@@ -1247,7 +1247,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: CAIXA DE OBRA === */}
+                    {/* === PÁGINA: CAIXA DE OBRA === */}
                     {currentPage === 'caixa' && (
                         <CaixaObraModal
                             obraId={obraSelecionada.id}
@@ -1257,7 +1257,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: GEST�O DE BOLETOS === */}
+                    {/* === PÁGINA: GESTÃO DE BOLETOS === */}
                     {currentPage === 'boletos' && (
                         <GestaoBoletos
                             obraId={obraSelecionada.id}
@@ -1266,7 +1266,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {/* === P�GINA: GERENCIAR USU�RIOS === */}
+                    {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
                     {currentPage === 'usuarios' && (
                         <AdminPanelModal 
                             allObras={obras}
@@ -1310,12 +1310,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <div className="windows-status-bar">
                     <div className="status-bar-left">
                         <span className="status-bar-item">?? {obraSelecionada.nome}</span>
-                        <span className="status-bar-item">�</span>
-                        <span className="status-bar-item">P�gina: {currentPage}</span>
+                        <span className="status-bar-item">•</span>
+                        <span className="status-bar-item">Página: {currentPage}</span>
                     </div>
                     <div className="status-bar-right">
                         <span className="status-bar-item">?? {user.nome} ({user.role === 'master' ? 'Master' : user.role === 'administrador' ? 'Admin' : 'Operador'})</span>
-                        <span className="status-bar-item">�</span>
+                        <span className="status-bar-item">•</span>
                         <span className="status-bar-item">{new Date().toLocaleDateString('pt-BR')}</span>
                     </div>
                 </div>
