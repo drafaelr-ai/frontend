@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
+import { fetchWithAuth } from '../auth/fetchWithAuth';
 import { logger } from '../utils/logger';
 import { confirmDialog } from '../utils/notify';
 
@@ -12,10 +13,7 @@ const NotificacoesDropdown = ({ user }) => {
     // Buscar contador de notificações não lidas
     const fetchCount = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/notificacoes/count`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(`${API_URL}/notificacoes/count`);
             if (response.ok) {
                 const data = await response.json();
                 setCount(data.count);
@@ -29,10 +27,7 @@ const NotificacoesDropdown = ({ user }) => {
     const fetchNotificacoes = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/notificacoes?limite=20`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(`${API_URL}/notificacoes?limite=20`);
             if (response.ok) {
                 const data = await response.json();
                 setNotificacoes(data);
@@ -47,13 +42,9 @@ const NotificacoesDropdown = ({ user }) => {
     // Marcar como lida/não lida
     const toggleLida = async (notifId, lida) => {
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`${API_URL}/notificacoes/${notifId}/lida`, {
+            await fetchWithAuth(`${API_URL}/notificacoes/${notifId}/lida`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lida: !lida })
             });
             setNotificacoes(prev => prev.map(n =>
@@ -68,11 +59,7 @@ const NotificacoesDropdown = ({ user }) => {
     // Limpar lidas
     const limparLidas = async () => {
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`${API_URL}/notificacoes/limpar-lidas`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await fetchWithAuth(`${API_URL}/notificacoes/limpar-lidas`, { method: 'DELETE' });
             setNotificacoes(prev => prev.filter(n => !n.lida));
         } catch (err) {
             logger.error('Erro ao limpar notificações:', err);
@@ -83,11 +70,7 @@ const NotificacoesDropdown = ({ user }) => {
     const limparTodas = async () => {
         if (!await confirmDialog('Limpar TODAS as notificações?', { confirmText: 'Limpar tudo' })) return;
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`${API_URL}/notificacoes/limpar-todas`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await fetchWithAuth(`${API_URL}/notificacoes/limpar-todas`, { method: 'DELETE' });
             setNotificacoes([]);
             setCount(0);
             setIsOpen(false);
@@ -99,11 +82,7 @@ const NotificacoesDropdown = ({ user }) => {
     // Marcar todas como lidas
     const marcarTodasLidas = async () => {
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`${API_URL}/notificacoes/marcar-todas-lidas`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await fetchWithAuth(`${API_URL}/notificacoes/marcar-todas-lidas`, { method: 'POST' });
             setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
             setCount(0);
         } catch (err) {

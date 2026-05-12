@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../modals/Modal';
 import CadastrarBoletoModal from '../modals/CadastrarBoletoModal';
 import { API_URL } from '../../config';
+import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
@@ -18,14 +19,11 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     const fetchBoletos = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
             const url = filtroStatus === 'todos'
                 ? `${API_URL}/obras/${obraId}/boletos`
                 : `${API_URL}/obras/${obraId}/boletos?status=${filtroStatus}`;
 
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(url);
 
             if (response.ok) {
                 const data = await response.json();
@@ -41,10 +39,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     // Buscar resumo
     const fetchResumo = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/resumo`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos/resumo`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -58,11 +53,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     // Verificar alertas
     const verificarAlertas = async () => {
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`${API_URL}/boletos/verificar-alertas`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await fetchWithAuth(`${API_URL}/boletos/verificar-alertas`, { method: 'POST' });
         } catch (error) {
             logger.error('Erro ao verificar alertas:', error);
         }
@@ -79,13 +70,9 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
         if (!await confirmDialog('Confirma que este boleto foi pago?', { confirmText: 'Confirmar pagamento' })) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}/pagar`, {
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos/${boletoId}/pagar`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
             });
 
@@ -106,10 +93,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
         if (!await confirmDialog('Tem certeza que deseja excluir este boleto?', { danger: true, confirmText: 'Excluir' })) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos/${boletoId}`, {
+                method: 'DELETE'
             });
 
             if (response.ok) {
@@ -131,10 +116,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     // Ver preview do PDF
     const verPreview = async (boletoId) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/obras/${obraId}/boletos/${boletoId}/arquivo`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/boletos/${boletoId}/arquivo`);
 
             if (response.ok) {
                 const data = await response.json();
