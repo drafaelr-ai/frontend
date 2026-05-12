@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -7,6 +7,7 @@ import { logger } from '../../utils/logger';
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
     const [selectedObraIds, setSelectedObraIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         if (userToEdit) {
             fetchWithAuth(`${API_URL}/admin/users/${userToEdit.id}/permissions`)
@@ -21,6 +22,7 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                 });
         }
     }, [userToEdit]);
+
     const handleCheckboxChange = (obraId) => {
         setSelectedObraIds(prevSet => {
             const newSet = new Set(prevSet);
@@ -32,25 +34,53 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
             return newSet;
         });
     };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const obra_ids = Array.from(selectedObraIds);
         onSave(userToEdit.id, obra_ids);
     };
-    if (isLoading) {
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando permissões...</div></Modal>;
-    }
+
     return (
-        <Modal onClose={onClose}>
-            <h2>Editar Permissões: {userToEdit.username}</h2>
-            <p>Nível: <strong>{userToEdit.role}</strong></p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione as obras que este usuário pode ver:</label>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px', borderRadius: '4px' }}>
-                        {allObras.length > 0 ? allObras.map(obra => (
-                            <div key={obra.id}>
-                                <label>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Editar Permissões"
+            subtitle={`${userToEdit.username} · ${userToEdit.role}`}
+            width="default"
+            footer={isLoading ? undefined : (
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-user-permissions" className="m-btn-primary">
+                        <i className="ti ti-check" aria-hidden="true"></i>
+                        Salvar Permissões
+                    </button>
+                </>
+            )}
+        >
+            {isLoading ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Carregando permissões...</p>
+            ) : (
+                <form id="form-user-permissions" onSubmit={handleSubmit}>
+                    <div className="m-field">
+                        <label className="m-label">Obras com acesso</label>
+                        <div style={{
+                            maxHeight: '300px',
+                            overflowY: 'auto',
+                            border: '0.5px solid var(--border-default)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: 'var(--space-2)',
+                        }}>
+                            {allObras.length > 0 ? allObras.map(obra => (
+                                <label key={obra.id} style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-2)',
+                                    padding: 'var(--space-1) var(--space-2)',
+                                    cursor: 'pointer',
+                                    fontSize: 'var(--text-base)',
+                                    color: 'var(--text-primary)',
+                                }}>
                                     <input
                                         type="checkbox"
                                         checked={selectedObraIds.has(obra.id)}
@@ -58,15 +88,15 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                                     />
                                     {obra.nome}
                                 </label>
-                            </div>
-                        )) : <p>Nenhuma obra cadastrada para atribuir.</p>}
+                            )) : (
+                                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)', padding: 'var(--space-2)' }}>
+                                    Nenhuma obra cadastrada para atribuir.
+                                </p>
+                            )}
+                        </div>
                     </div>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Permissões</button>
-                </div>
-            </form>
+                </form>
+            )}
         </Modal>
     );
 };

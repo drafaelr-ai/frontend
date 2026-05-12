@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -33,7 +33,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
         if (file.type.startsWith('image/')) {
             try {
                 setIsCompressing(true);
-                logger.debug('🔄 Comprimindo imagem do comprovante...');
+                logger.debug('Comprimindo imagem do comprovante...');
 
                 const compressedImages = await compressImages([file]);
 
@@ -41,7 +41,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                     const compressed = compressedImages[0];
                     setComprovante(compressed.base64);
                     setPreviewComprovante(compressed.base64);
-                    logger.debug('✅ Imagem comprimida com sucesso');
+                    logger.debug('Imagem comprimida com sucesso');
                 }
             } catch (err) {
                 logger.error('Erro ao comprimir imagem:', err);
@@ -104,7 +104,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
 
             if (!response.ok) throw new Error('Erro ao salvar movimentação');
 
-            notify.success('✅ Movimentação registrada com sucesso!');
+            notify.success('Movimentação registrada com sucesso!');
             onSave();
         } catch (err) {
             logger.error('Erro ao salvar movimentação:', err);
@@ -115,149 +115,115 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
     };
 
     return (
-        <Modal customWidth="600px">
-            <div style={{ padding: '30px' }}>
-                <h2 style={{ fontSize: '1.8em', marginBottom: '25px' }}>💸 Nova Movimentação</h2>
-
-                {/* Tipo */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Tipo:
-                    </label>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Saída"
-                                checked={tipo === 'Saída'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📤 Saída</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                                type="radio"
-                                value="Entrada"
-                                checked={tipo === 'Entrada'}
-                                onChange={e => setTipo(e.target.value)}
-                                style={{ transform: 'scale(1.3)' }}
-                            />
-                            <span style={{ fontSize: '1.1em' }}>📥 Entrada</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Valor */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Valor (R$):
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={valor}
-                        onChange={e => setValor(e.target.value)}
-                        placeholder="0,00"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd'
-                        }}
-                    />
-                </div>
-
-                {/* Descrição */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Descrição:
-                    </label>
-                    <textarea
-                        value={descricao}
-                        onChange={e => setDescricao(e.target.value)}
-                        placeholder="Ex: Cimento urgência laje 3º andar"
-                        rows={3}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1.1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Observações */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Observações (opcional):
-                    </label>
-                    <textarea
-                        value={observacoes}
-                        onChange={e => setObservacoes(e.target.value)}
-                        placeholder="Informações adicionais..."
-                        rows={2}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            fontSize: '1em',
-                            borderRadius: '5px',
-                            border: '1px solid #ddd',
-                            resize: 'vertical'
-                        }}
-                    />
-                </div>
-
-                {/* Comprovante */}
-                <div style={{ marginBottom: '25px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '1.1em', fontWeight: 'bold' }}>
-                        Comprovante (opcional):
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        onChange={handleComprovanteChange}
-                        disabled={isCompressing}
-                        style={{ marginBottom: '15px' }}
-                    />
-                    {isCompressing && (
-                        <div style={{ color: '#007bff', fontSize: '0.9em', marginBottom: '10px' }}>
-                            ⏳ Comprimindo imagem...
-                        </div>
-                    )}
-                    {previewComprovante && (
-                        <div style={{ marginTop: '15px' }}>
-                            <img
-                                src={previewComprovante}
-                                alt="Preview"
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '300px',
-                                    borderRadius: '8px',
-                                    border: '2px solid #ddd'
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Botões */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Nova Movimentação"
+            width="large"
+            scrollBody={true}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isSubmitting || isCompressing}>
                         Cancelar
                     </button>
                     <button
+                        type="button"
+                        className="m-btn-primary"
                         onClick={handleSubmit}
                         disabled={isSubmitting || isCompressing}
-                        className="submit-btn"
-                        style={{ padding: '12px 24px', fontSize: '1.1em' }}
                     >
-                        {isCompressing ? '⏳ Comprimindo...' : isSubmitting ? 'Salvando...' : '💾 Salvar'}
+                        <i className="ti ti-device-floppy" aria-hidden="true"></i>
+                        {isCompressing ? 'Comprimindo...' : isSubmitting ? 'Salvando...' : 'Salvar'}
                     </button>
+                </>
+            }
+        >
+            <div className="m-field">
+                <label className="m-label">Tipo</label>
+                <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>
+                        <input
+                            type="radio"
+                            value="Saída"
+                            checked={tipo === 'Saída'}
+                            onChange={e => setTipo(e.target.value)}
+                        />
+                        Saída
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>
+                        <input
+                            type="radio"
+                            value="Entrada"
+                            checked={tipo === 'Entrada'}
+                            onChange={e => setTipo(e.target.value)}
+                        />
+                        Entrada
+                    </label>
                 </div>
+            </div>
+
+            <div className="m-field">
+                <label className="m-label">Valor (R$)</label>
+                <input
+                    className="m-input"
+                    type="number"
+                    step="0.01"
+                    value={valor}
+                    onChange={e => setValor(e.target.value)}
+                    placeholder="0,00"
+                />
+            </div>
+
+            <div className="m-field">
+                <label className="m-label">Descrição</label>
+                <textarea
+                    className="m-textarea"
+                    value={descricao}
+                    onChange={e => setDescricao(e.target.value)}
+                    placeholder="Ex: Cimento urgência laje 3º andar"
+                    rows={3}
+                />
+            </div>
+
+            <div className="m-field">
+                <label className="m-label">Observações <span className="m-label-opt">(opcional)</span></label>
+                <textarea
+                    className="m-textarea"
+                    value={observacoes}
+                    onChange={e => setObservacoes(e.target.value)}
+                    placeholder="Informações adicionais..."
+                    rows={2}
+                />
+            </div>
+
+            <div className="m-field">
+                <label className="m-label">Comprovante <span className="m-label-opt">(opcional)</span></label>
+                <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleComprovanteChange}
+                    disabled={isCompressing}
+                    style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
+                />
+                {isCompressing && (
+                    <p style={{ color: 'var(--status-info)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-1)' }}>
+                        Comprimindo imagem...
+                    </p>
+                )}
+                {previewComprovante && (
+                    <div style={{ marginTop: 'var(--space-3)' }}>
+                        <img
+                            src={previewComprovante}
+                            alt="Preview do comprovante"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '300px',
+                                borderRadius: 'var(--radius-md)',
+                                border: '0.5px solid var(--border-default)',
+                            }}
+                        />
+                    </div>
+                )}
             </div>
         </Modal>
     );
