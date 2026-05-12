@@ -17,6 +17,8 @@ import AddLancamentoModal from '../../components/modals/AddLancamentoModal';
 import AdminPanelModal from '../../components/modals/AdminPanelModal';
 import OrcamentosModal from '../../components/modals/OrcamentosModal';
 import InserirPagamentoModal from '../../components/modals/InserirPagamentoModal';
+import PartialPaymentModal from '../../components/modals/PartialPaymentModal';
+import EditPrioridadeModal from '../../components/modals/EditPrioridadeModal';
 import CaixaObraModal from '../../components/modals/CaixaObraModal';
 import ModalRelatorioCronograma from '../../components/modals/ModalRelatorioCronograma';
 import RelatoriosModal from '../../components/modals/RelatoriosModal';
@@ -1277,7 +1279,7 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                     {/* Modais que aparecem por cima */}
                     {payingItem && (
-                        <PagamentoModal
+                        <PartialPaymentModal
                             item={payingItem}
                             onClose={() => setPayingItem(null)}
                             onSave={handleSavePartialPayment}
@@ -1285,8 +1287,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                     )}
 
                     {editingServicoPrioridade && (
-                        <PrioridadeModal
-                            currentValue={editingServicoPrioridade.prioridade}
+                        <EditPrioridadeModal
+                            item={editingServicoPrioridade}
                             onClose={() => setEditingServicoPrioridade(null)}
                             onSave={handleSaveServicoPrioridade}
                         />
