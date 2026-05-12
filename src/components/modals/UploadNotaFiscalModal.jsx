@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -72,39 +72,45 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Anexar Nota Fiscal</h2>
-            <div style={{ marginBottom: '15px', padding: '10px', background: '#f8f9fa', borderRadius: '5px' }}>
-                <strong>Item:</strong> {item.descricao}<br />
-                <strong>Fornecedor:</strong> {item.fornecedor || 'N/A'}
-            </div>
-
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Selecione o arquivo (PDF ou Imagem)</label>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Anexar Nota Fiscal"
+            subtitle={`${item.descricao}${item.fornecedor ? ` · ${item.fornecedor}` : ''}`}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isUploading}>
+                        Cancelar
+                    </button>
+                    <button type="submit" form="form-upload-nota-fiscal" className="m-btn-primary" disabled={isUploading}>
+                        <i className="ti ti-upload" aria-hidden="true"></i>
+                        {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
+                    </button>
+                </>
+            }
+        >
+            <form id="form-upload-nota-fiscal" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Selecione o arquivo <span className="m-label-opt">(PDF ou Imagem, máx. 10 MB)</span></label>
                     <input
                         type="file"
                         accept=".pdf,.png,.jpg,.jpeg"
                         onChange={handleFileChange}
                         disabled={isUploading}
+                        style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
                     />
                     {file && (
-                        <p style={{ marginTop: '5px', color: 'var(--cor-acento)', fontSize: '0.9em' }}>
-                            ✓ Arquivo selecionado: {file.name}
+                        <p style={{ marginTop: 'var(--space-1)', color: 'var(--status-success-text)', fontSize: 'var(--text-sm)' }}>
+                            <i className="ti ti-check" aria-hidden="true"></i>
+                            {' '}Arquivo selecionado: {file.name}
                         </p>
                     )}
                 </div>
-
-                {error && <p style={{ color: 'var(--cor-vermelho)', textAlign: 'center' }}>{error}</p>}
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isUploading}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="submit-btn" disabled={isUploading}>
-                        {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
-                    </button>
-                </div>
+                {error && (
+                    <p style={{ color: 'var(--status-danger-text)', textAlign: 'center', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+                        {error}
+                    </p>
+                )}
             </form>
         </Modal>
     );

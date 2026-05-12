@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -41,99 +41,69 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
 
     const isPDF = nota.mimetype === 'application/pdf';
     const isImage = nota.mimetype?.startsWith('image/');
+    const canDelete = user.role === 'administrador' || user.role === 'master';
 
     return (
-        <Modal onClose={onClose} customWidth="800px">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>📄 Nota Fiscal</h2>
-                {(user.role === 'administrador' || user.role === 'master') && (
-                    <button
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        style={{
-                            background: 'var(--cor-vermelho)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            fontSize: '0.9em'
-                        }}
-                    >
-                        {isDeleting ? 'Excluindo...' : '🗑️ Excluir'}
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Nota Fiscal"
+            subtitle={nota.filename}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <>
+                    {canDelete && (
+                        <button
+                            type="button"
+                            className="m-btn-primary m-btn-primary--danger"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            <i className="ti ti-trash" aria-hidden="true"></i>
+                            {isDeleting ? 'Excluindo...' : 'Excluir'}
+                        </button>
+                    )}
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+                    <button type="button" className="m-btn-primary" onClick={handleDownload}>
+                        <i className="ti ti-download" aria-hidden="true"></i>
+                        Baixar
                     </button>
-                )}
-            </div>
+                </>
+            }
+        >
+            <dl className="m-view-dl" style={{ marginBottom: 'var(--space-4)' }}>
+                <dt className="m-view-dt">Arquivo</dt>
+                <dd className="m-view-dd">{nota.filename}</dd>
+                <dt className="m-view-dt">Tipo</dt>
+                <dd className="m-view-dd">{nota.mimetype}</dd>
+            </dl>
 
             <div style={{
-                padding: '15px',
-                background: '#f8f9fa',
-                borderRadius: '8px',
-                marginBottom: '20px'
-            }}>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Arquivo:</strong> {nota.filename}
-                </p>
-                <p style={{ margin: '5px 0' }}>
-                    <strong>Tipo:</strong> {nota.mimetype}
-                </p>
-            </div>
-
-            <div style={{
-                border: '1px solid #ddd',
-                borderRadius: '8px',
+                border: '0.5px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
-                marginBottom: '20px',
-                maxHeight: '500px',
-                overflowY: 'auto'
             }}>
                 {isPDF && (
                     <iframe
                         src={`${API_URL}/notas-fiscais/${nota.id}`}
-                        style={{
-                            width: '100%',
-                            height: '500px',
-                            border: 'none'
-                        }}
+                        style={{ width: '100%', height: '500px', border: 'none' }}
                         title="Nota Fiscal PDF"
                     />
                 )}
-
                 {isImage && (
                     <img
                         src={`${API_URL}/notas-fiscais/${nota.id}`}
                         alt="Nota Fiscal"
-                        style={{
-                            width: '100%',
-                            height: 'auto',
-                            display: 'block'
-                        }}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
                 )}
-
                 {!isPDF && !isImage && (
-                    <div style={{
-                        padding: '40px',
-                        textAlign: 'center',
-                        color: '#666'
-                    }}>
+                    <div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--text-muted)' }}>
                         <p>Pré-visualização não disponível para este tipo de arquivo.</p>
                         <p>Clique em "Baixar" para visualizar o arquivo.</p>
                     </div>
                 )}
-            </div>
-
-            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button onClick={onClose} className="cancel-btn">
-                    Fechar
-                </button>
-                <button
-                    onClick={handleDownload}
-                    className="submit-btn"
-                    style={{ background: 'var(--cor-acento)' }}
-                >
-                    📥 Baixar
-                </button>
             </div>
         </Modal>
     );

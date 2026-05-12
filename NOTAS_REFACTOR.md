@@ -225,6 +225,17 @@ que serviam a 2 features nunca ativadas:
 
 ### Recomendação
 Decidir caso a caso na fase 5 (review de funcionalidades) ou fase 7 (a11y/UX):
+
+---
+
+## Bug detectado em VisualizarNotaFiscalModal (descoberto na fase 6 D2)
+
+- **Arquivo**: `src/components/modals/VisualizarNotaFiscalModal.jsx`
+- **Função**: `handleDownload`
+- **Problema**: `window.open(`${API_URL}/notas-fiscais/${nota.id}`, '_blank')` — chama a URL da API diretamente sem `fetchWithAuth`, sem token de autenticação
+- **Impacto**: o download falha silenciosamente se a rota exigir auth (retorna 401 ou redireciona)
+- **Contraste**: `handleDelete` no mesmo arquivo usa `fetchWithAuth` corretamente
+- **Nota**: não corrigido em D2 (fora do escopo). Corrigir em fase de bug fixes: substituir `window.open` por `fetchWithAuth(...).then(res => res.blob()).then(blob => URL.createObjectURL(blob))` e abrir o blob URL
 - Manter código (caso a feature volte a ser priorizada)
 - Remover por completo (setter, handler, modal-call) se decidido que não é necessária
 
