@@ -325,3 +325,21 @@ Dois modais tinham `customWidth` maiores que o máximo disponível (`xlarge` = 8
 - **OrcamentosModal**: `customWidth="96%"` → `width="xlarge"` (800px). Em telas grandes (>840px), o modal era quase fullscreen; agora é fixo em 800px. Tabela de solicitações pendentes pode precisar de scroll horizontal.
 
 **Ação futura**: se o feedback de UX indicar problemas, considerar adicionar `width="fullscreen"` ou `customWidth` como escape hatch no Modal wrapper.
+
+---
+
+## TODO Performance: HistoricoPagamentosCard — virtualização (fase 5)
+
+- **Arquivo**: `src/screens/HistoricoPagamentosCard/index.jsx`
+- **Problema**: componente renderiza todos os itens pagos em memória + DOM sem paginação ou virtualização. Smoke test com 339 itens mostrou lentidão.
+- **Spec**: `_refactor/design-system/05-lista-densa.md` diz "Virtualização obrigatória quando > 200 linhas — usar `react-window` ou similar"
+- **Mitigação atual**: `mostrarTodos` (mostra 10 por padrão, expand opcional). Não resolve o problema de 339 itens em memória.
+- **Solução fase 5**: paginação server-side (50/pág default) em `/obras/<id>/lancamentos` ou virtualização client-side com `react-window`. Verificar se `react-window` já está no `package.json` antes de instalar.
+- **Nota**: filtros e busca atuais são client-side — paginação server-side exige reescrever para filtros via query params.
+
+## Token ausente: overlay de modal inline (fase 7 ou design system v2.1)
+
+- `rgba(0,0,0,0.5)` usado em `HistoricoPagamentosCard` (edit modal) e provavelmente em outros modais inline.
+- Não há token para cor de overlay/backdrop no design system v2.0.
+- Candidato a adicionar: `var(--overlay-bg)` = `rgba(0, 0, 0, 0.45)` em `tokens.css`.
+- Catalogado aqui para a revisão de tokens da fase 7.
