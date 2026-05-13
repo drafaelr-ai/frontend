@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
-import { getTodayString } from '../../utils/format';
+import { getTodayString, formatCurrency } from '../../utils/format';
 
 const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const [formData, setFormData] = useState({
@@ -160,6 +160,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 }
             }
 
+            // BUG: notify.error used for success message — catalogado em NOTAS_REFACTOR.md, não corrigido em D2
             notify.error(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
             setMultiplosBoletos(null);
             onSave();
@@ -229,21 +230,34 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>📄 Cadastrar Novo Boleto</h2>
-            <p style={{ color: '#666', marginBottom: '15px' }}>
-                Faça upload do PDF do boleto para extração automática dos dados.
-            </p>
-
-            <form onSubmit={handleSubmit} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Cadastrar Novo Boleto"
+            subtitle="Upload do PDF para extração automática dos dados"
+            width="large"
+            scrollBody={true}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    {!multiplosboletos && (
+                        <button type="submit" form="form-cadastrar-boleto" className="m-btn-primary" disabled={salvando}>
+                            <i className="ti ti-device-floppy" aria-hidden="true"></i>
+                            {salvando ? 'Salvando...' : 'Salvar Boleto'}
+                        </button>
+                    )}
+                </>
+            }
+        >
+            <form id="form-cadastrar-boleto" onSubmit={handleSubmit}>
                 {/* Upload de PDF */}
                 <div style={{
-                    border: '2px dashed #1976d2',
-                    borderRadius: '10px',
-                    padding: '20px',
+                    border: '2px dashed var(--border-strong)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--space-5)',
                     textAlign: 'center',
-                    marginBottom: '20px',
-                    background: arquivo ? '#e3f2fd' : '#f5f5f5'
+                    marginBottom: 'var(--space-4)',
+                    background: arquivo ? 'var(--status-info-bg)' : 'var(--surface-muted)'
                 }}>
                     <input
                         type="file"
@@ -252,13 +266,13 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         style={{ display: 'none' }}
                         id="pdf-upload"
                     />
-                    <label htmlFor="pdf-upload" style={{ cursor: 'pointer' }}>
+                    <label htmlFor="pdf-upload" style={{ cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                         {extraindo ? (
-                            <span>⏳ Extraindo dados do PDF...</span>
+                            <span>Extraindo dados do PDF...</span>
                         ) : arquivo ? (
-                            <span>✅ {arquivo.name}</span>
+                            <span style={{ color: 'var(--status-info)' }}>✅ {arquivo.name}</span>
                         ) : (
-                            <span>📁 Clique para selecionar o PDF do boleto</span>
+                            <span>Clique para selecionar o PDF do boleto</span>
                         )}
                     </label>
                 </div>
@@ -266,20 +280,20 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 {/* Confirmação de PDF carregado */}
                 {arquivoBase64 && !multiplosboletos && (
                     <div style={{
-                        marginBottom: '20px',
-                        padding: '15px',
-                        background: '#e3f2fd',
-                        borderRadius: '8px',
-                        border: '1px solid #90caf9',
+                        marginBottom: 'var(--space-4)',
+                        padding: 'var(--space-3)',
+                        background: 'var(--status-info-bg)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '0.5px solid var(--status-info)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px'
+                        gap: 'var(--space-3)'
                     }}>
-                        <span style={{ fontSize: '24px' }}>✅</span>
+                        <i className="ti ti-check" aria-hidden="true" style={{ fontSize: '24px', color: 'var(--status-info)' }}></i>
                         <div>
-                            <strong style={{ color: '#1976d2' }}>PDF carregado com sucesso!</strong>
+                            <strong style={{ color: 'var(--status-info)' }}>PDF carregado com sucesso!</strong>
                             <br />
-                            <span style={{ fontSize: '12px', color: '#666' }}>{arquivo?.name}</span>
+                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{arquivo?.name}</span>
                         </div>
                     </div>
                 )}
@@ -287,38 +301,32 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 {/* MÚLTIPLOS BOLETOS ENCONTRADOS */}
                 {multiplosboletos && multiplosboletos.length > 1 && (
                     <div style={{
-                        marginBottom: '20px',
-                        padding: '15px',
-                        background: '#fff3e0',
-                        borderRadius: '8px',
-                        border: '1px solid #ffb74d'
+                        marginBottom: 'var(--space-4)',
+                        padding: 'var(--space-3)',
+                        background: 'var(--status-warning-bg)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '0.5px solid var(--status-warning)'
                     }}>
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            marginBottom: '15px'
+                            marginBottom: 'var(--space-3)'
                         }}>
-                            <h3 style={{ margin: 0, color: '#e65100' }}>
-                                📄 {multiplosboletos.length} Boletos Encontrados
+                            <h3 style={{ margin: 0, color: 'var(--status-warning-text)', fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)' }}>
+                                {multiplosboletos.length} Boletos Encontrados
                             </h3>
                         </div>
 
                         {/* Dropdown de Serviço para múltiplos boletos */}
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: 'bold', fontSize: '13px', color: '#333' }}>
+                        <div style={{ marginBottom: 'var(--space-3)' }}>
+                            <label style={{ fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-sm)', color: 'var(--text-primary)', display: 'block', marginBottom: 'var(--space-1)' }}>
                                 Vincular todos a um Serviço:
                             </label>
                             <select
+                                className="m-select"
                                 value={formData.vinculado_servico_id}
                                 onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px',
-                                    marginTop: '5px',
-                                    borderRadius: '5px',
-                                    border: '1px solid #ddd'
-                                }}
                             >
                                 <option value="">-- Nenhum (Despesa Extra) --</option>
                                 {servicos.map(servico => (
@@ -329,28 +337,20 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             </select>
                         </div>
 
-                        <div style={{ marginBottom: '10px' }}>
+                        <div style={{ marginBottom: 'var(--space-2)' }}>
                             <button
                                 type="button"
                                 onClick={cadastrarTodosBoletos}
                                 disabled={salvandoTodos}
-                                style={{
-                                    padding: '10px 20px',
-                                    background: salvandoTodos ? '#ccc' : '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: salvandoTodos ? 'default' : 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold',
-                                    width: '100%'
-                                }}
+                                className="m-btn-primary"
+                                style={{ width: '100%' }}
                             >
-                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar Todos os ${multiplosboletos.length} Boletos`}
+                                <i className="ti ti-check" aria-hidden="true"></i>
+                                {salvandoTodos ? 'Cadastrando...' : `Cadastrar Todos os ${multiplosboletos.length} Boletos`}
                             </button>
                         </div>
 
-                        <p style={{ color: '#666', fontSize: '13px', marginBottom: '10px' }}>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>
                             Ou clique em um boleto específico para cadastrá-lo individualmente:
                         </p>
 
@@ -360,35 +360,35 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                                     key={index}
                                     onClick={() => selecionarBoleto(boleto)}
                                     style={{
-                                        padding: '10px',
-                                        marginBottom: '8px',
-                                        background: 'white',
-                                        borderRadius: '5px',
-                                        border: '1px solid #ddd',
+                                        padding: 'var(--space-2)',
+                                        marginBottom: 'var(--space-2)',
+                                        background: 'var(--surface-card)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        border: '0.5px solid var(--border-default)',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        transition: 'all 0.2s'
+                                        transition: 'all var(--transition-fast)'
                                     }}
-                                    onMouseOver={(e) => e.currentTarget.style.background = '#e3f2fd'}
-                                    onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--status-info-bg)'}
+                                    onMouseOut={(e) => e.currentTarget.style.background = 'var(--surface-card)'}
                                 >
                                     <div>
-                                        <strong style={{ color: '#1976d2' }}>
+                                        <strong style={{ color: 'var(--status-info)', fontSize: 'var(--text-sm)' }}>
                                             Parcela {index + 1}
                                         </strong>
                                         <br />
-                                        <span style={{ fontSize: '12px', color: '#666' }}>
+                                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
                                             Venc: {boleto.data_vencimento ? new Date(boleto.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
                                         </span>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <strong style={{ color: '#2e7d32', fontSize: '16px' }}>
-                                            R$ {boleto.valor ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}
+                                        <strong style={{ color: 'var(--status-success-text)', fontSize: 'var(--text-base)' }}>
+                                            {boleto.valor ? formatCurrency(boleto.valor) : '-'}
                                         </strong>
                                         <br />
-                                        <span style={{ fontSize: '11px', color: '#999' }}>
+                                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
                                             Clique para selecionar
                                         </span>
                                     </div>
@@ -397,14 +397,14 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         </div>
 
                         <div style={{
-                            marginTop: '10px',
-                            padding: '10px',
-                            background: '#e8f5e9',
-                            borderRadius: '5px',
-                            fontSize: '12px',
-                            color: '#2e7d32'
+                            marginTop: 'var(--space-2)',
+                            padding: 'var(--space-2)',
+                            background: 'var(--status-success-bg)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: 'var(--text-xs)',
+                            color: 'var(--status-success-text)'
                         }}>
-                            💡 <strong>Total:</strong> R$ {multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            💡 <strong>Total:</strong> {formatCurrency(multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0))}
                             {multiplosboletos[0]?.beneficiario && (
                                 <span> | <strong>Beneficiário:</strong> {multiplosboletos[0].beneficiario}</span>
                             )}
@@ -415,107 +415,103 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 {/* Formulário normal (quando não há múltiplos boletos) */}
                 {!multiplosboletos && (
                     <>
-                <div className="form-group">
-                    <label>Descrição *</label>
-                    <input
-                        type="text"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                        placeholder="Ex: Conta de Energia - CEMIG"
-                        required
-                    />
-                </div>
+                        <div className="m-field">
+                            <label className="m-label">Descrição *</label>
+                            <input
+                                className="m-input"
+                                type="text"
+                                value={formData.descricao}
+                                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                                placeholder="Ex: Conta de Energia - CEMIG"
+                                required
+                            />
+                        </div>
 
-                <div className="form-group">
-                    <label>Beneficiário</label>
-                    <input
-                        type="text"
-                        value={formData.beneficiario}
-                        onChange={(e) => setFormData({ ...formData, beneficiario: e.target.value })}
-                        placeholder="Nome do beneficiário"
-                    />
-                </div>
+                        <div className="m-field">
+                            <label className="m-label">Beneficiário <span className="m-label-opt">(opcional)</span></label>
+                            <input
+                                className="m-input"
+                                type="text"
+                                value={formData.beneficiario}
+                                onChange={(e) => setFormData({ ...formData, beneficiario: e.target.value })}
+                                placeholder="Nome do beneficiário"
+                            />
+                        </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div className="form-group">
-                        <label>Valor (R$) *</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={formData.valor}
-                            onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                            required
-                        />
-                    </div>
+                        <div className="m-row">
+                            <div className="m-field">
+                                <label className="m-label">Valor (R$) *</label>
+                                <input
+                                    className="m-input"
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.valor}
+                                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="m-field">
+                                <label className="m-label">Data de Vencimento *</label>
+                                <input
+                                    className="m-input"
+                                    type="date"
+                                    value={formData.data_vencimento}
+                                    onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                    <div className="form-group">
-                        <label>Data de Vencimento *</label>
-                        <input
-                            type="date"
-                            value={formData.data_vencimento}
-                            onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
-                            required
-                        />
-                    </div>
-                </div>
+                        <div className="m-field">
+                            <label className="m-label">Código de Barras (Linha Digitável) <span className="m-label-opt">(opcional)</span></label>
+                            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                                <input
+                                    className="m-input"
+                                    type="text"
+                                    value={formData.codigo_barras}
+                                    onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })}
+                                    placeholder="Cole a linha digitável do boleto"
+                                    style={{ flex: 1 }}
+                                />
+                                {formData.codigo_barras && (
+                                    <button
+                                        type="button"
+                                        onClick={copiarCodigo}
+                                        style={{
+                                            padding: 'var(--space-2) var(--space-3)',
+                                            background: 'var(--brand-primary)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: 'var(--radius-sm)',
+                                            cursor: 'pointer',
+                                            flexShrink: 0
+                                        }}
+                                        title="Copiar código"
+                                    >
+                                        <i className="ti ti-copy" aria-hidden="true"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-                <div className="form-group">
-                    <label>Código de Barras (Linha Digitável)</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                            type="text"
-                            value={formData.codigo_barras}
-                            onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })}
-                            placeholder="Cole a linha digitável do boleto"
-                            style={{ flex: 1 }}
-                        />
-                        {formData.codigo_barras && (
-                            <button
-                                type="button"
-                                onClick={copiarCodigo}
-                                style={{
-                                    padding: '8px 15px',
-                                    background: '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer'
-                                }}
+                        <div className="m-field">
+                            <label className="m-label">Vincular a Serviço <span className="m-label-opt">(opcional)</span></label>
+                            <select
+                                className="m-select"
+                                value={formData.vinculado_servico_id}
+                                onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
                             >
-                                📋
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Vincular a Serviço */}
-                <div className="form-group">
-                    <label>Vincular a Serviço (Opcional)</label>
-                    <select
-                        value={formData.vinculado_servico_id}
-                        onChange={(e) => setFormData({ ...formData, vinculado_servico_id: e.target.value || null })}
-                        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-                    >
-                        <option value="">-- Nenhum (Despesa Extra) --</option>
-                        {servicos.map(servico => (
-                            <option key={servico.id} value={servico.id}>
-                                {servico.nome}
-                            </option>
-                        ))}
-                    </select>
-                    <small style={{ color: '#666', fontSize: '11px' }}>
-                        💡 Boletos vinculados a serviços são somados ao orçamento. Boletos sem serviço vão para "Despesas Extras".
-                    </small>
-                </div>
-
-                <div className="form-actions" style={{ marginTop: '20px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn">
-                        Cancelar
-                    </button>
-                    <button type="submit" className="submit-btn" disabled={salvando}>
-                        {salvando ? '⏳ Salvando...' : '💾 Salvar Boleto'}
-                    </button>
-                </div>
+                                <option value="">-- Nenhum (Despesa Extra) --</option>
+                                {servicos.map(servico => (
+                                    <option key={servico.id} value={servico.id}>
+                                        {servico.nome}
+                                    </option>
+                                ))}
+                            </select>
+                            <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)', marginTop: 'var(--space-1)', display: 'block' }}>
+                                Boletos vinculados a serviços são somados ao orçamento. Boletos sem serviço vão para "Despesas Extras".
+                            </small>
+                        </div>
                     </>
                 )}
             </form>

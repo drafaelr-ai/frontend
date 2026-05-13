@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../../components/modals/Modal';
+import Modal from '../../components/Modal/Modal';
 import CadastrarPagamentoFuturoModal from '../../components/modals/CadastrarPagamentoFuturoModal';
 import EditarPagamentoFuturoModal from '../../components/modals/EditarPagamentoFuturoModal';
 import CadastrarPagamentoParceladoModal from '../../components/modals/CadastrarPagamentoParceladoModal';
@@ -44,7 +44,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         return next;
     });
 
-    const showCronogramaToast = (msg, color = '#10b981') => {
+    const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
         toast.textContent = msg;
         toast.style.cssText = `position:fixed;top:20px;right:20px;background:${color};color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
@@ -341,7 +341,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         const idStr = String(id);
 
         if (idStr.startsWith('servico-')) {
-            notify.warning('⚠️ Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
+            notify.warning('Este pagamento está vinculado a um serviço.\n\nPara excluí-lo, acesse a página do serviço correspondente.');
             return;
         }
 
@@ -359,7 +359,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosFuturos(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('🗑️ Pagamento futuro excluído!');
+                showCronogramaToast('Pagamento futuro excluído!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -421,7 +421,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     );
                 }
 
-                showCronogramaToast('✅ Pagamento marcado como pago!');
+                showCronogramaToast('Pagamento marcado como pago!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -455,7 +455,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
             if (res.ok) {
                 setPagamentosParcelados(prev => prev.filter(pag => pag.id !== id));
-                showCronogramaToast('🗑️ Pagamento parcelado excluído!');
+                showCronogramaToast('Pagamento parcelado excluído!');
                 setTimeout(() => fetchData(), 500);
             } else {
                 notify.error('Erro ao excluir pagamento parcelado');
@@ -537,7 +537,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     });
                 });
 
-                showCronogramaToast(`✅ ${resultado.mensagem}`);
+                showCronogramaToast(resultado.mensagem);
                 setTimeout(() => fetchData(), 500);
             } else {
                 const erro = await res.json().catch(() => ({}));
@@ -559,14 +559,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         if (embedded) {
             return <div className="loading-screen">Carregando cronograma...</div>;
         }
-        return <Modal onClose={onClose}><div className="loading-screen">Carregando cronograma...</div></Modal>;
+        return <Modal isOpen={true} onClose={onClose} title="Cronograma Financeiro"><div className="loading-screen">Carregando cronograma...</div></Modal>;
     }
 
     const totalPrevisoes = previsoes.reduce((acc, prev) => acc + prev.valor, 0);
 
     const cronogramaContent = (
-        <div style={{ maxHeight: embedded ? 'none' : '85vh', overflowY: embedded ? 'visible' : 'auto' }}>
-            <h2>{simplified ? '📋' : '💰'} {simplified ? 'Início' : 'Cronograma Financeiro'} - {obraNome}</h2>
+        <div>
+            {embedded && !simplified && <h2><i className="ti ti-cash" aria-hidden="true" /> Cronograma Financeiro - {obraNome}</h2>}
             <QuadroAlertasVencimento obraId={obraId} />
             {/* Botões de Exportação */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -596,10 +596,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 notify.error('Erro ao gerar PDF do cronograma financeiro');
                             }
                         }}
-                        className="export-btn pdf"
+                        className="m-btn-secondary"
                         title="Gerar relatório PDF do cronograma financeiro"
                     >
-                        📊 Gerar PDF
+                        <i className="ti ti-file-text" aria-hidden="true" /> Gerar PDF
                     </button>
                 )}
 
@@ -608,11 +608,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     <button
                         type="button"
                         onClick={() => setShowWhatsAppModal(true)}
-                        className="export-btn"
+                        className="m-btn-primary"
                         style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
                         title="Compartilhar cronograma pelo WhatsApp"
                     >
-                        📱 WhatsApp
+                        <i className="ti ti-brand-whatsapp" aria-hidden="true" /> WhatsApp
                     </button>
                 )}
 
@@ -621,7 +621,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             onClick={handleMarcarMultiplosComoPago}
                             className="cf-btn cf-btn-success"
                         >
-                            ✅ Marcar {itensSelecionados.length} Selecionado(s) como Pago
+                            <i className="ti ti-check" aria-hidden="true" /> Marcar {itensSelecionados.length} Selecionado(s) como Pago
                         </button>
                     )}
                 </div>
@@ -630,7 +630,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 <div className="cf-section" style={{ marginBottom: '20px' }}>
                     <div className="cf-section-header">
                         <div>
-                            <div className="cf-section-title">📈 Previsão de Fluxo de Caixa</div>
+                            <div className="cf-section-title"><i className="ti ti-chart-line" aria-hidden="true" /> Previsão de Fluxo de Caixa</div>
                             <div className="cf-section-subtitle">Soma automática de pagamentos futuros e parcelados</div>
                         </div>
                         <button
@@ -654,7 +654,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             }}
                             className="cf-btn cf-btn-outline"
                         >
-                            📊 Gerar PDF
+                            <i className="ti ti-file-analytics" aria-hidden="true" /> Gerar PDF
                         </button>
                     </div>
 
@@ -688,7 +688,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             </div>
                         </>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.
                         </p>
                     )}
@@ -696,15 +696,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                 {/* Listagem de Pagamentos de Serviço Pendentes */}
                 {pagamentosServicoPendentes.length > 0 && (
-                    <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--cor-warning-bg)', border: '2px solid var(--cor-warning-light)' }}>
-                        <h3>⚠️ Pagamentos de Serviço Pendentes</h3>
-                        <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
+                    <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--status-warning-bg)', border: '2px solid var(--status-warning)' }}>
+                        <h3><i className="ti ti-alert-triangle" aria-hidden="true" /> Pagamentos de Serviço Pendentes</h3>
+                        <p style={{ fontSize: '0.9em', color: 'var(--status-warning-text)', marginBottom: '15px' }}>
                             Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
                         </p>
                         <table className="tabela-pendencias">
                             <thead>
                                 <tr>
-                                    <th style={{width: '40px'}}>☑</th>
+                                    <th style={{width: '40px'}}><i className="ti ti-checkbox" aria-hidden="true" /></th>
                                     <th>Serviço</th>
                                     <th>Descrição</th>
                                     <th>Tipo</th>
@@ -732,7 +732,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 padding: '3px 8px',
                                                 borderRadius: '12px',
                                                 fontSize: '0.85em',
-                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
+                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? 'var(--status-info)' : 'var(--status-success)',
                                                 color: 'white'
                                             }}>
                                                 {pag.tipo_pagamento}
@@ -757,7 +757,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     <div className="cf-section-header">
                         <div>
                             <div className="cf-section-title">
-                                📅 Pagamentos Futuros
+                                <i className="ti ti-calendar" aria-hidden="true" /> Pagamentos Futuros
                                 <span className="cf-badge cf-badge-info">Únicos</span>
                             </div>
                             <div className="cf-section-subtitle">
@@ -797,14 +797,14 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 width: '18px',
                                                 height: '18px',
                                                 marginRight: '12px',
-                                                accentColor: 'var(--cor-primaria)'
+                                                accentColor: 'var(--brand-primary)'
                                             }}
                                         />
                                     )}
 
                                     {/* Ícone */}
                                     <div className="cf-pagamento-futuro-icon">
-                                        {String(pag.id).startsWith('servico-') ? '🔧' : '💰'}
+                                        {String(pag.id).startsWith('servico-') ? <i className="ti ti-tool" aria-hidden="true" /> : <i className="ti ti-cash" aria-hidden="true" />}
                                     </div>
 
                                     {/* Info */}
@@ -821,7 +821,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         }}
                                     >
                                         <div className="cf-pagamento-futuro-desc" style={{
-                                            color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'var(--cor-texto)'
+                                            color: pag.status === 'Previsto' ? 'var(--brand-primary)' : 'var(--text-primary)'
                                         }}>
                                             {pag.descricao}
                                         </div>
@@ -854,7 +854,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={futuroProcessing ? 'Processando...' : 'Clique para marcar como pago'}
                                             >
-                                                {futuroProcessing ? '⏳ Processando...' : 'Pendente'}
+                                                {futuroProcessing ? <><i className="ti ti-loader" aria-hidden="true" /> Processando...</> : 'Pendente'}
                                             </span>
                                         );
                                     })()}
@@ -877,7 +877,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={isProcessing(`futuro-${pag.id}`) ? 'Processando...' : 'Excluir pagamento'}
                                             >
-                                                {isProcessing(`futuro-${pag.id}`) ? '⏳' : '🗑️'}
+                                                {isProcessing(`futuro-${pag.id}`) ? <i className="ti ti-loader" aria-hidden="true" /> : <i className="ti ti-trash" aria-hidden="true" />}
                                             </button>
                                         )}
                                     </div>
@@ -885,7 +885,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             ))}
                         </div>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhum pagamento futuro cadastrado.
                         </p>
                     )}
@@ -900,7 +900,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     <div className="cf-section-header">
                         <div>
                             <div className="cf-section-title">
-                                📋 Pagamentos Parcelados
+                                <i className="ti ti-clipboard-list" aria-hidden="true" /> Pagamentos Parcelados
                                 <span className="cf-badge cf-badge-purple">
                                     {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length} ativos
                                 </span>
@@ -926,9 +926,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
 
                                 const cores = {
-                                    'Semanal': { cor: 'var(--cor-warning-light)', corText: '#92400e', corBg: 'var(--cor-warning-bg)' },
-                                    'Quinzenal': { cor: 'var(--cor-purple-light)', corText: '#6b21a8', corBg: 'var(--cor-purple-bg)' },
-                                    'Mensal': { cor: 'var(--cor-info-light)', corText: '#0369a1', corBg: 'var(--cor-info-bg)' }
+                                    'Semanal': { cor: 'var(--status-warning)', corText: 'var(--status-warning-text)', corBg: 'var(--status-warning-bg)' },
+                                    'Quinzenal': { cor: 'var(--status-purple-text)', corText: 'var(--status-purple-text)', corBg: 'var(--status-purple-bg)' },
+                                    'Mensal': { cor: 'var(--status-info)', corText: 'var(--status-info-text)', corBg: 'var(--status-info-bg)' }
                                 };
                                 const corConfig = cores[pag.periodicidade] || cores['Mensal'];
 
@@ -937,7 +937,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         key={pag.id}
                                         className="parcela-popup-card"
                                         onClick={() => handleAbrirEditarParcelas(pag)}
-                                        style={{ borderColor: 'var(--cor-borda)' }}
+                                        style={{ borderColor: 'var(--border-subtle)' }}
                                     >
                                         {/* Header com bolinhas */}
                                         <div
@@ -949,7 +949,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                             }}
                                         >
                                             <span className="parcela-popup-title">
-                                                📦 {pag.descricao}
+                                                <i className="ti ti-package" aria-hidden="true" /> {pag.descricao}
                                             </span>
 
                                             {/* Bolinhas = Parcelas */}
@@ -1002,7 +1002,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                                             {/* Vencimento */}
                                             <div className="parcela-popup-vencimento">
-                                                <span className="parcela-popup-vencimento-label">📅 Vencimento</span>
+                                                <span className="parcela-popup-vencimento-label"><i className="ti ti-calendar" aria-hidden="true" /> Vencimento</span>
                                                 <span className="parcela-popup-vencimento-value">
                                                     {pag.proxima_parcela_vencimento ?
                                                         new Date(pag.proxima_parcela_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') :
@@ -1047,8 +1047,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                                 handleMarcarParcelaPaga(pag);
                                                             }}
                                                         >
-                                                            {parceladoProcessing ? '⏳ Processando...' : (
-                                                                <>💳 {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
+                                                            {parceladoProcessing ? <><i className="ti ti-loader" aria-hidden="true" /> Processando...</> : (
+                                                                <><i className="ti ti-credit-card" aria-hidden="true" /> {pag.proxima_parcela_numero === 0 ? 'Pagar Entrada' : (() => {
                                                                     const baseNum = pag.proxima_parcela_numero || pag.numero_parcelas;
                                                                     const num = pag.tem_entrada ? baseNum + 1 : baseNum;
                                                                     return `Pagar Parcela ${num}`;
@@ -1058,8 +1058,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                         <button
                                                             className="parcela-popup-btn"
                                                             style={{
-                                                                background: 'var(--cor-vermelho-bg)',
-                                                                color: 'var(--cor-vermelho)',
+                                                                background: 'var(--status-danger-bg)',
+                                                                color: 'var(--status-danger)',
                                                                 padding: '10px 12px',
                                                                 opacity: parceladoProcessing ? 0.5 : 1,
                                                                 cursor: parceladoProcessing ? 'wait' : 'pointer'
@@ -1071,7 +1071,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                             }}
                                                             title={parceladoProcessing ? 'Processando...' : 'Excluir parcelamento'}
                                                         >
-                                                            {parceladoProcessing ? '⏳' : '🗑️'}
+                                                            {parceladoProcessing ? <i className="ti ti-loader" aria-hidden="true" /> : <i className="ti ti-trash" aria-hidden="true" />}
                                                         </button>
                                                     </div>
                                                 );
@@ -1082,7 +1082,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             })}
                         </div>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhum pagamento parcelado cadastrado.
                         </p>
                     )}
@@ -1091,11 +1091,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 </div>
                 )}
 
-                <div className="modal-footer" style={{ marginTop: '20px' }}>
-                    <button onClick={onClose} className="voltar-btn">
-                        {embedded ? '← Voltar às Obras' : 'Fechar'}
-                    </button>
-                </div>
             </div>
     );
 
@@ -1165,7 +1160,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     }
 
     return (
-        <Modal onClose={onClose} customWidth="96%">
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title={`${simplified ? 'Início' : 'Cronograma Financeiro'} - ${obraNome}`}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
             {cronogramaContent}
 
             {/* Modais de Cadastro */}

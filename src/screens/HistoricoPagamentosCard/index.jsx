@@ -5,6 +5,7 @@ import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
 import NotaFiscalIcon from '../../components/NotaFiscalIcon';
+import './HistoricoPagamentos.css';
 
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
@@ -14,7 +15,6 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     const [busca, setBusca] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('todos'); // todos, mao_de_obra, material, equipamento
     const [filtroFornecedor, setFiltroFornecedor] = useState('');
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const ITENS_INICIAIS = 10;
 
     // Filtrar pagamentos baseado na busca e filtros
@@ -303,412 +303,189 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         return { numericId: parseInt(numericId), itemType };
     };
 
+    const hasActiveFilters = busca || filtroTipo !== 'todos' || filtroFornecedor;
+
+    // Resolves tipo key for a payment item
+    const getTipoKey = (item) => {
+        const tipo = (item.tipo || item.tipo_pagamento || '').toLowerCase();
+        if (tipo.includes('mão') || tipo.includes('mao') || tipo === 'mao_de_obra') return 'mao_de_obra';
+        if (tipo.includes('equipamento') || tipo.includes('despesa')) return 'equipamento';
+        return 'material';
+    };
+
+    const TIPO_LABELS = { mao_de_obra: 'Mão de Obra', material: 'Material', equipamento: 'Equipamento' };
+
+    const TIPO_CHIPS = [
+        { key: 'todos', label: 'Todos' },
+        { key: 'mao_de_obra', label: 'Mão de Obra' },
+        { key: 'material', label: 'Material' },
+        { key: 'equipamento', label: 'Equipamento' },
+    ];
+
     return (
         <div className="card" style={{ marginTop: '20px' }}>
-            <h2 style={{
-                fontSize: '1.5em',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                flexWrap: 'wrap'
-            }}>
-                💰 Histórico de Pagamentos
-                <span style={{
-                    fontSize: '0.6em',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    padding: '4px 10px',
-                    borderRadius: '12px'
-                }}>
-                    {itemsPagos.length} pagos
-                </span>
+
+            {/* === HEADER === */}
+            <div className="hpc-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h2 className="hpc-title">Histórico de Pagamentos</h2>
+                    <span className="hpc-count-badge">{itemsPagos.length} pagos</span>
+                </div>
                 {itemsPagos.length > 0 && (
-                    <button
-                        onClick={exportarCSV}
-                        style={{
-                            marginLeft: 'auto',
-                            padding: '6px 12px',
-                            fontSize: '0.55em',
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            fontWeight: '500'
-                        }}
-                        title="Exportar histórico para CSV"
-                    >
-                        📥 Exportar CSV
+                    <button onClick={exportarCSV} className="hpc-export-btn">
+                        <i className="ti ti-download" aria-hidden="true" />
+                        Exportar CSV
                     </button>
                 )}
-            </h2>
+            </div>
 
-            {/* Legenda de Tipos */}
-            {itemsPagos.length > 0 && (
-                <div style={{
-                    display: 'flex',
-                    gap: '20px',
-                    marginBottom: '16px',
-                    padding: '12px 16px',
-                    backgroundColor: 'var(--cor-fundo-secundario)',
-                    borderRadius: '8px',
-                    flexWrap: 'wrap'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '4px',
-                            backgroundColor: '#6366f1',
-                            display: 'inline-block'
-                        }}></span>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Mão de Obra</span>
+            {/* === STAT CARDS === */}
+            {(itemsPagos.length > 0 || totalPendente > 0) && (
+                <div className="hpc-stats-row">
+                    <div className="hpc-stat-card">
+                        <div className="hpc-stat-label">Total Pago</div>
+                        <div className="hpc-stat-value" style={{ color: 'var(--status-success)' }}>
+                            {formatCurrency(totalPago)}
+                        </div>
+                        <div className="hpc-stat-caption">{itemsPagos.length} itens</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '4px',
-                            backgroundColor: '#10b981',
-                            display: 'inline-block'
-                        }}></span>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Material</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '4px',
-                            backgroundColor: '#f59e0b',
-                            display: 'inline-block'
-                        }}></span>
-                        <span style={{ fontSize: '13px', color: 'var(--cor-texto)' }}>Equipamento</span>
+                    <div className="hpc-stat-card">
+                        <div className="hpc-stat-label">Pendente</div>
+                        <div className="hpc-stat-value" style={{ color: totalPendente > 0 ? 'var(--status-warning)' : 'var(--text-muted)' }}>
+                            {formatCurrency(totalPendente)}
+                        </div>
+                        <div className="hpc-stat-caption">{itemsAPagar.length} itens</div>
                     </div>
                 </div>
             )}
 
-            {/* Barra de Busca e Filtros */}
+            {/* === TOOLBAR === */}
             {itemsPagos.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
-                    <div style={{
-                        display: 'flex',
-                        gap: '12px',
-                        alignItems: 'center',
-                        flexWrap: 'wrap'
-                    }}>
-                        {/* Campo de Busca Rápida */}
-                        <div style={{
-                            flex: '1',
-                            minWidth: '250px',
-                            position: 'relative'
-                        }}>
-                            <span style={{
-                                position: 'absolute',
-                                left: '12px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                fontSize: '16px',
-                                color: '#9ca3af'
-                            }}>🔍</span>
-                            <input
-                                type="text"
-                                placeholder="Buscar por descrição, fornecedor ou serviço..."
-                                value={busca}
-                                onChange={(e) => setBusca(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px 10px 40px',
-                                    border: '2px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s',
-                                    boxSizing: 'border-box'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                            />
-                            {busca && (
-                                <button
-                                    onClick={() => setBusca('')}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '10px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: '16px',
-                                        color: '#9ca3af',
-                                        padding: '4px'
-                                    }}
-                                    title="Limpar busca"
-                                >
-                                    ✕
-                                </button>
-                            )}
-                        </div>
+                <div className="hpc-toolbar">
+                    <div className="hpc-search-wrap">
+                        <i className="ti ti-search hpc-search-icon" aria-hidden="true" />
+                        <input
+                            type="text"
+                            className="hpc-search-input"
+                            placeholder="Buscar descrição, fornecedor..."
+                            value={busca}
+                            onChange={(e) => setBusca(e.target.value)}
+                        />
+                        {busca && (
+                            <button className="hpc-search-clear" onClick={() => setBusca('')} title="Limpar busca">
+                                <i className="ti ti-x" aria-hidden="true" />
+                            </button>
+                        )}
+                    </div>
 
-                        {/* Botão Filtros */}
-                        <button
-                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                            style={{
-                                padding: '10px 16px',
-                                border: '2px solid #e2e8f0',
-                                borderRadius: '8px',
-                                backgroundColor: mostrarFiltros ? '#eff6ff' : '#fff',
-                                borderColor: mostrarFiltros ? '#3b82f6' : '#e2e8f0',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                color: mostrarFiltros ? '#3b82f6' : '#64748b',
-                                transition: 'all 0.2s'
-                            }}
+                    <div className="hpc-chips">
+                        {TIPO_CHIPS.map(opt => (
+                            <button
+                                key={opt.key}
+                                className={`hpc-chip${filtroTipo === opt.key ? ' active' : ''}`}
+                                onClick={() => setFiltroTipo(opt.key)}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {fornecedoresUnicos.length > 0 && (
+                        <select
+                            className="hpc-filter-select"
+                            value={filtroFornecedor}
+                            onChange={(e) => setFiltroFornecedor(e.target.value)}
+                            title="Filtrar por fornecedor"
                         >
-                            <span>⚙️</span>
-                            Filtros
-                            {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
-                                <span style={{
-                                    backgroundColor: '#3b82f6',
-                                    color: '#fff',
-                                    borderRadius: '50%',
-                                    width: '18px',
-                                    height: '18px',
-                                    fontSize: '11px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {(filtroTipo !== 'todos' ? 1 : 0) + (filtroFornecedor ? 1 : 0) + (busca ? 1 : 0)}
-                                </span>
-                            )}
-                        </button>
-                    </div>
-
-                    {/* Painel de Filtros Expandido */}
-                    {mostrarFiltros && (
-                        <div style={{
-                            marginTop: '12px',
-                            padding: '16px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0'
-                        }}>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                gap: '16px',
-                                marginBottom: '12px'
-                            }}>
-                                {/* Filtro por Tipo */}
-                                <div>
-                                    <label style={{
-                                        display: 'block',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        color: '#64748b',
-                                        marginBottom: '6px'
-                                    }}>
-                                        🏷️ Tipo
-                                    </label>
-                                    <select
-                                        value={filtroTipo}
-                                        onChange={(e) => setFiltroTipo(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '8px 12px',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fff',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <option value="todos">Todos os tipos</option>
-                                        <option value="mao_de_obra">👷 Mão de Obra</option>
-                                        <option value="material">🧱 Material</option>
-                                        <option value="equipamento">🔧 Equipamento</option>
-                                    </select>
-                                </div>
-
-                                {/* Filtro por Fornecedor */}
-                                <div>
-                                    <label style={{
-                                        display: 'block',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        color: '#64748b',
-                                        marginBottom: '6px'
-                                    }}>
-                                        🏢 Fornecedor
-                                    </label>
-                                    <select
-                                        value={filtroFornecedor}
-                                        onChange={(e) => setFiltroFornecedor(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '8px 12px',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fff',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <option value="">Todos os fornecedores</option>
-                                        {fornecedoresUnicos.map(fornecedor => (
-                                            <option key={fornecedor} value={fornecedor}>
-                                                {fornecedor}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Botão Limpar Filtros */}
-                            {(filtroTipo !== 'todos' || filtroFornecedor || busca) && (
-                                <div style={{
-                                    borderTop: '1px solid #e2e8f0',
-                                    paddingTop: '12px',
-                                    display: 'flex',
-                                    justifyContent: 'flex-end'
-                                }}>
-                                    <button
-                                        onClick={() => {
-                                            setBusca('');
-                                            setFiltroTipo('todos');
-                                            setFiltroFornecedor('');
-                                        }}
-                                        style={{
-                                            padding: '8px 16px',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            backgroundColor: '#fee2e2',
-                                            color: '#dc2626',
-                                            cursor: 'pointer',
-                                            fontSize: '13px',
-                                            fontWeight: '500',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}
-                                    >
-                                        ✕ Limpar todos os filtros
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                            <option value="">Todos os fornecedores</option>
+                            {fornecedoresUnicos.map(f => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </select>
                     )}
 
-                    {/* Indicador de resultados filtrados */}
-                    {(busca || filtroTipo !== 'todos' || filtroFornecedor) && (
-                        <div style={{
-                            marginTop: '12px',
-                            padding: '8px 12px',
-                            backgroundColor: '#eff6ff',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            color: '#3b82f6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            flexWrap: 'wrap'
-                        }}>
-                            <span>🔎</span>
-                            Exibindo <strong>{pagamentosFiltrados.length}</strong> de <strong>{itemsPagos.length}</strong> pagamentos
-                            {busca && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Busca: "{busca}"</span>}
-                            {filtroTipo !== 'todos' && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Tipo: {filtroTipo === 'mao_de_obra' ? 'Mão de Obra' : filtroTipo === 'material' ? 'Material' : 'Equipamento'}</span>}
-                            {filtroFornecedor && <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>Fornecedor: {filtroFornecedor}</span>}
-                        </div>
+                    {hasActiveFilters && (
+                        <button
+                            className="hpc-clear-btn"
+                            onClick={() => { setBusca(''); setFiltroTipo('todos'); setFiltroFornecedor(''); }}
+                        >
+                            <i className="ti ti-x" aria-hidden="true" /> Limpar
+                        </button>
                     )}
                 </div>
             )}
 
+            {/* === FILTER INFO === */}
+            {hasActiveFilters && (
+                <div className="hpc-filter-info">
+                    <i className="ti ti-filter" aria-hidden="true" />
+                    {pagamentosFiltrados.length} de {itemsPagos.length} resultados
+                    {busca && <span> · busca: "{busca}"</span>}
+                    {filtroTipo !== 'todos' && <span> · {TIPO_LABELS[filtroTipo]}</span>}
+                    {filtroFornecedor && <span> · {filtroFornecedor}</span>}
+                </div>
+            )}
+
+            {/* === TABLE === */}
             {itemsPagos.length === 0 ? (
-                <div style={{
-                    textAlign: 'center',
-                    padding: '30px',
-                    color: '#999',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '8px'
-                }}>
-                    <div style={{ fontSize: '2em', marginBottom: '10px' }}>💸</div>
+                <div className="hpc-empty">
+                    <i className="ti ti-cash-off" aria-hidden="true" />
                     <p>Nenhum pagamento registrado</p>
                 </div>
             ) : (
-                <>
-                    <div className="tabela-scroll-container" style={{ maxHeight: mostrarTodos ? '600px' : '400px', overflowY: 'auto' }}>
-                        <table className="tabela-pagamentos" style={{ width: '100%' }}>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Descrição</th>
-                                    <th>Fornecedor</th>
-                                    <th>Valor</th>
-                                    <th>Status</th>
-                                    <th style={{width: '50px', textAlign: 'center'}}>NF</th>
-                                    {isAdmin && <th style={{width: '50px'}}>Ações</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pagamentosExibidos.map((item, idx) => {
-                                    const getTipoColor = () => {
-                                        const tipo = item.tipo || item.tipo_pagamento || '';
-                                        const tipoLower = tipo.toLowerCase();
-                                        if (tipoLower.includes('mão') || tipoLower.includes('mao') || tipoLower === 'mao_de_obra') return '#6366f1';
-                                        if (tipoLower.includes('material')) return '#10b981';
-                                        if (tipoLower.includes('equipamento')) return '#f59e0b';
-                                        return '#94a3b8';
-                                    };
-                                    const tipoColor = getTipoColor();
+                <div className="hpc-table-container">
+                    <table className="hpc-table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: 72 }}>Data</th>
+                                <th>Descrição</th>
+                                <th style={{ width: 110 }}>Tipo</th>
+                                <th style={{ width: 110, textAlign: 'right' }}>Valor</th>
+                                <th style={{ width: 90 }}>Status</th>
+                                <th style={{ width: 36, textAlign: 'center' }}>NF</th>
+                                {isAdmin && <th style={{ width: 64, textAlign: 'center' }}>Ações</th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pagamentosExibidos.map((item, idx) => {
+                                const tipoKey = getTipoKey(item);
+                                const dataStr = item.data_vencimento || item.data;
+                                const dataFmt = dataStr
+                                    ? new Date(dataStr + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                                    : '-';
 
-                                    return (
-                                    <tr key={item.id || idx} style={{ position: 'relative' }}>
-                                        <td style={{ position: 'relative', paddingLeft: '16px' }}>
-                                            <span style={{
-                                                position: 'absolute',
-                                                left: '0',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                width: '4px',
-                                                height: '70%',
-                                                borderRadius: '2px',
-                                                backgroundColor: tipoColor
-                                            }}></span>
-                                            {new Date((item.data_vencimento || item.data) + 'T00:00:00').toLocaleDateString('pt-BR')}
-                                        </td>
+                                return (
+                                    <tr
+                                        key={item.id || idx}
+                                        className={isAdmin ? 'hpc-row-clickable' : ''}
+                                        onClick={isAdmin ? () => handleEditarItem(item) : undefined}
+                                    >
+                                        <td className="hpc-cell-date">{dataFmt}</td>
                                         <td>
-                                            <div style={{ fontWeight: '500' }}>{item.descricao}</div>
-                                            {item.orcamento_item_nome && (
-                                                <div style={{ fontSize: '0.85em', color: '#666' }}>
-                                                    🔗 {item.orcamento_item_nome}
+                                            <div className="hpc-desc-main">{item.descricao}</div>
+                                            {(item.fornecedor || item.orcamento_item_nome) && (
+                                                <div className="hpc-desc-sub">
+                                                    {item.fornecedor || ''}
+                                                    {item.fornecedor && item.orcamento_item_nome && ' · '}
+                                                    {item.orcamento_item_nome || ''}
                                                 </div>
                                             )}
                                         </td>
-                                        <td>{item.fornecedor || '-'}</td>
-                                        <td style={{ fontWeight: 'bold', color: '#2e7d32' }}>
+                                        <td>
+                                            <span className={`hpc-tipo-pill hpc-tipo-${tipoKey}`}>
+                                                {TIPO_LABELS[tipoKey]}
+                                            </span>
+                                        </td>
+                                        <td className="hpc-cell-valor">
                                             {formatCurrency(item.valor_pago || item.valor_total || 0)}
                                         </td>
                                         <td>
-                                            <span style={{
-                                                padding: '3px 8px',
-                                                borderRadius: '4px',
-                                                backgroundColor: '#4CAF50',
-                                                color: 'white',
-                                                fontSize: '0.8em'
-                                            }}>
-                                                ✅ Pago
+                                            <span className="hpc-status-pill hpc-status-pago">
+                                                <span className="hpc-status-dot" />
+                                                Pago
                                             </span>
                                         </td>
-                                        <td style={{textAlign: 'center'}}>
+                                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                                             {obraId && (() => {
                                                 const { numericId, itemType } = getNotaFiscalData(item);
                                                 return (
@@ -722,187 +499,154 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             })()}
                                         </td>
                                         {isAdmin && (
-                                            <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                            <td className="hpc-actions-cell" onClick={(e) => e.stopPropagation()}>
                                                 <button
                                                     onClick={() => handleEditarItem(item)}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.1em',
-                                                        padding: '3px',
-                                                        color: '#1976d2'
-                                                    }}
+                                                    className="hpc-action-btn"
                                                     title="Editar / Vincular a serviço"
                                                 >
-                                                    ✏️
+                                                    <i className="ti ti-pencil" aria-hidden="true" />
                                                 </button>
                                                 {isParcela(item) ? (
                                                     <button
                                                         onClick={() => handleRevertParcela(item)}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            fontSize: '1.1em',
-                                                            padding: '3px',
-                                                            color: '#ff9800'
-                                                        }}
-                                                        title="Reverter pagamento (voltar para Pendente)"
+                                                        className="hpc-action-btn hpc-action-warning"
+                                                        title="Reverter pagamento"
                                                     >
-                                                        ↩️
+                                                        <i className="ti ti-arrow-back-up" aria-hidden="true" />
                                                     </button>
                                                 ) : (
                                                     <button
                                                         onClick={() => handleDelete(item)}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            fontSize: '1.1em',
-                                                            padding: '3px',
-                                                            color: '#dc3545'
-                                                        }}
+                                                        className="hpc-action-btn hpc-action-danger"
                                                         title="Excluir"
                                                     >
-                                                        🗑️
+                                                        <i className="ti ti-trash" aria-hidden="true" />
                                                     </button>
                                                 )}
                                             </td>
                                         )}
                                     </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                );
+                            })}
+                        </tbody>
+                    </table>
 
-                    {pagamentosFiltrados.length > ITENS_INICIAIS && (
-                        <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                    {/* Footer */}
+                    <div className="hpc-footer">
+                        <span className="hpc-footer-count">
+                            Exibindo {pagamentosExibidos.length} de {pagamentosFiltrados.length} registros
+                        </span>
+                        {pagamentosFiltrados.length > ITENS_INICIAIS && (
                             <button
+                                className="hpc-show-more-btn"
                                 onClick={() => setMostrarTodos(!mostrarTodos)}
-                                className="voltar-btn"
                             >
                                 {mostrarTodos
-                                    ? '↑ Mostrar menos'
-                                    : `Ver todos os ${pagamentosFiltrados.length} pagamentos ↓`
+                                    ? <><i className="ti ti-chevron-up" aria-hidden="true" /> Mostrar menos</>
+                                    : <><i className="ti ti-chevron-down" aria-hidden="true" /> Ver todos ({pagamentosFiltrados.length})</>
                                 }
                             </button>
-                        </div>
-                    )}
-
-                    {/* Resumo de totais */}
-                    <div style={{
-                        marginTop: '15px',
-                        padding: '15px',
-                        backgroundColor: '#e8f5e9',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-around',
-                        flexWrap: 'wrap',
-                        gap: '15px'
-                    }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Total Pago</div>
-                            <div style={{ fontWeight: 'bold', color: '#2e7d32', fontSize: '1.2em' }}>
-                                {formatCurrency(totalPago)}
-                            </div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.85em', color: '#666' }}>Pendente</div>
-                            <div style={{ fontWeight: 'bold', color: '#f57c00', fontSize: '1.2em' }}>
-                                {formatCurrency(totalPendente)}
-                            </div>
-                        </div>
+                        )}
                     </div>
-                </>
+                </div>
             )}
 
-            {/* Modal de Edição - Vincular Serviço */}
+            {/* === EDIT MODAL — lógica preservada, tokens aplicados === */}
             {editandoItem && (
                 <div style={{
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', /* BUG: sem token para overlay — NOTAS_REFACTOR */
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
                     zIndex: 9999
                 }} onClick={() => setEditandoItem(null)}>
                     <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
+                        backgroundColor: 'var(--surface-card)',
+                        borderRadius: 'var(--radius-lg)',
                         padding: '25px',
                         width: '90%',
                         maxWidth: '450px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+                        boxShadow: 'var(--shadow-card)',
+                        border: '0.5px solid var(--border-subtle)',
                     }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            ✏️ Editar Pagamento
+                        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>
+                            <i className="ti ti-pencil" aria-hidden="true" /> Editar Pagamento
                         </h3>
 
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Descrição:</label>
-                            <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px' }}>
+                            <label style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Descrição:</label>
+                            <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-base)', marginTop: '3px', color: 'var(--text-primary)' }}>
                                 {editandoItem.descricao}
                             </div>
                         </div>
 
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em' }}>Valor:</label>
-                            <div style={{ fontWeight: '600', fontSize: '1.1em', marginTop: '3px', color: '#2e7d32' }}>
+                            <label style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Valor:</label>
+                            <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-base)', marginTop: '3px', color: 'var(--status-success)' }}>
                                 {formatCurrency(editandoItem.valor_pago || editandoItem.valor_total || 0)}
                             </div>
                         </div>
 
                         <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                🏷️ Tipo:
+                            <label style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)', display: 'block', marginBottom: '8px' }}>
+                                <i className="ti ti-tag" aria-hidden="true" /> Tipo:
                             </label>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                {['Mão de Obra', 'Material'].map(opcao => (
-                                    <button
-                                        key={opcao}
-                                        onClick={() => setEditandoItem({...editandoItem, tipo_edit: opcao})}
-                                        style={{
-                                            flex: 1,
-                                            padding: '10px',
-                                            borderRadius: '8px',
-                                            border: '2px solid',
-                                            borderColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#6366f1' : '#f59e0b') : '#e5e7eb',
-                                            backgroundColor: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#eef2ff' : '#fffbeb') : '#fff',
-                                            color: editandoItem.tipo_edit === opcao ? (opcao === 'Mão de Obra' ? '#4f46e5' : '#d97706') : '#6b7280',
-                                            fontWeight: editandoItem.tipo_edit === opcao ? '700' : '400',
-                                            cursor: 'pointer',
-                                            fontSize: '0.9em',
-                                            transition: 'all 0.15s'
-                                        }}
-                                    >
-                                        {opcao === 'Mão de Obra' ? '👷 Mão de Obra' : '🧱 Material'}
-                                    </button>
-                                ))}
+                                {['Mão de Obra', 'Material'].map(opcao => {
+                                    const isActive = editandoItem.tipo_edit === opcao;
+                                    const isMao = opcao === 'Mão de Obra';
+                                    return (
+                                        <button
+                                            key={opcao}
+                                            onClick={() => setEditandoItem({...editandoItem, tipo_edit: opcao})}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: '1.5px solid',
+                                                borderColor: isActive
+                                                    ? (isMao ? 'var(--status-warning)' : 'var(--brand-accent)')
+                                                    : 'var(--border-subtle)',
+                                                backgroundColor: isActive
+                                                    ? (isMao ? 'var(--status-warning-bg)' : 'var(--surface-subtle)')
+                                                    : 'var(--surface-card)',
+                                                color: isActive
+                                                    ? (isMao ? 'var(--status-warning)' : 'var(--text-primary)')
+                                                    : 'var(--text-muted)',
+                                                fontWeight: isActive ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                                                cursor: 'pointer',
+                                                fontSize: 'var(--text-sm)',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            {isMao ? <><i className="ti ti-helmet" aria-hidden="true" /> Mão de Obra</> : <><i className="ti ti-wall" aria-hidden="true" /> Material</>}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ fontWeight: '500', color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '8px' }}>
-                                🔗 Vincular a Item do Orçamento:
+                            <label style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)', display: 'block', marginBottom: '8px' }}>
+                                <i className="ti ti-link" aria-hidden="true" /> Vincular a Item do Orçamento:
                             </label>
                             {loadingItens ? (
-                                <div style={{ color: '#666' }}>Carregando itens...</div>
+                                <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Carregando itens...</div>
                             ) : (
                                 <select
                                     value={editandoItem.orcamento_item_id || ''}
                                     onChange={(e) => setEditandoItem({...editandoItem, orcamento_item_id: e.target.value})}
                                     style={{
                                         width: '100%',
-                                        padding: '10px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #ddd',
-                                        fontSize: '1em'
+                                        padding: '8px 10px',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: '0.5px solid var(--border-default)',
+                                        fontSize: 'var(--text-sm)',
+                                        color: 'var(--text-primary)',
+                                        background: 'var(--surface-card)',
                                     }}
                                 >
                                     <option value="">-- Nenhum item (Despesa Geral) --</option>
@@ -911,46 +655,46 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                     ))}
                                 </select>
                             )}
-                            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                                💡 Vincular a um item faz o valor contar no orçamento
+                            <small style={{ color: 'var(--text-muted)', marginTop: '5px', display: 'block', fontSize: 'var(--text-xs)' }}>
+                                Vincular a um item faz o valor contar no orçamento
                             </small>
                         </div>
 
                         {/* Comprovante de pagamento */}
                         {editandoItem.comprovante_url && (
-                            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                                <label style={{ fontWeight: '600', color: '#166534', fontSize: '0.9em', display: 'block', marginBottom: '10px' }}>
-                                    🧾 Comprovante de Pagamento
+                            <div style={{ marginBottom: '20px', padding: '14px', borderRadius: 'var(--radius-md)', background: 'var(--status-success-bg)', border: '0.5px solid var(--border-subtle)' }}>
+                                <label style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--status-success)', fontSize: 'var(--text-sm)', display: 'block', marginBottom: '10px' }}>
+                                    <i className="ti ti-receipt" aria-hidden="true" /> Comprovante de Pagamento
                                 </label>
                                 {editandoItem.comprovante_url.startsWith('data:image') ? (
                                     <div style={{ textAlign: 'center' }}>
                                         <img
                                             src={editandoItem.comprovante_url}
                                             alt="Comprovante"
-                                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain', cursor: 'pointer' }}
+                                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: 'var(--radius-sm)', objectFit: 'contain', cursor: 'pointer' }}
                                             onClick={() => window.open(editandoItem.comprovante_url, '_blank')}
                                             title="Clique para ampliar"
                                         />
                                         <div style={{ marginTop: '8px' }}>
                                             <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
-                                                style={{ fontSize: '12px', color: '#166534', textDecoration: 'none', fontWeight: '600' }}>
-                                                🔍 Ampliar imagem
+                                                style={{ fontSize: 'var(--text-xs)', color: 'var(--status-success)', textDecoration: 'none', fontWeight: 'var(--weight-semibold)' }}>
+                                                <i className="ti ti-zoom-in" aria-hidden="true" /> Ampliar imagem
                                             </a>
                                         </div>
                                     </div>
                                 ) : editandoItem.comprovante_url.startsWith('data:application/pdf') ? (
                                     <div style={{ textAlign: 'center' }}>
-                                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>📄</div>
+                                        <i className="ti ti-file-type-pdf" style={{ fontSize: '32px', color: 'var(--status-danger)', marginBottom: '8px', display: 'block' }} aria-hidden="true" />
                                         <a href={editandoItem.comprovante_url}
                                             download={`comprovante_${editandoItem.descricao || 'pagamento'}.pdf`}
-                                            style={{ padding: '8px 16px', background: '#166534', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '13px', fontWeight: '600' }}>
-                                            ⬇️ Baixar PDF
+                                            style={{ padding: '8px 16px', background: 'var(--status-success)', color: 'var(--surface-card)', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)' }}>
+                                            <i className="ti ti-download" aria-hidden="true" /> Baixar PDF
                                         </a>
                                     </div>
                                 ) : (
                                     <a href={editandoItem.comprovante_url} target="_blank" rel="noreferrer"
-                                        style={{ color: '#166534', fontWeight: '600', fontSize: '13px' }}>
-                                        🔗 Ver comprovante
+                                        style={{ color: 'var(--status-success)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-sm)' }}>
+                                        <i className="ti ti-external-link" aria-hidden="true" /> Ver comprovante
                                     </a>
                                 )}
                             </div>
@@ -960,11 +704,13 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <button
                                 onClick={() => setEditandoItem(null)}
                                 style={{
-                                    padding: '10px 20px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ddd',
-                                    backgroundColor: 'white',
-                                    cursor: 'pointer'
+                                    padding: '8px 18px',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '0.5px solid var(--border-default)',
+                                    backgroundColor: 'var(--surface-card)',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    fontSize: 'var(--text-sm)',
                                 }}
                             >
                                 Cancelar
@@ -972,16 +718,17 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             <button
                                 onClick={handleSalvarEdicao}
                                 style={{
-                                    padding: '10px 20px',
-                                    borderRadius: '8px',
+                                    padding: '8px 18px',
+                                    borderRadius: 'var(--radius-md)',
                                     border: 'none',
-                                    backgroundColor: '#1976d2',
-                                    color: 'white',
+                                    backgroundColor: 'var(--status-info)',
+                                    color: 'var(--surface-card)',
                                     cursor: 'pointer',
-                                    fontWeight: '500'
+                                    fontWeight: 'var(--weight-medium)',
+                                    fontSize: 'var(--text-sm)',
                                 }}
                             >
-                                💾 Salvar
+                                <i className="ti ti-device-floppy" aria-hidden="true" /> Salvar
                             </button>
                         </div>
                     </div>

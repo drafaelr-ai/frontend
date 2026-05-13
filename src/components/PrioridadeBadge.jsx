@@ -3,13 +3,13 @@ import React from 'react';
 const PrioridadeBadge = ({ prioridade }) => {
     let p = parseInt(prioridade, 10) || 0;
     if (p === 0) {
-        return <span style={{ color: '#aaa', fontSize: '0.9em' }}>-</span>;
+        return <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>-</span>;
     }
 
-    let color = '#6c757d'; // 1-2 (Baixa)
-    if (p === 3) color = '#007bff'; // 3 (Média)
-    if (p === 4) color = '#ffc107'; // 4 (Alta)
-    if (p === 5) color = '#dc3545'; // 5 (Urgente)
+    let color = 'var(--status-neutral)'; // 1-2 (Baixa)
+    if (p === 3) color = 'var(--status-info)'; // 3 (Média)
+    if (p === 4) color = 'var(--status-warning)'; // 4 (Alta)
+    if (p === 5) color = 'var(--status-danger)'; // 5 (Urgente)
 
     const style = {
         backgroundColor: color,

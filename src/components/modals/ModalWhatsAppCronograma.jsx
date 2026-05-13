@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import Modal from '../Modal/Modal';
+import { formatCurrency } from '../../utils/format';
 
 const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcelados, onClose }) => {
     const hoje = new Date();
-    const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
 
     const todosPendentes = [
@@ -77,7 +78,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
         if (vencidos.length > 0) {
             linhas.push(`\n🚨 *VENCIDOS (${vencidos.length})*`);
             vencidos.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                linhas.push(`  • ${p.descricao} — ${formatCurrency(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
                 if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
                 if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
             });
@@ -85,7 +86,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
         if (aVencer.length > 0) {
             linhas.push(`\n⏰ *A VENCER (${aVencer.length})*`);
             aVencer.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                linhas.push(`  • ${p.descricao} — ${formatCurrency(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
                 if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
                 if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
             });
@@ -93,14 +94,14 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
         if (parcelas.length > 0) {
             linhas.push(`\n📦 *PARCELAS (${parcelas.length})*`);
             parcelas.forEach(p => {
-                linhas.push(`  • ${p.descricao} — ${formatVal(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
+                linhas.push(`  • ${p.descricao} — ${formatCurrency(p.valor)} | Venc: ${formatDate(p.data_vencimento)}`);
                 if (p.pix) linhas.push(`    🔑 PIX: ${p.pix}`);
                 if (p.codigo_barras) linhas.push(`    📋 Cód: ${p.codigo_barras}`);
             });
         }
 
         linhas.push(`\n─────────────────────────`);
-        linhas.push(`💰 *TOTAL SELECIONADO: ${formatVal(totalSelecionado)}*`);
+        linhas.push(`💰 *TOTAL SELECIONADO: ${formatCurrency(totalSelecionado)}*`);
         linhas.push(`_Gerado pelo Obraly_`);
 
         const url = `https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`;
@@ -115,103 +116,108 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
     };
 
     return (
-        <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-            zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
-        }} onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{
-                background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '680px',
-                maxHeight: '88vh', display: 'flex', flexDirection: 'column',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.35)'
-            }}>
-                {/* Header */}
-                <div style={{ padding: '18px 24px', background: '#075E54', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h2 style={{ margin: 0, color: '#fff', fontSize: '17px', fontWeight: 700 }}>💬 Compartilhar no WhatsApp</h2>
-                        <p style={{ margin: '2px 0 0', color: '#a7f3d0', fontSize: '13px' }}>Selecione os pagamentos que deseja incluir</p>
-                    </div>
-                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                </div>
-
-                {/* Toolbar */}
-                <div style={{ padding: '12px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#374151' }}>
-                        <input type="checkbox"
-                            checked={selecionados.size === todosPendentes.length}
-                            onChange={toggleTodos}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        {selecionados.size === todosPendentes.length ? 'Desmarcar todos' : 'Selecionar todos'}
-                    </label>
-                    <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#6b7280' }}>
-                        {selecionados.size} de {todosPendentes.length} selecionados
-                    </span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#075E54' }}>
-                        {formatVal(totalSelecionado)}
-                    </span>
-                </div>
-
-                {/* Lista de itens */}
-                <div style={{ overflow: 'auto', flex: 1, padding: '8px 0' }}>
-                    {todosPendentes.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
-                            Nenhum pagamento pendente encontrado.
-                        </div>
-                    ) : todosPendentes.map(item => (
-                        <label key={item.key} style={{
-                            display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 24px',
-                            cursor: 'pointer', borderBottom: '1px solid #f3f4f6', transition: 'background 0.1s',
-                            background: selecionados.has(item.key) ? '#f0fdf4' : '#fff',
-                        }}
-                            onMouseEnter={e => { if (!selecionados.has(item.key)) e.currentTarget.style.background = '#f9fafb'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = selecionados.has(item.key) ? '#f0fdf4' : '#fff'; }}
-                        >
-                            <input type="checkbox"
-                                checked={selecionados.has(item.key)}
-                                onChange={() => toggleItem(item.key)}
-                                style={{ width: '16px', height: '16px', marginTop: '2px', cursor: 'pointer', flexShrink: 0 }}
-                            />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <span style={{
-                                        fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px',
-                                        background: item.vencido ? '#fee2e2' : item.tipo === '📦 Parcela' ? '#ede9fe' : '#fef3c7',
-                                        color: item.vencido ? '#991b1b' : item.tipo === '📦 Parcela' ? '#6d28d9' : '#92400e',
-                                    }}>{item.tipo}</span>
-                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{item.descricao}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: '16px', marginTop: '4px', fontSize: '13px', color: '#6b7280', flexWrap: 'wrap' }}>
-                                    <span style={{ fontWeight: 700, color: item.vencido ? '#dc2626' : '#059669' }}>{formatVal(item.valor)}</span>
-                                    <span>📅 {formatDate(item.data_vencimento)}</span>
-                                    {item.pix && <span>🔑 {item.pix}</span>}
-                                    {item.codigo_barras && <span>📋 {item.codigo_barras.substring(0, 20)}…</span>}
-                                </div>
-                            </div>
-                        </label>
-                    ))}
-                </div>
-
-                {/* Footer */}
-                <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '10px', justifyContent: 'flex-end', background: '#f8fafc', borderRadius: '0 0 16px 16px' }}>
-                    <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', color: '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Compartilhar no WhatsApp"
+            subtitle={obraNome}
+            width="large"
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>
                         Cancelar
                     </button>
                     <button
                         type="button"
+                        className="m-btn-primary"
                         onClick={compartilhar}
                         disabled={selecionados.size === 0}
-                        style={{
-                            padding: '10px 24px', borderRadius: '8px', border: 'none',
-                            background: selecionados.size === 0 ? '#9ca3af' : '#25D366',
-                            color: '#fff', fontWeight: 700, cursor: selecionados.size === 0 ? 'not-allowed' : 'pointer', fontSize: '14px',
-                            display: 'flex', alignItems: 'center', gap: '8px'
+                    >
+                        <i className="ti ti-brand-whatsapp" aria-hidden="true"></i>
+                        Compartilhar ({selecionados.size})
+                    </button>
+                </>
+            }
+        >
+            {/* Toolbar: selecionar todos + contagem + total */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-2) 0 var(--space-3)',
+                borderBottom: '0.5px solid var(--border-subtle)',
+                marginBottom: 'var(--space-3)',
+            }}>
+                <label style={{
+                    display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+                    cursor: 'pointer', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)',
+                    color: 'var(--text-secondary)',
+                }}>
+                    <input
+                        type="checkbox"
+                        checked={selecionados.size === todosPendentes.length}
+                        onChange={toggleTodos}
+                    />
+                    {selecionados.size === todosPendentes.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                </label>
+                <span style={{ marginLeft: 'auto', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                    {selecionados.size} de {todosPendentes.length}
+                </span>
+                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--brand-primary)' }}>
+                    {formatCurrency(totalSelecionado)}
+                </span>
+            </div>
+
+            {/* Lista de itens */}
+            <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                {todosPendentes.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                        Nenhum pagamento pendente encontrado.
+                    </div>
+                ) : todosPendentes.map(item => (
+                    <label key={item.key} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)',
+                        padding: 'var(--space-2) var(--space-1)',
+                        cursor: 'pointer',
+                        borderBottom: '0.5px solid var(--border-subtle)',
+                        background: selecionados.has(item.key) ? 'var(--status-success-bg)' : 'var(--surface-card)',
+                    }}
+                        onMouseEnter={e => {
+                            if (!selecionados.has(item.key)) e.currentTarget.style.background = 'var(--surface-muted)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = selecionados.has(item.key) ? 'var(--status-success-bg)' : 'var(--surface-card)';
                         }}
                     >
-                        💬 Compartilhar ({selecionados.size})
-                    </button>
-                </div>
+                        <input
+                            type="checkbox"
+                            checked={selecionados.has(item.key)}
+                            onChange={() => toggleItem(item.key)}
+                            style={{ marginTop: '2px', cursor: 'pointer', flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                                <span style={{
+                                    fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)',
+                                    padding: '2px var(--space-2)', borderRadius: 'var(--radius-full)',
+                                    background: item.vencido ? 'var(--status-danger-bg)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-bg)' : 'var(--status-warning-bg)',
+                                    color: item.vencido ? 'var(--status-danger-text)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-text)' : 'var(--status-warning-text)',
+                                }}>{item.tipo}</span>
+                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{item.descricao}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-1)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 'var(--weight-medium)', color: item.vencido ? 'var(--status-danger)' : 'var(--status-success-text)' }}>
+                                    {formatCurrency(item.valor)}
+                                </span>
+                                <span>{formatDate(item.data_vencimento)}</span>
+                                {item.pix && <span>{item.pix}</span>}
+                                {item.codigo_barras && <span>{item.codigo_barras.substring(0, 20)}…</span>}
+                            </div>
+                        </div>
+                    </label>
+                ))}
             </div>
-        </div>
+        </Modal>
     );
 };
 

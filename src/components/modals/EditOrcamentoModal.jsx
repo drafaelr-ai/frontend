@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -94,44 +94,59 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
     if (!orcamento) return null;
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Editar Solicitação</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Descrição</label>
-                    <input type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Editar Solicitação"
+            subtitle={orcamento.descricao}
+            width="large"
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-edit-orcamento" className="m-btn-primary">
+                        <i className="ti ti-device-floppy" aria-hidden="true"></i>
+                        Salvar Alterações
+                    </button>
+                </>
+            }
+        >
+            <form id="form-edit-orcamento" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Descrição</label>
+                    <input className="m-input" type="text" name="descricao" value={formData.descricao || ''} onChange={handleChange} required />
                 </div>
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
+                <div className="m-field">
+                    <label className="m-label">Fornecedor <span className="m-label-opt">(opcional)</span></label>
+                    <input className="m-input" type="text" name="fornecedor" value={formData.fornecedor || ''} onChange={handleChange} />
                 </div>
-                <div className="form-group">
-                    <label>Valor (R$)</label>
-                    <input type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
+                <div className="m-field">
+                    <label className="m-label">Valor (R$)</label>
+                    <input className="m-input" type="number" step="0.01" name="valor" value={formData.valor || 0} onChange={handleChange} required />
                 </div>
-                <div className="form-group">
-                    <label>Dados de Pagamento (Opcional)</label>
-                    <input type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
+                <div className="m-field">
+                    <label className="m-label">Dados de Pagamento <span className="m-label-opt">(opcional)</span></label>
+                    <input className="m-input" type="text" name="dados_pagamento" value={formData.dados_pagamento || ''} onChange={handleChange} />
+                </div>
+                <div className="m-field">
+                    <label className="m-label">Observações <span className="m-label-opt">(opcional)</span></label>
+                    <textarea className="m-textarea" name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
                 </div>
 
-                <div className="form-group">
-                    <label>Observações (Opcional)</label>
-                    <textarea name="observacoes" value={formData.observacoes || ''} onChange={handleChange} rows="3"></textarea>
-                </div>
+                <p className="m-section">Anexos</p>
 
-                <hr style={{margin: '20px 0'}} />
-
-                <div className="form-group">
-                    <label>Anexos Atuais</label>
-                    {isLoadingAnexos ? <p>Carregando anexos...</p> : (
+                <div className="m-field">
+                    <label className="m-label">Anexos Atuais</label>
+                    {isLoadingAnexos ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Carregando anexos...</p>
+                    ) : (
                         <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, maxHeight: '150px', overflowY: 'auto' }}>
                             {existingAnexos.length > 0 ? existingAnexos.map(anexo => (
-                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px', borderBottom: '1px solid #eee' }}>
+                                <li key={anexo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-1)', borderBottom: '0.5px solid var(--border-subtle)' }}>
                                     <a
                                         href="#"
                                         onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
                                         title={`Abrir ${anexo.filename}`}
-                                        style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+                                        style={{ color: 'var(--status-info)', textDecoration: 'underline', cursor: 'pointer', fontSize: 'var(--text-sm)' }}
                                     >
                                         {anexo.filename}
                                     </a>
@@ -139,49 +154,50 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
                                         type="button"
                                         onClick={(e) => handleDeleteAnexo(anexo.id, e)}
                                         title="Excluir Anexo"
-                                        style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontSize: '1.2em' }}
+                                        style={{ background: 'none', border: 'none', color: 'var(--status-danger-text)', cursor: 'pointer', fontSize: 'var(--text-base)' }}
                                     >
                                         &times;
                                     </button>
                                 </li>
-                            )) : <p>Nenhum anexo.</p>}
+                            )) : (
+                                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Nenhum anexo.</p>
+                            )}
                         </ul>
                     )}
                 </div>
 
-                <div className="form-group">
-                    <label>Adicionar Novos Anexos</label>
+                <div className="m-field">
+                    <label className="m-label">Adicionar Novos Anexos <span className="m-label-opt">(opcional)</span></label>
                     <input
                         type="file"
                         multiple
                         onChange={handleFileChange}
                         accept="image/*,.pdf"
+                        style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}
                     />
                 </div>
 
-                <hr style={{margin: '20px 0'}} />
+                <p className="m-section">Classificação</p>
 
-                <div className="form-group"><label>Vincular ao Serviço (Opcional)</label>
-                    <select name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
-                        <option value="">Nenhum (Gasto Geral)</option>
-                        {(servicos || []).map(s => (
-                            <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
-                </div>
-
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Alterações</button>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Vincular ao Serviço <span className="m-label-opt">(opcional)</span></label>
+                        <select className="m-select" name="servico_id" value={formData.servico_id || ''} onChange={handleChange}>
+                            <option value="">Nenhum (Gasto Geral)</option>
+                            {(servicos || []).map(s => (
+                                <option key={s.id} value={s.id}>{s.nome}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Tipo/Segmento</label>
+                        <select className="m-select" name="tipo" value={formData.tipo || 'Material'} onChange={handleChange} required>
+                            <option>Material</option>
+                            <option>Mão de Obra</option>
+                            <option>Serviço</option>
+                            <option>Equipamentos</option>
+                        </select>
+                    </div>
                 </div>
             </form>
         </Modal>

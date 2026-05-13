@@ -6,6 +6,7 @@ import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
 import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
+import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
 
 function App() {
@@ -76,7 +77,11 @@ function App() {
         <>
             <ToastContainer />
             <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
-                {user ? <Dashboard /> : <LoginScreen onBack={handleBackToSelector} />}
+                {user
+                    ? (new URLSearchParams(window.location.search).get('obra')
+                        ? <ObraDetalhe />
+                        : <Dashboard />)
+                    : <LoginScreen onBack={handleBackToSelector} />}
             </AuthContext.Provider>
         </>
     );

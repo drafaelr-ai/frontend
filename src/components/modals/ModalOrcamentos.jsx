@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
+import { formatCurrency } from '../../utils/format';
 
 const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
     const [orcamentos, setOrcamentos] = useState([]);
@@ -37,6 +38,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
             });
     };
 
+    // BUG: window.open sem fetchWithAuth — mesmo padrão de VisualizarNotaFiscalModal. Catalogado em NOTAS_REFACTOR.md
     const handleDownloadAnexo = (anexoId, filename) => {
         window.open(`${API_URL}/anexos/${anexoId}`, '_blank');
     };
@@ -48,10 +50,19 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
 
     const getStatusColor = (status) => {
         switch(status) {
-            case 'Aprovado': return '#28a745';
-            case 'Rejeitado': return '#dc3545';
-            case 'Pendente': return '#ffc107';
-            default: return '#6c757d';
+            case 'Aprovado': return 'var(--status-success)';
+            case 'Rejeitado': return 'var(--status-danger)';
+            case 'Pendente': return 'var(--status-warning)';
+            default: return 'var(--text-muted)';
+        }
+    };
+
+    const getStatusBorder = (status) => {
+        switch(status) {
+            case 'Aprovado': return 'var(--status-success)';
+            case 'Rejeitado': return 'var(--status-danger)';
+            case 'Pendente': return 'var(--status-warning)';
+            default: return 'var(--border-default)';
         }
     };
 
@@ -72,12 +83,17 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
     };
 
     return (
-        <Modal onClose={onClose} customWidth="900px">
-            <h2>💰 Solicitações de Compra</h2>
-            <p style={{ marginBottom: '20px', color: 'var(--cor-texto-secundario)' }}>
-                {obraNome}
-            </p>
-
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Solicitações de Compra"
+            subtitle={obraNome}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
             {/* Filtros */}
             <div style={{
                 display: 'flex',
@@ -91,10 +107,10 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                         onClick={() => setFiltro(statusFiltro)}
                         style={{
                             padding: '8px 16px',
-                            border: `2px solid ${filtro === statusFiltro ? 'var(--cor-primaria)' : '#ddd'}`,
+                            border: `2px solid ${filtro === statusFiltro ? 'var(--brand-primary)' : 'var(--border-default)'}`,
                             borderRadius: '20px',
-                            background: filtro === statusFiltro ? 'var(--cor-primaria)' : 'white',
-                            color: filtro === statusFiltro ? 'white' : 'var(--cor-texto)',
+                            background: filtro === statusFiltro ? 'var(--brand-primary)' : 'var(--surface-card)',
+                            color: filtro === statusFiltro ? 'white' : 'var(--text-primary)',
                             cursor: 'pointer',
                             fontSize: '0.9em',
                             fontWeight: filtro === statusFiltro ? 'bold' : 'normal',
@@ -114,10 +130,10 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
             <div style={{
                 maxHeight: '500px',
                 overflowY: 'auto',
-                border: '1px solid #e0e0e0',
+                border: `1px solid var(--border-default)`,
                 borderRadius: '8px',
                 padding: '15px',
-                background: '#f8f9fa'
+                background: 'var(--surface-subtle)'
             }}>
                 {isLoading ? (
                     <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -127,7 +143,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                     <div style={{
                         textAlign: 'center',
                         padding: '40px',
-                        color: 'var(--cor-vermelho)'
+                        color: 'var(--status-danger)'
                     }}>
                         <p>❌ {error}</p>
                         <button
@@ -135,7 +151,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                             style={{
                                 marginTop: '15px',
                                 padding: '8px 16px',
-                                background: 'var(--cor-primaria)',
+                                background: 'var(--brand-primary)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '5px',
@@ -146,7 +162,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                         </button>
                     </div>
                 ) : orcamentosFiltrados.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                         <p>📋 Nenhuma solicitação {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
                     </div>
                 ) : (
@@ -155,10 +171,10 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                             <div
                                 key={orc.id}
                                 style={{
-                                    background: 'white',
+                                    background: 'var(--surface-card)',
                                     padding: '20px',
                                     borderRadius: '8px',
-                                    border: `2px solid ${getStatusColor(orc.status)}20`,
+                                    border: `0.5px solid ${getStatusBorder(orc.status)}`,
                                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                                 }}
                             >
@@ -172,7 +188,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     <div>
                                         <h3 style={{
                                             margin: '0 0 5px 0',
-                                            color: 'var(--cor-primaria)',
+                                            color: 'var(--brand-primary)',
                                             fontSize: '1.1em'
                                         }}>
                                             {orc.descricao}
@@ -181,7 +197,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                             <p style={{
                                                 margin: 0,
                                                 fontSize: '0.85em',
-                                                color: '#6c757d'
+                                                color: 'var(--text-muted)'
                                             }}>
                                                 🔗 Serviço: {orc.servico_nome}
                                             </p>
@@ -208,7 +224,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     marginBottom: '15px'
                                 }}>
                                     <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                        <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                             Fornecedor:
                                         </strong>
                                         <p style={{ margin: '2px 0 0 0' }}>
@@ -216,23 +232,20 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                         </p>
                                     </div>
                                     <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                        <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                             Valor:
                                         </strong>
                                         <p style={{
                                             margin: '2px 0 0 0',
-                                            color: 'var(--cor-primaria)',
+                                            color: 'var(--brand-primary)',
                                             fontWeight: 'bold',
                                             fontSize: '1.1em'
                                         }}>
-                                            {new Intl.NumberFormat('pt-BR', {
-                                                style: 'currency',
-                                                currency: 'BRL'
-                                            }).format(orc.valor)}
+                                            {formatCurrency(orc.valor)}
                                         </p>
                                     </div>
                                     <div>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                        <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                             Tipo:
                                         </strong>
                                         <p style={{ margin: '2px 0 0 0' }}>
@@ -241,7 +254,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     </div>
                                     {orc.dados_pagamento && (
                                         <div>
-                                            <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                            <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                                 Pagamento:
                                             </strong>
                                             <p style={{ margin: '2px 0 0 0' }}>
@@ -256,11 +269,11 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     <div style={{
                                         marginBottom: '15px',
                                         padding: '10px',
-                                        background: '#f8f9fa',
+                                        background: 'var(--surface-subtle)',
                                         borderRadius: '5px',
-                                        borderLeft: '3px solid var(--cor-primaria)'
+                                        borderLeft: `3px solid var(--brand-primary)`
                                     }}>
-                                        <strong style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                        <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                             Observações:
                                         </strong>
                                         <p style={{ margin: '5px 0 0 0', fontSize: '0.9em' }}>
@@ -274,7 +287,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     <div>
                                         <strong style={{
                                             fontSize: '0.9em',
-                                            color: '#6c757d',
+                                            color: 'var(--text-muted)',
                                             display: 'block',
                                             marginBottom: '8px'
                                         }}>
@@ -291,24 +304,24 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                                     onClick={() => handleDownloadAnexo(anexo.id, anexo.filename)}
                                                     style={{
                                                         padding: '8px 12px',
-                                                        background: '#e7f3ff',
-                                                        border: '1px solid #0066cc',
+                                                        background: 'var(--status-info-bg)',
+                                                        border: `1px solid var(--status-info)`,
                                                         borderRadius: '5px',
                                                         cursor: 'pointer',
                                                         fontSize: '0.85em',
-                                                        color: '#0066cc',
+                                                        color: 'var(--status-info)',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '5px',
                                                         transition: 'all 0.2s'
                                                     }}
                                                     onMouseEnter={(e) => {
-                                                        e.currentTarget.style.background = '#0066cc';
+                                                        e.currentTarget.style.background = 'var(--status-info)';
                                                         e.currentTarget.style.color = 'white';
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = '#e7f3ff';
-                                                        e.currentTarget.style.color = '#0066cc';
+                                                        e.currentTarget.style.background = 'var(--status-info-bg)';
+                                                        e.currentTarget.style.color = 'var(--status-info)';
                                                     }}
                                                 >
                                                     <span>📄</span>
@@ -324,28 +337,19 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 )}
             </div>
 
-            {/* Footer */}
+            {/* Resumo */}
             <div style={{
                 marginTop: '20px',
                 padding: '15px',
-                background: '#f8f9fa',
-                borderRadius: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                background: 'var(--surface-subtle)',
+                borderRadius: '8px'
             }}>
-                <div style={{ fontSize: '0.9em', color: '#6c757d' }}>
+                <div style={{ fontSize: '0.9em', color: 'var(--text-muted)' }}>
                     <strong>Resumo:</strong> {contadores.total} solicitação(ões) •
                     ✅ {contadores.aprovados} aprovado(s) •
                     ❌ {contadores.rejeitados} rejeitado(s) •
                     ⏳ {contadores.pendentes} pendente(s)
                 </div>
-                <button
-                    onClick={onClose}
-                    className="cancel-btn"
-                >
-                    Fechar
-                </button>
             </div>
         </Modal>
     );

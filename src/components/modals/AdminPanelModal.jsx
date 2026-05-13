@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import UserPermissionsModal from './UserPermissionsModal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
@@ -138,30 +138,39 @@ const AdminPanelModal = ({ allObras, onClose }) => {
 
     const getRoleBadge = (role) => {
         const styles = {
-            master: { bg: '#fef3c7', color: '#92400e', icon: '👑' },
-            administrador: { bg: '#dbeafe', color: '#1e40af', icon: '⭐' },
-            comum: { bg: '#f3f4f6', color: '#374151', icon: '👤' }
+            master: { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)', icon: 'ti-crown' },
+            administrador: { bg: 'var(--status-info-bg)', color: 'var(--status-info)', icon: 'ti-star' },
+            comum: { bg: 'var(--surface-muted)', color: 'var(--text-secondary)', icon: 'ti-user' }
         };
         const s = styles[role] || styles.comum;
         return (
             <span style={{
                 backgroundColor: s.bg,
                 color: s.color,
-                padding: '4px 10px',
-                borderRadius: '12px',
-                fontSize: '0.85em',
-                fontWeight: '500',
+                padding: 'var(--space-1) var(--space-2)',
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 'var(--weight-medium)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: 'var(--space-1)'
             }}>
-                {s.icon} {role}
+                <i className={`ti ${s.icon}`} aria-hidden="true" /> {role}
             </span>
         );
     };
 
     return (
-        <Modal onClose={onClose} customWidth="800px">
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Painel de Administração"
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
             {userToEdit && (
                 <UserPermissionsModal
                     userToEdit={userToEdit}
@@ -170,10 +179,9 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                     onSave={handleSavePermissions}
                 />
             )}
-            <div style={{opacity: userToEdit ? 0.1 : 1}}>
-                <h2>Painel de Administração</h2>
-                <div className="card-full" style={{ background: '#f8f9fa' }}>
-                    <h3>Criar Novo Usuário</h3>
+            <div style={{ opacity: userToEdit ? 0.1 : 1 }}>
+                <div className="card-full" style={{ background: 'var(--surface-subtle)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
+                    <p className="m-section" style={{ marginTop: 0 }}>Criar Novo Usuário</p>
                     <form onSubmit={handleCreateUser} className="form-add-obra">
                         <input
                             type="text"
@@ -193,22 +201,28 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                             value={newRole}
                             onChange={(e) => setNewRole(e.target.value)}
                         >
-                            <option value="comum">👤 Operador (comum)</option>
-                            <option value="administrador">⭐ Administrador</option>
-                            <option value="master">👑 Master</option>
+                            <option value="comum">Operador (comum)</option>
+                            <option value="administrador">Administrador</option>
+                            <option value="master">Master</option>
                         </select>
-                        <button type="submit" className="submit-btn" style={{flexGrow: 0}}>Criar</button>
+                        <button type="submit" className="m-btn-primary" style={{ flexGrow: 0 }}>
+                            <i className="ti ti-plus" aria-hidden="true"></i>
+                            Criar
+                        </button>
                     </form>
-                    {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
+                    {error && <p style={{ color: 'var(--status-danger)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>{error}</p>}
                 </div>
-                <h3 style={{marginTop: '30px'}}>Usuários Existentes</h3>
-                {isLoading ? <p>Carregando usuários...</p> : (
+
+                <p className="m-section">Usuários Existentes</p>
+                {isLoading ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Carregando usuários...</p>
+                ) : (
                     <table className="tabela-historico">
                         <thead>
                             <tr>
                                 <th>Usuário</th>
-                                <th style={{width: '180px'}}>Nível</th>
-                                <th style={{textAlign: 'center'}}>Ações</th>
+                                <th style={{ width: '180px' }}>Nível</th>
+                                <th style={{ textAlign: 'center' }}>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -221,31 +235,31 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                             onChange={(e) => handleChangeRole(user.id, e.target.value)}
                                             disabled={changingRole === user.id}
                                             style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #d1d5db',
-                                                backgroundColor: changingRole === user.id ? '#f3f4f6' : 'white',
+                                                padding: 'var(--space-1) var(--space-2)',
+                                                borderRadius: 'var(--radius-sm)',
+                                                border: '0.5px solid var(--border-default)',
+                                                backgroundColor: changingRole === user.id ? 'var(--surface-muted)' : 'var(--surface-card)',
                                                 cursor: changingRole === user.id ? 'wait' : 'pointer',
-                                                fontSize: '0.9em',
+                                                fontSize: 'var(--text-sm)',
                                                 width: '100%'
                                             }}
                                         >
-                                            <option value="comum">👤 Operador</option>
-                                            <option value="administrador">⭐ Admin</option>
-                                            <option value="master">👑 Master</option>
+                                            <option value="comum">Operador</option>
+                                            <option value="administrador">Admin</option>
+                                            <option value="master">Master</option>
                                         </select>
                                     </td>
-                                   <td style={{textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center'}}>
+                                    <td style={{ textAlign: 'center', display: 'flex', gap: 'var(--space-1)', justifyContent: 'center' }}>
                                         <button
                                             className="acao-btn"
-                                            style={{backgroundColor: '#17a2b8', color: 'white'}}
+                                            style={{ backgroundColor: 'var(--status-info)', color: 'white' }}
                                             onClick={() => setUserToEdit(user)}
                                         >
                                             Obras
                                         </button>
                                         <button
                                             className="acao-btn"
-                                            style={{backgroundColor: 'var(--cor-vermelho)', color: 'white'}}
+                                            style={{ backgroundColor: 'var(--status-danger)', color: 'white' }}
                                             onClick={() => handleDeleteUser(user)}
                                         >
                                             Excluir

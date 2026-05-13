@@ -342,25 +342,25 @@ const GanttChart = ({ cronograma }) => {
     
     // Cor da barra baseada no status
     const getCorBarra = (etapa) => {
-        if (etapa.percentual >= 100) return '#10b981'; // Verde - concluído
-        
+        if (etapa.percentual >= 100) return 'var(--status-success)';
+
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const dataFim = etapa.dataFim ? new Date(etapa.dataFim + 'T00:00:00') : null;
-        
+
         if (dataFim && hoje > dataFim && etapa.percentual < 100) {
-            return '#ef4444'; // Vermelho - atrasado
+            return 'var(--status-danger)';
         }
-        
-        if (etapa.percentual > 0) return '#3b82f6'; // Azul - em andamento
-        
-        return '#94a3b8'; // Cinza - não iniciado
+
+        if (etapa.percentual > 0) return 'var(--status-info)';
+
+        return 'var(--status-neutral)';
     };
     
     if (todasEtapas.length === 0) {
         return (
             <div className="gantt-empty">
-                <p>📊 Nenhuma etapa cadastrada no cronograma.</p>
+                <p><i className="ti ti-chart-bar" aria-hidden="true" /> Nenhuma etapa cadastrada no cronograma.</p>
                 <p>Adicione etapas para visualizar o gráfico de Gantt.</p>
             </div>
         );
@@ -369,7 +369,7 @@ const GanttChart = ({ cronograma }) => {
     return (
         <div className="gantt-container">
             <div className="gantt-header">
-                <h4>📊 Gráfico de Gantt</h4>
+                <h4><i className="ti ti-chart-bar" aria-hidden="true" /> Gráfico de Gantt</h4>
                 <div className="gantt-controls">
                     <button 
                         className={zoomLevel === 'semana' ? 'active' : ''}
@@ -416,7 +416,7 @@ const GanttChart = ({ cronograma }) => {
                             return (
                                 <div key={etapa.id} className="gantt-row gantt-servico-header">
                                     <div className="gantt-label gantt-servico-label">
-                                        <span className="gantt-servico-icon">📋</span>
+                                        <span className="gantt-servico-icon"><i className="ti ti-clipboard-list" aria-hidden="true" /></span>
                                         <span className="gantt-servico-nome" title={etapa.nome}>
                                             {etapa.nome.length > 35 ? etapa.nome.substring(0, 35) + '...' : etapa.nome}
                                         </span>
@@ -488,10 +488,10 @@ const GanttChart = ({ cronograma }) => {
             
             {/* Legenda */}
             <div className="gantt-legend">
-                <span><i style={{ background: '#10b981' }}></i> Concluído</span>
-                <span><i style={{ background: '#3b82f6' }}></i> Em Andamento</span>
-                <span><i style={{ background: '#94a3b8' }}></i> Não Iniciado</span>
-                <span><i style={{ background: '#ef4444' }}></i> Atrasado</span>
+                <span><i style={{ background: 'var(--status-success)' }}></i> Concluído</span>
+                <span><i style={{ background: 'var(--status-info)' }}></i> Em Andamento</span>
+                <span><i style={{ background: 'var(--status-neutral)' }}></i> Não Iniciado</span>
+                <span><i style={{ background: 'var(--status-danger)' }}></i> Atrasado</span>
                 <span><i className="today-marker"></i> Hoje</span>
             </div>
         </div>
@@ -515,7 +515,7 @@ const MaterialDetalhesModal = ({ material, lancamentos, onClose }) => {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content modal-material" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h3>📦 Detalhes: {material}</h3>
+                    <h3><i className="ti ti-package" aria-hidden="true" /> Detalhes: {material}</h3>
                     <button onClick={onClose} className="modal-close">✕</button>
                 </div>
                 
@@ -649,7 +649,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
     
     return (
         <div className="dashboard-obra">
-            <h2>📊 Dashboard - {obraNome}</h2>
+            <h2><i className="ti ti-layout-dashboard" aria-hidden="true" /> Dashboard - {obraNome}</h2>
             
             {/* Gráfico de Gantt */}
             <div className="dashboard-section gantt-section">
@@ -662,7 +662,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
                 <div className="dashboard-section chart-section">
                     <PieChart 
                         data={dadosCategorias}
-                        title="💰 Distribuição de Custos"
+                        title="Distribuição de Custos"
                     />
                 </div>
                 
@@ -670,7 +670,7 @@ const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) 
                 <div className="dashboard-section chart-section">
                     <PieChart 
                         data={dadosMateriais}
-                        title="📦 Materiais (clique para detalhes)"
+                        title="Materiais (clique para detalhes)"
                         onSegmentClick={handleMaterialClick}
                     />
                 </div>

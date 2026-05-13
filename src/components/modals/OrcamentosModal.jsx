@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -240,183 +240,184 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     if (isLoading) {
         return (
-            <Modal onClose={onClose} customWidth="96%">
-                <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                    <h2>📋 Solicitações</h2>
-                    <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
-                </div>
+            <Modal isOpen={true} onClose={onClose} title="Solicitações" width="xlarge">
+                <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
             </Modal>
         );
     }
 
     return (
-        <Modal onClose={onClose} customWidth="96%">
-            <div style={{ maxHeight: '88vh', overflowY: 'auto' }}>
-                <button onClick={onClose} className="close-modal-btn">×</button>
-                <h2>📋 Solicitações Pendentes</h2>
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px',
-                    padding: '15px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px'
-                }}>
-                    <div>
-                        <span style={{ fontSize: '1.1em', color: 'var(--cor-texto-secundario)' }}>
-                            Total Pendente:
-                        </span>
-                        <span style={{
-                            fontSize: '1.5em',
-                            fontWeight: 'bold',
-                            color: 'var(--cor-primaria)',
-                            marginLeft: '10px'
-                        }}>
-                            {formatCurrency(totalPendente)}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        {selecionados.length > 0 && (
-                            <button
-                                onClick={handleAprovarSelecionados}
-                                disabled={aprovandoMultiplos}
-                                className="acao-btn"
-                                style={{
-                                    backgroundColor: 'var(--cor-acento)',
-                                    color: 'white',
-                                    opacity: aprovandoMultiplos ? 0.7 : 1
-                                }}
-                            >
-                                {aprovandoMultiplos ? '⏳ Aprovando...' : `✓ Aprovar Selecionados (${selecionados.length})`}
-                            </button>
-                        )}
-                        <button
-                            onClick={() => setAddModalVisible(true)}
-                            className="acao-btn add-btn"
-                            style={{ backgroundColor: 'var(--cor-info)' }}
-                        >
-                            + Nova Solicitação
-                        </button>
-                    </div>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Solicitações Pendentes"
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                padding: '15px',
+                backgroundColor: 'var(--surface-subtle)',
+                borderRadius: '8px'
+            }}>
+                <div>
+                    <span style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>
+                        Total Pendente:
+                    </span>
+                    <span style={{
+                        fontSize: '1.5em',
+                        fontWeight: 'bold',
+                        color: 'var(--brand-primary)',
+                        marginLeft: '10px'
+                    }}>
+                        {formatCurrency(totalPendente)}
+                    </span>
                 </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {selecionados.length > 0 && (
+                        <button
+                            onClick={handleAprovarSelecionados}
+                            disabled={aprovandoMultiplos}
+                            className="acao-btn"
+                            style={{
+                                backgroundColor: 'var(--status-success)',
+                                color: 'white',
+                                opacity: aprovandoMultiplos ? 0.7 : 1
+                            }}
+                        >
+                            {aprovandoMultiplos ? '⏳ Aprovando...' : `✓ Aprovar Selecionados (${selecionados.length})`}
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setAddModalVisible(true)}
+                        className="acao-btn add-btn"
+                        style={{ backgroundColor: 'var(--status-info)' }}
+                    >
+                        + Nova Solicitação
+                    </button>
+                </div>
+            </div>
 
-                {orcamentosPendentes.length > 0 ? (
-                    <table className="tabela-pendencias">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '40px', textAlign: 'center' }}>
+            {orcamentosPendentes.length > 0 ? (
+                <table className="tabela-pendencias">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '40px', textAlign: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={selecionados.length === orcamentosPendentes.length && orcamentosPendentes.length > 0}
+                                    onChange={toggleSelecionarTodos}
+                                    title="Selecionar todos"
+                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                />
+                            </th>
+                            <th>Descrição</th>
+                            <th>Fornecedor</th>
+                            <th>Segmento</th>
+                            <th>Serviço</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orcamentosPendentes.map(orc => (
+                            <tr key={orc.id} style={{
+                                backgroundColor: selecionados.includes(orc.id) ? 'var(--status-success-bg)' : 'transparent'
+                            }}>
+                                <td style={{ textAlign: 'center' }}>
                                     <input
                                         type="checkbox"
-                                        checked={selecionados.length === orcamentosPendentes.length && orcamentosPendentes.length > 0}
-                                        onChange={toggleSelecionarTodos}
-                                        title="Selecionar todos"
+                                        checked={selecionados.includes(orc.id)}
+                                        onChange={() => toggleSelecionado(orc.id)}
                                         style={{ cursor: 'pointer', width: '18px', height: '18px' }}
                                     />
-                                </th>
-                                <th>Descrição</th>
-                                <th>Fornecedor</th>
-                                <th>Segmento</th>
-                                <th>Serviço</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
+                                </td>
+                                <td
+                                    onClick={() => setEditingOrcamento(orc)}
+                                    style={{
+                                        cursor: 'pointer',
+                                        color: 'var(--brand-primary)',
+                                        fontWeight: '500',
+                                        textDecoration: 'underline'
+                                    }}
+                                    title="Clique para editar"
+                                >
+                                    {orc.descricao}
+                                </td>
+                                <td>{orc.fornecedor || 'N/A'}</td>
+                                <td>{orc.tipo}</td>
+                                <td>{orc.servico_nome || 'Geral'}</td>
+                                <td><strong>{formatCurrency(orc.valor)}</strong></td>
+                                <td>
+                                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                        {orc.anexos_count > 0 && (
+                                            <button
+                                                onClick={() => setViewingAnexos(orc)}
+                                                className="acao-icon-btn"
+                                                title={`${orc.anexos_count} anexo(s)`}
+                                                style={{ fontSize: '1.3em', color: 'var(--status-info)' }}
+                                            >
+                                                📎
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleRejeitar(orc.id)}
+                                            className="acao-btn"
+                                            style={{ backgroundColor: 'var(--status-danger)', color: 'white', padding: '5px 12px' }}
+                                        >
+                                            Rejeitar
+                                        </button>
+                                        <button
+                                            onClick={() => handleAprovar(orc)}
+                                            className="acao-btn"
+                                            style={{ backgroundColor: 'var(--status-success)', color: 'white', padding: '5px 12px' }}
+                                        >
+                                            Aprovar
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {orcamentosPendentes.map(orc => (
-                                <tr key={orc.id} style={{
-                                    backgroundColor: selecionados.includes(orc.id) ? '#e8f5e9' : 'transparent'
-                                }}>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selecionados.includes(orc.id)}
-                                            onChange={() => toggleSelecionado(orc.id)}
-                                            style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                                        />
-                                    </td>
-                                    <td
-                                        onClick={() => setEditingOrcamento(orc)}
-                                        style={{
-                                            cursor: 'pointer',
-                                            color: 'var(--cor-primaria)',
-                                            fontWeight: '500',
-                                            textDecoration: 'underline'
-                                        }}
-                                        title="Clique para editar"
-                                    >
-                                        {orc.descricao}
-                                    </td>
-                                    <td>{orc.fornecedor || 'N/A'}</td>
-                                    <td>{orc.tipo}</td>
-                                    <td>{orc.servico_nome || 'Geral'}</td>
-                                    <td><strong>{formatCurrency(orc.valor)}</strong></td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                            {orc.anexos_count > 0 && (
-                                                <button
-                                                    onClick={() => setViewingAnexos(orc)}
-                                                    className="acao-icon-btn"
-                                                    title={`${orc.anexos_count} anexo(s)`}
-                                                    style={{ fontSize: '1.3em', color: '#007bff' }}
-                                                >
-                                                    📎
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleRejeitar(orc.id)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-vermelho)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Rejeitar
-                                            </button>
-                                            <button
-                                                onClick={() => handleAprovar(orc)}
-                                                className="acao-btn"
-                                                style={{ backgroundColor: 'var(--cor-acento)', color: 'white', padding: '5px 12px' }}
-                                            >
-                                                Aprovar
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-secundario)' }}>
-                        Nenhuma solicitação pendente.
-                    </p>
-                )}
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                    Nenhuma solicitação pendente.
+                </p>
+            )}
 
-                {aprovandoOrcamento && (
-                    <ModalAprovarOrcamento
-                        orcamento={aprovandoOrcamento}
-                        onClose={() => setAprovandoOrcamento(null)}
-                        onConfirmar={handleConfirmarAprovacao}
-                    />
-                )}
+            {aprovandoOrcamento && (
+                <ModalAprovarOrcamento
+                    orcamento={aprovandoOrcamento}
+                    onClose={() => setAprovandoOrcamento(null)}
+                    onConfirmar={handleConfirmarAprovacao}
+                />
+            )}
 
-                {isAddModalVisible && (
-                    <AddOrcamentoModal
-                        obraId={obraId}
-                        onClose={() => setAddModalVisible(false)}
-                        onSave={handleSaveOrcamento}
-                        servicos={servicos}
-                    />
-                )}
+            {isAddModalVisible && (
+                <AddOrcamentoModal
+                    obraId={obraId}
+                    onClose={() => setAddModalVisible(false)}
+                    onSave={handleSaveOrcamento}
+                    servicos={servicos}
+                />
+            )}
 
-                {editingOrcamento && (
-                    <EditOrcamentoModal
-                        orcamento={editingOrcamento}
-                        obraId={obraId}
-                        onClose={() => setEditingOrcamento(null)}
-                        onSave={handleEditOrcamento}
-                        servicos={servicos}
-                    />
-                )}
-            </div>
+            {editingOrcamento && (
+                <EditOrcamentoModal
+                    orcamento={editingOrcamento}
+                    obraId={obraId}
+                    onClose={() => setEditingOrcamento(null)}
+                    onSave={handleEditOrcamento}
+                    servicos={servicos}
+                />
+            )}
         </Modal>
     );
 };

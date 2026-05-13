@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 
 const EditPrioridadeModal = ({ item, onClose, onSave }) => {
-    // ... (código inalterado)
     const [prioridade, setPrioridade] = useState(0);
 
     useEffect(() => {
@@ -19,16 +18,28 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
     if (!item) return null;
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Editar Prioridade</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Item</label>
-                    <input type="text" value={item.descricao} readOnly disabled />
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Editar Prioridade"
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-edit-prioridade" className="m-btn-primary">
+                        <i className="ti ti-check" aria-hidden="true"></i>
+                        Salvar Prioridade
+                    </button>
+                </>
+            }
+        >
+            <form id="form-edit-prioridade" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Item</label>
+                    <input className="m-input" type="text" value={item.descricao} readOnly disabled />
                 </div>
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                <div className="m-field">
+                    <label className="m-label">Prioridade</label>
+                    <select className="m-select" value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
                         <option value="0">0 (Nenhuma)</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -36,10 +47,6 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
                         <option value="4">4</option>
                         <option value="5">5 (Urgente)</option>
                     </select>
-                </div>
-                <div className="form-actions">
-                    <button type="button" onClick={onClose} className="cancel-btn">Cancelar</button>
-                    <button type="submit" className="submit-btn">Salvar Prioridade</button>
                 </div>
             </form>
         </Modal>

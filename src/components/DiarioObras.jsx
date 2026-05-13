@@ -51,7 +51,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f0f0f0',
+                backgroundColor: 'var(--surface-muted)',
                 borderRadius: '8px'
             }}>
                 <span>⏳ Carregando...</span>
@@ -68,7 +68,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#ffebee',
+                backgroundColor: 'var(--status-danger-bg)',
                 borderRadius: '8px'
             }}>
                 <span>❌ {error}</span>
@@ -87,7 +87,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f0f0f0',
+                backgroundColor: 'var(--surface-muted)',
                 borderRadius: '8px',
                 cursor: 'pointer'
             }} onClick={loadImage}>
@@ -105,7 +105,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f0f0f0',
+                backgroundColor: 'var(--surface-muted)',
                 borderRadius: '8px',
                 position: 'relative'
             }}>
@@ -119,8 +119,8 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                     style={{
                         marginTop: '10px',
                         padding: '5px 10px',
-                        backgroundColor: 'var(--cor-primaria)',
-                        color: 'white',
+                        backgroundColor: 'var(--brand-primary)',
+                        color: 'var(--text-on-dark)',
                         borderRadius: '4px',
                         textDecoration: 'none',
                         fontSize: '0.85em'
@@ -135,8 +135,8 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                             position: 'absolute',
                             top: '5px',
                             right: '5px',
-                            background: '#ff4444',
-                            color: 'white',
+                            background: 'var(--status-danger)',
+                            color: 'var(--text-on-dark)',
                             border: 'none',
                             borderRadius: '50%',
                             width: '30px',
@@ -170,8 +170,8 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                         position: 'absolute',
                         top: '5px',
                         right: '5px',
-                        background: '#ff4444',
-                        color: 'white',
+                        background: 'var(--status-danger)',
+                        color: 'var(--text-on-dark)',
                         border: 'none',
                         borderRadius: '50%',
                         width: '30px',
@@ -183,7 +183,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 </button>
             )}
             {legenda && (
-                <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'white' }}>
+                <div style={{ padding: '8px', fontSize: '0.9em', backgroundColor: 'var(--surface-card)' }}>
                     {legenda}
                 </div>
             )}
@@ -333,12 +333,12 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
             display: 'block',
             marginBottom: '5px',
             fontWeight: 'bold',
-            color: '#333'
+            color: 'var(--text-primary)'
         },
         input: {
             width: '100%',
             padding: '10px',
-            border: '1px solid #ddd',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '4px',
             fontSize: '14px',
             boxSizing: 'border-box'
@@ -346,7 +346,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
         textarea: {
             width: '100%',
             padding: '10px',
-            border: '1px solid #ddd',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '4px',
             fontSize: '14px',
             minHeight: '100px',
@@ -370,8 +370,10 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
     return (
         <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalStyles.content}>
-                <h2 style={{ marginTop: 0, color: 'var(--cor-primaria)' }}>
-                    {entrada ? '✏️ Editar Entrada' : '➕ Nova Entrada no Diário'}
+                <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>
+                    {entrada
+                        ? <><i className="ti ti-pencil" aria-hidden="true" /> Editar Entrada</>
+                        : <><i className="ti ti-plus" aria-hidden="true" /> Nova Entrada no Diário</>}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -502,7 +504,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                         />
                         {arquivos.length > 0 && (
                             <div style={{ marginTop: '10px' }}>
-                                <div style={{ fontSize: '0.9em', color: '#666', marginBottom: '8px' }}>
+                                <div style={{ fontSize: '0.9em', color: 'var(--text-muted)', marginBottom: '8px' }}>
                                     {arquivos.length} arquivo(s) selecionado(s):
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -514,9 +516,9 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                                                 alignItems: 'center',
                                                 justifyContent: 'space-between',
                                                 padding: '8px 12px',
-                                                backgroundColor: '#f8f9fa',
+                                                backgroundColor: 'var(--surface-subtle)',
                                                 borderRadius: '4px',
-                                                border: '1px solid #e0e0e0'
+                                                border: '1px solid var(--border-subtle)'
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -525,7 +527,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                                                 </span>
                                                 <span style={{ fontSize: '0.9em' }}>
                                                     {arquivo.name}
-                                                    <span style={{ color: '#999', marginLeft: '8px' }}>
+                                                    <span style={{ color: 'var(--text-muted)', marginLeft: '8px' }}>
                                                         ({(arquivo.size / 1024).toFixed(0)} KB)
                                                     </span>
                                                 </span>
@@ -534,8 +536,8 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                                                 type="button"
                                                 onClick={() => removerArquivo(index)}
                                                 style={{
-                                                    backgroundColor: '#dc3545',
-                                                    color: 'white',
+                                                    backgroundColor: 'var(--status-danger)',
+                                                    color: 'var(--text-on-dark)',
                                                     border: 'none',
                                                     borderRadius: '4px',
                                                     padding: '4px 8px',
@@ -553,7 +555,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                     </div>
 
                     {error && (
-                        <div style={{ color: 'var(--cor-vermelho)', marginBottom: '15px', padding: '10px', backgroundColor: '#fee', borderRadius: '4px' }}>
+                        <div style={{ color: 'var(--status-danger)', marginBottom: '15px', padding: '10px', backgroundColor: 'var(--status-danger-bg)', borderRadius: 'var(--radius-md)' }}>
                             {error}
                         </div>
                     )}
@@ -686,12 +688,12 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
         section: {
             marginBottom: '20px',
             padding: '15px',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--surface-subtle)',
             borderRadius: '4px'
         },
         sectionTitle: {
             fontWeight: 'bold',
-            color: 'var(--cor-primaria)',
+            color: 'var(--text-primary)',
             marginBottom: '10px',
             fontSize: '1.1em'
         },
@@ -716,8 +718,8 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
             position: 'absolute',
             top: '5px',
             right: '5px',
-            backgroundColor: 'rgba(220, 53, 69, 0.9)',
-            color: 'white',
+            backgroundColor: 'var(--status-danger)',
+            color: 'var(--text-on-dark)',
             border: 'none',
             borderRadius: '4px',
             padding: '5px 10px',
@@ -737,10 +739,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
         <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalStyles.content}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                        📋 {entrada.titulo}
+                    <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                        <i className="ti ti-notes" aria-hidden="true" /> {entrada.titulo}
                     </h2>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>
+                    <div style={{ fontSize: '0.9em', color: 'var(--text-muted)' }}>
                         {formatDate(entrada.data)}
                     </div>
                 </div>
@@ -803,7 +805,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                     <div style={modalStyles.sectionTitle}>📎 Anexos (Fotos e PDFs)</div>
                     
                     {/* Upload de novos anexos */}
-                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'white', borderRadius: '4px' }}>
+                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'var(--surface-card)', borderRadius: '4px' }}>
                         <input
                             type="file"
                             multiple
@@ -838,7 +840,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                             ))}
                         </div>
                     ) : (
-                        <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>
                             Nenhum anexo adicionado
                         </div>
                     )}
@@ -849,7 +851,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                         Fechar
                     </button>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => onEdit(entrada)} className="submit-btn" style={{ backgroundColor: '#6c757d' }}>
+                        <button onClick={() => onEdit(entrada)} className="submit-btn" style={{ backgroundColor: 'var(--status-neutral)' }}>
                             ✏️ Editar
                         </button>
                         <button onClick={() => onDelete(entrada.id)} className="voltar-btn">
@@ -1007,21 +1009,22 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     // Conteúdo principal do diário
     const content = (
         <div style={{
-            background: 'white',
-            borderRadius: embedded ? '0' : '8px',
-            padding: embedded ? '20px' : '30px',
+            background: 'var(--surface-card)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '20px',
             maxWidth: embedded ? '100%' : '1200px',
             width: '100%',
             maxHeight: embedded ? '100%' : '90vh',
             overflowY: 'auto',
-            boxShadow: embedded ? 'none' : '0 4px 6px rgba(0,0,0,0.1)'
+            boxShadow: embedded ? 'none' : 'var(--shadow-modal)',
+            border: embedded ? 'none' : '0.5px solid var(--border-subtle)'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                    📔 Diário de Obras - {obraData.nome}
+                <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                    <i className="ti ti-notebook" aria-hidden="true" /> Diário de Obras - {obraData.nome}
                 </h2>
                 {!embedded && (
-                    <button onClick={onClose} className="voltar-btn">✕ Fechar</button>
+                    <button onClick={onClose} className="m-btn-cancel"><i className="ti ti-x" aria-hidden="true" /> Fechar</button>
                 )}
             </div>
 
@@ -1032,9 +1035,9 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             }}>
                 <button
                     onClick={() => { setEntradaSelecionada(null); setIsFormModalOpen(true); }}
-                    className="submit-btn"
+                    className="m-btn-primary"
                 >
-                    ➕ Nova Entrada
+                    <i className="ti ti-plus" aria-hidden="true" /> Nova Entrada
                 </button>
 
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1042,63 +1045,63 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                         type="date"
                         value={filtroData}
                         onChange={(e) => setFiltroData(e.target.value)}
-                        style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)' }}
                     />
                     {filtroData && (
-                        <button
-                            onClick={() => setFiltroData('')}
-                            style={{ padding: '8px 12px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                        >
+                        <button onClick={() => setFiltroData('')} className="m-btn-cancel">
                             Limpar
                         </button>
                     )}
-                    <button onClick={handleGerarRelatorio} className="submit-btn" style={{ background: '#17a2b8' }}>
-                        📄 Gerar PDF
+                    <button onClick={handleGerarRelatorio} className="m-btn-secondary">
+                        <i className="ti ti-file-text" aria-hidden="true" /> Gerar PDF
                     </button>
                 </div>
             </div>
 
             {/* Lista de Entradas */}
             {isLoading ? (
-                <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
+                <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Carregando...</p>
             ) : entradasFiltradas.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#666', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <p>📝 Nenhuma entrada encontrada.</p>
-                    <p>Clique em "Nova Entrada" para começar.</p>
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', background: 'var(--surface-subtle)', borderRadius: 'var(--radius-md)' }}>
+                    <i className="ti ti-notes" aria-hidden="true" style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }} />
+                    <p style={{ margin: 0 }}>Nenhuma entrada encontrada.</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--text-sm)' }}>Clique em "Nova Entrada" para começar.</p>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {entradasFiltradas.map(entrada => (
                         <div
                             key={entrada.id}
                             onClick={() => { setEntradaSelecionada(entrada); setIsDetalhesModalOpen(true); }}
                             style={{
-                                padding: '15px', background: '#f8f9fa', borderRadius: '8px',
-                                cursor: 'pointer', border: '1px solid #e9ecef', transition: 'all 0.2s'
+                                padding: '14px 16px', background: 'var(--surface-subtle)', borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer', border: '1px solid var(--border-subtle)', transition: 'background var(--transition-fast)'
                             }}
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
-                                    <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
+                                    <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: 'var(--text-md)' }}>
                                         {entrada.titulo || `Entrada de ${formatDate(entrada.data)}`}
                                     </h4>
-                                    <p style={{ margin: 0, color: '#666', fontSize: '0.9em' }}>
-                                        📅 {formatDate(entrada.data)}
+                                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                                        <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: '4px' }} />
+                                        {formatDate(entrada.data)}
                                         {entrada.clima && ` • ${entrada.clima}`}
                                         {entrada.temperatura && ` • ${entrada.temperatura}°C`}
                                     </p>
                                 </div>
                                 {entrada.fotos && entrada.fotos.length > 0 && (
                                     <span style={{
-                                        background: '#007bff', color: 'white', padding: '4px 8px',
-                                        borderRadius: '12px', fontSize: '0.8em'
+                                        background: 'var(--status-info-bg)', color: 'var(--status-info)', padding: '3px 8px',
+                                        borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 600,
+                                        display: 'inline-flex', alignItems: 'center', gap: '3px'
                                     }}>
-                                        📷 {entrada.fotos.length}
+                                        <i className="ti ti-camera" aria-hidden="true" /> {entrada.fotos.length}
                                     </span>
                                 )}
                             </div>
                             {entrada.descricao && (
-                                <p style={{ margin: '10px 0 0 0', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {entrada.descricao.substring(0, 150)}{entrada.descricao.length > 150 && '...'}
                                 </p>
                             )}

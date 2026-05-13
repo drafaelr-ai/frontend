@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 
 const ViewAnexosModal = ({ orcamento, onClose }) => {
-    // ... (código inalterado)
     const [anexos, setAnexos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -42,29 +41,45 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
     if (!orcamento) return null;
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Anexos de: {orcamento.descricao}</h2>
-            <div className="form-group" style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #eee', padding: '10px' }}>
-                {isLoading ? <p>Carregando anexos...</p> : (
-                    <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0 }}>
-                        {anexos.length > 0 ? anexos.map(anexo => (
-                            <li key={anexo.id} style={{ padding: '8px', borderBottom: '1px solid #eee', fontSize: '1.1em' }}>
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
-                                    title={`Abrir ${anexo.filename}`}
-                                    style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
-                                >
-                                    📎 {anexo.filename}
-                                </a>
-                            </li>
-                        )) : <p>Nenhum anexo encontrado.</p>}
-                    </ul>
-                )}
-            </div>
-            <div className="form-actions" style={{marginTop: '20px'}}>
-                <button type="button" onClick={onClose} className="cancel-btn" style={{width: '100%'}}>Fechar</button>
-            </div>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Anexos"
+            subtitle={orcamento.descricao}
+            width="default"
+            scrollBody={true}
+            footer={
+                <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
+            {isLoading ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Carregando anexos...</p>
+            ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {anexos.length > 0 ? anexos.map(anexo => (
+                        <li
+                            key={anexo.id}
+                            style={{
+                                padding: 'var(--space-2) 0',
+                                borderBottom: '0.5px solid var(--border-subtle)',
+                                fontSize: 'var(--text-base)',
+                            }}
+                        >
+                            <a
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
+                                title={`Abrir ${anexo.filename}`}
+                                style={{ color: 'var(--status-info)', textDecoration: 'underline', cursor: 'pointer' }}
+                            >
+                                <i className="ti ti-paperclip" aria-hidden="true" style={{ marginRight: 'var(--space-1)' }}></i>
+                                {anexo.filename}
+                            </a>
+                        </li>
+                    )) : (
+                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Nenhum anexo encontrado.</p>
+                    )}
+                </ul>
+            )}
         </Modal>
     );
 };

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 
 const ExportReportModal = ({ onClose }) => {
-    // ... (código inalterado)
     const [selectedPriority, setSelectedPriority] = useState('todas');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -26,7 +25,6 @@ const ExportReportModal = ({ onClose }) => {
             .then(blob => {
                 const fileURL = URL.createObjectURL(blob);
                 window.open(fileURL);
-
                 setIsLoading(false);
                 onClose();
             })
@@ -38,12 +36,31 @@ const ExportReportModal = ({ onClose }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>Exportar Relatório Geral de Pendências</h2>
-            <form onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
-                <div className="form-group">
-                    <label>Filtrar por Prioridade</label>
-                    <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)} required>
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Exportar Relatório Geral de Pendências"
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isLoading}>
+                        Cancelar
+                    </button>
+                    <button type="submit" form="form-export-report" className="m-btn-primary" disabled={isLoading}>
+                        <i className="ti ti-file-type-pdf" aria-hidden="true"></i>
+                        {isLoading ? 'Gerando...' : 'Gerar PDF'}
+                    </button>
+                </>
+            }
+        >
+            <form id="form-export-report" onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
+                <div className="m-field">
+                    <label className="m-label">Filtrar por Prioridade</label>
+                    <select
+                        className="m-select"
+                        value={selectedPriority}
+                        onChange={(e) => setSelectedPriority(e.target.value)}
+                        required
+                    >
                         <option value="todas">Todas as Pendências</option>
                         <option value="5">Prioridade 5 (Urgente)</option>
                         <option value="4">Prioridade 4</option>
@@ -53,14 +70,11 @@ const ExportReportModal = ({ onClose }) => {
                         <option value="0">Prioridade 0 (Nenhuma)</option>
                     </select>
                 </div>
-
-                <div className="form-actions" style={{ marginTop: '30px' }}>
-                    <button type="button" onClick={onClose} className="cancel-btn" disabled={isLoading}>Cancelar</button>
-                    <button type="submit" className="submit-btn pdf" disabled={isLoading}>
-                        {isLoading ? 'Gerando...' : 'Gerar PDF'}
-                    </button>
-                </div>
-                {error && <p style={{color: 'red', textAlign: 'center', marginTop: '10px'}}>{error}</p>}
+                {error && (
+                    <p style={{ color: 'var(--status-danger-text)', textAlign: 'center', fontSize: 'var(--text-sm)', marginTop: 'var(--space-3)' }}>
+                        {error}
+                    </p>
+                )}
             </form>
         </Modal>
     );

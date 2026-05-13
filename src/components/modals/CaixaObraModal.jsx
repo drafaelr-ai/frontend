@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -35,7 +35,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 throw new Error(err.erro || 'Erro ao deletar movimentação');
             }
 
-            notify.success('✅ Movimentação apagada com sucesso!');
+            notify.success('Movimentação apagada com sucesso!');
             carregarDados();
         } catch (err) {
             logger.error('Erro ao deletar movimentação:', err);
@@ -98,7 +98,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
 
             if (!response.ok) throw new Error('Erro ao atualizar comprovante');
 
-            notify.success('✅ Comprovante atualizado com sucesso!');
+            notify.success('Comprovante atualizado com sucesso!');
             carregarDados();
         } catch (err) {
             logger.error('Erro ao reanexar comprovante:', err);
@@ -180,8 +180,8 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
 
     if (isLoading) {
         return (
-            <Modal customWidth="1200px">
-                <div style={{ padding: '40px', textAlign: 'center' }}>
+            <Modal isOpen={true} onClose={onClose} title="Caixa de Obra" subtitle={obraNome} width="xlarge">
+                <div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Carregando...
                 </div>
             </Modal>
@@ -189,295 +189,278 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     }
 
     return (
-        <Modal customWidth="1200px">
-            <div style={{ padding: '30px', maxHeight: '90vh', overflowY: 'auto' }}>
-                {/* Cabeçalho */}
-                <h2 style={{ fontSize: '2em', marginBottom: '10px' }}>💰 Caixa de Obra</h2>
-                <p style={{ color: '#666', marginBottom: '30px', fontSize: '1.1em' }}>
-                    <strong>{obraNome}</strong>
-                </p>
-
-                {/* Dashboard do Caixa */}
-                {caixa && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '20px',
-                        marginBottom: '30px'
-                    }}>
-                        <div style={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saldo Atual</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.saldo_atual)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#2196F3',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Entradas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_entradas_mes || 0)}
-                            </div>
-                        </div>
-
-                        <div style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            padding: '25px',
-                            borderRadius: '10px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '0.9em', marginBottom: '10px' }}>Saídas (mês)</div>
-                            <div style={{ fontSize: '2em', fontWeight: 'bold' }}>
-                                {formatCurrency(caixa.total_saidas_mes || 0)}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Controles */}
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Caixa de Obra"
+            subtitle={obraNome}
+            width="xlarge"
+            scrollBody={true}
+            footer={
+                <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
+            }
+        >
+            {/* Dashboard do Caixa */}
+            {caixa && (
                 <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '25px',
-                    flexWrap: 'wrap',
-                    gap: '15px'
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 'var(--space-4)',
+                    marginBottom: 'var(--space-5)'
                 }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <label style={{ fontSize: '1.1em' }}>Período:</label>
-                        <select
-                            value={mesAno.mes}
-                            onChange={e => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })}
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px' }}
-                        >
-                            <option value={1}>Janeiro</option>
-                            <option value={2}>Fevereiro</option>
-                            <option value={3}>Março</option>
-                            <option value={4}>Abril</option>
-                            <option value={5}>Maio</option>
-                            <option value={6}>Junho</option>
-                            <option value={7}>Julho</option>
-                            <option value={8}>Agosto</option>
-                            <option value={9}>Setembro</option>
-                            <option value={10}>Outubro</option>
-                            <option value={11}>Novembro</option>
-                            <option value={12}>Dezembro</option>
-                        </select>
-                        <input
-                            type="number"
-                            value={mesAno.ano}
-                            onChange={e => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })}
-                            min="2020"
-                            max="2100"
-                            style={{ padding: '10px', fontSize: '1em', borderRadius: '5px', width: '100px' }}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            onClick={handleNovaMovimentacao}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em' }}
-                        >
-                            + Nova Movimentação
-                        </button>
-                        <button
-                            onClick={handleGerarRelatorio}
-                            className="submit-btn"
-                            style={{ padding: '12px 24px', fontSize: '1.1em', backgroundColor: '#ff9800' }}
-                        >
-                            📊 Gerar Relatório PDF
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filtros */}
-                <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={() => setFiltroTipo('')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === '' ? '2px solid #4CAF50' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === '' ? '#e8f5e9' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Todas
-                    </button>
-                    <button
-                        onClick={() => setFiltroTipo('Entrada')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Entrada' ? '2px solid #2196F3' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Entrada' ? '#e3f2fd' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        📥 Entradas
-                    </button>
-                    <button
-                        onClick={() => setFiltroTipo('Saída')}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: filtroTipo === 'Saída' ? '2px solid #f44336' : '1px solid #ccc',
-                            backgroundColor: filtroTipo === 'Saída' ? '#ffebee' : 'white',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        📤 Saídas
-                    </button>
-                </div>
-
-                {/* Lista de Movimentações */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ marginBottom: '15px', fontSize: '1.3em' }}>Movimentações</h3>
-                    {movimentacoesFiltradas.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                            Nenhuma movimentação registrada neste período
-                        </p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {movimentacoesFiltradas.map(mov => (
-                                <div
-                                    key={mov.id}
-                                    style={{
-                                        border: '1px solid #ddd',
-                                        borderRadius: '8px',
-                                        padding: '15px',
-                                        backgroundColor: mov.tipo === 'Entrada' ? '#e3f2fd' : '#ffebee'
-                                    }}
-                                >
-                                    {/* Header: Ícone, Data, Anexo e Valor */}
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        marginBottom: '10px',
-                                        flexWrap: 'wrap',
-                                        gap: '5px'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '1.3em' }}>
-                                                {mov.tipo === 'Entrada' ? '📥' : '📤'}
-                                            </span>
-                                            <span style={{ fontSize: '0.85em', color: '#666' }}>
-                                                {new Date(mov.data).toLocaleString('pt-BR')}
-                                            </span>
-                                            {mov.comprovante_url && (
-                                                <span style={{ fontSize: '1em' }}>📎</span>
-                                            )}
-                                        </div>
-                                        <div style={{
-                                            fontSize: '1.4em',
-                                            fontWeight: 'bold',
-                                            color: mov.tipo === 'Entrada' ? '#2196F3' : '#f44336',
-                                            whiteSpace: 'nowrap'
-                                        }}>
-                                            {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
-                                        </div>
-                                    </div>
-
-                                    {/* Descrição */}
-                                    <div style={{
-                                        fontSize: '1.05em',
-                                        fontWeight: '600',
-                                        color: '#333'
-                                    }}>
-                                        {mov.descricao}
-                                    </div>
-
-                                    {/* Observações */}
-                                    {mov.observacoes && (
-                                        <div style={{ fontSize: '0.85em', color: '#666', fontStyle: 'italic', marginTop: '5px' }}>
-                                            Obs: {mov.observacoes}
-                                        </div>
-                                    )}
-
-                                    {/* Botão para reanexar comprovante e Apagar */}
-                                    <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <label
-                                                style={{
-                                                    cursor: 'pointer',
-                                                    padding: '5px 10px',
-                                                    backgroundColor: mov.comprovante_url?.startsWith('data:image') ? '#4CAF50' : '#ff9800',
-                                                    color: 'white',
-                                                    borderRadius: '5px',
-                                                    fontSize: '0.85em',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px'
-                                                }}
-                                            >
-                                                {mov.comprovante_url?.startsWith('data:image') ? '✅ Comprovante OK' : '📎 Anexar/Reanexar'}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        if (e.target.files[0]) {
-                                                            handleReanexarComprovante(mov.id, e.target.files[0]);
-                                                        }
-                                                    }}
-                                                />
-                                            </label>
-                                            {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                                <span style={{ fontSize: '0.75em', color: '#999' }}>
-                                                    ⚠️ Precisa reanexar
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Botão Apagar */}
-                                        <button
-                                            onClick={() => handleDeletarMovimentacao(mov.id, mov.descricao)}
-                                            disabled={deletandoId === mov.id}
-                                            style={{
-                                                padding: '5px 12px',
-                                                backgroundColor: deletandoId === mov.id ? '#ccc' : '#dc2626',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '5px',
-                                                fontSize: '0.85em',
-                                                cursor: deletandoId === mov.id ? 'not-allowed' : 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '5px'
-                                            }}
-                                        >
-                                            {deletandoId === mov.id ? '⏳ Apagando...' : '🗑️ Apagar'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                    <div style={{
+                        backgroundColor: 'var(--status-success)',
+                        color: 'white',
+                        padding: 'var(--space-5)',
+                        borderRadius: 'var(--radius-lg)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>Saldo Atual</div>
+                        <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)' }}>
+                            {formatCurrency(caixa.saldo_atual)}
                         </div>
-                    )}
+                    </div>
+
+                    <div style={{
+                        backgroundColor: 'var(--status-info)',
+                        color: 'white',
+                        padding: 'var(--space-5)',
+                        borderRadius: 'var(--radius-lg)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>Entradas (mês)</div>
+                        <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)' }}>
+                            {formatCurrency(caixa.total_entradas_mes || 0)}
+                        </div>
+                    </div>
+
+                    <div style={{
+                        backgroundColor: 'var(--status-danger)',
+                        color: 'white',
+                        padding: 'var(--space-5)',
+                        borderRadius: 'var(--radius-lg)',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>Saídas (mês)</div>
+                        <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)' }}>
+                            {formatCurrency(caixa.total_saidas_mes || 0)}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Controles */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'var(--space-5)',
+                flexWrap: 'wrap',
+                gap: 'var(--space-3)'
+            }}>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                    <label style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>Período:</label>
+                    <select
+                        value={mesAno.mes}
+                        onChange={e => setMesAno({ ...mesAno, mes: parseInt(e.target.value) })}
+                        style={{ padding: 'var(--space-2)', fontSize: 'var(--text-base)', borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border-default)' }}
+                    >
+                        <option value={1}>Janeiro</option>
+                        <option value={2}>Fevereiro</option>
+                        <option value={3}>Março</option>
+                        <option value={4}>Abril</option>
+                        <option value={5}>Maio</option>
+                        <option value={6}>Junho</option>
+                        <option value={7}>Julho</option>
+                        <option value={8}>Agosto</option>
+                        <option value={9}>Setembro</option>
+                        <option value={10}>Outubro</option>
+                        <option value={11}>Novembro</option>
+                        <option value={12}>Dezembro</option>
+                    </select>
+                    <input
+                        type="number"
+                        value={mesAno.ano}
+                        onChange={e => setMesAno({ ...mesAno, ano: parseInt(e.target.value) })}
+                        min="2020"
+                        max="2100"
+                        style={{ padding: 'var(--space-2)', fontSize: 'var(--text-base)', borderRadius: 'var(--radius-md)', border: '0.5px solid var(--border-default)', width: '100px' }}
+                    />
                 </div>
 
-                {/* Footer */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid #ddd' }}>
-                    <button onClick={onClose} className="voltar-btn" style={{ padding: '12px 24px', fontSize: '1.1em' }}>
-                        Fechar
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <button onClick={handleNovaMovimentacao} className="m-btn-primary">
+                        <i className="ti ti-plus" aria-hidden="true"></i>
+                        Nova Movimentação
+                    </button>
+                    <button onClick={handleGerarRelatorio} className="m-btn-primary">
+                        <i className="ti ti-file-type-pdf" aria-hidden="true"></i>
+                        Gerar Relatório PDF
                     </button>
                 </div>
             </div>
 
-            {/* Modal de Nova Movimentação */}
+            {/* Filtros */}
+            <div style={{ marginBottom: 'var(--space-4)', display: 'flex', gap: 'var(--space-2)' }}>
+                <button
+                    onClick={() => setFiltroTipo('')}
+                    style={{
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-full)',
+                        border: filtroTipo === '' ? `2px solid var(--status-success)` : `0.5px solid var(--border-default)`,
+                        backgroundColor: filtroTipo === '' ? 'var(--status-success-bg)' : 'var(--surface-card)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-primary)'
+                    }}
+                >
+                    Todas
+                </button>
+                <button
+                    onClick={() => setFiltroTipo('Entrada')}
+                    style={{
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-full)',
+                        border: filtroTipo === 'Entrada' ? `2px solid var(--status-info)` : `0.5px solid var(--border-default)`,
+                        backgroundColor: filtroTipo === 'Entrada' ? 'var(--status-info-bg)' : 'var(--surface-card)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-primary)'
+                    }}
+                >
+                    Entradas
+                </button>
+                <button
+                    onClick={() => setFiltroTipo('Saída')}
+                    style={{
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-full)',
+                        border: filtroTipo === 'Saída' ? `2px solid var(--status-danger)` : `0.5px solid var(--border-default)`,
+                        backgroundColor: filtroTipo === 'Saída' ? 'var(--status-danger-bg)' : 'var(--surface-card)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-primary)'
+                    }}
+                >
+                    Saídas
+                </button>
+            </div>
+
+            {/* Lista de Movimentações */}
+            <div style={{ marginBottom: 'var(--space-5)' }}>
+                <p className="m-section">Movimentações</p>
+                {movimentacoesFiltradas.length === 0 ? (
+                    <p style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                        Nenhuma movimentação registrada neste período
+                    </p>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                        {movimentacoesFiltradas.map(mov => (
+                            <div
+                                key={mov.id}
+                                style={{
+                                    border: '0.5px solid var(--border-default)',
+                                    borderRadius: 'var(--radius-md)',
+                                    padding: 'var(--space-3)',
+                                    backgroundColor: mov.tipo === 'Entrada' ? 'var(--status-info-bg)' : 'var(--status-danger-bg)'
+                                }}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: 'var(--space-2)',
+                                    flexWrap: 'wrap',
+                                    gap: 'var(--space-1)'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                                        <i className={`ti ${mov.tipo === 'Entrada' ? 'ti-arrow-down-circle' : 'ti-arrow-up-circle'}`} aria-hidden="true" style={{ fontSize: 'var(--text-xl)', color: mov.tipo === 'Entrada' ? 'var(--status-info)' : 'var(--status-danger)' }}></i>
+                                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                                            {new Date(mov.data).toLocaleString('pt-BR')}
+                                        </span>
+                                        {mov.comprovante_url && (
+                                            <i className="ti ti-paperclip" aria-hidden="true" style={{ color: 'var(--text-muted)' }}></i>
+                                        )}
+                                    </div>
+                                    <div style={{
+                                        fontSize: 'var(--text-lg)',
+                                        fontWeight: 'var(--weight-bold)',
+                                        color: mov.tipo === 'Entrada' ? 'var(--status-info)' : 'var(--status-danger)',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {mov.tipo === 'Entrada' ? '+' : '-'} {formatCurrency(mov.valor)}
+                                    </div>
+                                </div>
+
+                                <div style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
+                                    {mov.descricao}
+                                </div>
+
+                                {mov.observacoes && (
+                                    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 'var(--space-1)' }}>
+                                        Obs: {mov.observacoes}
+                                    </div>
+                                )}
+
+                                <div style={{ marginTop: 'var(--space-2)', display: 'flex', gap: 'var(--space-2)', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                                        <label
+                                            style={{
+                                                cursor: 'pointer',
+                                                padding: 'var(--space-1) var(--space-2)',
+                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? 'var(--status-success)' : 'var(--brand-primary)',
+                                                color: 'white',
+                                                borderRadius: 'var(--radius-sm)',
+                                                fontSize: 'var(--text-xs)',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 'var(--space-1)'
+                                            }}
+                                        >
+                                            {mov.comprovante_url?.startsWith('data:image') ? 'Comprovante OK' : 'Anexar/Reanexar'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    if (e.target.files[0]) {
+                                                        handleReanexarComprovante(mov.id, e.target.files[0]);
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                        {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
+                                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                                                ⚠️ Precisa reanexar
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleDeletarMovimentacao(mov.id, mov.descricao)}
+                                        disabled={deletandoId === mov.id}
+                                        style={{
+                                            padding: 'var(--space-1) var(--space-3)',
+                                            backgroundColor: deletandoId === mov.id ? 'var(--border-strong)' : 'var(--status-danger)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: 'var(--radius-sm)',
+                                            fontSize: 'var(--text-xs)',
+                                            cursor: deletandoId === mov.id ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 'var(--space-1)'
+                                        }}
+                                    >
+                                        {deletandoId === mov.id ? 'Apagando...' : 'Apagar'}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             {modalAberto && (
                 <ModalNovaMovimentacaoCaixa
                     obraId={obraId}

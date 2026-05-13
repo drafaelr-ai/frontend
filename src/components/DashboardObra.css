@@ -11,19 +11,19 @@
 
 .dashboard-obra {
     padding: 20px;
-    background: #f8fafc;
+    background: var(--surface-subtle);
     min-height: 100%;
 }
 
 .dashboard-obra h2 {
     margin: 0 0 25px 0;
-    color: #1e293b;
+    color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 600;
 }
 
 .dashboard-section {
-    background: white;
+    background: var(--surface-card);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
@@ -48,7 +48,7 @@
 
 .pie-chart-container h4 {
     margin: 0 0 15px 0;
-    color: #334155;
+    color: var(--text-secondary);
     font-size: 1.1rem;
     font-weight: 600;
     text-align: center;
@@ -79,7 +79,7 @@
 
 .legend-item:hover,
 .legend-item.hovered {
-    background: #f1f5f9;
+    background: var(--surface-muted);
 }
 
 .legend-color {
@@ -91,23 +91,23 @@
 
 .legend-label {
     flex: 1;
-    color: #334155;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
 .legend-value {
-    color: #1e293b;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .legend-percent {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.85rem;
 }
 
 .no-data {
     text-align: center;
-    color: #64748b;
+    color: var(--text-muted);
     padding: 40px;
     font-style: italic;
 }
@@ -130,7 +130,7 @@
 
 .gantt-header h4 {
     margin: 0;
-    color: #334155;
+    color: var(--text-secondary);
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -142,38 +142,38 @@
 
 .gantt-controls button {
     padding: 6px 12px;
-    border: 1px solid #e2e8f0;
-    background: white;
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-card);
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--text-muted);
     transition: all 0.2s;
 }
 
 .gantt-controls button:hover {
-    background: #f1f5f9;
+    background: var(--surface-muted);
 }
 
 .gantt-controls button.active {
-    background: #4f46e5;
+    background: var(--brand-primary);
     color: white;
-    border-color: #4f46e5;
+    border-color: var(--brand-primary);
 }
 
 .gantt-chart {
     min-width: 800px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     overflow: hidden;
 }
 
 .gantt-timeline {
     display: flex;
-    background: #f1f5f9;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border-subtle);
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
@@ -181,7 +181,7 @@
     width: 250px;
     min-width: 250px;
     padding: 10px 15px;
-    border-right: 1px solid #e2e8f0;
+    border-right: 1px solid var(--border-subtle);
 }
 
 .gantt-bars-header {
@@ -195,7 +195,7 @@
     top: 50%;
     transform: translateY(-50%);
     padding-left: 5px;
-    border-left: 1px solid #cbd5e1;
+    border-left: 1px solid var(--border-default);
     white-space: nowrap;
 }
 
@@ -206,16 +206,16 @@
 
 .gantt-row {
     display: flex;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--surface-muted);
     transition: background 0.2s;
 }
 
 .gantt-row:hover {
-    background: #f8fafc;
+    background: var(--surface-subtle);
 }
 
 .gantt-row.etapa-pai {
-    background: #f8fafc;
+    background: var(--surface-subtle);
 }
 
 .gantt-row.etapa-pai .gantt-label {
@@ -225,7 +225,7 @@
 /* Header de Serviço */
 .gantt-row.gantt-servico-header {
     background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
-    border-left: 4px solid #f59e0b;
+    border-left: 4px solid var(--brand-accent);
     margin-top: 10px;
 }
 
@@ -272,7 +272,7 @@
     width: 250px;
     min-width: 250px;
     padding: 10px 15px;
-    border-right: 1px solid #e2e8f0;
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -280,13 +280,13 @@
 }
 
 .gantt-numero {
-    color: #64748b;
+    color: var(--text-muted);
     font-weight: 600;
     min-width: 35px;
 }
 
 .gantt-nome {
-    color: #334155;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -300,8 +300,8 @@
         90deg,
         transparent,
         transparent 49px,
-        #f1f5f9 49px,
-        #f1f5f9 50px
+        var(--surface-muted) 49px,
+        var(--surface-muted) 50px
     );
 }
 
@@ -310,7 +310,7 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    background: #ef4444;
+    background: var(--status-danger);
     z-index: 10;
 }
 
@@ -321,7 +321,7 @@
     left: -4px;
     width: 10px;
     height: 10px;
-    background: #ef4444;
+    background: var(--status-danger);
     border-radius: 50%;
 }
 
@@ -369,7 +369,7 @@
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .gantt-legend i {
@@ -382,14 +382,14 @@
 .gantt-legend .today-marker {
     width: 12px;
     height: 12px;
-    background: #ef4444;
+    background: var(--status-danger);
     border-radius: 50%;
 }
 
 .gantt-empty {
     text-align: center;
     padding: 40px;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .gantt-empty p {
@@ -415,7 +415,7 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--surface-card);
     border-radius: 12px;
     width: 100%;
     max-width: 700px;
@@ -431,12 +431,12 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .modal-header h3 {
     margin: 0;
-    color: #1e293b;
+    color: var(--text-primary);
     font-size: 1.2rem;
 }
 
@@ -445,13 +445,13 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #64748b;
+    color: var(--text-muted);
     padding: 5px;
     line-height: 1;
 }
 
 .modal-close:hover {
-    color: #1e293b;
+    color: var(--text-primary);
 }
 
 .modal-body {
@@ -467,7 +467,7 @@
 }
 
 .resumo-item {
-    background: #f8fafc;
+    background: var(--surface-subtle);
     padding: 15px;
     border-radius: 8px;
     text-align: center;
@@ -475,21 +475,21 @@
 
 .resumo-label {
     display: block;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.85rem;
     margin-bottom: 5px;
 }
 
 .resumo-value {
     display: block;
-    color: #1e293b;
+    color: var(--text-primary);
     font-size: 1.3rem;
     font-weight: 700;
 }
 
 .modal-body h4 {
     margin: 0 0 15px 0;
-    color: #334155;
+    color: var(--text-secondary);
     font-size: 1rem;
 }
 
@@ -507,24 +507,24 @@
 .material-table td {
     padding: 10px 12px;
     text-align: left;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .material-table th {
-    background: #f8fafc;
+    background: var(--surface-subtle);
     font-weight: 600;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.8rem;
     text-transform: uppercase;
 }
 
 .material-table td {
-    color: #334155;
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
 .material-table tr:hover {
-    background: #f8fafc;
+    background: var(--surface-subtle);
 }
 
 /* ============================================

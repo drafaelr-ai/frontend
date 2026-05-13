@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { getTodayString } from '../../utils/format';
 
 const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
@@ -32,66 +32,91 @@ const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>💵 Adicionar Gasto Avulso (Pago)</h2>
-            <p style={{fontSize: '0.9em', color: '#666', marginBottom: '15px'}}>
-                Este gasto será automaticamente marcado como <strong>PAGO</strong> e adicionado ao histórico.
-            </p>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label>Data do Registro</label>
-                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Adicionar Gasto Avulso (Pago)"
+            subtitle="Este gasto será automaticamente marcado como PAGO e adicionado ao histórico."
+            width="large"
+            scrollBody={true}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-add-lancamento" className="m-btn-primary">
+                        <i className="ti ti-check" aria-hidden="true"></i>
+                        Salvar Gasto
+                    </button>
+                </>
+            }
+        >
+            <form id="form-add-lancamento" onSubmit={handleSubmit}>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Data do Registro</label>
+                        <input className="m-input" type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Data de Vencimento</label>
+                        <input className="m-input" type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                    </div>
                 </div>
-                <div className="form-group">
-                    <label>Data de Vencimento ⚠️</label>
-                    <input type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                <div className="m-field">
+                    <label className="m-label">Descrição</label>
+                    <input className="m-input" type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
                 </div>
-                <div className="form-group"><label>Descrição</label><input type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required /></div>
-
-                <div className="form-group">
-                    <label>Fornecedor (Opcional)</label>
-                    <input type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                <div className="m-field">
+                    <label className="m-label">Fornecedor <span className="m-label-opt">(opcional)</span></label>
+                    <input className="m-input" type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
                 </div>
-
-                <div className="form-group"><label>Chave PIX</label><input type="text" value={pix} onChange={(e) => setPix(e.target.value)} /></div>
-
-                <div className="form-group"><label>Valor Total (R$)</label>
-                    <input type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                <div className="m-field">
+                    <label className="m-label">Chave PIX</label>
+                    <input className="m-input" type="text" value={pix} onChange={(e) => setPix(e.target.value)} />
                 </div>
-
-                <div className="form-group"><label>Vincular ao Item do Orçamento (Opcional)</label>
-                    <select value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
+                <div className="m-field">
+                    <label className="m-label">Valor Total (R$)</label>
+                    <input className="m-input" type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                </div>
+                <div className="m-field">
+                    <label className="m-label">Vincular ao Item do Orçamento <span className="m-label-opt">(opcional)</span></label>
+                    <select className="m-select" value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
                         <option value="">Nenhum (Despesa Geral)</option>
                         {(itensOrcamento || []).map(item => (
                             <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
                 </div>
-
-                <div className="form-group">
-                    <label>Prioridade</label>
-                    <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
-                        <option value="0">0 (Nenhuma)</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3 (Média)</option>
-                        <option value="4">4</option>
-                        <option value="5">5 (Urgente)</option>
-                    </select>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Prioridade</label>
+                        <select className="m-select" value={prioridade} onChange={(e) => setPrioridade(e.target.value)}>
+                            <option value="0">0 (Nenhuma)</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3 (Média)</option>
+                            <option value="4">4</option>
+                            <option value="5">5 (Urgente)</option>
+                        </select>
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Tipo/Segmento</label>
+                        <select className="m-select" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                            <option>Material</option>
+                            <option>Mão de Obra</option>
+                            <option>Serviço</option>
+                            <option>Equipamentos</option>
+                        </select>
+                    </div>
                 </div>
-
-                <div className="form-group"><label>Tipo/Segmento</label>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-                        <option>Material</option>
-                        <option>Mão de Obra</option>
-                        <option>Serviço</option>
-                        <option>Equipamentos</option>
-                    </select>
+                <div style={{
+                    padding: 'var(--space-2) var(--space-3)',
+                    background: 'var(--status-success-bg)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--status-success-text)',
+                    fontWeight: 'var(--weight-medium)',
+                }}>
+                    Status: PAGO (automático)
                 </div>
-                <div style={{padding: '10px', backgroundColor: '#d4edda', borderRadius: '4px', marginBottom: '15px'}}>
-                    <strong>Status: PAGO</strong> (automático)
-                </div>
-                <div className="form-actions"><button type="button" onClick={onClose} className="cancel-btn">Cancelar</button><button type="submit" className="submit-btn">Salvar Gasto</button></div>
             </form>
         </Modal>
     );

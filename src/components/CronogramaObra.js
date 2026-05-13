@@ -577,10 +577,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
         const percentual = servico.percentual_conclusao || 0;
 
-        if (percentual >= 100) return { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅', key: 'concluido' };
-        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️', key: 'atrasado' };
-        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄', key: 'em_andamento' };
-        return { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳', key: 'a_iniciar' };
+        if (percentual >= 100) return { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅', key: 'concluido' };
+        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️', key: 'atrasado' };
+        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄', key: 'em_andamento' };
+        return { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳', key: 'a_iniciar' };
     };
 
     // NOVO: Calcular status EVM simplificado
@@ -593,18 +593,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const diferenca = percentualPago - percentualExecutado;
 
         if (percentualExecutado === 0 && percentualPago === 0) {
-            return { status: 'neutro', label: 'Não iniciado', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' };
+            return { status: 'neutro', label: 'Não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' };
         }
         if (percentualExecutado >= 100 && percentualPago <= 105) {
-            return { status: 'concluido', label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' };
+            return { status: 'concluido', label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' };
         }
         if (diferenca <= -10) {
-            return { status: 'otimo', label: 'Saudável', color: '#10b981', bg: '#d1fae5', icon: '🟢', msg: 'Executou mais do que pagou' };
+            return { status: 'otimo', label: 'Saudável', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '🟢', msg: 'Executou mais do que pagou' };
         }
         if (diferenca <= 5) {
-            return { status: 'normal', label: 'No Prazo', color: '#f59e0b', bg: '#fef3c7', icon: '🟡', msg: 'Pagamento alinhado' };
+            return { status: 'normal', label: 'No Prazo', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: '🟡', msg: 'Pagamento alinhado' };
         }
-        return { status: 'atencao', label: 'Atenção', color: '#ef4444', bg: '#fee2e2', icon: '🔴', msg: 'Pagando mais do que executou' };
+        return { status: 'atencao', label: 'Atenção', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '🔴', msg: 'Pagando mais do que executou' };
     };
 
     const handleGerarPDF = async () => {
@@ -658,10 +658,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     }, [cronograma, servicosPorStatus]);
 
     const statusConfig = {
-        'a_iniciar': { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' },
-        'em_andamento': { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄' },
-        'concluido': { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' },
-        'atrasado': { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️' }
+        'a_iniciar': { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' },
+        'em_andamento': { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄' },
+        'concluido': { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' },
+        'atrasado': { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️' }
     };
 
     const getTimelineRange = useMemo(() => {
@@ -1149,7 +1149,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                     className="mini-progress-fill"
                                                                     style={{ 
                                                                         width: `${percentual}%`,
-                                                                        backgroundColor: percentual >= 100 ? '#10b981' : '#3b82f6'
+                                                                        backgroundColor: percentual >= 100 ? 'var(--status-success)' : 'var(--status-info)'
                                                                     }}
                                                                 ></div>
                                                             </div>
@@ -1199,7 +1199,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                                     className="mini-progress-fill"
                                                                                     style={{ 
                                                                                         width: `${sub.percentual_conclusao}%`,
-                                                                                        backgroundColor: sub.percentual_conclusao >= 100 ? '#10b981' : '#3b82f6'
+                                                                                        backgroundColor: sub.percentual_conclusao >= 100 ? 'var(--status-success)' : 'var(--status-info)'
                                                                                     }}
                                                                                 ></div>
                                                                             </div>
@@ -1303,35 +1303,35 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     }
 
     const content = (
-        <div className="cronograma-obra-container">
+        <div className="cronograma-obra-container m-section-card">
             {/* Header */}
             <div className="cronograma-header">
-                <h2>📅 Cronograma de Obras - {obraNome}</h2>
+                <h2><i className="ti ti-calendar" aria-hidden="true" /> Cronograma de Obras - {obraNome}</h2>
                 <div className="header-actions">
                     <div className="view-toggle">
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
                             onClick={() => setViewMode('kanban')}
                         >
-                            📋 Kanban
+                            <i className="ti ti-layout-kanban" aria-hidden="true" /> Kanban
                         </button>
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'timeline' ? 'active' : ''}`}
                             onClick={() => setViewMode('timeline')}
                         >
-                            📅 Timeline
+                            <i className="ti ti-timeline" aria-hidden="true" /> Timeline
                         </button>
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'lista' ? 'active' : ''}`}
                             onClick={() => setViewMode('lista')}
                         >
-                            📝 Lista
+                            <i className="ti ti-list" aria-hidden="true" /> Lista
                         </button>
                     </div>
-                    <button className="btn-pdf" onClick={handleGerarPDF}>📄 PDF</button>
-                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>➕ Novo Serviço</button>
-                    <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}>📋 Importar</button>
-                    <button className="btn-orcamento" onClick={() => { fetchEtapasOrcamento(); setShowImportOrcamentoModal(true); }}>📊 Orçamento</button>
+                    <button className="btn-pdf" onClick={handleGerarPDF}><i className="ti ti-file-text" aria-hidden="true" /> PDF</button>
+                    <button className="btn-primary" onClick={() => setShowAddModal(true)}><i className="ti ti-plus" aria-hidden="true" /> Novo Serviço</button>
+                    <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}><i className="ti ti-clipboard-list" aria-hidden="true" /> Importar</button>
+                    <button className="btn-orcamento" onClick={() => { fetchEtapasOrcamento(); setShowImportOrcamentoModal(true); }}><i className="ti ti-chart-bar" aria-hidden="true" /> Orçamento</button>
                 </div>
             </div>
 
@@ -1342,15 +1342,15 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <div className="stat-label">Total</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.progressoGeral}%</div>
+                    <div className="stat-value" style={{ color: 'var(--status-success)' }}>{stats.progressoGeral}%</div>
                     <div className="stat-label">Progresso</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.concluidos}</div>
+                    <div className="stat-value" style={{ color: 'var(--status-success)' }}>{stats.concluidos}</div>
                     <div className="stat-label">Concluídos</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? '#ef4444' : '#10b981' }}>{stats.comAtencao}</div>
+                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}>{stats.comAtencao}</div>
                     <div className="stat-label">Atenção (EVM)</div>
                 </div>
             </div>
@@ -1446,7 +1446,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showImportModal && (
                 <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>📋 Importar Serviços</h3>
+                        <h3><i className="ti ti-clipboard-list" aria-hidden="true" /> Importar Serviços</h3>
                         {servicosDisponiveis.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Todos os serviços já estão no cronograma.</div>
                         ) : (
@@ -1479,7 +1479,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showImportOrcamentoModal && (
                 <div className="modal-overlay" onClick={() => setShowImportOrcamentoModal(false)}>
                     <div className="modal-content large" onClick={e => e.stopPropagation()}>
-                        <h3>📊 Importar do Orçamento de Engenharia</h3>
+                        <h3><i className="ti ti-chart-bar" aria-hidden="true" /> Importar do Orçamento de Engenharia</h3>
                         <p style={{ color: '#666', marginBottom: '15px' }}>
                             Importe etapas do Orçamento de Engenharia diretamente para o Cronograma.
                         </p>

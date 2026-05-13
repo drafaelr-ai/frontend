@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
+import Modal from '../Modal/Modal';
 import { getTodayString, formatCurrency } from '../../utils/format';
 import { notify } from '../../utils/notify';
 
@@ -90,31 +90,48 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
     };
 
     return (
-        <Modal onClose={onClose}>
-            <h2>📊 Cadastrar Pagamento Parcelado</h2>
-            <form onSubmit={handleSubmit} className="form-orcamento" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                <label>
-                    Descrição:
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Cadastrar Pagamento Parcelado"
+            width="large"
+            scrollBody={true}
+            footer={
+                <>
+                    <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
+                    <button type="submit" form="form-cadastrar-parcelado" className="m-btn-primary" disabled={!valoresValidos}>
+                        <i className="ti ti-check" aria-hidden="true"></i>
+                        Cadastrar
+                    </button>
+                </>
+            }
+        >
+            <form id="form-cadastrar-parcelado" onSubmit={handleSubmit}>
+                <div className="m-field">
+                    <label className="m-label">Descrição</label>
                     <input
+                        className="m-input"
                         type="text"
                         value={formData.descricao}
                         onChange={(e) => setFormData({...formData, descricao: e.target.value})}
                         required
                     />
-                </label>
+                </div>
 
-                <label>
-                    Fornecedor:
+                <div className="m-field">
+                    <label className="m-label">Fornecedor <span className="m-label-opt">(opcional)</span></label>
                     <input
+                        className="m-input"
                         type="text"
                         value={formData.fornecedor}
                         onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
                     />
-                </label>
+                </div>
 
-                <label>
-                    📦 Vincular a Item do Orçamento (Opcional):
+                <div className="m-field">
+                    <label className="m-label">Vincular a Item do Orçamento <span className="m-label-opt">(opcional)</span></label>
                     <select
+                        className="m-select"
                         value={formData.orcamento_item_id}
                         onChange={(e) => setFormData({...formData, orcamento_item_id: e.target.value})}
                     >
@@ -123,102 +140,112 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                             <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
-                    <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                    <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 'var(--space-1)', fontSize: 'var(--text-xs)' }}>
                         💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
                     </small>
-                </label>
+                </div>
 
-                <label>
-                    Segmento:
-                    <select
-                        value={formData.segmento}
-                        onChange={(e) => setFormData({...formData, segmento: e.target.value})}
-                        required
-                    >
-                        <option value="Material">Material</option>
-                        <option value="Mão de Obra">Mão de Obra</option>
-                    </select>
-                </label>
-
-                <label>
-                    Forma de Pagamento:
-                    <select
-                        value={formData.forma_pagamento}
-                        onChange={(e) => setFormData({...formData, forma_pagamento: e.target.value})}
-                        required
-                    >
-                        <option value="PIX">PIX</option>
-                        <option value="Boleto">Boleto</option>
-                        <option value="Transferência">Transferência</option>
-                    </select>
-                </label>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Segmento</label>
+                        <select
+                            className="m-select"
+                            value={formData.segmento}
+                            onChange={(e) => setFormData({...formData, segmento: e.target.value})}
+                            required
+                        >
+                            <option value="Material">Material</option>
+                            <option value="Mão de Obra">Mão de Obra</option>
+                        </select>
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Forma de Pagamento</label>
+                        <select
+                            className="m-select"
+                            value={formData.forma_pagamento}
+                            onChange={(e) => setFormData({...formData, forma_pagamento: e.target.value})}
+                            required
+                        >
+                            <option value="PIX">PIX</option>
+                            <option value="Boleto">Boleto</option>
+                            <option value="Transferência">Transferência</option>
+                        </select>
+                    </div>
+                </div>
 
                 {formData.forma_pagamento !== 'Boleto' && (
-                    <label>
-                        Chave PIX:
+                    <div className="m-field">
+                        <label className="m-label">Chave PIX <span className="m-label-opt">(opcional)</span></label>
                         <input
+                            className="m-input"
                             type="text"
                             value={formData.pix}
                             onChange={(e) => setFormData({...formData, pix: e.target.value})}
                             placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
                         />
-                    </label>
+                    </div>
                 )}
 
-                <label>
-                    Valor Total:
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor_total}
-                        onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
-                        required
-                        disabled={!valoresIguais && formData.forma_pagamento === 'Boleto'}
-                    />
-                </label>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Valor Total</label>
+                        <input
+                            className="m-input"
+                            type="number"
+                            step="0.01"
+                            value={formData.valor_total}
+                            onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
+                            required
+                            disabled={!valoresIguais && formData.forma_pagamento === 'Boleto'}
+                        />
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Número de Parcelas</label>
+                        <input
+                            className="m-input"
+                            type="number"
+                            min="1"
+                            max="48"
+                            value={formData.numero_parcelas}
+                            onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
+                            required
+                        />
+                    </div>
+                </div>
 
-                <label>
-                    Número de Parcelas:
-                    <input
-                        type="number"
-                        min="1"
-                        max="48"
-                        value={formData.numero_parcelas}
-                        onChange={(e) => setFormData({...formData, numero_parcelas: e.target.value})}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Periodicidade:
-                    <select
-                        value={formData.periodicidade}
-                        onChange={(e) => setFormData({...formData, periodicidade: e.target.value})}
-                        required
-                    >
-                        <option value="Semanal">Semanal (a cada 7 dias)</option>
-                        <option value="Quinzenal">Quinzenal (a cada 15 dias)</option>
-                        <option value="Mensal">Mensal (a cada 30 dias)</option>
-                    </select>
-                </label>
-
-                <label>
-                    Data da 1ª Parcela:
-                    <input
-                        type="date"
-                        value={formData.data_primeira_parcela}
-                        onChange={(e) => setFormData({...formData, data_primeira_parcela: e.target.value})}
-                        required
-                    />
-                </label>
+                <div className="m-row">
+                    <div className="m-field">
+                        <label className="m-label">Periodicidade</label>
+                        <select
+                            className="m-select"
+                            value={formData.periodicidade}
+                            onChange={(e) => setFormData({...formData, periodicidade: e.target.value})}
+                            required
+                        >
+                            <option value="Semanal">Semanal (a cada 7 dias)</option>
+                            <option value="Quinzenal">Quinzenal (a cada 15 dias)</option>
+                            <option value="Mensal">Mensal (a cada 30 dias)</option>
+                        </select>
+                    </div>
+                    <div className="m-field">
+                        <label className="m-label">Data da 1ª Parcela</label>
+                        <input
+                            className="m-input"
+                            type="date"
+                            value={formData.data_primeira_parcela}
+                            onChange={(e) => setFormData({...formData, data_primeira_parcela: e.target.value})}
+                            required
+                        />
+                    </div>
+                </div>
 
                 <div style={{
-                    padding: '10px',
-                    background: '#f5f5f5',
-                    borderRadius: '5px',
-                    marginBottom: '10px'
+                    padding: 'var(--space-2)',
+                    background: 'var(--surface-muted)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--space-2)'
                 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
                         <input
                             type="radio"
                             checked={valoresIguais}
@@ -226,7 +253,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                         />
                         Valores iguais ({formatCurrency(parseFloat(valor_parcela))} cada)
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
                         <input
                             type="radio"
                             checked={!valoresIguais}
@@ -238,43 +265,43 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
 
                 {(formData.forma_pagamento === 'Boleto' || !valoresIguais) && parcelasCustomizadas.length > 0 && (
                     <div style={{
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                        padding: '10px',
-                        marginBottom: '10px',
-                        background: '#fafafa',
+                        border: '0.5px solid var(--border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: 'var(--space-2)',
+                        marginBottom: 'var(--space-2)',
+                        background: 'var(--surface-subtle)',
                         maxHeight: '300px',
                         overflowY: 'auto'
                     }}>
-                        <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
-                            🎫 {formData.forma_pagamento === 'Boleto' ? 'Configuração dos Boletos' : 'Valores das Parcelas'}
-                        </h4>
+                        <p className="m-section" style={{ marginTop: 0 }}>
+                            {formData.forma_pagamento === 'Boleto' ? 'Configuração dos Boletos' : 'Valores das Parcelas'}
+                        </p>
 
                         {parcelasCustomizadas.map((parcela, index) => (
                             <div key={index} style={{
-                                background: '#fff',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '5px',
-                                padding: '10px',
-                                marginBottom: '8px'
+                                background: 'var(--surface-card)',
+                                border: '0.5px solid var(--border-subtle)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: 'var(--space-2)',
+                                marginBottom: 'var(--space-2)'
                             }}>
                                 <div style={{
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
-                                    marginBottom: '8px',
-                                    fontWeight: 'bold',
-                                    color: '#555'
+                                    marginBottom: 'var(--space-2)',
+                                    fontWeight: 'var(--weight-medium)',
+                                    color: 'var(--text-secondary)'
                                 }}>
                                     <span>Parcela {parcela.numero}/{formData.numero_parcelas}</span>
-                                    <span style={{ fontSize: '12px', color: '#888' }}>
+                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
                                         Venc: {new Date(parcela.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                                     </span>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                                     <div style={{ flex: '1', minWidth: '100px' }}>
-                                        <label style={{ fontSize: '12px', color: '#666' }}>Valor:</label>
+                                        <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Valor:</label>
                                         <input
                                             type="number"
                                             step="0.01"
@@ -283,17 +310,17 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                                             disabled={valoresIguais}
                                             style={{
                                                 width: '100%',
-                                                padding: '5px',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px'
+                                                padding: 'var(--space-1)',
+                                                border: '0.5px solid var(--border-default)',
+                                                borderRadius: 'var(--radius-sm)'
                                             }}
                                         />
                                     </div>
 
                                     {formData.forma_pagamento === 'Boleto' && (
                                         <div style={{ flex: '3', minWidth: '200px' }}>
-                                            <label style={{ fontSize: '12px', color: '#666' }}>Código de Barras:</label>
-                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                            <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>Código de Barras:</label>
+                                            <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
                                                 <input
                                                     type="text"
                                                     value={parcela.codigo_barras}
@@ -301,10 +328,10 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                                                     placeholder="Cole a linha digitável do boleto"
                                                     style={{
                                                         flex: '1',
-                                                        padding: '5px',
-                                                        border: '1px solid #ccc',
-                                                        borderRadius: '4px',
-                                                        fontSize: '12px'
+                                                        padding: 'var(--space-1)',
+                                                        border: '0.5px solid var(--border-default)',
+                                                        borderRadius: 'var(--radius-sm)',
+                                                        fontSize: 'var(--text-xs)'
                                                     }}
                                                 />
                                                 {parcela.codigo_barras && (
@@ -312,17 +339,17 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                                                         type="button"
                                                         onClick={() => copiarCodigo(parcela.codigo_barras)}
                                                         style={{
-                                                            padding: '5px 10px',
-                                                            background: '#4CAF50',
+                                                            padding: 'var(--space-1) var(--space-2)',
+                                                            background: 'var(--brand-primary)',
                                                             color: 'white',
                                                             border: 'none',
-                                                            borderRadius: '4px',
+                                                            borderRadius: 'var(--radius-sm)',
                                                             cursor: 'pointer',
-                                                            fontSize: '12px'
+                                                            fontSize: 'var(--text-xs)'
                                                         }}
                                                         title="Copiar código"
                                                     >
-                                                        📋
+                                                        <i className="ti ti-copy" aria-hidden="true"></i>
                                                     </button>
                                                 )}
                                             </div>
@@ -334,15 +361,15 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
 
                         {!valoresIguais && (
                             <div style={{
-                                marginTop: '10px',
-                                padding: '8px',
-                                background: valoresValidos ? '#e8f5e9' : '#ffebee',
-                                borderRadius: '4px',
-                                fontSize: '13px'
+                                marginTop: 'var(--space-2)',
+                                padding: 'var(--space-2)',
+                                background: valoresValidos ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: 'var(--text-sm)'
                             }}>
                                 <strong>Soma das parcelas:</strong> {formatCurrency(somaValoresParcelas)}
                                 {!valoresValidos && (
-                                    <span style={{ color: '#d32f2f', marginLeft: '10px' }}>
+                                    <span style={{ color: 'var(--status-danger-text)', marginLeft: 'var(--space-2)' }}>
                                         ⚠️ Diferença de {formatCurrency(diferencaValor)}
                                     </span>
                                 )}
@@ -351,20 +378,14 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                     </div>
                 )}
 
-                <label>
-                    Observações:
+                <div className="m-field">
+                    <label className="m-label">Observações <span className="m-label-opt">(opcional)</span></label>
                     <textarea
+                        className="m-textarea"
                         value={formData.observacoes}
                         onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
                         rows="2"
                     />
-                </label>
-
-                <div className="modal-footer">
-                    <button type="submit" className="submit-btn" disabled={!valoresValidos}>
-                        Cadastrar
-                    </button>
-                    <button type="button" onClick={onClose} className="voltar-btn">Cancelar</button>
                 </div>
             </form>
         </Modal>
