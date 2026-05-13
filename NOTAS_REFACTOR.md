@@ -412,3 +412,80 @@ Páginas via `?page=` que atualmente renderizam como Modal overlays flutuantes e
 **Cabe em**: Fase 6.5 (polish dedicado) ou refactor visual futuro.
 
 **Estimativa**: 1-2 dias para cobrir todos os 5 componentes.
+
+---
+
+## Fase 6 — COMPLETA (12/05/2026)
+
+### Sumário executivo
+
+Design system v2.0 aplicado ao módulo de obras. Sub-lotes A–F concluídos: tokens CSS, migração de `var(--cor-*)` legados para novos tokens, extração de componentes, limpeza de hex hardcoded, deleção do Modal.jsx legado.
+
+### Métricas finais
+
+**Build:**
+- Bundle JS: 292.36 kB (gzip) — `-271 B` vs pré-F3
+- Bundle CSS: 16.06 kB (gzip) — `-329 B` vs pré-F3
+- Status: `Compiled successfully`
+
+**F3 — Hex hardcoded hunt (commit f4af068):**
+- 12 arquivos modificados, 537 insertions, 537 deletions
+- 471 hex substituídos por `var(--*)` tokens
+- 35 hex mantidos intencionalmente (ver abaixo)
+
+### Hex intencionalmente mantidos
+
+#### Marca / brand colors de terceiros
+
+| Cor | Valor | Arquivo | Linha | Motivo |
+|-----|-------|---------|-------|--------|
+| WhatsApp | `#25D366` | `CronogramaFinanceiro/index.jsx` | 612 | Cor oficial da marca WhatsApp |
+| Material blue | `#1976d2` | `CronogramaObra.js` | 1106 | Hint de edição inline (padrão MUI) |
+| Material blue | `#1976d2` | `GestaoBoletos/index.jsx` | 171 | Cor de link de edição (padrão MUI) |
+
+#### Paletas de visualização de dados (chart series)
+
+Não tokenizadas — cada cor representa uma série de dado distinta, sem semântica de estado.
+
+| Arquivo | Linhas | Cores |
+|---------|--------|-------|
+| `DashboardObra.jsx` | 59–70 | `#4f46e5` `#10b981` `#f59e0b` `#6b7280` `#3b82f6` `#ef4444` `#f97316` `#8b5cf6` `#ec4899` `#06b6d4` `#84cc16` `#6366f1` `#14b8a6` `#a855f7` `#eab308` `#22c55e` `#0ea5e9` |
+
+#### Material Design — formulário de medição (CronogramaObra.js)
+
+Paleta de 3 seções coloridas (azul = área, laranja = etapas, verde = execução). Contexto: único formulário de medição dentro da tela de cronograma.
+
+| Arquivo | Linhas | Cores |
+|---------|--------|-------|
+| `CronogramaObra.js` | 1739–1785 | `#e3f2fd` `#1565c0` `#90caf9` `#fff3e0` `#e65100` `#e8f5e9` `#2e7d32` |
+
+#### Gradientes e hovers computados
+
+Gradientes customizados e cores de hover derivadas por escurecimento manual — tokenizar exigiria variáveis de escopo muito restrito.
+
+| Arquivo | Linhas | Cores | Contexto |
+|---------|--------|-------|----------|
+| `App.css` | 200–204 | `#9333ea` `#7e22ce` `#6b21a8` | Gradiente do card KPI Despesas Extras |
+| `App.css` | 309, 310, 1015 | `#0e8a6a` `#c83b3b` `#4338ca` | Hovers computados (escurecimento de tokens de status) |
+| `DashboardObra.css` | 227 | `#1e3a5f` `#2d5a87` | Gradiente do header de serviço no Gantt |
+| `CronogramaObra.css` | 1091, 1239 | `#4338ca` | Hover computado de `.btn-save:hover` |
+
+#### Paleta roxa local — EditStageModal + login
+
+Gradiente `#667eea`/`#764ba2` não está no sistema de tokens. Tokenizar exigiria `--brand-purple`/`--brand-purple-dark` — fora do escopo da fase 6.
+
+| Arquivo | Linhas |
+|---------|--------|
+| `EditStageModal.css` | 100, 153, 166, 178, 269, 280, 289, 298, 315, 334, 387 |
+| `login-background.css` | 13 |
+
+### TODO pós-fase-6
+
+- [ ] **GestaoBoletos/index.jsx**: migrar 6 fetch diretos → `fetchWithAuth`
+- [ ] **NotificacoesDropdown.jsx**: migrar 5 fetch diretos → `fetchWithAuth`
+- [ ] **VisualizarNotaFiscalModal.handleDownload**: `window.open()` sem auth → `fetchWithAuth` + blob URL
+- [ ] **ModalOrcamentos.handleDownloadAnexo**: mesmo padrão, mesmo fix
+- [ ] **CadastrarBoletoModal**: `notify.error(✅ ...)` para sucesso → trocar por `notify.success`
+- [ ] **Modal wrapper**: adicionar `width="fullscreen"` para CaixaObraModal e OrcamentosModal
+- [ ] **PRs GitHub**: `refactor/fase-4-backend → main` e `refactor/fase-6-design → main`
+- [ ] **Smoke test**: obraly.uk incógnito após Vercel deploy da branch
