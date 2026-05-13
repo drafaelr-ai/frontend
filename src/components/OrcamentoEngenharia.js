@@ -21,15 +21,16 @@ import { fetchWithAuth } from '../auth/fetchWithAuth';
 const styles = {
     container: {
         padding: '20px',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-page)',
         minHeight: '100%'
     },
     header: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: 'var(--radius-xl)',
         padding: '20px 24px',
         marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -37,17 +38,17 @@ const styles = {
         gap: '16px'
     },
     title: {
-        fontSize: '24px',
-        fontWeight: '700',
-        color: '#1e293b',
+        fontSize: '20px',
+        fontWeight: '600',
+        color: 'var(--text-primary)',
         margin: 0,
         display: 'flex',
         alignItems: 'center',
         gap: '12px'
     },
     subtitle: {
-        fontSize: '14px',
-        color: '#64748b',
+        fontSize: 'var(--text-md)',
+        color: 'var(--text-muted)',
         margin: '4px 0 0 0'
     },
     headerActions: {
@@ -58,9 +59,9 @@ const styles = {
     },
     button: {
         padding: '10px 16px',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-md)',
         border: 'none',
-        fontSize: '14px',
+        fontSize: 'var(--text-md)',
         fontWeight: '500',
         cursor: 'pointer',
         display: 'flex',
@@ -69,28 +70,28 @@ const styles = {
         transition: 'all 0.2s'
     },
     buttonPrimary: {
-        backgroundColor: '#4f46e5',
-        color: '#fff'
+        backgroundColor: 'var(--brand-primary)',
+        color: 'var(--surface-card)'
     },
     buttonSecondary: {
-        backgroundColor: '#f1f5f9',
-        color: '#475569'
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--text-muted)'
     },
     buttonSuccess: {
-        backgroundColor: '#10b981',
-        color: '#fff'
+        backgroundColor: 'var(--status-success)',
+        color: 'var(--surface-card)'
     },
     buttonInfo: {
-        backgroundColor: '#3b82f6',
-        color: '#fff'
+        backgroundColor: 'var(--status-info)',
+        color: 'var(--surface-card)'
     },
     buttonDanger: {
-        backgroundColor: '#ef4444',
-        color: '#fff'
+        backgroundColor: 'var(--status-danger)',
+        color: 'var(--surface-card)'
     },
     buttonSmall: {
         padding: '6px 12px',
-        fontSize: '12px'
+        fontSize: 'var(--text-sm)'
     },
     // Cards de Resumo
     summaryGrid: {
@@ -100,15 +101,16 @@ const styles = {
         marginBottom: '20px'
     },
     summaryCard: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: 'var(--radius-xl)',
         padding: '16px 20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)'
     },
     summaryLabel: {
-        fontSize: '11px',
+        fontSize: 'var(--text-xs)',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         textTransform: 'uppercase',
         letterSpacing: '0.5px',
         marginBottom: '4px'
@@ -116,11 +118,11 @@ const styles = {
     summaryValue: {
         fontSize: '22px',
         fontWeight: '700',
-        color: '#1e293b'
+        color: 'var(--text-primary)'
     },
     summarySubtext: {
-        fontSize: '11px',
-        color: '#94a3b8',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-muted)',
         marginTop: '4px'
     },
     // BDI Config
@@ -129,61 +131,63 @@ const styles = {
         alignItems: 'center',
         gap: '8px',
         padding: '8px 12px',
-        backgroundColor: '#fef3c7',
-        borderRadius: '8px',
-        fontSize: '13px',
-        color: '#92400e'
+        backgroundColor: 'var(--status-warning-bg)',
+        borderRadius: 'var(--radius-md)',
+        fontSize: 'var(--text-base)',
+        color: 'var(--status-warning-text)'
     },
     bdiInput: {
         width: '50px',
         padding: '4px 6px',
         borderRadius: '4px',
-        border: '1px solid #fcd34d',
-        fontSize: '13px',
+        border: '1px solid var(--status-warning)',
+        fontSize: 'var(--text-base)',
         textAlign: 'center'
     },
     // Progress Bar
     progressContainer: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: 'var(--radius-xl)',
         padding: '16px 20px',
         marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)'
     },
     progressBar: {
         height: '12px',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'var(--border-subtle)',
         borderRadius: '6px',
         overflow: 'hidden'
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#16a34a',
+        backgroundColor: 'var(--status-success)',
         borderRadius: '6px',
         transition: 'width 0.5s'
     },
     // Tabela
     tableContainer: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)',
         overflow: 'hidden'
     },
     table: {
         width: '100%',
         borderCollapse: 'collapse',
-        fontSize: '13px'
+        fontSize: 'var(--text-base)'
     },
     th: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         padding: '12px 12px',
         textAlign: 'left',
         fontWeight: '600',
-        color: '#475569',
-        fontSize: '10px',
+        color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)',
         textTransform: 'uppercase',
         letterSpacing: '0.5px',
-        borderBottom: '2px solid #e2e8f0',
+        borderBottom: '2px solid var(--border-subtle)',
         position: 'sticky',
         top: 0,
         whiteSpace: 'nowrap'
@@ -196,31 +200,31 @@ const styles = {
     },
     // Etapa Row
     etapaRow: {
-        backgroundColor: '#4f46e5',
-        color: '#fff',
+        backgroundColor: 'var(--brand-primary)',
+        color: 'var(--surface-card)',
         cursor: 'pointer',
         transition: 'background-color 0.2s'
     },
     etapaTd: {
         padding: '12px',
         fontWeight: '600',
-        fontSize: '13px'
+        fontSize: 'var(--text-base)'
     },
     // Item Row
     itemRow: {
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--border-subtle)',
         transition: 'background-color 0.2s',
         cursor: 'pointer'
     },
     td: {
         padding: '10px 12px',
-        color: '#334155',
+        color: 'var(--text-secondary)',
         verticalAlign: 'middle'
     },
     tdCodigo: {
-        color: '#64748b',
+        color: 'var(--text-muted)',
         fontFamily: 'monospace',
-        fontSize: '11px'
+        fontSize: 'var(--text-xs)'
     },
     tdDescricao: {
         fontWeight: '500',
@@ -228,18 +232,18 @@ const styles = {
     },
     tdUnidade: {
         textAlign: 'center',
-        color: '#64748b',
-        fontSize: '11px'
+        color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)'
     },
     tdNumero: {
         textAlign: 'right',
         fontFamily: 'monospace',
-        fontSize: '12px'
+        fontSize: 'var(--text-sm)'
     },
     tdTotal: {
         textAlign: 'right',
         fontWeight: '600',
-        color: '#1e293b'
+        color: 'var(--text-primary)'
     },
     // Status
     statusBadge: {
@@ -248,21 +252,21 @@ const styles = {
         gap: '4px',
         padding: '4px 8px',
         borderRadius: '12px',
-        fontSize: '10px',
+        fontSize: 'var(--text-xs)',
         fontWeight: '600',
         whiteSpace: 'nowrap'
     },
     statusPago: {
-        backgroundColor: '#dcfce7',
-        color: '#16a34a'
+        backgroundColor: 'var(--status-success-bg)',
+        color: 'var(--status-success)'
     },
     statusEmAndamento: {
-        backgroundColor: '#fef3c7',
-        color: '#d97706'
+        backgroundColor: 'var(--status-warning-bg)',
+        color: 'var(--status-warning)'
     },
     statusAFazer: {
-        backgroundColor: '#f1f5f9',
-        color: '#64748b'
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--text-muted)'
     },
     // Serviço Badge
     servicoBadge: {
@@ -273,27 +277,27 @@ const styles = {
         borderRadius: '4px',
         fontSize: '9px',
         fontWeight: '600',
-        backgroundColor: '#dbeafe',
-        color: '#2563eb',
+        backgroundColor: 'var(--status-info-bg)',
+        color: 'var(--status-info)',
         marginLeft: '6px'
     },
     // Subtotal Row
     subtotalRow: {
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
         fontWeight: '600'
     },
     subtotalTd: {
         padding: '8px 12px',
-        fontSize: '12px'
+        fontSize: 'var(--text-sm)'
     },
     // Total Row
     totalRow: {
-        backgroundColor: '#1e293b',
-        color: '#fff'
+        backgroundColor: 'var(--text-primary)',
+        color: 'var(--surface-card)'
     },
     totalTd: {
         padding: '14px 12px',
-        fontSize: '14px',
+        fontSize: 'var(--text-md)',
         fontWeight: '700'
     },
     // Modal
@@ -311,17 +315,17 @@ const styles = {
         padding: '20px'
     },
     modal: {
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         maxWidth: '700px',
         width: '100%',
         maxHeight: '90vh',
         overflow: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow: 'var(--shadow-modal)'
     },
     modalHeader: {
         padding: '20px 24px',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -329,7 +333,7 @@ const styles = {
     modalTitle: {
         fontSize: '18px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         margin: 0
     },
     modalBody: {
@@ -337,7 +341,7 @@ const styles = {
     },
     modalFooter: {
         padding: '16px 24px',
-        borderTop: '1px solid #e2e8f0',
+        borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'flex-end',
         gap: '12px'
@@ -347,7 +351,7 @@ const styles = {
         border: 'none',
         fontSize: '24px',
         cursor: 'pointer',
-        color: '#9ca3af',
+        color: 'var(--text-muted)',
         padding: '0'
     },
     // Form
@@ -356,17 +360,17 @@ const styles = {
     },
     formLabel: {
         display: 'block',
-        fontSize: '13px',
+        fontSize: 'var(--text-base)',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '6px'
     },
     formInput: {
         width: '100%',
         padding: '10px 12px',
-        borderRadius: '8px',
-        border: '1px solid #d1d5db',
-        fontSize: '14px',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border-default)',
+        fontSize: 'var(--text-md)',
         transition: 'border-color 0.2s',
         boxSizing: 'border-box'
     },
@@ -386,9 +390,9 @@ const styles = {
         flexDirection: 'column',
         gap: '10px',
         padding: '12px',
-        backgroundColor: '#f8fafc',
-        borderRadius: '8px',
-        border: '1px solid #e2e8f0'
+        backgroundColor: 'var(--surface-subtle)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border-subtle)'
     },
     radioOption: {
         display: 'flex',
@@ -400,7 +404,7 @@ const styles = {
         transition: 'background-color 0.2s'
     },
     radioOptionSelected: {
-        backgroundColor: '#eff6ff'
+        backgroundColor: 'var(--status-info-bg)'
     },
     // Autocomplete
     autocompleteContainer: {
@@ -411,47 +415,47 @@ const styles = {
         top: '100%',
         left: 0,
         right: 0,
-        backgroundColor: '#fff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        backgroundColor: 'var(--surface-card)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-card)',
         maxHeight: '300px',
         overflow: 'auto',
         zIndex: 100
     },
     autocompleteSection: {
         padding: '8px 12px',
-        backgroundColor: '#f8fafc',
-        fontSize: '11px',
+        backgroundColor: 'var(--surface-subtle)',
+        fontSize: 'var(--text-xs)',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         textTransform: 'uppercase',
-        borderBottom: '1px solid #e2e8f0'
+        borderBottom: '1px solid var(--border-subtle)'
     },
     autocompleteItem: {
         padding: '10px 12px',
         cursor: 'pointer',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--border-subtle)',
         transition: 'background-color 0.2s'
     },
     autocompleteItemHover: {
-        backgroundColor: '#f1f5f9'
+        backgroundColor: 'var(--surface-muted)'
     },
     // Info Box
     infoBox: {
         padding: '12px 16px',
-        backgroundColor: '#eff6ff',
-        borderRadius: '8px',
-        border: '1px solid #bfdbfe',
-        fontSize: '13px',
-        color: '#1e40af',
+        backgroundColor: 'var(--status-info-bg)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--status-info)',
+        fontSize: 'var(--text-base)',
+        color: 'var(--status-info)',
         marginTop: '16px'
     },
     // Empty State
     emptyState: {
         textAlign: 'center',
         padding: '60px 20px',
-        color: '#9ca3af'
+        color: 'var(--text-muted)'
     },
     // Actions
     actionsCell: {
@@ -465,13 +469,13 @@ const styles = {
         border: 'none',
         backgroundColor: 'transparent',
         cursor: 'pointer',
-        fontSize: '12px',
+        fontSize: 'var(--text-sm)',
         transition: 'background-color 0.2s'
     },
     // Valor Pago
     valorPago: {
-        fontSize: '10px',
-        color: '#16a34a',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--status-success)',
         fontWeight: '500'
     },
     // Célula com Progresso (MO e Material)
@@ -487,7 +491,7 @@ const styles = {
     miniProgressBar: {
         width: '100%',
         height: '6px',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'var(--border-subtle)',
         borderRadius: '3px',
         overflow: 'hidden'
     },
@@ -507,19 +511,19 @@ const styles = {
         alignItems: 'center',
         gap: '2px',
         padding: '8px 12px',
-        backgroundColor: '#1e293b',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        backgroundColor: 'var(--text-primary)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-card)',
         zIndex: 100,
         whiteSpace: 'nowrap'
     },
     hoverPercentual: {
-        fontSize: '14px',
+        fontSize: 'var(--text-md)',
         fontWeight: '700'
     },
     hoverValor: {
-        fontSize: '11px',
-        color: '#94a3b8'
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-muted)'
     }
 };
 
@@ -1245,28 +1249,28 @@ const uploadStyles = {
         padding: '20px'
     },
     modal: {
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         maxWidth: '95vw',
         width: '1200px',
         maxHeight: '95vh',
         overflow: 'hidden',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        boxShadow: 'var(--shadow-modal)',
         display: 'flex',
         flexDirection: 'column'
     },
     modalHeader: {
         padding: '20px 24px',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#f8fafc'
+        backgroundColor: 'var(--surface-subtle)'
     },
     modalTitle: {
         fontSize: '20px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         margin: 0,
         display: 'flex',
         alignItems: 'center',
@@ -1279,27 +1283,27 @@ const uploadStyles = {
     },
     modalFooter: {
         padding: '16px 24px',
-        borderTop: '1px solid #e2e8f0',
+        borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#f8fafc'
+        backgroundColor: 'var(--surface-subtle)'
     },
     closeBtn: {
         background: 'none',
         border: 'none',
         fontSize: '28px',
         cursor: 'pointer',
-        color: '#9ca3af',
+        color: 'var(--text-muted)',
         padding: '0',
         lineHeight: 1
     },
     // Buttons
     button: {
         padding: '12px 20px',
-        borderRadius: '8px',
+        borderRadius: 'var(--radius-md)',
         border: 'none',
-        fontSize: '14px',
+        fontSize: 'var(--text-md)',
         fontWeight: '600',
         cursor: 'pointer',
         display: 'flex',
@@ -1308,16 +1312,16 @@ const uploadStyles = {
         transition: 'all 0.2s'
     },
     buttonPrimary: {
-        backgroundColor: '#4f46e5',
-        color: '#fff'
+        backgroundColor: 'var(--brand-primary)',
+        color: 'var(--surface-card)'
     },
     buttonSuccess: {
-        backgroundColor: '#10b981',
-        color: '#fff'
+        backgroundColor: 'var(--status-success)',
+        color: 'var(--surface-card)'
     },
     buttonSecondary: {
-        backgroundColor: '#f1f5f9',
-        color: '#475569'
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--text-muted)'
     },
     buttonDisabled: {
         opacity: 0.5,
@@ -1325,22 +1329,22 @@ const uploadStyles = {
     },
     // Upload Area
     uploadArea: {
-        border: '3px dashed #cbd5e1',
+        border: '3px dashed var(--border-default)',
         borderRadius: '16px',
         padding: '60px 40px',
         textAlign: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         cursor: 'pointer',
         transition: 'all 0.3s'
     },
     uploadAreaHover: {
-        borderColor: '#4f46e5',
-        backgroundColor: '#eef2ff'
+        borderColor: 'var(--brand-primary)',
+        backgroundColor: 'var(--status-info-bg)'
     },
     uploadAreaWithImage: {
         padding: '20px',
         borderStyle: 'solid',
-        borderColor: '#10b981'
+        borderColor: 'var(--status-success)'
     },
     uploadIcon: {
         fontSize: '64px',
@@ -1349,17 +1353,17 @@ const uploadStyles = {
     uploadTitle: {
         fontSize: '18px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         marginBottom: '8px'
     },
     uploadSubtitle: {
-        fontSize: '14px',
-        color: '#64748b',
+        fontSize: 'var(--text-md)',
+        color: 'var(--text-muted)',
         marginBottom: '16px'
     },
     uploadFormats: {
-        fontSize: '12px',
-        color: '#94a3b8'
+        fontSize: 'var(--text-sm)',
+        color: 'var(--text-muted)'
     },
     // Preview Image
     previewContainer: {
@@ -1408,8 +1412,8 @@ const uploadStyles = {
     processingSpinner: {
         width: '80px',
         height: '80px',
-        border: '4px solid #e2e8f0',
-        borderTop: '4px solid #4f46e5',
+        border: '4px solid var(--border-subtle)',
+        borderTop: '4px solid var(--brand-primary)',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite',
         margin: '0 auto 24px'
@@ -1417,12 +1421,12 @@ const uploadStyles = {
     processingTitle: {
         fontSize: '20px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         marginBottom: '8px'
     },
     processingSubtitle: {
-        fontSize: '14px',
-        color: '#64748b',
+        fontSize: 'var(--text-md)',
+        color: 'var(--text-muted)',
         marginBottom: '24px'
     },
     processingSteps: {
@@ -1448,16 +1452,16 @@ const uploadStyles = {
         fontSize: '12px'
     },
     stepDone: {
-        backgroundColor: '#dcfce7',
-        color: '#16a34a'
+        backgroundColor: 'var(--status-success-bg)',
+        color: 'var(--status-success)'
     },
     stepCurrent: {
-        backgroundColor: '#dbeafe',
-        color: '#2563eb'
+        backgroundColor: 'var(--status-info-bg)',
+        color: 'var(--status-info)'
     },
     stepPending: {
-        backgroundColor: '#f1f5f9',
-        color: '#94a3b8'
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--text-muted)'
     },
     // Results
     resultsContainer: {
@@ -1467,8 +1471,8 @@ const uploadStyles = {
         height: '100%'
     },
     resultsSidebar: {
-        backgroundColor: '#f8fafc',
-        borderRadius: '12px',
+        backgroundColor: 'var(--surface-subtle)',
+        borderRadius: 'var(--radius-xl)',
         padding: '16px',
         height: 'fit-content'
     },
@@ -1477,27 +1481,28 @@ const uploadStyles = {
     },
     // Info Cards
     infoCard: {
-        backgroundColor: '#fff',
-        borderRadius: '8px',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: 'var(--radius-md)',
         padding: '12px',
         marginBottom: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)'
     },
     infoCardTitle: {
-        fontSize: '11px',
+        fontSize: 'var(--text-xs)',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         textTransform: 'uppercase',
         marginBottom: '8px'
     },
     infoCardValue: {
         fontSize: '18px',
         fontWeight: '700',
-        color: '#1e293b'
+        color: 'var(--text-primary)'
     },
     infoCardSubtext: {
-        fontSize: '12px',
-        color: '#64748b',
+        fontSize: 'var(--text-sm)',
+        color: 'var(--text-muted)',
         marginTop: '4px'
     },
     // Ambientes List
@@ -1509,10 +1514,10 @@ const uploadStyles = {
     },
     ambienteBadge: {
         padding: '4px 8px',
-        backgroundColor: '#e0e7ff',
-        color: '#4338ca',
+        backgroundColor: 'var(--status-purple-bg)',
+        color: 'var(--status-purple-text)',
         borderRadius: '4px',
-        fontSize: '11px',
+        fontSize: 'var(--text-xs)',
         fontWeight: '500'
     },
     // Table
@@ -1522,14 +1527,14 @@ const uploadStyles = {
         fontSize: '13px'
     },
     th: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         padding: '10px 12px',
         textAlign: 'left',
         fontWeight: '600',
-        color: '#475569',
-        fontSize: '11px',
+        color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)',
         textTransform: 'uppercase',
-        borderBottom: '2px solid #e2e8f0',
+        borderBottom: '2px solid var(--border-subtle)',
         position: 'sticky',
         top: 0
     },
@@ -1540,15 +1545,15 @@ const uploadStyles = {
         textAlign: 'center'
     },
     etapaRow: {
-        backgroundColor: '#4f46e5',
-        color: '#fff'
+        backgroundColor: 'var(--brand-primary)',
+        color: 'var(--surface-card)'
     },
     etapaTd: {
         padding: '10px 12px',
         fontWeight: '600'
     },
     itemRow: {
-        borderBottom: '1px solid #f1f5f9'
+        borderBottom: '1px solid var(--border-subtle)'
     },
     td: {
         padding: '10px 12px',
@@ -1572,8 +1577,8 @@ const uploadStyles = {
         width: '80px',
         padding: '6px 8px',
         borderRadius: '4px',
-        border: '1px solid #d1d5db',
-        fontSize: '13px',
+        border: '1px solid var(--border-default)',
+        fontSize: 'var(--text-base)',
         textAlign: 'right'
     },
     // Justificativa
@@ -1586,11 +1591,11 @@ const uploadStyles = {
     // Warning
     warningBox: {
         padding: '12px 16px',
-        backgroundColor: '#fef3c7',
-        borderRadius: '8px',
-        border: '1px solid #fcd34d',
-        fontSize: '13px',
-        color: '#92400e',
+        backgroundColor: 'var(--status-warning-bg)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--status-warning)',
+        fontSize: 'var(--text-base)',
+        color: 'var(--status-warning-text)',
         marginBottom: '16px',
         display: 'flex',
         alignItems: 'flex-start',
@@ -1598,8 +1603,8 @@ const uploadStyles = {
     },
     // Total
     totalRow: {
-        backgroundColor: '#1e293b',
-        color: '#fff',
+        backgroundColor: 'var(--text-primary)',
+        color: 'var(--surface-card)',
         fontWeight: '700'
     },
     totalTd: {
@@ -1613,16 +1618,16 @@ const uploadStyles = {
         marginLeft: '6px'
     },
     fonteBase: {
-        backgroundColor: '#dcfce7',
-        color: '#16a34a'
+        backgroundColor: 'var(--status-success-bg)',
+        color: 'var(--status-success)'
     },
     fonteAproximado: {
-        backgroundColor: '#fef3c7',
-        color: '#92400e'
+        backgroundColor: 'var(--status-warning-bg)',
+        color: 'var(--status-warning-text)'
     },
     fonteNaoEncontrado: {
-        backgroundColor: '#fee2e2',
-        color: '#dc2626'
+        backgroundColor: 'var(--status-danger-bg)',
+        color: 'var(--status-danger)'
     }
 };
 
@@ -2757,10 +2762,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
 
     if (error) {
         return (
-            <div style={styles.container}>
+            <div className="m-section-card" style={{ minHeight: '100%' }}>
                 <div style={styles.emptyState}>
                     <p>❌ {error}</p>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '12px' }}
                         onClick={carregarDados}
                     >
@@ -2772,16 +2777,16 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     }
 
     return (
-        <div style={styles.container}>
+        <div className="m-section-card" style={{ minHeight: '100%' }}>
             {/* Header */}
             <div style={styles.header}>
                 <div>
-                    <h1 style={styles.title}>📋 Orçamento de Engenharia</h1>
+                    <h1 style={styles.title}><i className="ti ti-clipboard-data" aria-hidden="true" /> Orçamento de Engenharia</h1>
                     <p style={styles.subtitle}>{obraNome}</p>
                 </div>
                 <div style={styles.headerActions}>
                     <div style={styles.bdiConfig}>
-                        <span>📊 BDI:</span>
+                        <span><i className="ti ti-chart-bar" aria-hidden="true" /> BDI:</span>
                         <input 
                             type="number" 
                             value={bdi}
@@ -2792,27 +2797,27 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         <span>%</span>
                     </div>
                     <button 
-                        style={{ 
-                            ...styles.button, 
-                            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-                            color: '#fff'
+                        style={{
+                            ...styles.button,
+                            backgroundColor: 'var(--status-purple-text)',
+                            color: 'var(--surface-card)'
                         }}
                         onClick={() => setShowUploadPlanta(true)}
                         title="Gerar orçamento automaticamente a partir de uma planta baixa"
                     >
-                        🤖 IA - Planta Baixa
+                        <i className="ti ti-robot" aria-hidden="true" /> IA - Planta Baixa
                     </button>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonSuccess }}
                         onClick={() => setShowNovaEtapa(true)}
                     >
-                        ➕ Nova Etapa
+                        <i className="ti ti-plus" aria-hidden="true" /> Nova Etapa
                     </button>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonPrimary }}
                         onClick={() => setShowNovoItem(true)}
                     >
-                        ➕ Novo Item
+                        <i className="ti ti-plus" aria-hidden="true" /> Novo Item
                     </button>
                     
                     {/* Botões de Excel */}
@@ -2822,34 +2827,34 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                             onClick={exportarExcel}
                             title="Exportar orçamento para CSV/Excel"
                         >
-                            📥 Exportar
+                            <i className="ti ti-download" aria-hidden="true" /> Exportar
                         </button>
                         <label style={{ margin: 0 }}>
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 accept=".csv,.txt"
                                 onChange={importarExcel}
                                 style={{ display: 'none' }}
                             />
-                            <span 
-                                style={{ 
-                                    ...styles.button, 
-                                    ...styles.buttonSecondary, 
+                            <span
+                                style={{
+                                    ...styles.button,
+                                    ...styles.buttonSecondary,
                                     ...styles.buttonSmall,
                                     cursor: 'pointer',
-                                    display: 'inline-block'
+                                    display: 'inline-flex'
                                 }}
                                 title="Importar orçamento de CSV/Excel"
                             >
-                                📤 Importar
+                                <i className="ti ti-upload" aria-hidden="true" /> Importar
                             </span>
                         </label>
-                        <button 
+                        <button
                             style={{ ...styles.button, ...styles.buttonDanger, ...styles.buttonSmall }}
                             onClick={apagarOrcamentoCompleto}
                             title="Apagar todo o orçamento de engenharia"
                         >
-                            🗑️ Apagar Tudo
+                            <i className="ti ti-trash" aria-hidden="true" /> Apagar Tudo
                         </button>
                     </div>
                 </div>
@@ -2859,7 +2864,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             <div style={styles.summaryGrid}>
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>Mão de Obra</div>
-                    <div style={{ ...styles.summaryValue, color: '#4f46e5', fontSize: '20px' }}>
+                    <div style={{ ...styles.summaryValue, color: 'var(--brand-primary)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.total_mao_obra)}
                     </div>
                     <div style={styles.summarySubtext}>
@@ -2868,7 +2873,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 </div>
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>Material</div>
-                    <div style={{ ...styles.summaryValue, color: '#10b981', fontSize: '20px' }}>
+                    <div style={{ ...styles.summaryValue, color: 'var(--status-success)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.total_material)}
                     </div>
                     <div style={styles.summarySubtext}>
@@ -2879,7 +2884,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 {(resumoComBdi.total_servico || 0) > 0 && (
                     <div style={styles.summaryCard}>
                         <div style={styles.summaryLabel}>Serviço</div>
-                        <div style={{ ...styles.summaryValue, color: '#8b5cf6', fontSize: '20px' }}>
+                        <div style={{ ...styles.summaryValue, color: 'var(--status-purple-text)', fontSize: '20px' }}>
                             {formatCurrency(resumoComBdi.total_servico || 0)}
                         </div>
                         <div style={styles.summarySubtext}>
@@ -2889,25 +2894,25 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 )}
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>BDI ({bdi}%)</div>
-                    <div style={{ ...styles.summaryValue, color: '#f59e0b', fontSize: '20px' }}>
+                    <div style={{ ...styles.summaryValue, color: 'var(--status-warning)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.valor_bdi)}
                     </div>
                 </div>
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>Executado</div>
-                    <div style={{ ...styles.summaryValue, color: '#16a34a', fontSize: '20px' }}>
+                    <div style={{ ...styles.summaryValue, color: 'var(--status-success)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.total_pago)}
                     </div>
                     <div style={styles.summarySubtext}>
                         {formatNumber(resumoComBdi.percentual_executado || 0, 1)}% do orçamento
                     </div>
                 </div>
-                <div style={{ ...styles.summaryCard, backgroundColor: '#1e293b' }}>
-                    <div style={{ ...styles.summaryLabel, color: '#94a3b8' }}>Total Geral</div>
-                    <div style={{ ...styles.summaryValue, color: '#fff', fontSize: '20px' }}>
+                <div style={{ ...styles.summaryCard, backgroundColor: 'var(--text-primary)', border: 'none' }}>
+                    <div style={{ ...styles.summaryLabel, color: 'var(--text-muted)' }}>Total Geral</div>
+                    <div style={{ ...styles.summaryValue, color: 'var(--surface-card)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.total_geral)}
                     </div>
-                    <div style={{ ...styles.summarySubtext, color: '#64748b' }}>
+                    <div style={{ ...styles.summarySubtext, color: 'var(--text-muted)' }}>
                         {dados.etapas.length || 0} etapas • {resumoComBdi.total_itens || 0} itens
                     </div>
                 </div>
@@ -2916,8 +2921,8 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             {/* Barra de Progresso */}
             <div style={styles.progressContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: '600', color: '#1e293b' }}>📊 Progresso Geral</span>
-                    <span style={{ fontWeight: '700', color: '#16a34a' }}>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><i className="ti ti-chart-bar" aria-hidden="true" /> Progresso Geral</span>
+                    <span style={{ fontWeight: '700', color: 'var(--status-success)' }}>
                         {formatNumber(resumoComBdi.percentual_executado || 0, 1)}%
                     </span>
                 </div>
@@ -2929,7 +2934,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             {/* Tabela */}
             {dados.etapas.length === 0 ? (
                 <div style={{ ...styles.tableContainer, ...styles.emptyState }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+                    <i className="ti ti-clipboard-data" aria-hidden="true" style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--text-muted)', display: 'block' }} />
                     <p style={{ fontSize: '16px', marginBottom: '8px' }}>Nenhuma etapa cadastrada</p>
                     <p style={{ fontSize: '14px', color: '#9ca3af' }}>Clique em "Nova Etapa" para começar</p>
                 </div>
