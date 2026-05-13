@@ -596,10 +596,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 notify.error('Erro ao gerar PDF do cronograma financeiro');
                             }
                         }}
-                        className="export-btn pdf"
+                        className="m-btn-secondary"
                         title="Gerar relatório PDF do cronograma financeiro"
                     >
-                        <i className="ti ti-file-analytics" aria-hidden="true" /> Gerar PDF
+                        <i className="ti ti-file-text" aria-hidden="true" /> Gerar PDF
                     </button>
                 )}
 
@@ -608,7 +608,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     <button
                         type="button"
                         onClick={() => setShowWhatsAppModal(true)}
-                        className="export-btn"
+                        className="m-btn-primary"
                         style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
                         title="Compartilhar cronograma pelo WhatsApp"
                     >
@@ -688,7 +688,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             </div>
                         </>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhuma previsão calculada. Cadastre pagamentos futuros ou parcelados.
                         </p>
                     )}
@@ -696,7 +696,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                 {/* Listagem de Pagamentos de Serviço Pendentes */}
                 {pagamentosServicoPendentes.length > 0 && (
-                    <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--cor-warning-bg)', border: '2px solid var(--cor-warning-light)' }}>
+                    <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--status-warning-bg)', border: '2px solid var(--status-warning)' }}>
                         <h3><i className="ti ti-alert-triangle" aria-hidden="true" /> Pagamentos de Serviço Pendentes</h3>
                         <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
                             Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
@@ -797,7 +797,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 width: '18px',
                                                 height: '18px',
                                                 marginRight: '12px',
-                                                accentColor: 'var(--cor-primaria)'
+                                                accentColor: 'var(--brand-primary)'
                                             }}
                                         />
                                     )}
@@ -821,7 +821,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         }}
                                     >
                                         <div className="cf-pagamento-futuro-desc" style={{
-                                            color: pag.status === 'Previsto' ? 'var(--cor-primaria)' : 'var(--cor-texto)'
+                                            color: pag.status === 'Previsto' ? 'var(--brand-primary)' : 'var(--text-primary)'
                                         }}>
                                             {pag.descricao}
                                         </div>
@@ -854,7 +854,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={futuroProcessing ? 'Processando...' : 'Clique para marcar como pago'}
                                             >
-                                                {futuroProcessing ? '⏳ Processando...' : 'Pendente'}
+                                                {futuroProcessing ? <><i className="ti ti-loader" aria-hidden="true" /> Processando...</> : 'Pendente'}
                                             </span>
                                         );
                                     })()}
@@ -885,7 +885,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             ))}
                         </div>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhum pagamento futuro cadastrado.
                         </p>
                     )}
@@ -926,9 +926,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
 
                                 const cores = {
-                                    'Semanal': { cor: 'var(--cor-warning-light)', corText: '#92400e', corBg: 'var(--cor-warning-bg)' },
-                                    'Quinzenal': { cor: 'var(--cor-purple-light)', corText: '#6b21a8', corBg: 'var(--cor-purple-bg)' },
-                                    'Mensal': { cor: 'var(--cor-info-light)', corText: '#0369a1', corBg: 'var(--cor-info-bg)' }
+                                    'Semanal': { cor: 'var(--status-warning)', corText: 'var(--status-warning-text)', corBg: 'var(--status-warning-bg)' },
+                                    'Quinzenal': { cor: 'var(--status-purple-text)', corText: 'var(--status-purple-text)', corBg: 'var(--status-purple-bg)' },
+                                    'Mensal': { cor: 'var(--status-info)', corText: 'var(--status-info-text)', corBg: 'var(--status-info-bg)' }
                                 };
                                 const corConfig = cores[pag.periodicidade] || cores['Mensal'];
 
@@ -937,7 +937,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         key={pag.id}
                                         className="parcela-popup-card"
                                         onClick={() => handleAbrirEditarParcelas(pag)}
-                                        style={{ borderColor: 'var(--cor-borda)' }}
+                                        style={{ borderColor: 'var(--border-subtle)' }}
                                     >
                                         {/* Header com bolinhas */}
                                         <div
@@ -1058,8 +1058,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                         <button
                                                             className="parcela-popup-btn"
                                                             style={{
-                                                                background: 'var(--cor-vermelho-bg)',
-                                                                color: 'var(--cor-vermelho)',
+                                                                background: 'var(--status-danger-bg)',
+                                                                color: 'var(--status-danger)',
                                                                 padding: '10px 12px',
                                                                 opacity: parceladoProcessing ? 0.5 : 1,
                                                                 cursor: parceladoProcessing ? 'wait' : 'pointer'
@@ -1082,7 +1082,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             })}
                         </div>
                     ) : (
-                        <p style={{ color: 'var(--cor-texto-secundario)', textAlign: 'center', padding: '30px' }}>
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>
                             Nenhum pagamento parcelado cadastrado.
                         </p>
                     )}

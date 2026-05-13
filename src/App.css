@@ -1695,11 +1695,12 @@ body {
 
 /* Seção Card */
 .cf-section {
-    background: var(--cor-card);
-    border-radius: var(--radius-lg);
+    background: var(--surface-card);
+    border-radius: var(--radius-xl);
     padding: 24px;
     margin-bottom: 20px;
-    border: 1px solid var(--cor-borda);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-card);
 }
 
 .cf-section-header {
@@ -1710,9 +1711,9 @@ body {
 }
 
 .cf-section-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--cor-texto);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1720,7 +1721,7 @@ body {
 
 .cf-section-subtitle {
     font-size: 13px;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
     margin-top: 4px;
 }
 
@@ -1733,37 +1734,37 @@ body {
 }
 
 .cf-badge-info {
-    background: var(--cor-info-bg);
-    color: var(--cor-info);
+    background: var(--status-info-bg);
+    color: var(--status-info);
 }
 
 .cf-badge-purple {
-    background: var(--cor-purple-bg);
-    color: var(--cor-purple);
+    background: var(--status-purple-bg);
+    color: var(--status-purple-text);
 }
 
 .cf-badge-success {
-    background: var(--cor-acento-bg);
-    color: var(--cor-acento);
+    background: var(--status-success-bg);
+    color: var(--status-success);
 }
 
 .cf-badge-warning {
-    background: var(--cor-warning-bg);
-    color: #92400e;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
 }
 
 /* Dica/Tip Box */
 .cf-tip-box {
-    background: var(--cor-warning-bg);
+    background: var(--status-warning-bg);
     border-radius: var(--radius-md);
     padding: 12px 16px;
     margin-bottom: 16px;
     font-size: 13px;
-    color: #92400e;
+    color: var(--status-warning-text);
     display: flex;
     align-items: center;
     gap: 10px;
-    border: 1px solid #fde68a;
+    border: 1px solid var(--status-warning);
 }
 
 /* ============================================
@@ -1777,9 +1778,9 @@ body {
 }
 
 .parcela-popup-card {
-    background: var(--cor-card);
+    background: var(--surface-card);
     border-radius: var(--radius-md);
-    border: 2px solid var(--cor-borda);
+    border: 2px solid var(--border-subtle);
     overflow: hidden;
     transition: all var(--transition-normal);
     cursor: pointer;
@@ -1787,7 +1788,7 @@ body {
 
 .parcela-popup-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--sombra-card-hover);
+    box-shadow: var(--shadow-card);
 }
 
 /* Header do Card Popup */
@@ -1805,7 +1806,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 /* Bolinhas de Parcelas */
@@ -1843,13 +1844,13 @@ body {
 .parcela-popup-valor-number {
     font-size: 24px;
     font-weight: 700;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 .parcela-popup-periodo {
     font-size: 11px;
-    color: var(--cor-texto-secundario);
-    background: var(--cor-fundo-secundario);
+    color: var(--text-muted);
+    background: var(--surface-subtle);
     display: inline-block;
     padding: 3px 10px;
     border-radius: 12px;
@@ -1865,7 +1866,7 @@ body {
 }
 
 .parcela-popup-info-item {
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
     padding: 8px 10px;
     border-radius: 8px;
     text-align: center;
@@ -1873,7 +1874,7 @@ body {
 
 .parcela-popup-info-label {
     font-size: 10px;
-    color: var(--cor-texto-muted);
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -1881,29 +1882,29 @@ body {
 .parcela-popup-info-value {
     font-size: 15px;
     font-weight: 700;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 /* Box de Vencimento */
 .parcela-popup-vencimento {
-    background: var(--cor-warning-bg);
+    background: var(--status-warning-bg);
     padding: 8px 12px;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
-    border: 1px solid #fde68a;
+    border: 1px solid var(--status-warning);
 }
 
 .parcela-popup-vencimento-label {
     font-size: 12px;
-    color: #92400e;
+    color: var(--status-warning-text);
 }
 
 .parcela-popup-vencimento-value {
     font-size: 13px;
-    color: #92400e;
+    color: var(--status-warning-text);
     font-weight: 600;
 }
 
@@ -1920,17 +1921,17 @@ body {
 }
 
 .parcela-popup-progress-label {
-    color: var(--cor-texto-muted);
+    color: var(--text-muted);
 }
 
 .parcela-popup-progress-percent {
     font-weight: 600;
-    color: var(--cor-primaria);
+    color: var(--brand-primary);
 }
 
 .parcela-popup-progress-bar {
     height: 6px;
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -1944,8 +1945,8 @@ body {
 /* Footer do Card Popup */
 .parcela-popup-footer {
     padding: 12px 16px;
-    border-top: 1px solid var(--cor-borda);
-    background: var(--cor-fundo-secundario);
+    border-top: 1px solid var(--border-subtle);
+    background: var(--surface-subtle);
 }
 
 .parcela-popup-btn {
@@ -1978,7 +1979,7 @@ body {
 
 .editar-parcelas-header {
     padding: 20px 24px;
-    border-bottom: 3px solid var(--cor-primaria);
+    border-bottom: 3px solid var(--brand-primary);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -1988,12 +1989,12 @@ body {
     margin: 0;
     font-size: 20px;
     font-weight: 700;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 .editar-parcelas-subtitulo {
     font-size: 14px;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
     margin-top: 4px;
 }
 
@@ -2002,13 +2003,13 @@ body {
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
     padding: 0;
     line-height: 1;
 }
 
 .editar-parcelas-close:hover {
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 /* Resumo do Parcelamento */
@@ -2017,8 +2018,8 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     padding: 20px 24px;
-    background: var(--cor-fundo-secundario);
-    border-bottom: 1px solid var(--cor-borda);
+    background: var(--surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 @media (max-width: 600px) {
@@ -2028,7 +2029,7 @@ body {
 }
 
 .resumo-item {
-    background: var(--cor-card);
+    background: var(--surface-card);
     padding: 14px;
     border-radius: var(--radius-sm);
     text-align: center;
@@ -2046,7 +2047,7 @@ body {
 .resumo-item-value {
     font-size: 20px;
     font-weight: 700;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 /* Lista de Parcelas */
@@ -2061,25 +2062,25 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
     border-radius: var(--radius-sm);
     margin-bottom: 10px;
-    border: 1px solid var(--cor-borda);
+    border: 1px solid var(--border-subtle);
     transition: all var(--transition-fast);
 }
 
 .parcela-item:hover {
-    border-color: var(--cor-primaria-light);
+    border-color: var(--border-default);
 }
 
 .parcela-item.paga {
-    background: var(--cor-acento-bg);
-    border-color: var(--cor-acento-light);
+    background: var(--status-success-bg);
+    border-color: var(--status-success);
 }
 
 .parcela-item.vencida {
-    background: var(--cor-vermelho-bg);
-    border-color: var(--cor-vermelho-light);
+    background: var(--status-danger-bg);
+    border-color: var(--status-danger);
 }
 
 .parcela-item-info {
@@ -2100,14 +2101,14 @@ body {
 }
 
 .parcela-item-numero.paga {
-    background: var(--cor-acento);
+    background: var(--status-success);
     color: white;
 }
 
 .parcela-item-numero.pendente {
-    background: var(--cor-card);
-    color: var(--cor-texto-muted);
-    border: 2px solid var(--cor-borda);
+    background: var(--surface-card);
+    color: var(--text-muted);
+    border: 2px solid var(--border-subtle);
 }
 
 .parcela-item-dados {
@@ -2119,12 +2120,12 @@ body {
 .parcela-item-valor {
     font-size: 15px;
     font-weight: 600;
-    color: var(--cor-texto);
+    color: var(--text-primary);
 }
 
 .parcela-item-vencimento {
     font-size: 12px;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
 }
 
 .parcela-item-actions {
@@ -2141,24 +2142,24 @@ body {
 }
 
 .parcela-status-badge.paga {
-    background: var(--cor-acento-light);
-    color: #166534;
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
 }
 
 .parcela-status-badge.pendente {
-    background: var(--cor-warning-light);
-    color: #92400e;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
 }
 
 .parcela-status-badge.vencida {
-    background: var(--cor-vermelho-light);
-    color: #991b1b;
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
 }
 
 /* Botões de ação da parcela */
 .parcela-action-btn {
-    background: var(--cor-card);
-    border: 1px solid var(--cor-borda);
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
     padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
@@ -2167,24 +2168,24 @@ body {
 }
 
 .parcela-action-btn:hover {
-    background: var(--cor-fundo-secundario);
-    border-color: var(--cor-primaria-light);
+    background: var(--surface-subtle);
+    border-color: var(--border-default);
 }
 
 .parcela-action-btn.primary {
-    background: var(--cor-primaria);
+    background: var(--brand-primary);
     color: white;
-    border-color: var(--cor-primaria);
+    border-color: var(--brand-primary);
 }
 
 .parcela-action-btn.primary:hover {
-    background: var(--cor-primaria-dark);
+    filter: brightness(1.1);
 }
 
 .parcela-action-btn.success {
-    background: var(--cor-acento);
+    background: var(--status-success);
     color: white;
-    border-color: var(--cor-acento);
+    border-color: var(--status-success);
 }
 
 /* Formulário de edição inline */
@@ -2196,7 +2197,7 @@ body {
 
 .parcela-edit-input {
     padding: 6px 10px;
-    border: 1px solid var(--cor-borda);
+    border: 1px solid var(--border-subtle);
     border-radius: 6px;
     font-size: 13px;
     width: 120px;
@@ -2204,18 +2205,18 @@ body {
 
 .parcela-edit-input:focus {
     outline: none;
-    border-color: var(--cor-primaria);
-    box-shadow: 0 0 0 2px var(--cor-primaria-bg);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px var(--surface-muted);
 }
 
 /* Footer do Modal */
 .editar-parcelas-footer {
     padding: 16px 24px;
-    border-top: 1px solid var(--cor-borda);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
 }
 
 /* ============================================
@@ -2242,14 +2243,14 @@ body {
 .cf-chart-bar-value {
     font-size: 13px;
     font-weight: 600;
-    color: var(--cor-primaria);
+    color: var(--brand-primary);
 }
 
 .cf-chart-bar-fill {
     width: 100%;
     max-width: 60px;
     border-radius: 8px 8px 2px 2px;
-    background: linear-gradient(180deg, var(--cor-primaria-light) 0%, var(--cor-primaria) 100%);
+    background: linear-gradient(180deg, var(--border-default) 0%, var(--brand-primary) 100%);
     transition: all var(--transition-normal);
 }
 
@@ -2259,7 +2260,7 @@ body {
 
 .cf-chart-bar-label {
     font-size: 12px;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
 }
 
 .cf-chart-total {
@@ -2267,20 +2268,21 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 14px 18px;
-    background: var(--cor-primaria);
+    background: var(--surface-subtle);
     border-radius: var(--radius-md);
-    color: white;
+    border: 1px solid var(--border-subtle);
     margin-top: 16px;
 }
 
 .cf-chart-total-label {
     font-size: 13px;
-    opacity: 0.9;
+    color: var(--text-muted);
 }
 
 .cf-chart-total-value {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 /* ============================================
@@ -2291,23 +2293,23 @@ body {
     display: flex;
     align-items: center;
     padding: 14px 16px;
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
     border-radius: var(--radius-sm);
     gap: 16px;
-    border: 1px solid var(--cor-borda);
+    border: 1px solid var(--border-subtle);
     margin-bottom: 10px;
     transition: all var(--transition-fast);
 }
 
 .cf-pagamento-futuro-item:hover {
-    border-color: var(--cor-primaria-light);
+    border-color: var(--border-default);
 }
 
 .cf-pagamento-futuro-icon {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: var(--cor-info-bg);
+    background: var(--status-info-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2321,19 +2323,19 @@ body {
 .cf-pagamento-futuro-desc {
     font-size: 14px;
     font-weight: 600;
-    color: var(--cor-texto);
+    color: var(--text-primary);
     margin-bottom: 2px;
 }
 
 .cf-pagamento-futuro-meta {
     font-size: 12px;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
 }
 
 .cf-pagamento-futuro-valor {
     font-size: 16px;
     font-weight: 700;
-    color: var(--cor-primaria);
+    color: var(--brand-primary);
 }
 
 .cf-pagamento-futuro-actions {
@@ -2349,7 +2351,7 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: var(--cor-acento);
+    background: var(--status-success);
     color: white;
     padding: 14px 24px;
     border-radius: var(--radius-sm);
@@ -2388,17 +2390,17 @@ body {
 }
 
 .cf-btn-primary {
-    background: var(--cor-primaria);
+    background: var(--brand-primary);
     color: white;
 }
 
 .cf-btn-primary:hover {
-    background: var(--cor-primaria-dark);
+    filter: brightness(1.1);
     transform: translateY(-1px);
 }
 
 .cf-btn-success {
-    background: var(--cor-acento);
+    background: var(--status-success);
     color: white;
 }
 
@@ -2407,40 +2409,40 @@ body {
 }
 
 .cf-btn-outline {
-    background: var(--cor-card);
-    color: var(--cor-texto-secundario);
-    border: 1px solid var(--cor-borda);
+    background: var(--surface-card);
+    color: var(--text-muted);
+    border: 1px solid var(--border-default);
 }
 
 .cf-btn-outline:hover {
-    background: var(--cor-fundo-secundario);
-    border-color: var(--cor-primaria-light);
+    background: var(--surface-subtle);
+    border-color: var(--border-strong);
 }
 
 .cf-btn-ghost {
     background: transparent;
-    color: var(--cor-texto-secundario);
+    color: var(--text-muted);
     border: none;
 }
 
 .cf-btn-ghost:hover {
-    background: var(--cor-fundo-secundario);
+    background: var(--surface-subtle);
 }
 
 .cf-btn-danger {
-    background: var(--cor-vermelho-bg);
-    color: var(--cor-vermelho);
-    border: 1px solid var(--cor-vermelho-light);
+    background: var(--status-danger-bg);
+    color: var(--status-danger);
+    border: 1px solid var(--status-danger);
 }
 
 .cf-btn-danger:hover {
-    background: var(--cor-vermelho-light);
+    filter: brightness(0.95);
 }
 
 /* Cores específicas por periodicidade */
-.periodo-semanal { background: var(--cor-warning-light); color: #92400e; }
-.periodo-quinzenal { background: var(--cor-warning); color: white; }
-.periodo-mensal { background: var(--cor-info-light); color: #0369a1; }
+.periodo-semanal { background: var(--status-warning-bg); color: var(--status-warning-text); }
+.periodo-quinzenal { background: var(--status-warning); color: white; }
+.periodo-mensal { background: var(--status-info-bg); color: var(--status-info-text); }
 
 /* =====================================================
    AGENDA DE DEMANDAS
