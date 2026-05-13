@@ -8,6 +8,7 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
+import { fetchWithAuthAdmin } from './auth/fetchWithAuthAdmin';
 
 // ===================================================================================
 // CONFIGURAÇÃO
@@ -293,9 +294,8 @@ const Dashboard = () => {
     const fetchDashboard = async () => {
         try {
             setLoading(true);
-            const response = await fetch(
-                `${API_URL_ADMIN}/dashboard?mes=${mesAno.mes}&ano=${mesAno.ano}`,
-                { headers: { 'Authorization': `Bearer ${token}` } }
+            const response = await fetchWithAuthAdmin(
+                `${API_URL_ADMIN}/dashboard?mes=${mesAno.mes}&ano=${mesAno.ano}`
             );
             const data = await response.json();
             setDados(data);
@@ -309,9 +309,8 @@ const Dashboard = () => {
     const fetchAcumulado = async () => {
         try {
             // Buscar todos os anos disponíveis e somar
-            const response = await fetch(
-                `${API_URL_ADMIN}/lancamentos`,
-                { headers: { 'Authorization': `Bearer ${token}` } }
+            const response = await fetchWithAuthAdmin(
+                `${API_URL_ADMIN}/lancamentos`
             );
             const lancamentos = await response.json();
             if (!Array.isArray(lancamentos)) return;
@@ -589,9 +588,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
         if (mes) params.append('mes', mes);
         if (ano) params.append('ano', ano);
 
-        fetch(`${API_URL_ADMIN}/lancamentos?${params}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos?${params}`)
             .then(r => r.json())
             .then(d => setLancamentos(Array.isArray(d) ? d : []))
             .catch(logger.error)
@@ -679,7 +676,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
     const [categorias, setCategorias] = useState([]);
 
     useEffect(() => {
-        fetch(`${API_URL_ADMIN}/categorias`, { headers: { Authorization: `Bearer ${token}` } })
+        fetchWithAuthAdmin(`${API_URL_ADMIN}/categorias`)
             .then(r => r.json()).then(d => setCategorias(Array.isArray(d) ? d : [])).catch(() => {});
     }, [token]);
 
@@ -688,7 +685,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
         try {
             const params = new URLSearchParams({ imovel_id: imovel.id, mes, ano });
             if (tipo) params.append('tipo', tipo);
-            const r = await fetch(`${API_URL_ADMIN}/lancamentos?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+            const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos?${params}`);
             const d = await r.json();
             setLancamentos(Array.isArray(d) ? d : []);
         } catch (e) { logger.error(e); } finally { setLoading(false); }
@@ -698,7 +695,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
 
     const handleDelete = async (id) => {
         if (!await confirmDialog('Remover este lançamento?', { danger: true, confirmText: 'Remover' })) return;
-        await fetch(`${API_URL_ADMIN}/lancamentos/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos/${id}`, { method: 'DELETE' });
         carregar();
     };
 
@@ -861,9 +858,8 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                 data_pagamento: form.data_pagamento || undefined,
             };
             if (comprovanteBase64 !== undefined) payload.comprovante_base64 = comprovanteBase64;
-            const resp = await fetch(`${API_URL_ADMIN}/lancamentos/${lancamento.id}`, {
+            const resp = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos/${lancamento.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify(payload),
             });
             const data = await resp.json();
@@ -1011,9 +1007,7 @@ const Imoveis = () => {
 
     const fetchImoveis = async () => {
         try {
-            const response = await fetch(`${API_URL_ADMIN}/imoveis`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`);
             const data = await response.json();
             setImoveis(data);
         } catch (err) {
@@ -1030,12 +1024,8 @@ const Imoveis = () => {
                 ? `${API_URL_ADMIN}/imoveis/${editando.id}`
                 : `${API_URL_ADMIN}/imoveis`;
             
-            const response = await fetch(url, {
+            const response = await fetchWithAuthAdmin(url, {
                 method: editando ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
                     ...form,
                     valor_aluguel: parseFloat(form.valor_aluguel) || 0,
@@ -1056,9 +1046,8 @@ const Imoveis = () => {
         if (!await confirmDialog('Tem certeza que deseja remover este imóvel?', { danger: true, confirmText: 'Remover' })) return;
         
         try {
-            await fetch(`${API_URL_ADMIN}/imoveis/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${id}`, {
+                method: 'DELETE'
             });
             fetchImoveis();
         } catch (err) {
@@ -1431,9 +1420,9 @@ const Lancamentos = () => {
             if (filtros.tipo) url += `&tipo=${filtros.tipo}`;
 
             const [lancRes, imovRes, catRes] = await Promise.all([
-                fetch(url, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_URL_ADMIN}/imoveis`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_URL_ADMIN}/categorias`, { headers: { 'Authorization': `Bearer ${token}` } })
+                fetchWithAuthAdmin(url),
+                fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`),
+                fetchWithAuthAdmin(`${API_URL_ADMIN}/categorias`)
             ]);
 
             setLancamentos(await lancRes.json());
@@ -1449,12 +1438,8 @@ const Lancamentos = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${API_URL_ADMIN}/lancamentos`, {
+            const response = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
                     ...form,
                     valor: parseFloat(form.valor) || 0,
@@ -1535,13 +1520,9 @@ const Lancamentos = () => {
         
         try {
             // Primeiro marcar como pago
-            const response = await fetch(`${API_URL_ADMIN}/lancamentos/${lancamentoPagar.id}/pagar`, {
+            const response = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos/${lancamentoPagar.id}/pagar`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     data_pagamento: pagamentoForm.data_pagamento,
                     comprovante_url: pagamentoForm.comprovante_base64 || null
                 })
@@ -1564,9 +1545,8 @@ const Lancamentos = () => {
         if (!await confirmDialog('Tem certeza que deseja remover este lançamento?', { danger: true, confirmText: 'Remover' })) return;
 
         try {
-            await fetch(`${API_URL_ADMIN}/lancamentos/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos/${id}`, {
+                method: 'DELETE'
             });
             fetchDados();
         } catch (err) {
@@ -2128,7 +2108,7 @@ const GestaoBoletos = () => {
     const [modalPreview, setModalPreview] = useState(null);
 
     useEffect(() => {
-        fetch(`${API_URL_ADMIN}/imoveis`, { headers: { Authorization: `Bearer ${token}` } })
+        fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`)
             .then(r => r.json()).then(d => { setImoveis(Array.isArray(d) ? d : []); })
             .catch(logger.error);
     }, [token]);
@@ -2141,8 +2121,8 @@ const GestaoBoletos = () => {
                 ? `${API_URL_ADMIN}/imoveis/${imovelId}/boletos`
                 : `${API_URL_ADMIN}/imoveis/${imovelId}/boletos?status=${filtroStatus}`;
             const [bRes, rRes] = await Promise.all([
-                fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/resumo`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetchWithAuthAdmin(url),
+                fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/resumo`),
             ]);
             if (bRes.ok) setBoletos(await bRes.json());
             if (rRes.ok) setResumo(await rRes.json());
@@ -2153,8 +2133,8 @@ const GestaoBoletos = () => {
 
     const marcarPago = async (boletoId) => {
         if (!await confirmDialog('Confirma que este boleto foi pago?', { confirmText: 'Confirmar pagamento' })) return;
-        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/pagar`, {
-            method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/pagar`, {
+            method: 'POST',
             body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
         });
         if (r.ok) { fetchBoletos(); notify.success('Boleto marcado como pago!'); }
@@ -2162,16 +2142,14 @@ const GestaoBoletos = () => {
 
     const deletarBoleto = async (boletoId) => {
         if (!await confirmDialog('Excluir este boleto?', { danger: true, confirmText: 'Excluir' })) return;
-        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}`, {
-            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+        const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}`, {
+            method: 'DELETE'
         });
         if (r.ok) fetchBoletos();
     };
 
     const verPreview = async (boletoId) => {
-        const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/arquivo`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelSelecionado}/boletos/${boletoId}/arquivo`);
         if (r.ok) setModalPreview(await r.json());
         else notify.warning('Boleto não possui arquivo anexado');
     };
@@ -2356,8 +2334,8 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
             setArquivoBase64(base64);
             setExtraindo(true);
             try {
-                const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/extrair-pdf`, {
-                    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos/extrair-pdf`, {
+                    method: 'POST',
                     body: JSON.stringify({ arquivo_base64: base64 })
                 });
                 if (r.ok) {
@@ -2390,8 +2368,8 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
         let sucessos = 0, erros = 0;
         for (let i = 0; i < multiplos.length; i++) {
             const b = multiplos[i];
-            const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
-                method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
+                method: 'POST',
                 body: JSON.stringify({ descricao: `${descBase} - Parcela ${i + 1}/${multiplos.length}`, beneficiario: b.beneficiario || '', codigo_barras: b.codigo_barras || '', valor: b.valor || 0, data_vencimento: b.data_vencimento, arquivo_nome: arquivo?.name, arquivo_base64: arquivoBase64 })
             });
             if (r.ok) sucessos++; else if ((await r.json()).duplicado) {} else erros++;
@@ -2407,8 +2385,8 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
         if (!form.descricao || !form.valor || !form.data_vencimento) { notify.warning('Preencha os campos obrigatórios'); return; }
         setSalvando(true);
         try {
-            const r = await fetch(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
-                method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
+                method: 'POST',
                 body: JSON.stringify({ ...form, valor: parseFloat(form.valor), arquivo_nome: arquivo?.name || null, arquivo_base64: arquivoBase64 })
             });
             if (r.ok) { notify.success('Boleto cadastrado!'); onSave(); }
@@ -2494,8 +2472,8 @@ const Relatorios = () => {
 
     useEffect(() => {
         Promise.all([
-            fetch(`${API_URL_ADMIN}/imoveis`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-            fetch(`${API_URL_ADMIN}/lancamentos`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+            fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`).then(r => r.json()),
+            fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos`).then(r => r.json()),
         ]).then(([imov, lanc]) => {
             setImoveis(Array.isArray(imov) ? imov : []);
             setLancamentos(Array.isArray(lanc) ? lanc : []);
@@ -3051,9 +3029,7 @@ const Usuarios = () => {
 
     const fetchUsuarios = async () => {
         try {
-            const response = await fetch(`${API_URL_ADMIN}/usuarios`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuthAdmin(`${API_URL_ADMIN}/usuarios`);
             if (response.ok) {
                 const data = await response.json();
                 setUsuarios(data);
@@ -3078,12 +3054,8 @@ const Usuarios = () => {
                 ? { nome: form.nome, email: form.email, role: form.role, ...(form.password ? { password: form.password } : {}) }
                 : form;
             
-            const response = await fetch(url, {
+            const response = await fetchWithAuthAdmin(url, {
                 method: editando ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify(body)
             });
 
@@ -3105,9 +3077,8 @@ const Usuarios = () => {
         if (!await confirmDialog('Tem certeza que deseja desativar este usuário?', { danger: true, confirmText: 'Desativar' })) return;
         
         try {
-            await fetch(`${API_URL_ADMIN}/usuarios/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await fetchWithAuthAdmin(`${API_URL_ADMIN}/usuarios/${id}`, {
+                method: 'DELETE'
             });
             fetchUsuarios();
         } catch (err) {
