@@ -577,10 +577,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
         const percentual = servico.percentual_conclusao || 0;
 
-        if (percentual >= 100) return { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅', key: 'concluido' };
-        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️', key: 'atrasado' };
-        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄', key: 'em_andamento' };
-        return { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳', key: 'a_iniciar' };
+        if (percentual >= 100) return { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅', key: 'concluido' };
+        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️', key: 'atrasado' };
+        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄', key: 'em_andamento' };
+        return { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳', key: 'a_iniciar' };
     };
 
     // NOVO: Calcular status EVM simplificado
@@ -593,18 +593,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const diferenca = percentualPago - percentualExecutado;
 
         if (percentualExecutado === 0 && percentualPago === 0) {
-            return { status: 'neutro', label: 'Não iniciado', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' };
+            return { status: 'neutro', label: 'Não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' };
         }
         if (percentualExecutado >= 100 && percentualPago <= 105) {
-            return { status: 'concluido', label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' };
+            return { status: 'concluido', label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' };
         }
         if (diferenca <= -10) {
-            return { status: 'otimo', label: 'Saudável', color: '#10b981', bg: '#d1fae5', icon: '🟢', msg: 'Executou mais do que pagou' };
+            return { status: 'otimo', label: 'Saudável', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '🟢', msg: 'Executou mais do que pagou' };
         }
         if (diferenca <= 5) {
-            return { status: 'normal', label: 'No Prazo', color: '#f59e0b', bg: '#fef3c7', icon: '🟡', msg: 'Pagamento alinhado' };
+            return { status: 'normal', label: 'No Prazo', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: '🟡', msg: 'Pagamento alinhado' };
         }
-        return { status: 'atencao', label: 'Atenção', color: '#ef4444', bg: '#fee2e2', icon: '🔴', msg: 'Pagando mais do que executou' };
+        return { status: 'atencao', label: 'Atenção', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '🔴', msg: 'Pagando mais do que executou' };
     };
 
     const handleGerarPDF = async () => {
@@ -658,10 +658,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     }, [cronograma, servicosPorStatus]);
 
     const statusConfig = {
-        'a_iniciar': { label: 'A Iniciar', color: '#6b7280', bg: '#f3f4f6', icon: '⏳' },
-        'em_andamento': { label: 'Em Andamento', color: '#3b82f6', bg: '#dbeafe', icon: '🔄' },
-        'concluido': { label: 'Concluído', color: '#10b981', bg: '#d1fae5', icon: '✅' },
-        'atrasado': { label: 'Atrasado', color: '#ef4444', bg: '#fee2e2', icon: '⚠️' }
+        'a_iniciar': { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' },
+        'em_andamento': { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄' },
+        'concluido': { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' },
+        'atrasado': { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️' }
     };
 
     const getTimelineRange = useMemo(() => {
@@ -1149,7 +1149,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                     className="mini-progress-fill"
                                                                     style={{ 
                                                                         width: `${percentual}%`,
-                                                                        backgroundColor: percentual >= 100 ? '#10b981' : '#3b82f6'
+                                                                        backgroundColor: percentual >= 100 ? 'var(--status-success)' : 'var(--status-info)'
                                                                     }}
                                                                 ></div>
                                                             </div>
@@ -1199,7 +1199,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                                     className="mini-progress-fill"
                                                                                     style={{ 
                                                                                         width: `${sub.percentual_conclusao}%`,
-                                                                                        backgroundColor: sub.percentual_conclusao >= 100 ? '#10b981' : '#3b82f6'
+                                                                                        backgroundColor: sub.percentual_conclusao >= 100 ? 'var(--status-success)' : 'var(--status-info)'
                                                                                     }}
                                                                                 ></div>
                                                                             </div>

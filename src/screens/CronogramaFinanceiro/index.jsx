@@ -44,7 +44,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         return next;
     });
 
-    const showCronogramaToast = (msg, color = '#10b981') => {
+    const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
         toast.textContent = msg;
         toast.style.cssText = `position:fixed;top:20px;right:20px;background:${color};color:white;padding:15px 25px;border-radius:8px;z-index:10000;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);`;
@@ -698,7 +698,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 {pagamentosServicoPendentes.length > 0 && (
                     <div className="cf-section" style={{ marginBottom: '20px', background: 'var(--status-warning-bg)', border: '2px solid var(--status-warning)' }}>
                         <h3><i className="ti ti-alert-triangle" aria-hidden="true" /> Pagamentos de Serviço Pendentes</h3>
-                        <p style={{ fontSize: '0.9em', color: '#856404', marginBottom: '15px' }}>
+                        <p style={{ fontSize: '0.9em', color: 'var(--status-warning-text)', marginBottom: '15px' }}>
                             Estes são pagamentos vinculados a serviços que ainda não foram quitados totalmente.
                         </p>
                         <table className="tabela-pendencias">
@@ -732,7 +732,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 padding: '3px 8px',
                                                 borderRadius: '12px',
                                                 fontSize: '0.85em',
-                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? '#007bff' : '#28a745',
+                                                backgroundColor: pag.tipo_pagamento === 'Mão de Obra' ? 'var(--status-info)' : 'var(--status-success)',
                                                 color: 'white'
                                             }}>
                                                 {pag.tipo_pagamento}

@@ -555,19 +555,19 @@ const CelulaComProgresso = ({ valorTotal, valorPago, cor, corTexto }) => {
     
     // Calcular percentual
     const percentual = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0;
-    const corBarra = percentual >= 100 ? '#10b981' : cor;
-    
+    const corBarra = percentual >= 100 ? 'var(--status-success)' : cor;
+
     if (!valorTotal || valorTotal === 0) {
         if (!valorPago || valorPago === 0) {
-            return <div style={{ color: '#9ca3af', textAlign: 'center' }}>R$ 0,00</div>;
+            return <div style={{ color: 'var(--text-muted)', textAlign: 'center' }}>R$ 0,00</div>;
         }
         // Tem pagamento mas sem orçamento — mostra o pago em destaque
         return (
             <div style={{ textAlign: 'center' }}>
-                <div style={{ color: '#dc2626', fontWeight: '600', fontSize: '13px' }}>
+                <div style={{ color: 'var(--status-danger)', fontWeight: '600', fontSize: '13px' }}>
                     {formatCurrency(valorPago)}
                 </div>
-                <div style={{ fontSize: '9px', color: '#dc2626', opacity: 0.7 }}>s/ orçamento</div>
+                <div style={{ fontSize: '9px', color: 'var(--status-danger)', opacity: 0.7 }}>s/ orçamento</div>
             </div>
         );
     }
@@ -672,7 +672,7 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
                             onChange={e => setAdicionarOutra(e.target.checked)}
                             style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                         />
-                        <span style={{ fontSize: '14px', color: '#6b7280' }}>Adicionar outra</span>
+                        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Adicionar outra</span>
                     </label>
                     <button 
                         style={{ ...styles.button, ...styles.buttonSecondary }} 
@@ -917,7 +917,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 }}
                                 onBlur={() => setTimeout(() => setAutocomplete(prev => ({...prev, show: false})), 200)}
                             />
-                            {buscando && <span style={{ position: 'absolute', right: 12, top: 12, fontSize: '12px', color: '#9ca3af' }}>Buscando...</span>}
+                            {buscando && <span style={{ position: 'absolute', right: 12, top: 12, fontSize: '12px', color: 'var(--text-muted)' }}>Buscando...</span>}
                             
                             {autocomplete.show && (autocomplete.results.usuario.length > 0 || autocomplete.results.base.length > 0) && (
                                 <div style={styles.autocompleteDropdown}>
@@ -929,11 +929,11 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                                     key={`u-${s.id}`}
                                                     style={styles.autocompleteItem}
                                                     onClick={() => selecionarAutocomplete(s)}
-                                                    onMouseEnter={e => e.target.style.backgroundColor = '#f1f5f9'}
+                                                    onMouseEnter={e => e.target.style.backgroundColor = 'var(--surface-muted)'}
                                                     onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
                                                 >
                                                     <div style={{ fontWeight: '500' }}>{s.descricao}</div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                                         {s.unidade} • {s.tipo_composicao === 'composto' 
                                                             ? formatCurrency(s.preco_unitario)
                                                             : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
@@ -951,11 +951,11 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                                     key={`b-${s.id}`}
                                                     style={styles.autocompleteItem}
                                                     onClick={() => selecionarAutocomplete(s)}
-                                                    onMouseEnter={e => e.target.style.backgroundColor = '#f1f5f9'}
+                                                    onMouseEnter={e => e.target.style.backgroundColor = 'var(--surface-muted)'}
                                                     onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
                                                 >
                                                     <div style={{ fontWeight: '500' }}>{s.descricao}</div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                                         {s.unidade} • {s.tipo_composicao === 'composto' 
                                                             ? formatCurrency(s.preco_unitario)
                                                             : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
@@ -1045,7 +1045,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 ) : (
                                     <input 
                                         type="number" 
-                                        style={{...styles.formInput, backgroundColor: '#fef3c7'}}
+                                        style={{...styles.formInput, backgroundColor: 'var(--status-warning-bg)'}}
                                         value={valorTotalMO}
                                         onChange={e => {
                                             setValorTotalMO(e.target.value);
@@ -1060,7 +1060,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     />
                                 )}
                                 {modoEntradaMO === 'total' && form.preco_mao_obra && (
-                                    <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                         = R$ {parseFloat(form.preco_mao_obra).toFixed(2)}/{form.unidade}
                                     </div>
                                 )}
@@ -1103,7 +1103,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 ) : (
                                     <input 
                                         type="number" 
-                                        style={{...styles.formInput, backgroundColor: '#fef3c7'}}
+                                        style={{...styles.formInput, backgroundColor: 'var(--status-warning-bg)'}}
                                         value={valorTotalMat}
                                         onChange={e => {
                                             setValorTotalMat(e.target.value);
@@ -1118,7 +1118,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     />
                                 )}
                                 {modoEntradaMat === 'total' && form.preco_material && (
-                                    <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                         = R$ {parseFloat(form.preco_material).toFixed(2)}/{form.unidade}
                                     </div>
                                 )}
@@ -1151,12 +1151,12 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 </div>
                             </div>
                             {/* Composto: Não mostra rateio - valor vai direto para "Serviço" */}
-                            <div style={{ 
-                                padding: '8px 12px', 
-                                backgroundColor: '#fef3c7', 
+                            <div style={{
+                                padding: '8px 12px',
+                                backgroundColor: 'var(--status-warning-bg)',
                                 borderRadius: '6px',
                                 fontSize: '12px',
-                                color: '#92400e',
+                                color: 'var(--status-warning-text)',
                                 marginBottom: '8px'
                             }}>
                                 💡 Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)
@@ -1165,21 +1165,21 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                     )}
                     
                     {/* Resumo do Item */}
-                    <div style={{ 
-                        padding: '12px 16px', 
-                        backgroundColor: '#f0fdf4', 
+                    <div style={{
+                        padding: '12px 16px',
+                        backgroundColor: 'var(--status-success-bg)',
                         borderRadius: '8px',
-                        border: '1px solid #bbf7d0',
+                        border: '1px solid var(--status-success)',
                         marginBottom: '16px'
                     }}>
-                        <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--status-success-text)', fontWeight: '600', marginBottom: '4px' }}>
                             📊 TOTAL DO ITEM
                         </div>
-                        <div style={{ fontSize: '20px', fontWeight: '700', color: '#15803d' }}>
+                        <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--status-success-text)' }}>
                             {formatCurrency(calcularTotal())}
                         </div>
                         {form.tipo_composicao === 'separado' && (
-                            <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--status-success-text)', marginTop: '4px' }}>
                                 MO: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_mao_obra) || 0))} | 
                                 Mat: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_material) || 0))}
                             </div>
@@ -1194,7 +1194,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                             checked={form.salvar_biblioteca}
                             onChange={e => setForm({...form, salvar_biblioteca: e.target.checked})}
                         />
-                        <label htmlFor="salvarBiblioteca" style={{ fontSize: '13px', color: '#4b5563', cursor: 'pointer' }}>
+                        <label htmlFor="salvarBiblioteca" style={{ fontSize: '13px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                             Salvar este serviço na minha biblioteca para uso futuro
                         </label>
                     </div>
@@ -1388,14 +1388,14 @@ const uploadStyles = {
         display: 'block',
         fontSize: '13px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '6px'
     },
     formInput: {
         width: '100%',
         padding: '10px 12px',
         borderRadius: '8px',
-        border: '1px solid #d1d5db',
+        border: '1px solid var(--border-default)',
         fontSize: '14px',
         boxSizing: 'border-box'
     },
@@ -1584,7 +1584,7 @@ const uploadStyles = {
     // Justificativa
     justificativa: {
         fontSize: '11px',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         fontStyle: 'italic',
         marginTop: '2px'
     },
@@ -1993,7 +1993,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                     <div style={uploadStyles.modalHeader}>
                         <h2 style={uploadStyles.modalTitle}>
                             🤖 Gerar Orçamento por Planta Baixa
-                            {etapa === 'results' && <span style={{ fontSize: '14px', fontWeight: '400', color: '#64748b' }}> - Revisão</span>}
+                            {etapa === 'results' && <span style={{ fontSize: '14px', fontWeight: '400', color: 'var(--text-muted)' }}> - Revisão</span>}
                         </h2>
                         <button style={uploadStyles.closeBtn} onClick={onClose}>×</button>
                     </div>
@@ -2004,7 +2004,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                         {etapa === 'upload' && (
                             <>
                                 {erro && (
-                                    <div style={{ ...uploadStyles.warningBox, backgroundColor: '#fee2e2', borderColor: '#fca5a5', color: '#dc2626' }}>
+                                    <div style={{ ...uploadStyles.warningBox, backgroundColor: 'var(--status-danger-bg)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}>
                                         ⚠️ {erro}
                                     </div>
                                 )}
@@ -2051,10 +2051,10 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         </div>
                                         
                                         <div style={uploadStyles.previewInfo}>
-                                            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#1e293b' }}>
+                                            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: 'var(--text-primary)' }}>
                                                 📋 Informações adicionais (opcional)
                                             </h3>
-                                            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                                                 Essas informações ajudam a IA a gerar um orçamento mais preciso. Se não souber, deixe em branco.
                                             </p>
                                             
@@ -2146,7 +2146,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                             }}>
                                                 {idx < stepAtual ? '✓' : idx === stepAtual ? '...' : '○'}
                                             </div>
-                                            <span style={{ color: idx <= stepAtual ? '#1e293b' : '#94a3b8' }}>
+                                            <span style={{ color: idx <= stepAtual ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                                                 {step}
                                             </span>
                                         </div>
@@ -2166,7 +2166,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         Os quantitativos foram estimados pela IA com base na análise visual da planta e <strong>devem ser conferidos</strong>.
                                         Este recurso agiliza a montagem inicial do orçamento, mas um engenheiro deve revisar e ajustar os valores.
                                         <br />
-                                        <span style={{ fontSize: '12px', color: '#92400e' }}>💡 Clique na quantidade para editar antes de importar.</span>
+                                        <span style={{ fontSize: '12px', color: 'var(--status-warning-text)' }}>💡 Clique na quantidade para editar antes de importar.</span>
                                     </div>
                                 </div>
                                 
@@ -2208,12 +2208,12 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                             </div>
                                         </div>
                                         
-                                        <div style={{ ...uploadStyles.infoCard, backgroundColor: '#1e293b', color: '#fff' }}>
-                                            <div style={{ ...uploadStyles.infoCardTitle, color: '#94a3b8' }}>Total Selecionado</div>
-                                            <div style={{ ...uploadStyles.infoCardValue, color: '#fff' }}>
+                                        <div style={{ ...uploadStyles.infoCard, backgroundColor: 'var(--brand-primary)', color: 'var(--text-on-dark)' }}>
+                                            <div style={{ ...uploadStyles.infoCardTitle, color: 'var(--text-on-dark-muted)' }}>Total Selecionado</div>
+                                            <div style={{ ...uploadStyles.infoCardValue, color: 'var(--text-on-dark)' }}>
                                                 {formatCurrency(totais.total)}
                                             </div>
-                                            <div style={{ ...uploadStyles.infoCardSubtext, color: '#64748b' }}>
+                                            <div style={{ ...uploadStyles.infoCardSubtext, color: 'var(--text-muted)' }}>
                                                 {totais.itens} itens selecionados
                                             </div>
                                         </div>
@@ -2270,7 +2270,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                                     style={{
                                                                         ...uploadStyles.itemRow,
                                                                         opacity: item.selecionado ? 1 : 0.5,
-                                                                        backgroundColor: item.selecionado ? '#fff' : '#f8fafc'
+                                                                        backgroundColor: item.selecionado ? 'var(--surface-card)' : 'var(--surface-subtle)'
                                                                     }}
                                                                 >
                                                                     <td style={uploadStyles.td}>
@@ -2281,7 +2281,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                                             style={uploadStyles.checkbox}
                                                                         />
                                                                     </td>
-                                                                    <td style={{ ...uploadStyles.td, fontFamily: 'monospace', fontSize: '11px', color: '#64748b' }}>
+                                                                    <td style={{ ...uploadStyles.td, fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>
                                                                         {item.codigo}
                                                                     </td>
                                                                     <td style={uploadStyles.td}>
@@ -2340,7 +2340,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                     
                     {/* Footer */}
                     <div style={uploadStyles.modalFooter}>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                             {etapa === 'upload' && imagem && '✓ Imagem carregada'}
                             {etapa === 'results' && `${totais.itens} itens selecionados`}
                         </div>
@@ -2821,7 +2821,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                     </button>
                     
                     {/* Botões de Excel */}
-                    <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', paddingLeft: '8px', borderLeft: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', paddingLeft: '8px', borderLeft: '1px solid var(--border-subtle)' }}>
                         <button 
                             style={{ ...styles.button, ...styles.buttonSecondary, ...styles.buttonSmall }}
                             onClick={exportarExcel}
@@ -2936,7 +2936,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 <div style={{ ...styles.tableContainer, ...styles.emptyState }}>
                     <i className="ti ti-clipboard-data" aria-hidden="true" style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--text-muted)', display: 'block' }} />
                     <p style={{ fontSize: '16px', marginBottom: '8px' }}>Nenhuma etapa cadastrada</p>
-                    <p style={{ fontSize: '14px', color: '#9ca3af' }}>Clique em "Nova Etapa" para começar</p>
+                    <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Clique em "Nova Etapa" para começar</p>
                 </div>
             ) : (
                 <div style={styles.tableContainer}>
@@ -2989,10 +2989,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                             </td>
                                             <td style={styles.etapaTd}>
                                                 <div style={{ display: 'flex', gap: '4px' }}>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fff', opacity: dados.etapas.indexOf(etapa) === 0 ? 0.3 : 1 }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
+                                                    <button
+                                                        style={{ ...styles.actionBtn, color: 'var(--text-on-dark)', opacity: dados.etapas.indexOf(etapa) === 0 ? 0.3 : 1 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             moverEtapa(etapa.id, 'cima');
                                                         }}
                                                         title="Mover para cima"
@@ -3000,10 +3000,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                     >
                                                         ⬆️
                                                     </button>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fff', opacity: dados.etapas.indexOf(etapa) === dados.etapas.length - 1 ? 0.3 : 1 }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
+                                                    <button
+                                                        style={{ ...styles.actionBtn, color: 'var(--text-on-dark)', opacity: dados.etapas.indexOf(etapa) === dados.etapas.length - 1 ? 0.3 : 1 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             moverEtapa(etapa.id, 'baixo');
                                                         }}
                                                         title="Mover para baixo"
@@ -3011,22 +3011,22 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                     >
                                                         ⬇️
                                                     </button>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fff' }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
+                                                    <button
+                                                        style={{ ...styles.actionBtn, color: 'var(--text-on-dark)' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
                                                             setEtapaParaNovoItem(etapa.id);
-                                                            setShowNovoItem(true); 
+                                                            setShowNovoItem(true);
                                                         }}
                                                         title="Adicionar item"
                                                     >
                                                         ➕
                                                     </button>
-                                                    <button 
-                                                        style={{ ...styles.actionBtn, color: '#fca5a5' }}
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            deletarEtapa(etapa.id); 
+                                                    <button
+                                                        style={{ ...styles.actionBtn, color: 'var(--status-danger)' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deletarEtapa(etapa.id);
                                                         }}
                                                         title="Excluir etapa"
                                                     >
@@ -3042,7 +3042,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 key={item.id}
                                                 style={{
                                                     ...styles.itemRow,
-                                                    backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
+                                                    backgroundColor: idx % 2 === 0 ? 'var(--surface-card)' : 'var(--surface-subtle)',
                                                     cursor: 'pointer'
                                                 }}
                                                 onClick={() => abrirEdicaoItem(item)}
@@ -3052,7 +3052,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 <td style={{ ...styles.td, ...styles.tdDescricao }}>
                                                     {item.descricao}
                                                     {item.tipo_composicao === 'composto' && (
-                                                        <span style={{ ...styles.servicoBadge, backgroundColor: '#fef3c7', color: '#92400e' }}>
+                                                        <span style={{ ...styles.servicoBadge, backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' }}>
                                                             Composto
                                                         </span>
                                                     )}
@@ -3063,39 +3063,39 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
                                                     {item.tipo_composicao === 'composto' ? (
-                                                        <div style={{ color: '#9ca3af' }}>-</div>
+                                                        <div style={{ color: 'var(--text-muted)' }}>-</div>
                                                     ) : (
-                                                        <CelulaComProgresso 
+                                                        <CelulaComProgresso
                                                             valorTotal={item.total_mao_obra}
                                                             valorPago={item.valor_pago_mo || 0}
-                                                            cor="#6366f1"
-                                                            corTexto="#4f46e5"
+                                                            cor="var(--status-info)"
+                                                            corTexto="var(--brand-primary)"
                                                         />
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
                                                     {item.tipo_composicao === 'composto' ? (
-                                                        <div style={{ color: '#9ca3af' }}>-</div>
+                                                        <div style={{ color: 'var(--text-muted)' }}>-</div>
                                                     ) : (
-                                                        <CelulaComProgresso 
+                                                        <CelulaComProgresso
                                                             valorTotal={item.total_material}
                                                             valorPago={item.valor_pago_mat || 0}
-                                                            cor="#f59e0b"
-                                                            corTexto="#10b981"
+                                                            cor="var(--status-warning)"
+                                                            corTexto="var(--status-success)"
                                                         />
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdTotal }}>
                                                     {item.tipo_composicao === 'composto' ? (
-                                                        <div style={{ color: '#8b5cf6', fontWeight: '600' }}>
+                                                        <div style={{ color: 'var(--status-purple-text)', fontWeight: '600' }}>
                                                             {formatCurrency(item.total)}
-                                                            <div style={{ fontSize: '9px', color: '#a78bfa' }}>serviço</div>
+                                                            <div style={{ fontSize: '9px', color: 'var(--status-purple-text)' }}>serviço</div>
                                                         </div>
                                                     ) : (
                                                         formatCurrency(item.total)
                                                     )}
                                                 </td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero, color: '#16a34a', fontWeight: '600' }}>
+                                                <td style={{ ...styles.td, ...styles.tdNumero, color: 'var(--status-success-text)', fontWeight: '600' }}>
                                                     {formatCurrency(item.total_pago)}
                                                 </td>
                                                 <td style={{ ...styles.td, textAlign: 'center' }}>
@@ -3103,15 +3103,15 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                 </td>
                                                 <td style={styles.td} onClick={(e) => e.stopPropagation()}>
                                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                                        <button 
-                                                            style={{ ...styles.actionBtn, color: '#3b82f6' }}
+                                                        <button
+                                                            style={{ ...styles.actionBtn, color: 'var(--status-info)' }}
                                                             onClick={() => abrirEdicaoItem(item)}
                                                             title="Editar item"
                                                         >
                                                             ✏️
                                                         </button>
-                                                        <button 
-                                                            style={{ ...styles.actionBtn, color: '#ef4444' }}
+                                                        <button
+                                                            style={{ ...styles.actionBtn, color: 'var(--status-danger)' }}
                                                             onClick={() => deletarItem(item.id)}
                                                             title="Excluir item"
                                                         >
@@ -3125,14 +3125,14 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                 ))}
                                 
                                 {/* Subtotal */}
-                                <tr style={{ ...styles.subtotalRow, backgroundColor: '#e2e8f0' }}>
+                                <tr style={{ ...styles.subtotalRow, backgroundColor: 'var(--border-subtle)' }}>
                                     <td style={{ ...styles.subtotalTd, fontWeight: '700' }} colSpan={6}>
                                         SUBTOTAL (sem BDI)
                                     </td>
                                     <td style={{ ...styles.subtotalTd, textAlign: 'right', fontWeight: '700' }}>
                                         {formatCurrency(resumoComBdi.subtotal)}
                                     </td>
-                                    <td style={{ ...styles.subtotalTd, textAlign: 'right', fontWeight: '700', color: '#16a34a' }}>
+                                    <td style={{ ...styles.subtotalTd, textAlign: 'right', fontWeight: '700', color: 'var(--status-success-text)' }}>
                                         {formatCurrency(resumoComBdi.total_pago)}
                                     </td>
                                     <td style={{ ...styles.subtotalTd, textAlign: 'center', fontWeight: '700' }}>
@@ -3142,11 +3142,11 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                 </tr>
                                 
                                 {/* BDI */}
-                                <tr style={{ backgroundColor: '#fef3c7' }}>
+                                <tr style={{ backgroundColor: 'var(--status-warning-bg)' }}>
                                     <td style={{ ...styles.td, fontWeight: '600' }} colSpan={6}>
                                         BDI ({bdi}%)
                                     </td>
-                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: '#92400e' }}>
+                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: 'var(--status-warning-text)' }}>
                                         {formatCurrency(resumoComBdi.valor_bdi)}
                                     </td>
                                     <td colSpan={3}></td>
@@ -3158,7 +3158,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                     <td style={{ ...styles.totalTd, textAlign: 'right', fontSize: '16px' }}>
                                         {formatCurrency(resumoComBdi.total_geral)}
                                     </td>
-                                    <td style={{ ...styles.totalTd, textAlign: 'right', color: '#22c55e' }}>
+                                    <td style={{ ...styles.totalTd, textAlign: 'right', color: 'var(--status-success)' }}>
                                         {formatCurrency(resumoComBdi.total_pago)}
                                     </td>
                                     <td style={{ ...styles.totalTd, textAlign: 'center' }}>
@@ -3173,10 +3173,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             )}
 
             {/* Legenda */}
-            <div style={{ 
-                marginTop: '20px', 
-                padding: '16px 20px', 
-                backgroundColor: '#fff', 
+            <div style={{
+                marginTop: '20px',
+                padding: '16px 20px',
+                backgroundColor: 'var(--surface-card)',
                 borderRadius: '12px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                 display: 'flex',

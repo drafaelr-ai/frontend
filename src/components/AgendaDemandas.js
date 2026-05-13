@@ -78,15 +78,15 @@ const styles = {
         color: 'var(--text-muted)'
     },
     buttonSuccess: {
-        backgroundColor: '#10b981',
+        backgroundColor: 'var(--status-success)',
         color: '#fff'
     },
     buttonWarning: {
-        backgroundColor: '#f59e0b',
+        backgroundColor: 'var(--status-warning)',
         color: '#fff'
     },
     buttonDanger: {
-        backgroundColor: '#ef4444',
+        backgroundColor: 'var(--status-danger)',
         color: '#fff'
     },
     card: {
@@ -136,7 +136,7 @@ const styles = {
     kpiValue: {
         fontSize: '28px',
         fontWeight: '700',
-        color: '#1e293b'
+        color: 'var(--text-primary)'
     },
     // Filtros
     filterBar: {
@@ -147,9 +147,9 @@ const styles = {
     },
     filterChip: {
         padding: '8px 16px',
-        backgroundColor: 'white',
-        color: '#64748b',
-        border: '1px solid #e5e7eb',
+        backgroundColor: 'var(--surface-card)',
+        color: 'var(--text-muted)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: '20px',
         fontSize: '13px',
         fontWeight: '500',
@@ -159,7 +159,7 @@ const styles = {
         gap: '6px'
     },
     filterChipActive: {
-        backgroundColor: '#4f46e5',
+        backgroundColor: 'var(--brand-primary)',
         color: 'white',
         border: 'none'
     },
@@ -168,7 +168,7 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         padding: '16px 20px',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--border-subtle)',
         gap: '16px',
         transition: 'background-color 0.2s'
     },
@@ -176,7 +176,7 @@ const styles = {
         width: '44px',
         height: '44px',
         borderRadius: '10px',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -189,7 +189,7 @@ const styles = {
     demandaTitle: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         marginBottom: '4px',
         display: 'flex',
         alignItems: 'center',
@@ -198,7 +198,7 @@ const styles = {
     },
     demandaMeta: {
         fontSize: '12px',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         display: 'flex',
         gap: '12px',
         flexWrap: 'wrap'
@@ -206,7 +206,7 @@ const styles = {
     demandaValor: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#059669',
+        color: 'var(--status-success-text)',
         minWidth: '100px',
         textAlign: 'right'
     },
@@ -223,32 +223,32 @@ const styles = {
         fontWeight: '600'
     },
     badgePagamento: {
-        backgroundColor: '#dbeafe',
-        color: '#1e40af'
+        backgroundColor: 'var(--status-info-bg)',
+        color: 'var(--status-info-text)'
     },
     badgeOrcamento: {
-        backgroundColor: '#fef3c7',
-        color: '#92400e'
+        backgroundColor: 'var(--status-warning-bg)',
+        color: 'var(--status-warning-text)'
     },
     badgeCronograma: {
-        backgroundColor: '#dbeafe',
-        color: '#1e40af'
+        backgroundColor: 'var(--status-info-bg)',
+        color: 'var(--status-info-text)'
     },
     badgeManual: {
-        backgroundColor: '#f3e8ff',
-        color: '#7c3aed'
+        backgroundColor: 'var(--status-purple-bg)',
+        color: 'var(--status-purple-text)'
     },
     badgeAguardando: {
-        backgroundColor: '#fef3c7',
-        color: '#92400e'
+        backgroundColor: 'var(--status-warning-bg)',
+        color: 'var(--status-warning-text)'
     },
     badgeConcluido: {
-        backgroundColor: '#d1fae5',
-        color: '#065f46'
+        backgroundColor: 'var(--status-success-bg)',
+        color: 'var(--status-success-text)'
     },
     badgeAtrasado: {
-        backgroundColor: '#fee2e2',
-        color: '#991b1b'
+        backgroundColor: 'var(--status-danger-bg)',
+        color: 'var(--status-danger-text)'
     },
     // Seções
     section: {
@@ -257,7 +257,7 @@ const styles = {
     sectionTitle: {
         fontSize: '16px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '12px',
         display: 'flex',
         alignItems: 'center',
@@ -265,8 +265,8 @@ const styles = {
     },
     // Alert banner
     alertBanner: {
-        backgroundColor: '#fef2f2',
-        border: '1px solid #fecaca',
+        backgroundColor: 'var(--status-danger-bg)',
+        border: '1px solid var(--status-danger)',
         borderRadius: '12px',
         padding: '16px 20px',
         marginBottom: '20px',
@@ -275,8 +275,8 @@ const styles = {
         gap: '12px'
     },
     infoBanner: {
-        backgroundColor: '#eff6ff',
-        border: '1px solid #bfdbfe',
+        backgroundColor: 'var(--status-info-bg)',
+        border: '1px solid var(--status-info)',
         borderRadius: '12px',
         padding: '16px 20px',
         marginBottom: '20px',
@@ -296,12 +296,12 @@ const styles = {
     emptyTitle: {
         fontSize: '18px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '8px'
     },
     emptyText: {
         fontSize: '14px',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         marginBottom: '24px'
     },
     // Modal
@@ -319,7 +319,7 @@ const styles = {
         padding: '20px'
     },
     modal: {
-        backgroundColor: 'white',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         maxWidth: '700px',
         width: '100%',
@@ -329,7 +329,7 @@ const styles = {
         flexDirection: 'column'
     },
     modalSmall: {
-        backgroundColor: 'white',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         maxWidth: '500px',
         width: '100%',
@@ -338,7 +338,7 @@ const styles = {
     },
     modalHeader: {
         padding: '20px 24px',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -346,7 +346,7 @@ const styles = {
     modalTitle: {
         fontSize: '18px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         margin: 0,
         display: 'flex',
         alignItems: 'center',
@@ -359,7 +359,7 @@ const styles = {
     },
     modalFooter: {
         padding: '16px 24px',
-        borderTop: '1px solid #e5e7eb',
+        borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'flex-end',
         gap: '12px'
@@ -369,19 +369,19 @@ const styles = {
         border: 'none',
         fontSize: '24px',
         cursor: 'pointer',
-        color: '#9ca3af'
+        color: 'var(--text-muted)'
     },
     // Tabs
     tabs: {
         display: 'flex',
-        borderBottom: '2px solid #e5e7eb',
-        backgroundColor: '#f8fafc'
+        borderBottom: '2px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-subtle)'
     },
     tab: {
         flex: 1,
         padding: '16px 24px',
         backgroundColor: 'transparent',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         border: 'none',
         borderBottom: '2px solid transparent',
         marginBottom: '-2px',
@@ -394,8 +394,8 @@ const styles = {
         gap: '8px'
     },
     tabActive: {
-        color: '#4f46e5',
-        borderBottom: '2px solid #4f46e5'
+        color: 'var(--brand-primary)',
+        borderBottom: '2px solid var(--brand-primary)'
     },
     // Form
     formGroup: {
@@ -405,13 +405,13 @@ const styles = {
         display: 'block',
         fontSize: '13px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '6px'
     },
     input: {
         width: '100%',
         padding: '12px',
-        border: '2px solid #e5e7eb',
+        border: '2px solid var(--border-subtle)',
         borderRadius: '8px',
         fontSize: '14px',
         boxSizing: 'border-box',
@@ -420,12 +420,12 @@ const styles = {
     inputDisabled: {
         width: '100%',
         padding: '12px',
-        border: '2px solid #e5e7eb',
+        border: '2px solid var(--border-subtle)',
         borderRadius: '8px',
         fontSize: '14px',
         boxSizing: 'border-box',
-        backgroundColor: '#f8fafc',
-        color: '#64748b'
+        backgroundColor: 'var(--surface-subtle)',
+        color: 'var(--text-muted)'
     },
     formRow: {
         display: 'grid',
@@ -434,12 +434,12 @@ const styles = {
     },
     searchBox: {
         padding: '16px 24px',
-        borderBottom: '1px solid #e5e7eb'
+        borderBottom: '1px solid var(--border-subtle)'
     },
     searchInput: {
         width: '100%',
         padding: '12px 16px',
-        border: '2px solid #e5e7eb',
+        border: '2px solid var(--border-subtle)',
         borderRadius: '8px',
         fontSize: '14px',
         boxSizing: 'border-box'
@@ -449,7 +449,7 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         padding: '16px 24px',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--border-subtle)',
         cursor: 'pointer',
         transition: 'background-color 0.2s',
         gap: '16px'
@@ -458,7 +458,7 @@ const styles = {
         width: '44px',
         height: '44px',
         borderRadius: '10px',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -470,12 +470,12 @@ const styles = {
     listTitle: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--text-primary)',
         marginBottom: '4px'
     },
     listMeta: {
         fontSize: '12px',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         display: 'flex',
         gap: '12px',
         flexWrap: 'wrap'
@@ -483,13 +483,13 @@ const styles = {
     listValor: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#059669',
+        color: 'var(--status-success-text)',
         minWidth: '100px',
         textAlign: 'right'
     },
     listAction: {
         padding: '8px 16px',
-        backgroundColor: '#4f46e5',
+        backgroundColor: 'var(--brand-primary)',
         color: 'white',
         border: 'none',
         borderRadius: '6px',
@@ -499,8 +499,8 @@ const styles = {
     },
     // Highlight
     highlightField: {
-        backgroundColor: '#fef3c7',
-        border: '2px solid #fbbf24',
+        backgroundColor: 'var(--status-warning-bg)',
+        border: '2px solid var(--status-warning)',
         borderRadius: '8px',
         padding: '16px',
         marginTop: '20px'
@@ -508,13 +508,13 @@ const styles = {
     highlightLabel: {
         fontSize: '11px',
         fontWeight: '700',
-        color: '#92400e',
+        color: 'var(--status-warning-text)',
         textTransform: 'uppercase',
         marginBottom: '12px'
     },
     importedBox: {
-        backgroundColor: '#f0fdf4',
-        border: '2px solid #86efac',
+        backgroundColor: 'var(--status-success-bg)',
+        border: '2px solid var(--status-success)',
         borderRadius: '8px',
         padding: '12px 16px',
         marginBottom: '20px',
@@ -524,7 +524,7 @@ const styles = {
     },
     // Info Box
     infoBox: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         borderRadius: '12px',
         padding: '16px',
         marginBottom: '20px'
@@ -536,11 +536,11 @@ const styles = {
         fontSize: '14px'
     },
     infoLabel: {
-        color: '#64748b'
+        color: 'var(--text-muted)'
     },
     infoValue: {
         fontWeight: '600',
-        color: '#1e293b'
+        color: 'var(--text-primary)'
     }
 };
 
@@ -1029,7 +1029,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     if (error) {
         return (
             <div style={styles.container}>
-                <div style={{ textAlign: 'center', padding: '60px', color: '#dc2626' }}>
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--status-danger)' }}>
                     <div style={{ fontSize: '24px', marginBottom: '16px' }}>❌</div>
                     <div>{error}</div>
                     <button 
@@ -1152,12 +1152,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {/* Hoje */}
             {eventosHoje.length > 0 && (filtro === 'todos' || filtro === 'hoje' || filtro === 'semana') && (
                 <div style={styles.section}>
-                    <h3 style={{ ...styles.sectionTitle, color: '#dc2626' }}>🔴 Hoje</h3>
+                    <h3 style={{ ...styles.sectionTitle, color: 'var(--status-danger)' }}>🔴 Hoje</h3>
                     <div style={styles.card}>
                         {eventosHoje.map(demanda => (
-                            <div 
-                                key={demanda.id} 
-                                style={{ ...styles.demandaItem, backgroundColor: '#fef2f2', cursor: 'pointer' }}
+                            <div
+                                key={demanda.id}
+                                style={{ ...styles.demandaItem, backgroundColor: 'var(--status-danger-bg)', cursor: 'pointer' }}
                                 onClick={() => abrirModalEditar(demanda)}
                             >
                                 <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
@@ -1476,8 +1476,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         <div style={{ ...styles.modalBody, padding: 0, maxHeight: '400px' }}>
                             {abaImportar === 'pagamentos' ? (
                                 pagamentosFiltrados.length === 0 ? (
-                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                                        {pagamentosImportar.length === 0 
+                                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        {pagamentosImportar.length === 0
                                             ? 'Nenhum pagamento de material disponível para importar'
                                             : 'Nenhum resultado encontrado'
                                         }
@@ -1487,7 +1487,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         <div key={item.id} style={styles.listItem}>
                                             <div style={{ 
                                                 ...styles.listIcon, 
-                                                backgroundColor: item.tipo === 'material' ? '#d1fae5' : item.tipo === 'mao_de_obra' ? '#dbeafe' : '#fef3c7'
+                                                backgroundColor: item.tipo === 'material' ? 'var(--status-success-bg)' : item.tipo === 'mao_de_obra' ? 'var(--status-info-bg)' : 'var(--status-warning-bg)'
                                             }}>
                                                 {item.tipo === 'material' ? '📦' : item.tipo === 'mao_de_obra' ? '👷' : '💳'}
                                             </div>
@@ -1498,18 +1498,18 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                                         <span style={{ 
                                                             marginLeft: '8px', 
                                                             fontSize: '10px', 
-                                                            background: '#fef3c7', 
-                                                            color: '#92400e',
+                                                            background: 'var(--status-warning-bg)',
+                                                            color: 'var(--status-warning-text)',
                                                             padding: '2px 6px',
                                                             borderRadius: '4px'
                                                         }}>Futuro</span>
                                                     )}
                                                     {item.fonte === 'pagamento_parcelado' && (
-                                                        <span style={{ 
-                                                            marginLeft: '8px', 
-                                                            fontSize: '10px', 
-                                                            background: '#e0e7ff', 
-                                                            color: '#3730a3',
+                                                        <span style={{
+                                                            marginLeft: '8px',
+                                                            fontSize: '10px',
+                                                            background: 'var(--status-purple-bg)',
+                                                            color: 'var(--status-purple-text)',
                                                             padding: '2px 6px',
                                                             borderRadius: '4px'
                                                         }}>Parcelado</span>
@@ -1520,7 +1520,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                                     <span>👤 {item.fornecedor || '-'}</span>
                                                     <span>📅 {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : formatDate(item.data_pagamento)}</span>
                                                     <span style={{ 
-                                                        color: item.status === 'Pago' ? '#059669' : item.status === 'Previsto' ? '#d97706' : '#6b7280'
+                                                        color: item.status === 'Pago' ? 'var(--status-success-text)' : item.status === 'Previsto' ? 'var(--status-warning-text)' : 'var(--status-neutral)'
                                                     }}>
                                                         {item.status === 'Pago' ? '✅' : item.status === 'Previsto' ? '⏳' : '📋'} {item.status}
                                                     </span>
@@ -1538,8 +1538,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 )
                             ) : abaImportar === 'orcamento' ? (
                                 orcamentoFiltrados.length === 0 ? (
-                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                                        {orcamentoImportar.length === 0 
+                                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        {orcamentoImportar.length === 0
                                             ? 'Nenhum item do orçamento disponível para importar'
                                             : 'Nenhum resultado encontrado'
                                         }
@@ -1547,7 +1547,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     orcamentoFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: '#fef3c7' }}>📋</div>
+                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-warning-bg)' }}>📋</div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>{item.descricao}</div>
                                                 <div style={styles.listMeta}>
@@ -1567,8 +1567,8 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 )
                             ) : abaImportar === 'cronograma' ? (
                                 servicosFiltrados.length === 0 ? (
-                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                                        {servicosImportar.length === 0 
+                                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        {servicosImportar.length === 0
                                             ? 'Nenhum serviço com data de início disponível'
                                             : 'Nenhum resultado encontrado'
                                         }
@@ -1576,7 +1576,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     servicosFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: '#dbeafe' }}>🔧</div>
+                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-info-bg)' }}>🔧</div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>{item.nome}</div>
                                                 <div style={styles.listMeta}>
@@ -1585,7 +1585,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                                     {item.responsavel && <span>👤 {item.responsavel}</span>}
                                                 </div>
                                             </div>
-                                            <div style={{ ...styles.listValor, color: '#3b82f6' }}>
+                                            <div style={{ ...styles.listValor, color: 'var(--status-info)' }}>
                                                 {item.status || 'A Iniciar'}
                                             </div>
                                             <button 
@@ -1625,10 +1625,10 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             <div style={styles.importedBox}>
                                 <span style={{ fontSize: '24px' }}>✅</span>
                                 <div>
-                                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#166534' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--status-success-text)' }}>
                                         Dados importados de {showModalConfirmar === 'pagamento' ? 'Pagamento' : showModalConfirmar === 'orcamento' ? 'Orçamento' : 'Cronograma'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#15803d' }}>
+                                    <div style={{ fontSize: '12px', color: 'var(--status-success-text)' }}>
                                         Campos preenchidos automaticamente
                                     </div>
                                 </div>
@@ -1688,7 +1688,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         <label style={styles.label}>📅 Data *</label>
                                         <input 
                                             type="date" 
-                                            style={{ ...styles.input, borderColor: formImportar.data_prevista ? '#10b981' : '#fbbf24' }}
+                                            style={{ ...styles.input, borderColor: formImportar.data_prevista ? 'var(--status-success)' : 'var(--status-warning)' }}
                                             value={formImportar.data_prevista}
                                             onChange={(e) => setFormImportar({...formImportar, data_prevista: e.target.value})}
                                         />
@@ -1843,10 +1843,10 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             {/* Info de origem */}
                             <div style={{ 
                                 padding: '12px', 
-                                background: '#f1f5f9', 
+                                background: 'var(--surface-muted)',
                                 borderRadius: '8px',
                                 fontSize: '12px',
-                                color: '#64748b',
+                                color: 'var(--text-muted)',
                                 marginTop: '8px'
                             }}>
                                 <span>Origem: {showModalEditar.origem === 'manual' ? '✍️ Manual' : showModalEditar.origem === 'pagamento' ? '💳 Pagamento' : showModalEditar.origem === 'cronograma' ? '🔧 Cronograma' : '📋 Orçamento'}</span>

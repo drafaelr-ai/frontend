@@ -342,19 +342,19 @@ const GanttChart = ({ cronograma }) => {
     
     // Cor da barra baseada no status
     const getCorBarra = (etapa) => {
-        if (etapa.percentual >= 100) return '#10b981'; // Verde - concluído
-        
+        if (etapa.percentual >= 100) return 'var(--status-success)';
+
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const dataFim = etapa.dataFim ? new Date(etapa.dataFim + 'T00:00:00') : null;
-        
+
         if (dataFim && hoje > dataFim && etapa.percentual < 100) {
-            return '#ef4444'; // Vermelho - atrasado
+            return 'var(--status-danger)';
         }
-        
-        if (etapa.percentual > 0) return '#3b82f6'; // Azul - em andamento
-        
-        return '#94a3b8'; // Cinza - não iniciado
+
+        if (etapa.percentual > 0) return 'var(--status-info)';
+
+        return 'var(--status-neutral)';
     };
     
     if (todasEtapas.length === 0) {
@@ -488,10 +488,10 @@ const GanttChart = ({ cronograma }) => {
             
             {/* Legenda */}
             <div className="gantt-legend">
-                <span><i style={{ background: '#10b981' }}></i> Concluído</span>
-                <span><i style={{ background: '#3b82f6' }}></i> Em Andamento</span>
-                <span><i style={{ background: '#94a3b8' }}></i> Não Iniciado</span>
-                <span><i style={{ background: '#ef4444' }}></i> Atrasado</span>
+                <span><i style={{ background: 'var(--status-success)' }}></i> Concluído</span>
+                <span><i style={{ background: 'var(--status-info)' }}></i> Em Andamento</span>
+                <span><i style={{ background: 'var(--status-neutral)' }}></i> Não Iniciado</span>
+                <span><i style={{ background: 'var(--status-danger)' }}></i> Atrasado</span>
                 <span><i className="today-marker"></i> Hoje</span>
             </div>
         </div>

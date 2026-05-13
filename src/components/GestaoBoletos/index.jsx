@@ -139,11 +139,11 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     // Renderizar card de boleto
     const renderBoletoCard = (boleto, urgencia = 'normal') => {
         const cores = {
-            vencido: { bg: '#ffebee', border: '#ef5350', badge: '#d32f2f' },
-            urgente: { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
-            proximo: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
-            normal: { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
-            pago: { bg: '#e8f5e9', border: '#4caf50', badge: '#388e3c' }
+            vencido: { bg: 'var(--status-danger-bg)', border: 'var(--status-danger)', badge: 'var(--status-danger-text)' },
+            urgente: { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
+            proximo: { bg: 'var(--brand-accent-soft)', border: 'var(--brand-accent)', badge: 'var(--brand-accent)' },
+            normal: { bg: 'var(--surface-muted)', border: 'var(--border-subtle)', badge: 'var(--text-muted)' },
+            pago: { bg: 'var(--status-success-bg)', border: 'var(--status-success)', badge: 'var(--status-success-text)' }
         };
         const cor = cores[urgencia];
 
@@ -201,15 +201,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         </div>
                     </div>
                     <div>
-                        <span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span>
-                        <div style={{ fontWeight: 'bold', color: '#1976d2', fontSize: '1.1em' }}>
+                        <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Valor</span>
+                        <div style={{ fontWeight: 'bold', color: 'var(--brand-primary)', fontSize: '1.1em' }}>
                             {formatCurrency(boleto.valor)}
                         </div>
                     </div>
                     {boleto.data_pagamento && (
                         <div>
-                            <span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span>
-                            <div style={{ fontWeight: 'bold', color: '#388e3c' }}>
+                            <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Pago em</span>
+                            <div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>
                                 {new Date(boleto.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </div>
                         </div>
@@ -239,7 +239,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             onClick={() => copiarCodigo(boleto.codigo_barras)}
                             style={{
                                 padding: '8px 15px',
-                                background: '#4caf50',
+                                background: 'var(--status-success)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '5px',
@@ -256,7 +256,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             onClick={() => verPreview(boleto.id)}
                             style={{
                                 padding: '8px 15px',
-                                background: '#2196f3',
+                                background: 'var(--status-info)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '5px',
@@ -273,7 +273,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             onClick={() => marcarPago(boleto.id)}
                             style={{
                                 padding: '8px 15px',
-                                background: '#ff9800',
+                                background: 'var(--status-warning)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '5px',
@@ -289,7 +289,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         onClick={() => deletarBoleto(boleto.id)}
                         style={{
                             padding: '8px 15px',
-                            background: '#f44336',
+                            background: 'var(--status-danger)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '5px',
@@ -480,7 +480,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 height: '100%',
-                                background: '#f5f5f5',
+                                background: 'var(--surface-muted)',
                                 borderRadius: '5px'
                             }}>
                                 <p>Seu navegador não suporta visualização de PDF.</p>
@@ -489,7 +489,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                     download={modalPreview.arquivo_nome || 'boleto.pdf'}
                                     style={{
                                         padding: '10px 20px',
-                                        background: '#1976d2',
+                                        background: 'var(--brand-primary)',
                                         color: 'white',
                                         textDecoration: 'none',
                                         borderRadius: '5px',
@@ -507,7 +507,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             download={modalPreview.arquivo_nome || 'boleto.pdf'}
                             style={{
                                 padding: '10px 20px',
-                                background: '#4caf50',
+                                background: 'var(--status-success)',
                                 color: 'white',
                                 textDecoration: 'none',
                                 borderRadius: '5px',

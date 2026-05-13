@@ -803,19 +803,19 @@ const totalOrcamentosPendentes = useMemo(() => {
                 justifyContent: 'center', 
                 alignItems: 'center', 
                 height: '100vh',
-                background: 'var(--cor-fundo, #f5f5f5)'
+                background: 'var(--surface-subtle)'
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div className="loading-spinner" style={{
                         width: '50px',
                         height: '50px',
-                        border: '4px solid #e0e0e0',
-                        borderTop: '4px solid var(--cor-primaria, #6c5ce7)',
+                        border: '4px solid var(--border-subtle)',
+                        borderTop: '4px solid var(--brand-primary)',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite',
                         margin: '0 auto 15px'
                     }} />
-                    <p style={{ color: '#666' }}>Carregando...</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Carregando...</p>
                 </div>
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
             </div>
@@ -853,7 +853,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <button 
                             onClick={() => setCurrentPage('bi')} 
                             className="export-btn" 
-                            style={{marginRight: '10px', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6'}}
+                            style={{marginRight: '10px', backgroundColor: 'var(--status-purple-text)', borderColor: 'var(--status-purple-text)'}}
                         >
                             ?? BI Dashboard
                         </button>
@@ -871,7 +871,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 Gerenciar Usuários
                             </button>
                         )}
-                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: '#6c757d'}}>Sair (Logout)</button>
+                        <button onClick={logout} className="voltar-btn" style={{backgroundColor: 'var(--status-neutral)'}}>Sair (Logout)</button>
                     </div>
                 </header>
 
@@ -899,7 +899,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         alignItems: 'center', 
                         gap: '8px',
                         cursor: 'pointer',
-                        color: 'var(--cor-texto-secundario)',
+                        color: 'var(--text-muted)',
                         fontSize: '0.9em'
                     }}>
                         <input 
@@ -920,7 +920,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                 className="card-obra"
                                 style={{
                                     opacity: obra.concluida ? 0.7 : 1,
-                                    border: obra.concluida ? '2px solid #22c55e' : undefined,
+                                    border: obra.concluida ? '2px solid var(--status-success)' : undefined,
                                     position: 'relative'
                                 }}
                             >
@@ -929,8 +929,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         position: 'absolute',
                                         top: '10px',
                                         left: '10px',
-                                        backgroundColor: '#22c55e',
-                                        color: 'white',
+                                        backgroundColor: 'var(--status-success)',
+                                        color: 'var(--text-on-dark)',
                                         padding: '2px 8px',
                                         borderRadius: '4px',
                                         fontSize: '0.75em',
@@ -975,25 +975,25 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     <div className="obra-kpi-summary">
                                         <div>
                                             <span>Orçamento Total</span>
-                                            <strong style={{ color: 'var(--cor-vermelho)' }}>
+                                            <strong style={{ color: 'var(--status-danger)' }}>
                                                 {formatCurrency(obra.orcamento_total || 0)}
                                             </strong>
                                         </div>
                                         <div>
                                             <span>Valores Pagos</span>
-                                            <strong style={{ color: 'var(--cor-primaria)' }}>
+                                            <strong style={{ color: 'var(--brand-primary)' }}>
                                                 {formatCurrency(obra.total_pago || 0)}
                                             </strong>
                                         </div>
                                         <div>
                                             <span>Liberado (Fila)</span>
-                                            <strong style={{ color: 'var(--cor-acento)' }}>
+                                            <strong style={{ color: 'var(--status-success)' }}>
                                                 {formatCurrency(obra.liberado_pagamento || 0)}
                                             </strong>
                                         </div>
                                         <div>
                                             <span>Despesas Extras</span>
-                                            <strong style={{ color: '#9333ea' }}>
+                                            <strong style={{ color: 'var(--status-purple-text)' }}>
                                                 {formatCurrency(obra.despesas_extras || 0)}
                                             </strong>
                                         </div>
