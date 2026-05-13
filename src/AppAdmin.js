@@ -354,12 +354,12 @@ const Dashboard = () => {
                 <h1 style={styles.pageTitle}>📊 Dashboard</h1>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {/* Toggle Modo */}
-                    <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
                         {[['mes', '📅 Mensal'], ['acumulado', '📊 Acumulado']].map(([m, label]) => (
                             <button key={m} onClick={() => setModo(m)} style={{
                                 padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
-                                background: modo === m ? '#1e293b' : '#fff',
-                                color: modo === m ? '#fff' : '#64748b',
+                                background: modo === m ? 'var(--surface-dark-soft)' : 'var(--surface-card)',
+                                color: modo === m ? 'var(--surface-card)' : 'var(--status-neutral)',
                                 transition: 'all 0.15s'
                             }}>{label}</button>
                         ))}
@@ -543,13 +543,13 @@ const Dashboard = () => {
                                         <td style={styles.td}>
                                             <span style={{
                                                 ...styles.badge,
-                                                backgroundColor: lanc.tipo === 'receita' ? '#dcfce7' : '#fee2e2',
-                                                color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626'
+                                                backgroundColor: lanc.tipo === 'receita' ? '#dcfce7' : 'var(--status-danger-bg)',
+                                                color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)'
                                             }}>
                                                 {lanc.tipo === 'receita' ? '↑ Receita' : '↓ Despesa'}
                                             </span>
                                         </td>
-                                        <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626', fontWeight: '600' }}>
+                                        <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)', fontWeight: '600' }}>
                                             {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
                                         </td>
                                     </tr>
@@ -600,43 +600,43 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
              onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '860px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ background: 'var(--surface-card)', borderRadius: '16px', width: '100%', maxWidth: '860px', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
                 {/* Header */}
-                <div style={{ padding: '18px 24px', background: '#1e293b', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '18px 24px', background: 'var(--surface-dark-soft)', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h2 style={{ margin: 0, color: '#fff', fontSize: '17px', fontWeight: 700 }}>📋 {titulo}</h2>
-                        <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '13px' }}>{lancamentos.length} lançamentos · Total: {formatCurrency(total)}</p>
+                        <h2 style={{ margin: 0, color: 'var(--surface-card)', fontSize: '17px', fontWeight: 700 }}>📋 {titulo}</h2>
+                        <p style={{ margin: '2px 0 0', color: 'var(--border-strong)', fontSize: '13px' }}>{lancamentos.length} lançamentos · Total: {formatCurrency(total)}</p>
                     </div>
-                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--surface-card)', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
                 </div>
 
                 {/* Tabela */}
                 <div style={{ overflow: 'auto', flex: 1 }}>
                     {loading ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Carregando...</div>
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--status-neutral)' }}>Carregando...</div>
                     ) : lancamentos.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Nenhum lançamento encontrado.</div>
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--border-strong)' }}>Nenhum lançamento encontrado.</div>
                     ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
+                                <tr style={{ background: 'var(--surface-subtle)', borderBottom: '2px solid var(--border-subtle)' }}>
                                     {['Data', 'Imóvel', 'Categoria', 'Descrição', 'Status', 'Valor'].map(h =>
-                                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#475569', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                                     )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {lancamentos.map(l => (
-                                    <tr key={l.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '10px 14px', color: '#64748b', whiteSpace: 'nowrap' }}>{formatDate(l.data_lancamento)}</td>
-                                        <td style={{ padding: '10px 14px', color: '#475569', fontSize: '13px' }}>{l.imovel_nome}</td>
+                                    <tr key={l.id} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
+                                        <td style={{ padding: '10px 14px', color: 'var(--status-neutral)', whiteSpace: 'nowrap' }}>{formatDate(l.data_lancamento)}</td>
+                                        <td style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: '13px' }}>{l.imovel_nome}</td>
                                         <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{l.categoria_icone} {l.categoria_nome}</td>
-                                        <td style={{ padding: '10px 14px', maxWidth: '220px', color: '#1e293b' }}>{l.descricao}</td>
+                                        <td style={{ padding: '10px 14px', maxWidth: '220px', color: 'var(--surface-dark-soft)' }}>{l.descricao}</td>
                                         <td style={{ padding: '10px 14px' }}>
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-                                                background: l.status === 'pago' ? '#dcfce7' : l.status === 'cancelado' ? '#f1f5f9' : '#fef3c7',
-                                                color: l.status === 'pago' ? '#166534' : l.status === 'cancelado' ? '#94a3b8' : '#92400e',
+                                                background: l.status === 'pago' ? '#dcfce7' : l.status === 'cancelado' ? 'var(--surface-muted)' : 'var(--status-warning-bg)',
+                                                color: l.status === 'pago' ? '#166534' : l.status === 'cancelado' ? 'var(--border-strong)' : '#92400e',
                                             }}>
                                                 {l.status === 'pago' ? '✓ Pago' : l.status === 'cancelado' ? 'Cancelado' : '⏳ Pendente'}
                                             </span>
@@ -651,8 +651,8 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                     )}
                 </div>
 
-                <div style={{ padding: '14px 24px', borderTop: '1px solid #e5e7eb', background: '#f8fafc', borderRadius: '0 0 16px 16px', textAlign: 'right' }}>
-                    <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
+                <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--surface-subtle)', borderRadius: '0 0 16px 16px', textAlign: 'right' }}>
+                    <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--surface-card)', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
                         Fechar
                     </button>
                 </div>
@@ -711,17 +711,17 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
         <>
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:1050, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
              onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{ background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'960px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ background:'var(--surface-card)', borderRadius:'16px', width:'100%', maxWidth:'960px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
                 {/* Header */}
-                <div style={{ padding:'18px 24px', background:'#1e293b', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ padding:'18px 24px', background:'var(--surface-dark-soft)', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                     <div>
-                        <h2 style={{ margin:0, color:'#fff', fontSize:'17px', fontWeight:700 }}>📋 Lançamentos — {imovel.nome}</h2>
-                        <p style={{ margin:'2px 0 0', color:'#94a3b8', fontSize:'13px' }}>{imovel.status === 'proprio' ? '🏠 Imóvel próprio' : imovel.status}</p>
+                        <h2 style={{ margin:0, color:'var(--surface-card)', fontSize:'17px', fontWeight:700 }}>📋 Lançamentos — {imovel.nome}</h2>
+                        <p style={{ margin:'2px 0 0', color:'var(--border-strong)', fontSize:'13px' }}>{imovel.status === 'proprio' ? '🏠 Imóvel próprio' : imovel.status}</p>
                     </div>
-                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', borderRadius:'8px', width:'34px', height:'34px', cursor:'pointer', fontSize:'18px' }}>×</button>
+                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'var(--surface-card)', borderRadius:'8px', width:'34px', height:'34px', cursor:'pointer', fontSize:'18px' }}>×</button>
                 </div>
                 {/* Filtros */}
-                <div style={{ padding:'12px 24px', background:'#f8fafc', borderBottom:'1px solid #e5e7eb', display:'flex', gap:'10px', flexWrap:'wrap' }}>
+                <div style={{ padding:'12px 24px', background:'var(--surface-subtle)', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'10px', flexWrap:'wrap' }}>
                     <select value={mes} onChange={e => setMes(Number(e.target.value))} style={styles.select}>
                         {mesesNomes.map((m,i) => <option key={i+1} value={i+1}>{m}</option>)}
                     </select>
@@ -735,17 +735,17 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                     </select>
                 </div>
                 {/* Resumo */}
-                <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid #e5e7eb', display:'flex', gap:'24px', alignItems:'center' }}>
-                    <div><span style={{ fontSize:'12px', color:'#64748b' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'#64748b' }}>Receitas </span><strong style={{ color:'#22c55e' }}>{formatCurrency(totalReceitas)}</strong></div>}
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'#64748b' }}>Saldo </span><strong style={{ color: saldo >= 0 ? '#22c55e' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
-                    {isProprio && <span style={{ fontSize:'12px', color:'#94a3b8', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
-                    <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'#64748b' }}>{lancamentos.length} lançamentos</span></div>
+                <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
+                    <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Receitas </span><strong style={{ color:'#22c55e' }}>{formatCurrency(totalReceitas)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? '#22c55e' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
+                    {isProprio && <span style={{ fontSize:'12px', color:'var(--border-strong)', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
+                    <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>{lancamentos.length} lançamentos</span></div>
                 </div>
                 {/* Tabela */}
                 <div style={{ overflow:'auto', flex:1 }}>
-                    {loading ? <div style={{ textAlign:'center', padding:'40px', color:'#64748b' }}>Carregando…</div> :
-                     lancamentos.length === 0 ? <div style={{ textAlign:'center', padding:'40px', color:'#64748b' }}>Nenhum lançamento neste período.</div> : (
+                    {loading ? <div style={{ textAlign:'center', padding:'40px', color:'var(--status-neutral)' }}>Carregando…</div> :
+                     lancamentos.length === 0 ? <div style={{ textAlign:'center', padding:'40px', color:'var(--status-neutral)' }}>Nenhum lançamento neste período.</div> : (
                         <table style={styles.table}>
                             <thead>
                                 <tr>
@@ -760,15 +760,15 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                         <td style={styles.td}>{l.categoria_icone} {l.categoria_nome}</td>
                                         <td style={{ ...styles.td, maxWidth:'240px' }}>
                                             {l.descricao}
-                                            {l.observacoes && <div style={{ fontSize:'11px', color:'#94a3b8' }}>{l.observacoes}</div>}
+                                            {l.observacoes && <div style={{ fontSize:'11px', color:'var(--border-strong)' }}>{l.observacoes}</div>}
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.tipo==='despesa'?'#fee2e2':'#dcfce7', color: l.tipo==='despesa'?'#b91c1c':'#15803d' }}>
+                                            <span style={{ ...styles.badge, background: l.tipo==='despesa'?'var(--status-danger-bg)':'#dcfce7', color: l.tipo==='despesa'?'var(--status-danger-text)':'#15803d' }}>
                                                 {l.tipo === 'despesa' ? 'Despesa' : 'Receita'}
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.status==='pago'?'#dcfce7':l.status==='cancelado'?'#f1f5f9':'#fef3c7', color: l.status==='pago'?'#166534':l.status==='cancelado'?'#94a3b8':'#92400e' }}>
+                                            <span style={{ ...styles.badge, background: l.status==='pago'?'#dcfce7':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'#166534':l.status==='cancelado'?'var(--border-strong)':'#92400e' }}>
                                                 {l.status==='pago'?'✓ Pago':l.status==='cancelado'?'Cancelado':'⏳ Pendente'}
                                             </span>
                                         </td>
@@ -776,12 +776,12 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                             {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
                                         </td>
                                         <td style={{ ...styles.td, textAlign:'center' }}>
-                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }}>📎</a> : <span style={{ color:'#d1d5db' }}>—</span>}
+                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }} title="Ver comprovante"><i className="ti ti-paperclip" aria-hidden="true" /></a> : <span style={{ color:'#d1d5db' }}>—</span>}
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{ display:'flex', gap:'6px' }}>
-                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}>✏️ Editar</button>
-                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'#dc2626', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }}>🗑️</button>
+                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
+                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }} title="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -871,10 +871,10 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
     return (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.65)', zIndex:1100, display:'flex', alignItems:'center', justifyContent:'center', padding:'16px' }}
              onClick={e => e.target === e.currentTarget && onClose()}>
-            <div style={{ background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'540px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
-                <div style={{ padding:'16px 24px', background:'#1e293b', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <h3 style={{ margin:0, color:'#fff', fontSize:'16px', fontWeight:700 }}>✏️ Editar Lançamento #{lancamento.id}</h3>
-                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', borderRadius:'8px', width:'32px', height:'32px', cursor:'pointer', fontSize:'16px' }}>×</button>
+            <div style={{ background:'var(--surface-card)', borderRadius:'16px', width:'100%', maxWidth:'540px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
+                <div style={{ padding:'16px 24px', background:'var(--surface-dark-soft)', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <h3 style={{ margin:0, color:'var(--surface-card)', fontSize:'16px', fontWeight:700 }}>✏️ Editar Lançamento #{lancamento.id}</h3>
+                    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'var(--surface-card)', borderRadius:'8px', width:'32px', height:'32px', cursor:'pointer', fontSize:'16px' }}>×</button>
                 </div>
                 <div style={{ overflow:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:'14px' }}>
                     {/* Tipo */}
@@ -882,9 +882,9 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                         {['despesa','receita'].map(t => (
                             <button key={t} type='button' onClick={() => setForm(f => ({ ...f, tipo:t, categoria_id:'' }))}
                                 style={{ flex:1, padding:'10px', borderRadius:'10px', border:'2px solid', cursor:'pointer', fontWeight:700, fontSize:'14px',
-                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'#22c55e') : '#e5e7eb',
-                                    background: form.tipo===t ? (t==='despesa'?'#fee2e2':'#dcfce7') : '#fff',
-                                    color: form.tipo===t ? (t==='despesa'?'#b91c1c':'#15803d') : '#94a3b8' }}>
+                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'#22c55e') : 'var(--border-subtle)',
+                                    background: form.tipo===t ? (t==='despesa'?'var(--status-danger-bg)':'#dcfce7') : 'var(--surface-card)',
+                                    color: form.tipo===t ? (t==='despesa'?'var(--status-danger-text)':'#15803d') : 'var(--border-strong)' }}>
                                 {t==='despesa'?'📤 Despesa':'📥 Receita'}
                             </button>
                         ))}
@@ -945,28 +945,28 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                     <div>
                         <label style={styles.label}>Comprovante</label>
                         {comprovantePreview ? (
-                            <div style={{ border:'1px solid #e5e7eb', borderRadius:'10px', padding:'12px', display:'flex', alignItems:'center', gap:'12px', background:'#f8fafc' }}>
+                            <div style={{ border:'1px solid var(--border-subtle)', borderRadius:'10px', padding:'12px', display:'flex', alignItems:'center', gap:'12px', background:'var(--surface-subtle)' }}>
                                 {comprovantePreview.startsWith('data:image') ? (
                                     <img src={comprovantePreview} alt='Comprovante' style={{ width:'60px', height:'60px', objectFit:'cover', borderRadius:'6px' }} />
                                 ) : <div style={{ fontSize:'28px' }}>📄</div>}
-                                <div style={{ flex:1, fontSize:'13px', color:'#475569' }}>
+                                <div style={{ flex:1, fontSize:'13px', color:'var(--text-muted)' }}>
                                     {comprovanteBase64 !== undefined && comprovanteBase64 !== null ? '✅ Novo comprovante selecionado' : '📎 Comprovante atual'}
                                 </div>
                                 <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'5px 10px', borderRadius:'6px' }}>🔄 Trocar</button>
-                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'#dc2626', background:'#fff0f0', padding:'5px 10px', borderRadius:'6px' }}>🗑️ Remover</button>
+                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-refresh" aria-hidden="true" /> Trocar</button>
+                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-trash" aria-hidden="true" /> Remover</button>
                                 </div>
                             </div>
                         ) : (
-                            <button type='button' onClick={() => fileRef.current?.click()} style={{ width:'100%', padding:'14px', borderRadius:'10px', border:'2px dashed #cbd5e1', background:'#f8fafc', color:'#64748b', cursor:'pointer', fontSize:'14px' }}>
-                                📎 Clique para anexar comprovante (imagem ou PDF)
+                            <button type='button' onClick={() => fileRef.current?.click()} style={{ width:'100%', padding:'14px', borderRadius:'10px', border:'2px dashed var(--border-default)', background:'var(--surface-subtle)', color:'var(--status-neutral)', cursor:'pointer', fontSize:'14px' }}>
+                                <i className="ti ti-paperclip" aria-hidden="true" /> Clique para anexar comprovante (imagem ou PDF)
                             </button>
                         )}
                         <input ref={fileRef} type='file' accept='image/*,application/pdf' style={{ display:'none' }} onChange={handleFile} />
                     </div>
-                    {erro && <div style={{ padding:'10px 14px', borderRadius:'8px', background:'#fee2e2', color:'#b91c1c', fontSize:'13px' }}>⚠️ {erro}</div>}
+                    {erro && <div style={{ padding:'10px 14px', borderRadius:'8px', background:'var(--status-danger-bg)', color:'var(--status-danger-text)', fontSize:'13px' }}><i className="ti ti-alert-triangle" aria-hidden="true" /> {erro}</div>}
                 </div>
-                <div style={{ padding:'14px 24px', borderTop:'1px solid #e5e7eb', display:'flex', justifyContent:'flex-end', gap:'10px', background:'#f8fafc', borderRadius:'0 0 16px 16px' }}>
+                <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border-subtle)', display:'flex', justifyContent:'flex-end', gap:'10px', background:'var(--surface-subtle)', borderRadius:'0 0 16px 16px' }}>
                     <button type='button' onClick={onClose} style={{ ...styles.cancelButton }}>Cancelar</button>
                     <button type='button' onClick={handleSalvar} disabled={salvando} style={{ ...styles.primaryButton, opacity: salvando ? 0.7 : 1 }}>
                         {salvando ? '⏳ Salvando…' : '✅ Salvar Alterações'}
@@ -1105,12 +1105,12 @@ const Imoveis = () => {
     const statusImovel = [
         { value: 'proprio', label: 'Próprio', icon: '🏠', cor: '#e0e7ff', corTexto: '#4f46e5' },
         { value: 'alugado', label: 'Alugado', icon: '💰', cor: '#dcfce7', corTexto: '#16a34a' },
-        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: '🔑', cor: '#dbeafe', corTexto: '#2563eb' },
-        { value: 'a_venda', label: 'À Venda', icon: '🏷️', cor: '#fef3c7', corTexto: '#d97706' },
-        { value: 'vendido', label: 'Vendido', icon: '✅', cor: '#d1fae5', corTexto: '#059669' },
+        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: '🔑', cor: 'var(--status-info-bg)', corTexto: '#2563eb' },
+        { value: 'a_venda', label: 'À Venda', icon: '🏷️', cor: 'var(--status-warning-bg)', corTexto: '#d97706' },
+        { value: 'vendido', label: 'Vendido', icon: '✅', cor: 'var(--status-success-bg)', corTexto: '#059669' },
         { value: 'em_obra', label: 'Em Obra', icon: '🏗️', cor: '#fae8ff', corTexto: '#a855f7' },
-        { value: 'em_espera', label: 'Em Espera', icon: '⏸️', cor: '#f1f5f9', corTexto: '#64748b' },
-        { value: 'inativo', label: 'Inativo', icon: '🚫', cor: '#fee2e2', corTexto: '#dc2626' },
+        { value: 'em_espera', label: 'Em Espera', icon: '⏸️', cor: 'var(--surface-muted)', corTexto: 'var(--status-neutral)' },
+        { value: 'inativo', label: 'Inativo', icon: '🚫', cor: 'var(--status-danger-bg)', corTexto: 'var(--status-danger)' },
     ];
 
     if (loading) {
@@ -1158,7 +1158,7 @@ const Imoveis = () => {
                             <div style={styles.imovelStats}>
                                 <div style={styles.imovelStat}>
                                     <span style={styles.statLabel}>Despesas</span>
-                                    <span style={{ ...styles.statValue, color: '#dc2626' }}>
+                                    <span style={{ ...styles.statValue, color: 'var(--status-danger)' }}>
                                         {formatCurrency(imovel.total_despesas || 0)}
                                     </span>
                                 </div>
@@ -1175,7 +1175,7 @@ const Imoveis = () => {
                                         <span style={styles.statLabel}>Saldo</span>
                                         <span style={{ 
                                             ...styles.statValue, 
-                                            color: (imovel.saldo || 0) >= 0 ? '#16a34a' : '#dc2626' 
+                                            color: (imovel.saldo || 0) >= 0 ? '#16a34a' : 'var(--status-danger)' 
                                         }}>
                                             {formatCurrency(imovel.saldo || 0)}
                                         </span>
@@ -1183,7 +1183,7 @@ const Imoveis = () => {
                                 )}
                                 {imovel.status === 'proprio' && (
                                     <div style={{ ...styles.imovelStat, gridColumn: '2 / span 2' }}>
-                                        <span style={{ ...styles.statLabel, fontStyle: 'italic', color: '#94a3b8' }}>sem receita de aluguel</span>
+                                        <span style={{ ...styles.statLabel, fontStyle: 'italic', color: 'var(--border-strong)' }}>sem receita de aluguel</span>
                                     </div>
                                 )}
                             </div>
@@ -1193,19 +1193,19 @@ const Imoveis = () => {
                                     onClick={() => setImovelLancamentos(imovel)} 
                                     style={{ ...styles.actionButton, color: '#0369a1', background: '#f0f9ff' }}
                                 >
-                                    📋 Lançamentos
+                                    <i className="ti ti-list" aria-hidden="true" /> Lançamentos
                                 </button>
-                                <button 
-                                    onClick={() => openModal(imovel)} 
+                                <button
+                                    onClick={() => openModal(imovel)}
                                     style={styles.actionButton}
                                 >
-                                    ✏️ Editar
+                                    <i className="ti ti-pencil" aria-hidden="true" /> Editar
                                 </button>
-                                <button 
-                                    onClick={() => handleDelete(imovel.id)} 
-                                    style={{ ...styles.actionButton, color: '#dc2626' }}
+                                <button
+                                    onClick={() => handleDelete(imovel.id)}
+                                    style={{ ...styles.actionButton, color: 'var(--status-danger)' }}
                                 >
-                                    🗑️ Remover
+                                    <i className="ti ti-trash" aria-hidden="true" /> Remover
                                 </button>
                             </div>
                         </div>
@@ -1645,9 +1645,9 @@ const Lancamentos = () => {
                                         <span style={{
                                             ...styles.badge,
                                             backgroundColor: lanc.status === 'pago' ? '#dcfce7' : 
-                                                            lanc.status === 'pendente' ? '#fef3c7' : '#fee2e2',
+                                                            lanc.status === 'pendente' ? 'var(--status-warning-bg)' : 'var(--status-danger-bg)',
                                             color: lanc.status === 'pago' ? '#16a34a' : 
-                                                   lanc.status === 'pendente' ? '#d97706' : '#dc2626'
+                                                   lanc.status === 'pendente' ? '#d97706' : 'var(--status-danger)'
                                         }}>
                                             {lanc.status === 'pago' ? '✓ Pago' : 
                                              lanc.status === 'pendente' ? '⏳ Pendente' : '✗ Cancelado'}
@@ -1655,7 +1655,7 @@ const Lancamentos = () => {
                                     </td>
                                     <td style={{
                                         ...styles.tdRight,
-                                        color: lanc.tipo === 'receita' ? '#16a34a' : '#dc2626',
+                                        color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)',
                                         fontWeight: '600'
                                     }}>
                                         {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
@@ -1668,16 +1668,16 @@ const Lancamentos = () => {
                                                     style={{ ...styles.smallButton, color: '#16a34a', fontWeight: '600' }}
                                                     title="Registrar pagamento"
                                                 >
-                                                    💵 Pagar
+                                                    <i className="ti ti-currency-dollar" aria-hidden="true" /> Pagar
                                                 </button>
                                             )}
                                             {lanc.status === 'pago' && lanc.comprovante_url && (
                                                 <button
                                                     onClick={() => setShowComprovante(lanc)}
-                                                    style={{ ...styles.smallButton, color: '#3b82f6' }}
+                                                    style={{ ...styles.smallButton, color: 'var(--status-info)' }}
                                                     title="Ver comprovante"
                                                 >
-                                                    📎
+                                                    <i className="ti ti-paperclip" aria-hidden="true" />
                                                 </button>
                                             )}
                                             <button
@@ -1685,14 +1685,14 @@ const Lancamentos = () => {
                                                 style={{ ...styles.smallButton, color: '#2563eb' }}
                                                 title="Editar lançamento"
                                             >
-                                                ✏️
+                                                <i className="ti ti-pencil" aria-hidden="true" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(lanc.id)}
-                                                style={{ ...styles.smallButton, color: '#dc2626' }}
+                                                style={{ ...styles.smallButton, color: 'var(--status-danger)' }}
                                                 title="Remover"
                                             >
-                                                🗑️
+                                                <i className="ti ti-trash" aria-hidden="true" />
                                             </button>
                                         </div>
                                     </td>
@@ -1727,18 +1727,18 @@ const Lancamentos = () => {
                                     <strong>{lancamentoPagar.descricao}</strong>
                                 </div>
                                 <div style={styles.pagamentoLinha}>
-                                    <span style={{ color: '#64748b' }}>Imóvel:</span>
+                                    <span style={{ color: 'var(--status-neutral)' }}>Imóvel:</span>
                                     <span>{lancamentoPagar.imovel_nome}</span>
                                 </div>
                                 <div style={styles.pagamentoLinha}>
-                                    <span style={{ color: '#64748b' }}>Valor:</span>
-                                    <span style={{ fontSize: '20px', fontWeight: '700', color: '#dc2626' }}>
+                                    <span style={{ color: 'var(--status-neutral)' }}>Valor:</span>
+                                    <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--status-danger)' }}>
                                         {formatCurrency(lancamentoPagar.valor)}
                                     </span>
                                 </div>
                                 {lancamentoPagar.data_vencimento && (
                                     <div style={styles.pagamentoLinha}>
-                                        <span style={{ color: '#64748b' }}>Vencimento:</span>
+                                        <span style={{ color: 'var(--status-neutral)' }}>Vencimento:</span>
                                         <span>{formatDate(lancamentoPagar.data_vencimento)}</span>
                                     </div>
                                 )}
@@ -1776,15 +1776,15 @@ const Lancamentos = () => {
                                                         style={styles.previewImg}
                                                     />
                                                 ) : (
-                                                    <div style={styles.pdfIcon}>📄 PDF</div>
+                                                    <div style={styles.pdfIcon}><i className="ti ti-file-description" aria-hidden="true" /> PDF</div>
                                                 )}
                                                 <span style={styles.uploadedText}>✓ Arquivo selecionado</span>
                                             </div>
                                         ) : (
                                             <>
-                                                <span style={{ fontSize: '32px' }}>📎</span>
+                                                <span style={{ fontSize: '32px' }}><i className="ti ti-paperclip" aria-hidden="true" /></span>
                                                 <span>Clique para anexar comprovante</span>
-                                                <span style={{ fontSize: '12px', color: '#94a3b8' }}>JPG, PNG ou PDF (máx. 5MB)</span>
+                                                <span style={{ fontSize: '12px', color: 'var(--border-strong)' }}>JPG, PNG ou PDF (máx. 5MB)</span>
                                             </>
                                         )}
                                     </label>
@@ -1822,7 +1822,7 @@ const Lancamentos = () => {
                             <button onClick={() => setShowComprovante(null)} style={styles.closeButton}>×</button>
                         </div>
                         <div style={{ padding: '24px', textAlign: 'center' }}>
-                            <p style={{ marginBottom: '16px', color: '#64748b' }}>
+                            <p style={{ marginBottom: '16px', color: 'var(--status-neutral)' }}>
                                 {showComprovante.descricao} - {formatCurrency(showComprovante.valor)}
                             </p>
                             {showComprovante.comprovante_url?.startsWith('data:image') ? (
@@ -1839,7 +1839,7 @@ const Lancamentos = () => {
                                         download={`comprovante_${showComprovante.id}.pdf`}
                                         style={styles.primaryButton}
                                     >
-                                        📥 Baixar PDF
+                                        <i className="ti ti-download" aria-hidden="true" /> Baixar PDF
                                     </a>
                                 </div>
                             ) : (
@@ -2037,7 +2037,7 @@ const Lancamentos = () => {
                                         onChange={e => setForm({ ...form, recorrente: e.target.checked })}
                                         style={styles.checkbox}
                                     />
-                                    <span>🔄 Lançamento recorrente</span>
+                                    <span><i className="ti ti-refresh" aria-hidden="true" /> Lançamento recorrente</span>
                                 </label>
                                 
                                 {form.recorrente && (
@@ -2204,10 +2204,10 @@ const GestaoBoletos = () => {
                 )}
 
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>📋 Copiar Código</button>}
-                    {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>👁️ Ver PDF</button>}
-                    {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>✅ Marcar Pago</button>}
-                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}>🗑️</button>
+                    {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-copy" aria-hidden="true" /> Copiar Código</button>}
+                    {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-eye" aria-hidden="true" /> Ver PDF</button>}
+                    {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-circle-check" aria-hidden="true" /> Marcar Pago</button>}
+                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }} title="Excluir boleto"><i className="ti ti-trash" aria-hidden="true" /></button>
                 </div>
             </div>
         );
@@ -2404,15 +2404,15 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                 <form onSubmit={handleSubmit} style={styles.modalBody}>
                     {/* Upload PDF */}
                     <div style={styles.formGroup}>
-                        <label style={styles.label}>📎 Anexar PDF do Boleto (extração automática)</label>
+                        <label style={styles.label}><i className="ti ti-paperclip" aria-hidden="true" /> Anexar PDF do Boleto (extração automática)</label>
                         <input type="file" accept="application/pdf" onChange={handleFile} style={{ width: '100%', padding: '8px 0' }} />
-                        {extraindo && <p style={{ color: '#1976d2', fontSize: '0.9em' }}>⏳ Extraindo dados do PDF...</p>}
+                        {extraindo && <p style={{ color: '#1976d2', fontSize: '0.9em' }}><i className="ti ti-loader" aria-hidden="true" /> Extraindo dados do PDF...</p>}
                     </div>
 
                     {/* Múltiplos boletos */}
                     {multiplos && (
                         <div style={{ padding: '14px', background: '#e3f2fd', borderRadius: '10px', marginBottom: '16px' }}>
-                            <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}>📄 {multiplos.length} boletos encontrados no PDF</p>
+                            <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
                             <button type="button" onClick={cadastrarTodos} disabled={salvandoTodos}
                                 style={{ padding: '10px 20px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
                                 {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar todos (${multiplos.length})`}
@@ -2699,46 +2699,55 @@ const Relatorios = () => {
 <meta charset="UTF-8">
 <title>${titulo} — ${periodoLabel}</title>
 <style>
+    :root {
+        --surface-dark-soft:#1e293b; --text-secondary:#334155; --text-muted:#475569;
+        --status-neutral:#64748b; --border-strong:#94a3b8; --border-default:#cbd5e1;
+        --border-subtle:#e2e8f0; --surface-muted:#f1f5f9; --surface-subtle:#f8fafc;
+        --surface-card:#fff; --status-danger:#dc2626; --status-danger-bg:#fee2e2;
+        --status-danger-text:#b91c1c; --status-warning:#f59e0b; --status-warning-bg:#fef3c7;
+        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:#047857;
+        --status-info:#3b82f6; --status-info-bg:#dbeafe;
+    }
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 24px; font-size: 13px; }
-    .header { border-bottom: 3px solid #1e293b; padding-bottom: 14px; margin-bottom: 20px; }
-    .header h1 { margin: 0; font-size: 22px; color: #1e293b; }
-    .header .sub { color: #475569; margin-top: 6px; font-size: 13px; }
-    .header .meta { color: #94a3b8; font-size: 11px; margin-top: 4px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: var(--surface-dark-soft); margin: 24px; font-size: 13px; }
+    .header { border-bottom: 3px solid var(--surface-dark-soft); padding-bottom: 14px; margin-bottom: 20px; }
+    .header h1 { margin: 0; font-size: 22px; color: var(--surface-dark-soft); }
+    .header .sub { color: var(--text-muted); margin-top: 6px; font-size: 13px; }
+    .header .meta { color: var(--border-strong); font-size: 11px; margin-top: 4px; }
     .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; }
-    .kpi span { display: block; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-subtle); background: #fff; }
+    .kpi span { display: block; font-size: 10px; color: var(--status-neutral); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
     .kpi strong { font-size: 18px; font-weight: 800; }
-    .kpi.red strong { color: #dc2626; }
+    .kpi.red strong { color: var(--status-danger); }
     .kpi.green strong { color: #16a34a; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-    th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid #e5e7eb; color: #475569; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
+    th { background: var(--surface-subtle); padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; }
     th.r, td.r { text-align: right; }
-    td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
-    td.red { color: #dc2626; font-weight: 600; }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--surface-muted); }
+    td.red { color: var(--status-danger); font-weight: 600; }
     td.green { color: #16a34a; font-weight: 600; }
-    td.muted { color: #94a3b8; font-size: 11px; }
-    tfoot td { background: #f8fafc; border-top: 2px solid #e5e7eb; padding: 10px 12px; border-bottom: none; }
+    td.muted { color: var(--border-strong); font-size: 11px; }
+    tfoot td { background: var(--surface-subtle); border-top: 2px solid var(--border-subtle); padding: 10px 12px; border-bottom: none; }
     .empty-row td { opacity: 0.4; }
-    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #64748b; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface-muted); color: var(--status-neutral); }
     .dre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .dre-box { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #fff; }
+    .dre-box { border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: #fff; }
     .dre-box table { border: none; border-radius: 0; margin: 0; }
     .dre-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
     .dre-head span { font-weight: 700; font-size: 14px; }
     .dre-head strong { font-size: 17px; font-weight: 800; }
     .green-bg { background: #dcfce7; color: #166534; }
-    .red-bg { background: #fee2e2; color: #991b1b; }
+    .red-bg { background: var(--status-danger-bg); color: #991b1b; }
     .resultado { padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
     .resultado div { display: flex; flex-direction: column; }
-    .resultado span { font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .resultado small { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+    .resultado span { font-weight: 700; color: var(--status-neutral); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .resultado small { color: var(--border-strong); font-size: 11px; margin-top: 2px; }
     .resultado strong { font-size: 26px; font-weight: 900; }
     .green-box { background: #f0fdf4; border: 2px solid #bbf7d0; }
     .green-box strong { color: #16a34a; }
     .red-box { background: #fff1f2; border: 2px solid #fecdd3; }
-    .red-box strong { color: #dc2626; }
-    .empty { text-align: center; color: #94a3b8; padding: 24px; margin: 0; font-style: italic; }
+    .red-box strong { color: var(--status-danger); }
+    .empty { text-align: center; color: var(--border-strong); padding: 24px; margin: 0; font-style: italic; }
     .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #059669; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     @media print {
         body { margin: 14mm; }
@@ -2786,12 +2795,12 @@ const Relatorios = () => {
                 <h1 style={styles.pageTitle}>📈 Relatórios</h1>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button onClick={exportarPDF} disabled={exportando}
-                        style={{ ...styles.primaryButton, background: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🖨️ {exportando ? '...' : 'Exportar PDF'}
+                        style={{ ...styles.primaryButton, background: 'var(--status-danger)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="ti ti-printer" aria-hidden="true" /> {exportando ? '...' : 'Exportar PDF'}
                     </button>
                     <button onClick={exportarCSV} disabled={exportando}
                         style={{ ...styles.primaryButton, background: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        📥 {exportando ? '...' : 'Exportar CSV'}
+                        <i className="ti ti-download" aria-hidden="true" /> {exportando ? '...' : 'Exportar CSV'}
                     </button>
                 </div>
             </div>
@@ -2812,7 +2821,7 @@ const Relatorios = () => {
             </div>
 
             {/* Abas */}
-            <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: '24px', gap: '4px' }}>
+            <div style={{ display: 'flex', borderBottom: '2px solid var(--border-subtle)', marginBottom: '24px', gap: '4px' }}>
                 {[
                     ['fluxo', '💸 Fluxo de Caixa'],
                     ['rentabilidade', '📊 Rentabilidade'],
@@ -2821,9 +2830,9 @@ const Relatorios = () => {
                     <button key={id} onClick={() => setAbaAtiva(id)} style={{
                         padding: '10px 20px', border: 'none', cursor: 'pointer', fontWeight: 700,
                         fontSize: '14px', borderRadius: '8px 8px 0 0',
-                        background: abaAtiva === id ? '#1e293b' : 'transparent',
-                        color: abaAtiva === id ? '#fff' : '#64748b',
-                        borderBottom: abaAtiva === id ? '2px solid #1e293b' : 'none',
+                        background: abaAtiva === id ? 'var(--surface-dark-soft)' : 'transparent',
+                        color: abaAtiva === id ? 'var(--surface-card)' : 'var(--status-neutral)',
+                        borderBottom: abaAtiva === id ? '2px solid var(--surface-dark-soft)' : 'none',
                         marginBottom: '-2px',
                     }}>{label}</button>
                 ))}
@@ -2835,20 +2844,20 @@ const Relatorios = () => {
                     {/* Resumo anual */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
                         {[
-                            { label: 'Total Despesas', val: totalFluxo.despesas, color: '#dc2626', bg: '#fee2e2' },
+                            { label: 'Total Despesas', val: totalFluxo.despesas, color: 'var(--status-danger)', bg: 'var(--status-danger-bg)' },
                             { label: 'Total Receitas', val: totalFluxo.receitas, color: '#16a34a', bg: '#dcfce7' },
-                            { label: 'Saldo Anual', val: totalFluxo.saldo, color: totalFluxo.saldo >= 0 ? '#16a34a' : '#dc2626', bg: totalFluxo.saldo >= 0 ? '#dcfce7' : '#fee2e2' },
+                            { label: 'Saldo Anual', val: totalFluxo.saldo, color: totalFluxo.saldo >= 0 ? '#16a34a' : 'var(--status-danger)', bg: totalFluxo.saldo >= 0 ? '#dcfce7' : 'var(--status-danger-bg)' },
                         ].map(k => (
                             <div key={k.label} style={{ background: k.bg, borderRadius: '12px', padding: '18px 20px' }}>
-                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>{k.label}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>{k.label}</div>
                                 <div style={{ fontSize: '22px', fontWeight: 800, color: k.color }}>{fmtCur(k.val)}</div>
                             </div>
                         ))}
                     </div>
 
                     {/* Gráfico de barras */}
-                    <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
-                        <h3 style={{ margin: '0 0 16px', fontSize: '15px', color: '#1e293b' }}>Despesas × Receitas por Mês</h3>
+                    <div style={{ background: 'var(--surface-card)', borderRadius: '12px', padding: '20px', border: '1px solid var(--border-subtle)', marginBottom: '24px' }}>
+                        <h3 style={{ margin: '0 0 16px', fontSize: '15px', color: 'var(--surface-dark-soft)' }}>Despesas × Receitas por Mês</h3>
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', height: '160px' }}>
                             {fluxoPorMes.map((m, i) => (
                                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', height: '100%', justifyContent: 'flex-end' }}>
@@ -2856,37 +2865,37 @@ const Relatorios = () => {
                                         <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: '#ef4444', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
                                         <div title={`Receitas: ${fmtCur(m.receitas)}`} style={{ flex: 1, background: '#22c55e', borderRadius: '3px 3px 0 0', height: `${(m.receitas / maxFluxo) * 130}px`, minHeight: m.receitas > 0 ? '2px' : 0 }} />
                                     </div>
-                                    <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>{m.mes}</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--border-strong)', marginTop: '4px' }}>{m.mes}</div>
                                 </div>
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: '16px', marginTop: '8px', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
-                            <span style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#22c55e', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
+                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
+                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#22c55e', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
                         </div>
                     </div>
 
                     {/* Tabela mensal */}
-                    <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
+                                <tr style={{ background: 'var(--surface-subtle)' }}>
                                     {['Mês', 'Despesas', 'Receitas', 'Saldo'].map(h => (
-                                        <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Mês' ? 'left' : 'right', color: '#475569', fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}>{h}</th>
+                                        <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Mês' ? 'left' : 'right', color: 'var(--text-muted)', fontWeight: 700, borderBottom: '2px solid var(--border-subtle)' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {fluxoPorMes.map((m, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', opacity: m.despesas === 0 && m.receitas === 0 ? 0.4 : 1 }}>
-                                        <td style={{ padding: '10px 16px', fontWeight: 600, color: '#1e293b' }}>{m.mes}</td>
+                                    <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)', opacity: m.despesas === 0 && m.receitas === 0 ? 0.4 : 1 }}>
+                                        <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{m.mes}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>{m.receitas > 0 ? fmtCur(m.receitas) : '—'}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
                                     </tr>
                                 ))}
-                                <tr style={{ background: '#f8fafc', borderTop: '2px solid #e5e7eb' }}>
-                                    <td style={{ padding: '12px 16px', fontWeight: 800, color: '#1e293b' }}>TOTAL</td>
+                                <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
+                                    <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(totalFluxo.despesas)}</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#22c55e' }}>{fmtCur(totalFluxo.receitas)}</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{fmtCur(totalFluxo.saldo)}</td>
@@ -2903,21 +2912,21 @@ const Relatorios = () => {
                     {rentabilidade.length === 0 ? (
                         <div style={styles.emptyState}><div style={styles.emptyIcon}>📊</div><p>Nenhum dado encontrado para o período</p></div>
                     ) : (
-                        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                 <thead>
-                                    <tr style={{ background: '#f8fafc' }}>
+                                    <tr style={{ background: 'var(--surface-subtle)' }}>
                                         {['Imóvel', 'Status', 'Despesas', 'Receitas', 'Saldo', 'Rentab.'].map(h => (
-                                            <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Imóvel' || h === 'Status' ? 'left' : 'right', color: '#475569', fontWeight: 700, borderBottom: '2px solid #e5e7eb' }}>{h}</th>
+                                            <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Imóvel' || h === 'Status' ? 'left' : 'right', color: 'var(--text-muted)', fontWeight: 700, borderBottom: '2px solid var(--border-subtle)' }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {rentabilidade.map(i => (
-                                        <tr key={i.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '12px 16px', fontWeight: 600, color: '#1e293b' }}>{i.nome}</td>
+                                        <tr key={i.id} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
+                                            <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{i.nome}</td>
                                             <td style={{ padding: '12px 16px' }}>
-                                                <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '999px', background: '#f1f5f9', color: '#64748b' }}>
+                                                <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '999px', background: 'var(--surface-muted)', color: 'var(--status-neutral)' }}>
                                                     {i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : i.status}
                                                 </span>
                                             </td>
@@ -2929,8 +2938,8 @@ const Relatorios = () => {
                                             </td>
                                         </tr>
                                     ))}
-                                    <tr style={{ background: '#f8fafc', borderTop: '2px solid #e5e7eb' }}>
-                                        <td colSpan={2} style={{ padding: '12px 16px', fontWeight: 800, color: '#1e293b' }}>TOTAL</td>
+                                    <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
+                                        <td colSpan={2} style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#22c55e' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.receitas, 0))}</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
@@ -2947,19 +2956,19 @@ const Relatorios = () => {
             {abaAtiva === 'dre' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     {/* Receitas */}
-                    <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                         <div style={{ background: '#dcfce7', padding: '14px 16px', borderBottom: '1px solid #bbf7d0' }}>
-                            <h3 style={{ margin: 0, color: '#166534', fontSize: '15px', fontWeight: 700 }}>📥 Receitas</h3>
+                            <h3 style={{ margin: 0, color: '#166534', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-up" aria-hidden="true" /> Receitas</h3>
                             <div style={{ fontSize: '20px', fontWeight: 800, color: '#166534', marginTop: '4px' }}>{fmtCur(totalDREReceitas)}</div>
                         </div>
-                        {dreReceitas.length === 0 ? <p style={{ padding: '16px', color: '#94a3b8', textAlign: 'center' }}>Nenhuma receita</p> : (
+                        {dreReceitas.length === 0 ? <p style={{ padding: '16px', color: 'var(--border-strong)', textAlign: 'center' }}>Nenhuma receita</p> : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                                 <tbody>
                                     {dreReceitas.map((c, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
                                             <td style={{ padding: '10px 16px', color: '#374151' }}>{c.icone} {c.nome}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>{fmtCur(c.total)}</td>
-                                            <td style={{ padding: '10px 16px', textAlign: 'right', color: '#94a3b8', fontSize: '12px' }}>{totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
+                                            <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -2968,19 +2977,19 @@ const Relatorios = () => {
                     </div>
 
                     {/* Despesas */}
-                    <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                        <div style={{ background: '#fee2e2', padding: '14px 16px', borderBottom: '1px solid #fecaca' }}>
-                            <h3 style={{ margin: 0, color: '#991b1b', fontSize: '15px', fontWeight: 700 }}>📤 Despesas</h3>
+                    <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--status-danger-bg)', padding: '14px 16px', borderBottom: '1px solid #fecaca' }}>
+                            <h3 style={{ margin: 0, color: '#991b1b', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-down" aria-hidden="true" /> Despesas</h3>
                             <div style={{ fontSize: '20px', fontWeight: 800, color: '#991b1b', marginTop: '4px' }}>{fmtCur(totalDREDespesas)}</div>
                         </div>
-                        {dreDespesas.length === 0 ? <p style={{ padding: '16px', color: '#94a3b8', textAlign: 'center' }}>Nenhuma despesa</p> : (
+                        {dreDespesas.length === 0 ? <p style={{ padding: '16px', color: 'var(--border-strong)', textAlign: 'center' }}>Nenhuma despesa</p> : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                                 <tbody>
                                     {dreDespesas.map((c, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
                                             <td style={{ padding: '10px 16px', color: '#374151' }}>{c.icone} {c.nome}</td>
-                                            <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: '#dc2626' }}>{fmtCur(c.total)}</td>
-                                            <td style={{ padding: '10px 16px', textAlign: 'right', color: '#94a3b8', fontSize: '12px' }}>{totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
+                                            <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--status-danger)' }}>{fmtCur(c.total)}</td>
+                                            <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -2991,10 +3000,10 @@ const Relatorios = () => {
                     {/* Resultado */}
                     <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? '#f0fdf4' : '#fff1f2', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? '#bbf7d0' : '#fecdd3'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Resultado do Período</div>
-                            <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '2px' }}>Receitas − Despesas</div>
+                            <div style={{ fontSize: '13px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase' }}>Resultado do Período</div>
+                            <div style={{ fontSize: '13px', color: 'var(--border-strong)', marginTop: '2px' }}>Receitas − Despesas</div>
                         </div>
-                        <div style={{ fontSize: '28px', fontWeight: 900, color: resultadoDRE >= 0 ? '#16a34a' : '#dc2626' }}>
+                        <div style={{ fontSize: '28px', fontWeight: 900, color: resultadoDRE >= 0 ? '#16a34a' : 'var(--status-danger)' }}>
                             {resultadoDRE >= 0 ? '+' : ''}{fmtCur(resultadoDRE)}
                         </div>
                     </div>
@@ -3159,8 +3168,8 @@ const Usuarios = () => {
                                 <td style={styles.td}>
                                     <span style={{
                                         ...styles.badge,
-                                        backgroundColor: usuario.role === 'admin' ? '#fee2e2' : '#e0e7ff',
-                                        color: usuario.role === 'admin' ? '#dc2626' : '#4f46e5'
+                                        backgroundColor: usuario.role === 'admin' ? 'var(--status-danger-bg)' : '#e0e7ff',
+                                        color: usuario.role === 'admin' ? 'var(--status-danger)' : '#4f46e5'
                                     }}>
                                         {usuario.role === 'admin' ? '👑 Admin' : '👤 Operador'}
                                     </span>
@@ -3175,14 +3184,14 @@ const Usuarios = () => {
                                             style={styles.smallButton}
                                             title="Editar"
                                         >
-                                            ✏️
+                                            <i className="ti ti-pencil" aria-hidden="true" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(usuario.id)}
-                                            style={{ ...styles.smallButton, color: '#dc2626' }}
+                                            style={{ ...styles.smallButton, color: 'var(--status-danger)' }}
                                             title="Desativar"
                                         >
-                                            🚫
+                                            <i className="ti ti-user-off" aria-hidden="true" />
                                         </button>
                                     </div>
                                 </td>
@@ -3285,7 +3294,7 @@ const Usuarios = () => {
                                         <span style={{ fontSize: '24px' }}>👤</span>
                                         <div>
                                             <div style={{ fontWeight: '600' }}>Operador</div>
-                                            <div style={{ fontSize: '11px', color: '#64748b' }}>Acesso básico</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--status-neutral)' }}>Acesso básico</div>
                                         </div>
                                     </label>
                                     <label 
@@ -3306,7 +3315,7 @@ const Usuarios = () => {
                                         <span style={{ fontSize: '24px' }}>👑</span>
                                         <div>
                                             <div style={{ fontWeight: '600' }}>Administrador</div>
-                                            <div style={{ fontSize: '11px', color: '#64748b' }}>Acesso total</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--status-neutral)' }}>Acesso total</div>
                                         </div>
                                     </label>
                                 </div>
@@ -3447,7 +3456,7 @@ const styles = {
     layout: {
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
     },
     main: {
         flex: 1,
@@ -3462,8 +3471,8 @@ const styles = {
     // Sidebar
     sidebar: {
         width: '260px',
-        backgroundColor: '#1e293b',
-        color: '#fff',
+        backgroundColor: 'var(--surface-dark-soft)',
+        color: 'var(--surface-card)',
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
@@ -3475,7 +3484,7 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        borderBottom: '1px solid #334155',
+        borderBottom: '1px solid var(--text-secondary)',
     },
     sidebarLogo: {
         fontSize: '32px',
@@ -3486,12 +3495,12 @@ const styles = {
     },
     sidebarSubtitle: {
         fontSize: '12px',
-        color: '#94a3b8',
+        color: 'var(--border-strong)',
     },
     sidebarCloseBtn: {
         background: 'transparent',
         border: 'none',
-        color: '#94a3b8',
+        color: 'var(--border-strong)',
         fontSize: '20px',
         cursor: 'pointer',
         padding: '4px 8px',
@@ -3510,7 +3519,7 @@ const styles = {
         borderRadius: '8px',
         border: 'none',
         backgroundColor: 'transparent',
-        color: '#cbd5e1',
+        color: 'var(--border-default)',
         fontSize: '15px',
         cursor: 'pointer',
         transition: 'all 0.2s',
@@ -3518,15 +3527,15 @@ const styles = {
         marginBottom: '4px',
     },
     menuItemActive: {
-        backgroundColor: '#10b981',
-        color: '#fff',
+        backgroundColor: 'var(--status-success)',
+        color: 'var(--surface-card)',
     },
     menuIcon: {
         fontSize: '18px',
     },
     sidebarFooter: {
         padding: '16px',
-        borderTop: '1px solid #334155',
+        borderTop: '1px solid var(--text-secondary)',
     },
     userInfo: {
         display: 'flex',
@@ -3538,7 +3547,7 @@ const styles = {
         width: '40px',
         height: '40px',
         borderRadius: '50%',
-        backgroundColor: '#334155',
+        backgroundColor: 'var(--text-secondary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -3550,15 +3559,15 @@ const styles = {
     },
     userRole: {
         fontSize: '12px',
-        color: '#94a3b8',
+        color: 'var(--border-strong)',
     },
     logoutButton: {
         width: '100%',
         padding: '10px',
         borderRadius: '8px',
-        border: '1px solid #475569',
+        border: '1px solid var(--text-muted)',
         backgroundColor: 'transparent',
-        color: '#94a3b8',
+        color: 'var(--border-strong)',
         cursor: 'pointer',
         fontSize: '14px',
     },
@@ -3573,7 +3582,7 @@ const styles = {
     pageTitle: {
         fontSize: '28px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         margin: 0,
     },
 
@@ -3594,15 +3603,15 @@ const styles = {
     },
     cardBlue: {
         background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-        color: '#fff',
+        color: 'var(--surface-card)',
     },
     cardGreen: {
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        color: '#fff',
+        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        color: 'var(--surface-card)',
     },
     cardRed: {
-        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-        color: '#fff',
+        background: 'linear-gradient(135deg, #ef4444 0%, var(--status-danger) 100%)',
+        color: 'var(--surface-card)',
     },
     cardIcon: {
         fontSize: '40px',
@@ -3621,7 +3630,7 @@ const styles = {
     alertBox: {
         padding: '16px 20px',
         borderRadius: '12px',
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'var(--status-warning-bg)',
         border: '1px solid #fcd34d',
         color: '#92400e',
         marginBottom: '24px',
@@ -3630,7 +3639,7 @@ const styles = {
 
     // Section
     section: {
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '24px',
@@ -3639,7 +3648,7 @@ const styles = {
     sectionTitle: {
         fontSize: '18px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         marginTop: 0,
         marginBottom: '20px',
     },
@@ -3661,7 +3670,7 @@ const styles = {
         alignItems: 'center',
         gap: '8px',
         fontSize: '14px',
-        color: '#475569',
+        color: 'var(--text-muted)',
     },
     categoryIcon: {
         fontSize: '18px',
@@ -3669,7 +3678,7 @@ const styles = {
     categoryBar: {
         flex: 1,
         height: '8px',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'var(--border-subtle)',
         borderRadius: '4px',
         overflow: 'hidden',
     },
@@ -3683,7 +3692,7 @@ const styles = {
         textAlign: 'right',
         fontSize: '14px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
     },
 
     // Table
@@ -3697,28 +3706,28 @@ const styles = {
     th: {
         textAlign: 'left',
         padding: '12px 16px',
-        borderBottom: '2px solid #e2e8f0',
+        borderBottom: '2px solid var(--border-subtle)',
         fontSize: '13px',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         textTransform: 'uppercase',
     },
     thRight: {
         textAlign: 'right',
         padding: '12px 16px',
-        borderBottom: '2px solid #e2e8f0',
+        borderBottom: '2px solid var(--border-subtle)',
         fontSize: '13px',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         textTransform: 'uppercase',
     },
     tr: {
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--surface-muted)',
     },
     td: {
         padding: '14px 16px',
         fontSize: '14px',
-        color: '#334155',
+        color: 'var(--text-secondary)',
     },
     tdRight: {
         padding: '14px 16px',
@@ -3742,7 +3751,7 @@ const styles = {
         gap: '20px',
     },
     imovelCard: {
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '16px',
         padding: '24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
@@ -3765,12 +3774,12 @@ const styles = {
     imovelNome: {
         fontSize: '18px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         margin: '0 0 8px 0',
     },
     imovelEndereco: {
         fontSize: '14px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         margin: '0 0 16px 0',
     },
     imovelStats: {
@@ -3778,8 +3787,8 @@ const styles = {
         gridTemplateColumns: 'repeat(3, 1fr)',
         gap: '12px',
         padding: '16px 0',
-        borderTop: '1px solid #f1f5f9',
-        borderBottom: '1px solid #f1f5f9',
+        borderTop: '1px solid var(--surface-muted)',
+        borderBottom: '1px solid var(--surface-muted)',
     },
     imovelStat: {
         textAlign: 'center',
@@ -3787,7 +3796,7 @@ const styles = {
     statLabel: {
         display: 'block',
         fontSize: '12px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         marginBottom: '4px',
     },
     statValue: {
@@ -3803,9 +3812,9 @@ const styles = {
         flex: 1,
         padding: '10px',
         borderRadius: '8px',
-        border: '1px solid #e2e8f0',
-        backgroundColor: '#fff',
-        color: '#475569',
+        border: '1px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
+        color: 'var(--text-muted)',
         fontSize: '14px',
         cursor: 'pointer',
     },
@@ -3814,14 +3823,14 @@ const styles = {
     emptyState: {
         textAlign: 'center',
         padding: '60px 20px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
     },
     emptyIcon: {
         fontSize: '64px',
         marginBottom: '16px',
     },
     emptyText: {
-        color: '#94a3b8',
+        color: 'var(--border-strong)',
         textAlign: 'center',
         padding: '20px',
     },
@@ -3831,8 +3840,8 @@ const styles = {
         padding: '12px 24px',
         borderRadius: '10px',
         border: 'none',
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        color: '#fff',
+        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        color: 'var(--surface-card)',
         fontSize: '15px',
         fontWeight: '600',
         cursor: 'pointer',
@@ -3840,9 +3849,9 @@ const styles = {
     cancelButton: {
         padding: '12px 24px',
         borderRadius: '10px',
-        border: '1px solid #e2e8f0',
-        backgroundColor: '#fff',
-        color: '#64748b',
+        border: '1px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
+        color: 'var(--status-neutral)',
         fontSize: '15px',
         fontWeight: '500',
         cursor: 'pointer',
@@ -3850,8 +3859,8 @@ const styles = {
     smallButton: {
         padding: '6px 10px',
         borderRadius: '6px',
-        border: '1px solid #e2e8f0',
-        backgroundColor: '#fff',
+        border: '1px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
         fontSize: '14px',
         cursor: 'pointer',
     },
@@ -3868,9 +3877,9 @@ const styles = {
     select: {
         padding: '10px 14px',
         borderRadius: '8px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border-subtle)',
         fontSize: '14px',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         minWidth: '150px',
     },
     periodSelector: {
@@ -3893,7 +3902,7 @@ const styles = {
         padding: '20px',
     },
     modal: {
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '20px',
         width: '100%',
         maxWidth: '600px',
@@ -3905,12 +3914,12 @@ const styles = {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '20px 24px',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--surface-muted)',
     },
     modalTitle: {
         fontSize: '20px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         margin: 0,
     },
     closeButton: {
@@ -3918,10 +3927,10 @@ const styles = {
         height: '36px',
         borderRadius: '50%',
         border: 'none',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
         fontSize: '24px',
         cursor: 'pointer',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
     },
     modalBody: {
         padding: '24px',
@@ -3953,7 +3962,7 @@ const styles = {
         width: '100%',
         padding: '12px 14px',
         borderRadius: '10px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border-subtle)',
         fontSize: '15px',
         boxSizing: 'border-box',
     },
@@ -3968,20 +3977,20 @@ const styles = {
         flex: 1,
         padding: '14px',
         borderRadius: '10px',
-        border: '2px solid #e2e8f0',
-        backgroundColor: '#fff',
+        border: '2px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
         fontSize: '15px',
         fontWeight: '600',
         cursor: 'pointer',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
     },
     tipoButtonActiveDespesa: {
         borderColor: '#ef4444',
-        backgroundColor: '#fee2e2',
-        color: '#dc2626',
+        backgroundColor: 'var(--status-danger-bg)',
+        color: 'var(--status-danger)',
     },
     tipoButtonActiveReceita: {
-        borderColor: '#10b981',
+        borderColor: 'var(--status-success)',
         backgroundColor: '#dcfce7',
         color: '#059669',
     },
@@ -4002,7 +4011,7 @@ const styles = {
         left: '30px',
         background: 'rgba(255,255,255,0.15)',
         border: 'none',
-        color: '#fff',
+        color: 'var(--surface-card)',
         padding: '10px 20px',
         borderRadius: '10px',
         cursor: 'pointer',
@@ -4024,7 +4033,7 @@ const styles = {
         width: '70px',
         height: '70px',
         borderRadius: '18px',
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -4052,14 +4061,14 @@ const styles = {
         padding: '14px',
         borderRadius: '12px',
         border: 'none',
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        color: '#fff',
+        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        color: 'var(--surface-card)',
         fontSize: '16px',
         fontWeight: '600',
         cursor: 'pointer',
     },
     error: {
-        color: '#dc2626',
+        color: 'var(--status-danger)',
         fontSize: '14px',
         textAlign: 'center',
         margin: 0,
@@ -4071,7 +4080,7 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         height: '400px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         fontSize: '16px',
     },
     loadingScreen: {
@@ -4079,8 +4088,8 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f1f5f9',
-        color: '#64748b',
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--status-neutral)',
         fontSize: '16px',
     },
 
@@ -4096,14 +4105,14 @@ const styles = {
         border: '1px solid #fecaca',
         borderRadius: '16px',
         padding: '20px',
-        borderLeft: '4px solid #dc2626',
+        borderLeft: '4px solid var(--status-danger)',
     },
     alertaAVencer: {
         backgroundColor: '#fffbeb',
         border: '1px solid #fde68a',
         borderRadius: '16px',
         padding: '20px',
-        borderLeft: '4px solid #f59e0b',
+        borderLeft: '4px solid var(--status-warning)',
     },
     alertaHeader: {
         display: 'flex',
@@ -4139,7 +4148,7 @@ const styles = {
         marginRight: '8px',
     },
     alertaImovel: {
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         fontWeight: 'normal',
     },
     alertaInfo: {
@@ -4148,7 +4157,7 @@ const styles = {
         gap: '16px',
     },
     alertaDias: {
-        color: '#dc2626',
+        color: 'var(--status-danger)',
         fontWeight: '600',
         fontSize: '12px',
     },
@@ -4165,9 +4174,9 @@ const styles = {
     // Recorrência
     recorrenciaBox: {
         padding: '16px',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border-subtle)',
         marginBottom: '16px',
     },
     checkboxLabel: {
@@ -4189,12 +4198,12 @@ const styles = {
         gap: '16px',
         marginTop: '16px',
         paddingTop: '16px',
-        borderTop: '1px solid #e2e8f0',
+        borderTop: '1px solid var(--border-subtle)',
     },
 
     // Pagamento e Comprovante
     pagamentoInfo: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         borderRadius: '12px',
         padding: '16px',
         marginBottom: '20px',
@@ -4204,7 +4213,7 @@ const styles = {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '8px 0',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid var(--border-subtle)',
     },
     uploadArea: {
         position: 'relative',
@@ -4223,13 +4232,13 @@ const styles = {
         justifyContent: 'center',
         gap: '8px',
         padding: '30px',
-        border: '2px dashed #e2e8f0',
+        border: '2px dashed var(--border-subtle)',
         borderRadius: '12px',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         cursor: 'pointer',
         transition: 'all 0.2s',
         textAlign: 'center',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
     },
     uploadPreview: {
         display: 'flex',
@@ -4256,7 +4265,7 @@ const styles = {
         padding: '6px 12px',
         border: 'none',
         backgroundColor: 'transparent',
-        color: '#dc2626',
+        color: 'var(--status-danger)',
         fontSize: '13px',
         cursor: 'pointer',
     },
@@ -4277,17 +4286,17 @@ const styles = {
         gap: '12px',
         padding: '16px',
         borderRadius: '12px',
-        border: '2px solid #e2e8f0',
-        backgroundColor: '#fff',
+        border: '2px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
         cursor: 'pointer',
         transition: 'all 0.2s',
     },
     statusOptionActivePendente: {
-        borderColor: '#f59e0b',
+        borderColor: 'var(--status-warning)',
         backgroundColor: '#fffbeb',
     },
     statusOptionActivePago: {
-        borderColor: '#10b981',
+        borderColor: 'var(--status-success)',
         backgroundColor: '#dcfce7',
     },
     statusIcon: {
@@ -4296,17 +4305,17 @@ const styles = {
     statusTitle: {
         fontSize: '15px',
         fontWeight: '600',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
     },
     statusDesc: {
         fontSize: '12px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
     },
     alertaVencimentoForm: {
         marginTop: '12px',
         padding: '12px 16px',
         borderRadius: '8px',
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'var(--status-warning-bg)',
         border: '1px solid #fcd34d',
         color: '#92400e',
         fontSize: '13px',
@@ -4343,8 +4352,8 @@ const styles = {
         gap: '12px',
         padding: '14px',
         borderRadius: '12px',
-        border: '2px solid #e2e8f0',
-        backgroundColor: '#fff',
+        border: '2px solid var(--border-subtle)',
+        backgroundColor: 'var(--surface-card)',
         cursor: 'pointer',
         transition: 'all 0.2s',
     },
@@ -4353,7 +4362,7 @@ const styles = {
         backgroundColor: '#eef2ff',
     },
     roleOptionActiveAdmin: {
-        borderColor: '#dc2626',
+        borderColor: 'var(--status-danger)',
         backgroundColor: '#fef2f2',
     },
 };
