@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../modals/Modal';
+import Modal from '../Modal/Modal';
 import CadastrarBoletoModal from '../modals/CadastrarBoletoModal';
 import { API_URL } from '../../config';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
