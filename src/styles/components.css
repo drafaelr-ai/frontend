@@ -1,0 +1,110 @@
+/*
+ * Obraly Design System — Component Utilities v2.0
+ *
+ * Classes utilitárias para composição de UI. Importar em index.js APÓS tokens.css.
+ */
+
+/* ── Section Card wrapper ────────────────────────────────────── */
+
+.m-section-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.m-section-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.m-section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.m-section-card-title i {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.m-section-card-subtitle {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin: 2px 0 0 0;
+}
+
+.m-section-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Page header (sub-pages embedded in ObraDetalhe) ─────────── */
+
+.m-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.m-page-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m-page-header-subtitle {
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  margin: 4px 0 0 28px;
+}
+
+/* ── Text button (Recolher / Expandir inline actions) ────────── */
+
+.m-btn-text {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+.m-btn-text:hover {
+  color: var(--text-primary);
+  background: var(--surface-muted);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .m-section-card {
+    padding: 16px 18px;
+  }
+  .m-section-card-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+}
