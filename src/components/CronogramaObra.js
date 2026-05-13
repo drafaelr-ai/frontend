@@ -1303,35 +1303,35 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     }
 
     const content = (
-        <div className="cronograma-obra-container">
+        <div className="cronograma-obra-container m-section-card">
             {/* Header */}
             <div className="cronograma-header">
                 <h2><i className="ti ti-calendar" aria-hidden="true" /> Cronograma de Obras - {obraNome}</h2>
                 <div className="header-actions">
                     <div className="view-toggle">
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
                             onClick={() => setViewMode('kanban')}
                         >
-                            📋 Kanban
+                            <i className="ti ti-layout-kanban" aria-hidden="true" /> Kanban
                         </button>
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'timeline' ? 'active' : ''}`}
                             onClick={() => setViewMode('timeline')}
                         >
-                            📅 Timeline
+                            <i className="ti ti-timeline" aria-hidden="true" /> Timeline
                         </button>
-                        <button 
+                        <button
                             className={`view-btn ${viewMode === 'lista' ? 'active' : ''}`}
                             onClick={() => setViewMode('lista')}
                         >
-                            📝 Lista
+                            <i className="ti ti-list" aria-hidden="true" /> Lista
                         </button>
                     </div>
-                    <button className="btn-pdf" onClick={handleGerarPDF}>📄 PDF</button>
-                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>➕ Novo Serviço</button>
-                    <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}>📋 Importar</button>
-                    <button className="btn-orcamento" onClick={() => { fetchEtapasOrcamento(); setShowImportOrcamentoModal(true); }}>📊 Orçamento</button>
+                    <button className="btn-pdf" onClick={handleGerarPDF}><i className="ti ti-file-text" aria-hidden="true" /> PDF</button>
+                    <button className="btn-primary" onClick={() => setShowAddModal(true)}><i className="ti ti-plus" aria-hidden="true" /> Novo Serviço</button>
+                    <button className="btn-secondary" onClick={() => { fetchServicosDisponiveis(); setShowImportModal(true); }}><i className="ti ti-clipboard-list" aria-hidden="true" /> Importar</button>
+                    <button className="btn-orcamento" onClick={() => { fetchEtapasOrcamento(); setShowImportOrcamentoModal(true); }}><i className="ti ti-chart-bar" aria-hidden="true" /> Orçamento</button>
                 </div>
             </div>
 
@@ -1342,15 +1342,15 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <div className="stat-label">Total</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.progressoGeral}%</div>
+                    <div className="stat-value" style={{ color: 'var(--status-success)' }}>{stats.progressoGeral}%</div>
                     <div className="stat-label">Progresso</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: '#10b981' }}>{stats.concluidos}</div>
+                    <div className="stat-value" style={{ color: 'var(--status-success)' }}>{stats.concluidos}</div>
                     <div className="stat-label">Concluídos</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? '#ef4444' : '#10b981' }}>{stats.comAtencao}</div>
+                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}>{stats.comAtencao}</div>
                     <div className="stat-label">Atenção (EVM)</div>
                 </div>
             </div>
