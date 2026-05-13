@@ -489,3 +489,17 @@ Gradiente `#667eea`/`#764ba2` não está no sistema de tokens. Tokenizar exigiri
 - [ ] **Modal wrapper**: adicionar `width="fullscreen"` para CaixaObraModal e OrcamentosModal
 - [ ] **PRs GitHub**: `refactor/fase-4-backend → main` e `refactor/fase-6-design → main`
 - [ ] **Smoke test**: obraly.uk incógnito após Vercel deploy da branch
+
+---
+
+## Métricas finais da Fase 6 (F5 — 13/05/2026)
+
+- Bundle JS: 292.36 kB (gzip)
+- Bundle CSS: 16.06 kB (gzip)
+- Build time: ~12s
+- Componentes em src/components/: 36 arquivos JSX
+- Telas em src/screens/: 11 arquivos JSX
+- Modais migrados: 26/26
+- Sub-páginas com card wrapper: 6/6 (das wrappable)
+- Tokens v2.0 coverage: 100%
+- Build status: `Compiled successfully`
