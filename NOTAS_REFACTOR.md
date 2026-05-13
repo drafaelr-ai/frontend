@@ -390,3 +390,25 @@ Dois modais tinham `customWidth` maiores que o máximo disponível (`xlarge` = 8
 - **Arquivo**: `src/BiModule.js` — emojis em tab labels (`💰 Financeiro`, `🏗️ Obras`, `📅 Calendário`), ChartCard titles e alert badges.
 - **Escopo**: módulo BI tem refactor visual próprio não planejado na fase 6.
 - **Quando**: ao dedicar sprint ao módulo BI (sem data definida).
+
+---
+
+## TODO Refactor: Converter modais que viraram pseudo-páginas em embedded components
+
+Páginas via `?page=` que atualmente renderizam como Modal overlays flutuantes em vez de páginas integradas ao layout:
+
+| ?page= | Componente | Situação atual |
+|---|---|---|
+| caixa | CaixaObraModal | sem prop embedded — Modal overlay |
+| relatorios | RelatoriosModal | sem prop embedded — Modal overlay |
+| orcamentos | OrcamentosModal | sem prop embedded — Modal overlay |
+| pagamento | InserirPagamentoModal | parcial — needs embedded path |
+| usuarios | AdminPanelModal | sem prop embedded — Modal overlay |
+
+**Problema**: quando o usuário navega via sidebar para essas páginas, o componente renderiza como modal flutuante por cima da página vazia, não como conteúdo inline.
+
+**Solução**: adicionar suporte a `embedded={true}` em cada modal, similar ao padrão já implementado em `CronogramaObra`, `DiarioObras`, `OrcamentoEngenharia`. Quando `embedded=true`, renderiza sem overlay/backdrop, full-width, sem `<Modal>` wrapper.
+
+**Cabe em**: Fase 6.5 (polish dedicado) ou refactor visual futuro.
+
+**Estimativa**: 1-2 dias para cobrir todos os 5 componentes.

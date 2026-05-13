@@ -21,15 +21,16 @@ import { fetchWithAuth } from '../auth/fetchWithAuth';
 const styles = {
     container: {
         padding: '20px',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-page)',
         minHeight: '100%'
     },
     header: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: '10px',
         padding: '20px 24px',
         marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -37,17 +38,17 @@ const styles = {
         gap: '16px'
     },
     title: {
-        fontSize: '24px',
-        fontWeight: '700',
-        color: '#1e293b',
+        fontSize: '20px',
+        fontWeight: '600',
+        color: 'var(--text-primary)',
         margin: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: '12px'
+        gap: '10px'
     },
     subtitle: {
-        fontSize: '14px',
-        color: '#64748b',
+        fontSize: '13px',
+        color: 'var(--text-muted)',
         margin: '4px 0 0 0'
     },
     headerActions: {
@@ -57,10 +58,10 @@ const styles = {
         alignItems: 'center'
     },
     button: {
-        padding: '10px 16px',
-        borderRadius: '8px',
+        padding: '8px 14px',
+        borderRadius: '6px',
         border: 'none',
-        fontSize: '14px',
+        fontSize: '13px',
         fontWeight: '500',
         cursor: 'pointer',
         display: 'flex',
@@ -69,12 +70,12 @@ const styles = {
         transition: 'all 0.2s'
     },
     buttonPrimary: {
-        backgroundColor: '#4f46e5',
-        color: '#fff'
+        backgroundColor: 'var(--brand-primary)',
+        color: 'var(--text-on-dark)'
     },
     buttonSecondary: {
-        backgroundColor: '#f1f5f9',
-        color: '#475569'
+        backgroundColor: 'var(--surface-muted)',
+        color: 'var(--text-muted)'
     },
     buttonSuccess: {
         backgroundColor: '#10b981',
@@ -89,15 +90,16 @@ const styles = {
         color: '#fff'
     },
     card: {
-        backgroundColor: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: '10px',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)',
         overflow: 'hidden',
         marginBottom: '20px'
     },
     cardHeader: {
         padding: '16px 20px',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -105,7 +107,7 @@ const styles = {
     cardTitle: {
         fontSize: '16px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text-primary)',
         margin: 0
     },
     // KPIs
@@ -116,16 +118,20 @@ const styles = {
         marginBottom: '20px'
     },
     kpiCard: {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        borderLeft: '4px solid #4f46e5'
+        backgroundColor: 'var(--surface-card)',
+        borderRadius: '10px',
+        padding: '16px 20px',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid var(--border-subtle)',
+        borderLeft: '4px solid var(--brand-primary)'
     },
     kpiLabel: {
-        fontSize: '13px',
-        color: '#64748b',
-        marginBottom: '4px'
+        fontSize: 'var(--text-xs)',
+        color: 'var(--text-muted)',
+        marginBottom: '4px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        fontWeight: '500'
     },
     kpiValue: {
         fontSize: '28px',
@@ -1043,42 +1049,42 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             <div style={styles.header}>
                 <div>
                     <h1 style={styles.title}>
-                        📅 Agenda de Eventos
+                        <i className="ti ti-calendar-event" aria-hidden="true" /> Agenda de Eventos
                     </h1>
                     <p style={styles.subtitle}>{obraNome || 'Obra'}</p>
                 </div>
                 <div style={styles.headerActions}>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonSecondary }}
                         onClick={() => setShowModalManual(true)}
                     >
-                        ✏️ Novo Evento
+                        <i className="ti ti-pencil" aria-hidden="true" /> Novo Evento
                     </button>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonPrimary }}
                         onClick={() => setShowModalImportar(true)}
                     >
-                        📥 Importar
+                        <i className="ti ti-download" aria-hidden="true" /> Importar
                     </button>
                 </div>
             </div>
 
             {/* KPIs */}
             <div style={styles.kpiContainer}>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#ef4444' }}>
-                    <div style={styles.kpiLabel}>🔴 Hoje</div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: 'var(--status-danger)' }}>
+                    <div style={styles.kpiLabel}>Hoje</div>
                     <div style={styles.kpiValue}>{eventosHoje.length}</div>
                 </div>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#f59e0b' }}>
-                    <div style={styles.kpiLabel}>📅 Esta Semana</div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: 'var(--status-warning)' }}>
+                    <div style={styles.kpiLabel}>Esta Semana</div>
                     <div style={styles.kpiValue}>{eventosHoje.length + estaSemana.length}</div>
                 </div>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#3b82f6' }}>
-                    <div style={styles.kpiLabel}>🗓️ Próx. Semana</div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: 'var(--status-info)' }}>
+                    <div style={styles.kpiLabel}>Próx. Semana</div>
                     <div style={styles.kpiValue}>{proximaSemana.length}</div>
                 </div>
-                <div style={{ ...styles.kpiCard, borderLeftColor: '#6366f1' }}>
-                    <div style={styles.kpiLabel}>📋 Total Ativos</div>
+                <div style={{ ...styles.kpiCard, borderLeftColor: 'var(--brand-primary)' }}>
+                    <div style={styles.kpiLabel}>Total Ativos</div>
                     <div style={styles.kpiValue}>{eventosAtivos.length}</div>
                 </div>
             </div>
@@ -1095,21 +1101,21 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         onClick={() => setFiltro(f)}
                     >
                         {f === 'todos' && `Todos (${eventosAtivos.length})`}
-                        {f === 'hoje' && `🔴 Hoje (${eventosHoje.length})`}
-                        {f === 'semana' && `📅 Esta Semana (${eventosHoje.length + estaSemana.length})`}
+                        {f === 'hoje' && `Hoje (${eventosHoje.length})`}
+                        {f === 'semana' && `Esta Semana (${eventosHoje.length + estaSemana.length})`}
                     </button>
                 ))}
             </div>
 
             {/* Alerta de Eventos Hoje */}
             {eventosHoje.length > 0 && (
-                <div style={{ ...styles.alertBanner, backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}>
-                    <span style={{ fontSize: '24px' }}>📌</span>
+                <div style={{ ...styles.alertBanner, backgroundColor: 'var(--status-warning-bg)', borderColor: 'var(--status-warning)' }}>
+                    <i className="ti ti-pin" aria-hidden="true" style={{ fontSize: '24px', color: 'var(--status-warning-text)' }} />
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--status-warning-text)' }}>
                             {eventosHoje.length} {eventosHoje.length === 1 ? 'evento hoje' : 'eventos hoje'}!
                         </div>
-                        <div style={{ fontSize: '13px', color: '#b45309' }}>
+                        <div style={{ fontSize: '13px', color: 'var(--status-warning-text)' }}>
                             Confira os eventos programados para hoje
                         </div>
                     </div>
