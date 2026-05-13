@@ -362,6 +362,7 @@ export default function Dashboard() {
                                                 obraName={obra.nome}
                                                 onNavigate={() => navigateToObra(id)}
                                                 onDeleted={loadData}
+                                                onArchived={loadData}
                                             />
                                         </div>
                                     </div>
