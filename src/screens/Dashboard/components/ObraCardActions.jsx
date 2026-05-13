@@ -3,7 +3,7 @@ import { fetchWithAuth } from '../../../auth/fetchWithAuth';
 import { API_URL } from '../../../config';
 import { confirmDialog, notify } from '../../../utils/notify';
 
-export default function ObraCardActions({ obraId, obraName, onNavigate, onDeleted }) {
+export default function ObraCardActions({ obraId, obraName, onNavigate, onDeleted, onArchived }) {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
@@ -15,6 +15,27 @@ export default function ObraCardActions({ obraId, obraName, onNavigate, onDelete
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [open]);
+
+    async function handleArchive(e) {
+        e.stopPropagation();
+        setOpen(false);
+        const ok = await confirmDialog(
+            'A obra será movida para arquivadas. Você pode desarquivá-la depois.',
+            { title: `Arquivar "${obraName}"?`, confirmText: 'Arquivar', danger: false }
+        );
+        if (!ok) return;
+        try {
+            const res = await fetchWithAuth(`${API_URL}/obras/${obraId}/arquivar`, { method: 'PATCH' });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.erro || 'Falha ao arquivar obra');
+            }
+            notify.success(`"${obraName}" arquivada`);
+            onArchived?.();
+        } catch (err) {
+            notify.error(err.message);
+        }
+    }
 
     async function handleDelete(e) {
         e.stopPropagation();
@@ -53,7 +74,7 @@ export default function ObraCardActions({ obraId, obraName, onNavigate, onDelete
                         <i className="ti ti-external-link" aria-hidden="true" />
                         Ver detalhes
                     </button>
-                    <button className="db-obra-menu-item" disabled title="Em breve">
+                    <button className="db-obra-menu-item" onClick={handleArchive}>
                         <i className="ti ti-archive" aria-hidden="true" />
                         Arquivar
                     </button>
