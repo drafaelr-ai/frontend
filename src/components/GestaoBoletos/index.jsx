@@ -305,31 +305,18 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     };
 
     return (
-        <div className="gestao-boletos">
+        <div className="m-section-card">
             {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                flexWrap: 'wrap',
-                gap: '10px'
-            }}>
-                <h2 style={{ margin: 0 }}>🏦 Gestão de Boletos</h2>
-                <button
-                    onClick={() => setModalCadastro(true)}
-                    style={{
-                        padding: '10px 20px',
-                        background: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                    }}
-                >
-                    + Novo Boleto
-                </button>
+            <div className="m-section-card-header">
+                <h2 className="m-section-card-title">
+                    <i className="ti ti-receipt" aria-hidden="true" />
+                    Gestão de Boletos
+                </h2>
+                <div className="m-section-card-actions">
+                    <button className="m-btn-primary" onClick={() => setModalCadastro(true)}>
+                        <i className="ti ti-plus" aria-hidden="true" /> Novo Boleto
+                    </button>
+                </div>
             </div>
 
             {/* Resumo */}
@@ -340,28 +327,28 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     gap: '15px',
                     marginBottom: '20px'
                 }}>
-                    <div style={{ background: '#ffebee', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.85em', color: '#c62828' }}>Vencidos</div>
-                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#d32f2f' }}>
+                    <div style={{ background: 'var(--status-danger-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-danger-text)' }}>Vencidos</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-danger)' }}>
                             {formatCurrency(resumo.total_vencido)}
                         </div>
-                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_vencido} boletos</div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{resumo.quantidade_vencido} boletos</div>
                     </div>
 
-                    <div style={{ background: '#fff3e0', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.85em', color: '#e65100' }}>Pendentes</div>
-                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#f57c00' }}>
+                    <div style={{ background: 'var(--status-warning-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-warning-text)' }}>Pendentes</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-warning)' }}>
                             {formatCurrency(resumo.total_pendente)}
                         </div>
-                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_pendente} boletos</div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{resumo.quantidade_pendente} boletos</div>
                     </div>
 
-                    <div style={{ background: '#e8f5e9', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.85em', color: '#2e7d32' }}>Pagos</div>
-                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#388e3c' }}>
+                    <div style={{ background: 'var(--status-success-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-success)' }}>Pagos</div>
+                        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-success)' }}>
                             {formatCurrency(resumo.total_pago)}
                         </div>
-                        <div style={{ fontSize: '0.8em', color: '#666' }}>{resumo.quantidade_pago} boletos</div>
+                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{resumo.quantidade_pago} boletos</div>
                     </div>
                 </div>
             )}
@@ -372,10 +359,12 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     value={filtroStatus}
                     onChange={(e) => setFiltroStatus(e.target.value)}
                     style={{
-                        padding: '10px 15px',
-                        borderRadius: '8px',
-                        border: '1px solid #ccc',
-                        fontSize: '1em'
+                        padding: '8px 12px',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-default)',
+                        fontSize: 'var(--text-base)',
+                        color: 'var(--text-primary)',
+                        background: 'var(--surface-card)'
                     }}
                 >
                     <option value="todos">Todos os boletos</option>
@@ -392,25 +381,18 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 <div style={{
                     textAlign: 'center',
                     padding: '40px',
-                    background: '#f5f5f5',
-                    borderRadius: '10px'
+                    background: 'var(--surface-subtle)',
+                    borderRadius: 'var(--radius-xl)'
                 }}>
-                    <p style={{ fontSize: '1.1em', color: '#666' }}>
+                    <p style={{ fontSize: 'var(--text-md)', color: 'var(--text-muted)' }}>
                         Nenhum boleto cadastrado
                     </p>
                     <button
+                        className="m-btn-primary"
                         onClick={() => setModalCadastro(true)}
-                        style={{
-                            padding: '10px 20px',
-                            background: '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            marginTop: '10px'
-                        }}
+                        style={{ marginTop: '10px' }}
                     >
-                        + Cadastrar primeiro boleto
+                        <i className="ti ti-plus" aria-hidden="true" /> Cadastrar primeiro boleto
                     </button>
                 </div>
             ) : (
@@ -418,8 +400,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {/* Vencidos */}
                     {boletosVencidos.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#d32f2f', marginBottom: '10px' }}>
-                                🔴 VENCIDOS ({boletosVencidos.length})
+                            <h3 style={{ color: 'var(--status-danger)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="ti ti-alert-circle" aria-hidden="true" /> VENCIDOS ({boletosVencidos.length})
                             </h3>
                             {boletosVencidos.map(b => renderBoletoCard(b, 'vencido'))}
                         </div>
@@ -428,8 +410,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {/* Urgentes (<=3 dias) */}
                     {boletosUrgentes.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#f57c00', marginBottom: '10px' }}>
-                                🔥 URGENTE - Vence em até 3 dias ({boletosUrgentes.length})
+                            <h3 style={{ color: 'var(--status-warning)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="ti ti-flame" aria-hidden="true" /> URGENTE - Vence em até 3 dias ({boletosUrgentes.length})
                             </h3>
                             {boletosUrgentes.map(b => renderBoletoCard(b, 'urgente'))}
                         </div>
@@ -438,8 +420,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {/* Próximos (4-7 dias) */}
                     {boletosProximos.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#ffa000', marginBottom: '10px' }}>
-                                ⚡ Vence em até 7 dias ({boletosProximos.length})
+                            <h3 style={{ color: 'var(--status-warning)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="ti ti-calendar-week" aria-hidden="true" /> Vence em até 7 dias ({boletosProximos.length})
                             </h3>
                             {boletosProximos.map(b => renderBoletoCard(b, 'proximo'))}
                         </div>
@@ -448,8 +430,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {/* Normais (>7 dias) */}
                     {boletosNormais.length > 0 && (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#666', marginBottom: '10px' }}>
-                                📅 Próximos vencimentos ({boletosNormais.length})
+                            <h3 style={{ color: 'var(--text-muted)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="ti ti-calendar" aria-hidden="true" /> Próximos vencimentos ({boletosNormais.length})
                             </h3>
                             {boletosNormais.map(b => renderBoletoCard(b, 'normal'))}
                         </div>
@@ -458,8 +440,8 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     {/* Pagos */}
                     {boletosPagos.length > 0 && filtroStatus === 'todos' && (
                         <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#388e3c', marginBottom: '10px' }}>
-                                ✅ Pagos ({boletosPagos.length})
+                            <h3 style={{ color: 'var(--status-success)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="ti ti-circle-check" aria-hidden="true" /> Pagos ({boletosPagos.length})
                             </h3>
                             {boletosPagos.map(b => renderBoletoCard(b, 'pago'))}
                         </div>
