@@ -370,8 +370,10 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
     return (
         <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalStyles.content}>
-                <h2 style={{ marginTop: 0, color: 'var(--cor-primaria)' }}>
-                    {entrada ? '✏️ Editar Entrada' : '➕ Nova Entrada no Diário'}
+                <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>
+                    {entrada
+                        ? <><i className="ti ti-pencil" aria-hidden="true" /> Editar Entrada</>
+                        : <><i className="ti ti-plus" aria-hidden="true" /> Nova Entrada no Diário</>}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -553,7 +555,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                     </div>
 
                     {error && (
-                        <div style={{ color: 'var(--cor-vermelho)', marginBottom: '15px', padding: '10px', backgroundColor: '#fee', borderRadius: '4px' }}>
+                        <div style={{ color: 'var(--status-danger)', marginBottom: '15px', padding: '10px', backgroundColor: 'var(--status-danger-bg)', borderRadius: 'var(--radius-md)' }}>
                             {error}
                         </div>
                     )}
@@ -691,7 +693,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
         },
         sectionTitle: {
             fontWeight: 'bold',
-            color: 'var(--cor-primaria)',
+            color: 'var(--text-primary)',
             marginBottom: '10px',
             fontSize: '1.1em'
         },
@@ -737,8 +739,8 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
         <div style={modalStyles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalStyles.content}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                        📋 {entrada.titulo}
+                    <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                        <i className="ti ti-notes" aria-hidden="true" /> {entrada.titulo}
                     </h2>
                     <div style={{ fontSize: '0.9em', color: '#666' }}>
                         {formatDate(entrada.data)}
@@ -1007,21 +1009,22 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     // Conteúdo principal do diário
     const content = (
         <div style={{
-            background: 'white',
-            borderRadius: embedded ? '0' : '8px',
-            padding: embedded ? '20px' : '30px',
+            background: 'var(--surface-card)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '20px',
             maxWidth: embedded ? '100%' : '1200px',
             width: '100%',
             maxHeight: embedded ? '100%' : '90vh',
             overflowY: 'auto',
-            boxShadow: embedded ? 'none' : '0 4px 6px rgba(0,0,0,0.1)'
+            boxShadow: embedded ? 'none' : 'var(--shadow-modal)',
+            border: embedded ? 'none' : '0.5px solid var(--border-subtle)'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: 'var(--cor-primaria)' }}>
-                    📔 Diário de Obras - {obraData.nome}
+                <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>
+                    <i className="ti ti-notebook" aria-hidden="true" /> Diário de Obras - {obraData.nome}
                 </h2>
                 {!embedded && (
-                    <button onClick={onClose} className="voltar-btn">✕ Fechar</button>
+                    <button onClick={onClose} className="m-btn-cancel"><i className="ti ti-x" aria-hidden="true" /> Fechar</button>
                 )}
             </div>
 
@@ -1032,9 +1035,9 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
             }}>
                 <button
                     onClick={() => { setEntradaSelecionada(null); setIsFormModalOpen(true); }}
-                    className="submit-btn"
+                    className="m-btn-primary"
                 >
-                    ➕ Nova Entrada
+                    <i className="ti ti-plus" aria-hidden="true" /> Nova Entrada
                 </button>
 
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1042,63 +1045,63 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                         type="date"
                         value={filtroData}
                         onChange={(e) => setFiltroData(e.target.value)}
-                        style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', background: 'var(--surface-card)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)' }}
                     />
                     {filtroData && (
-                        <button
-                            onClick={() => setFiltroData('')}
-                            style={{ padding: '8px 12px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                        >
+                        <button onClick={() => setFiltroData('')} className="m-btn-cancel">
                             Limpar
                         </button>
                     )}
-                    <button onClick={handleGerarRelatorio} className="submit-btn" style={{ background: '#17a2b8' }}>
-                        📄 Gerar PDF
+                    <button onClick={handleGerarRelatorio} className="m-btn-secondary">
+                        <i className="ti ti-file-text" aria-hidden="true" /> Gerar PDF
                     </button>
                 </div>
             </div>
 
             {/* Lista de Entradas */}
             {isLoading ? (
-                <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
+                <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Carregando...</p>
             ) : entradasFiltradas.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#666', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <p>📝 Nenhuma entrada encontrada.</p>
-                    <p>Clique em "Nova Entrada" para começar.</p>
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', background: 'var(--surface-subtle)', borderRadius: 'var(--radius-md)' }}>
+                    <i className="ti ti-notes" aria-hidden="true" style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }} />
+                    <p style={{ margin: 0 }}>Nenhuma entrada encontrada.</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--text-sm)' }}>Clique em "Nova Entrada" para começar.</p>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {entradasFiltradas.map(entrada => (
                         <div
                             key={entrada.id}
                             onClick={() => { setEntradaSelecionada(entrada); setIsDetalhesModalOpen(true); }}
                             style={{
-                                padding: '15px', background: '#f8f9fa', borderRadius: '8px',
-                                cursor: 'pointer', border: '1px solid #e9ecef', transition: 'all 0.2s'
+                                padding: '14px 16px', background: 'var(--surface-subtle)', borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer', border: '1px solid var(--border-subtle)', transition: 'background var(--transition-fast)'
                             }}
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div>
-                                    <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
+                                    <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: 'var(--text-md)' }}>
                                         {entrada.titulo || `Entrada de ${formatDate(entrada.data)}`}
                                     </h4>
-                                    <p style={{ margin: 0, color: '#666', fontSize: '0.9em' }}>
-                                        📅 {formatDate(entrada.data)}
+                                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+                                        <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: '4px' }} />
+                                        {formatDate(entrada.data)}
                                         {entrada.clima && ` • ${entrada.clima}`}
                                         {entrada.temperatura && ` • ${entrada.temperatura}°C`}
                                     </p>
                                 </div>
                                 {entrada.fotos && entrada.fotos.length > 0 && (
                                     <span style={{
-                                        background: '#007bff', color: 'white', padding: '4px 8px',
-                                        borderRadius: '12px', fontSize: '0.8em'
+                                        background: 'var(--status-info-bg)', color: 'var(--status-info)', padding: '3px 8px',
+                                        borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', fontWeight: 600,
+                                        display: 'inline-flex', alignItems: 'center', gap: '3px'
                                     }}>
-                                        📷 {entrada.fotos.length}
+                                        <i className="ti ti-camera" aria-hidden="true" /> {entrada.fotos.length}
                                     </span>
                                 )}
                             </div>
                             {entrada.descricao && (
-                                <p style={{ margin: '10px 0 0 0', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <p style={{ margin: '8px 0 0 0', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {entrada.descricao.substring(0, 150)}{entrada.descricao.length > 150 && '...'}
                                 </p>
                             )}
