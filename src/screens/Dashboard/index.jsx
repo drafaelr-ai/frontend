@@ -395,11 +395,13 @@ export default function Dashboard() {
                                             <ObraCardActions
                                                 obraId={id}
                                                 obraName={obra.nome}
+                                                obraCliente={obra.cliente}
                                                 obraArquivada={obra.arquivada}
                                                 onNavigate={() => navigateToObra(id)}
                                                 onDeleted={loadData}
                                                 onArchived={loadData}
                                                 onUnarchived={loadData}
+                                                onEdited={loadData}
                                             />
                                         </div>
                                     </div>

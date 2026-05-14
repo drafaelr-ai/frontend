@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../../auth/fetchWithAuth';
 import { API_URL } from '../../../config';
 import { confirmDialog, notify } from '../../../utils/notify';
+import EditObraModal from '../../../components/modals/EditObraModal';
 
-export default function ObraCardActions({ obraId, obraName, obraArquivada, onNavigate, onDeleted, onArchived, onUnarchived }) {
+export default function ObraCardActions({ obraId, obraName, obraCliente, obraArquivada, onNavigate, onDeleted, onArchived, onUnarchived, onEdited }) {
     const [open, setOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
     const ref = useRef(null);
 
     useEffect(() => {
@@ -77,6 +79,7 @@ export default function ObraCardActions({ obraId, obraName, obraArquivada, onNav
     }
 
     return (
+        <>
         <div ref={ref} className="db-obra-menu" onClick={e => e.stopPropagation()}>
             <button
                 className="db-obra-menu-btn"
@@ -94,6 +97,13 @@ export default function ObraCardActions({ obraId, obraName, obraArquivada, onNav
                     >
                         <i className="ti ti-external-link" aria-hidden="true" />
                         Ver detalhes
+                    </button>
+                    <button
+                        className="db-obra-menu-item"
+                        onClick={e => { e.stopPropagation(); setOpen(false); setEditOpen(true); }}
+                    >
+                        <i className="ti ti-edit" aria-hidden="true" />
+                        Editar
                     </button>
                     {obraArquivada ? (
                         <button className="db-obra-menu-item" onClick={handleUnarchive}>
@@ -114,5 +124,14 @@ export default function ObraCardActions({ obraId, obraName, obraArquivada, onNav
                 </div>
             )}
         </div>
+        <EditObraModal
+            isOpen={editOpen}
+            onClose={() => setEditOpen(false)}
+            obraId={obraId}
+            obraName={obraName}
+            obraCliente={obraCliente}
+            onSaved={() => onEdited?.()}
+        />
+        </>
     );
 }
