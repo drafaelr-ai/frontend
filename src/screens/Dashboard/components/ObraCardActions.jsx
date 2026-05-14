@@ -3,7 +3,7 @@ import { fetchWithAuth } from '../../../auth/fetchWithAuth';
 import { API_URL } from '../../../config';
 import { confirmDialog, notify } from '../../../utils/notify';
 
-export default function ObraCardActions({ obraId, obraName, onNavigate, onDeleted, onArchived }) {
+export default function ObraCardActions({ obraId, obraName, obraArquivada, onNavigate, onDeleted, onArchived, onUnarchived }) {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
@@ -15,6 +15,27 @@ export default function ObraCardActions({ obraId, obraName, onNavigate, onDelete
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, [open]);
+
+    async function handleUnarchive(e) {
+        e.stopPropagation();
+        setOpen(false);
+        const ok = await confirmDialog(
+            'A obra voltará para a lista de obras ativas.',
+            { title: `Desarquivar "${obraName}"?`, confirmText: 'Desarquivar', danger: false }
+        );
+        if (!ok) return;
+        try {
+            const res = await fetchWithAuth(`${API_URL}/obras/${obraId}/desarquivar`, { method: 'PATCH' });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.erro || 'Falha ao desarquivar obra');
+            }
+            notify.success(`"${obraName}" desarquivada`);
+            onUnarchived?.();
+        } catch (err) {
+            notify.error(err.message);
+        }
+    }
 
     async function handleArchive(e) {
         e.stopPropagation();
@@ -74,10 +95,17 @@ export default function ObraCardActions({ obraId, obraName, onNavigate, onDelete
                         <i className="ti ti-external-link" aria-hidden="true" />
                         Ver detalhes
                     </button>
-                    <button className="db-obra-menu-item" onClick={handleArchive}>
-                        <i className="ti ti-archive" aria-hidden="true" />
-                        Arquivar
-                    </button>
+                    {obraArquivada ? (
+                        <button className="db-obra-menu-item" onClick={handleUnarchive}>
+                            <i className="ti ti-archive-off" aria-hidden="true" />
+                            Desarquivar
+                        </button>
+                    ) : (
+                        <button className="db-obra-menu-item" onClick={handleArchive}>
+                            <i className="ti ti-archive" aria-hidden="true" />
+                            Arquivar
+                        </button>
+                    )}
                     <div className="db-obra-menu-divider" />
                     <button className="db-obra-menu-item db-obra-menu-item-danger" onClick={handleDelete}>
                         <i className="ti ti-trash" aria-hidden="true" />

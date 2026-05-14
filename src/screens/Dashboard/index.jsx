@@ -103,13 +103,14 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [period, setPeriod] = useState('mes');  // 'mes' | 'acumulado' — visual toggle, data uses mes
+    const [filtroObras, setFiltroObras] = useState('ativas');
 
     const loadData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             // Phase 1: fetch obra list
-            const obrasRes = await fetchWithAuth(`${API_URL}/obras`);
+            const obrasRes = await fetchWithAuth(`${API_URL}/obras?incluir_arquivadas=true`);
             if (!obrasRes.ok) throw new Error('Falha ao carregar obras');
             const obrasData = await obrasRes.json();
 
@@ -119,8 +120,8 @@ export default function Dashboard() {
 
             setObras(list);
 
-            // Phase 2: parallel per-obra detail fetches
-            const activeObras = list.filter(o => !o.concluida);
+            // Phase 2: parallel per-obra detail fetches (active only — skip archived)
+            const activeObras = list.filter(o => !o.concluida && !o.arquivada);
             const results = await Promise.allSettled(
                 activeObras.map(async (obra) => {
                     const id = obra.id ?? obra.obra_id;
@@ -168,7 +169,7 @@ export default function Dashboard() {
         let totalPago = 0;
         let countObrasAtivas = 0;
 
-        obras.filter(o => !o.concluida).forEach(obra => {
+        obras.filter(o => !o.concluida && !o.arquivada).forEach(obra => {
             const id = obra.id ?? obra.obra_id;
             const d = obraDetails[id];
             countObrasAtivas++;
@@ -204,7 +205,7 @@ export default function Dashboard() {
     // --- Activity feed: flatten historico_unificado across obras, sort by date, take 10 ---
     const activityFeed = useMemo(() => {
         const items = [];
-        obras.filter(o => !o.concluida).forEach(obra => {
+        obras.filter(o => !o.concluida && !o.arquivada).forEach(obra => {
             const id = obra.id ?? obra.obra_id;
             const d = obraDetails[id];
             const historico = d?.detail?.historico_unificado;
@@ -221,6 +222,12 @@ export default function Dashboard() {
         return items.slice(0, 10);
     }, [obras, obraDetails]);
 
+    const displayObras = useMemo(() => {
+        if (filtroObras === 'arquivadas') return obras.filter(o => o.arquivada);
+        if (filtroObras === 'todas') return obras.filter(o => !o.concluida);
+        return obras.filter(o => !o.concluida && !o.arquivada);
+    }, [obras, filtroObras]);
+
     if (loading) return <LoadingSkeleton />;
 
     if (error) {
@@ -236,8 +243,6 @@ export default function Dashboard() {
             </div>
         );
     }
-
-    const activeObras = obras.filter(o => !o.concluida);
 
     return (
         <div className="db-root">
@@ -308,25 +313,49 @@ export default function Dashboard() {
                     label="Obras Concluídas"
                     value={kpis.countObrasConcluidas}
                     severity="info"
-                    description={`${obras.length} total`}
+                    description={`${obras.filter(o => !o.arquivada).length} total`}
                 />
             </div>
 
-            {/* Obras ativas */}
+            {/* Obras */}
             <div className="db-section">
-                <div className="db-section-header">
-                    <h2 className="db-section-title">Obras Ativas</h2>
+                <div className="db-filtro-obras">
+                    <button
+                        className={`db-filtro-chip${filtroObras === 'ativas' ? ' active' : ''}`}
+                        onClick={() => setFiltroObras('ativas')}
+                    >
+                        Ativas
+                    </button>
+                    <button
+                        className={`db-filtro-chip${filtroObras === 'arquivadas' ? ' active' : ''}`}
+                        onClick={() => setFiltroObras('arquivadas')}
+                    >
+                        Arquivadas
+                    </button>
+                    <button
+                        className={`db-filtro-chip${filtroObras === 'todas' ? ' active' : ''}`}
+                        onClick={() => setFiltroObras('todas')}
+                    >
+                        Todas
+                    </button>
                 </div>
-                {activeObras.length === 0 ? (
+                <div className="db-section-header">
+                    <h2 className="db-section-title">
+                        {filtroObras === 'ativas' && `Obras Ativas (${displayObras.length})`}
+                        {filtroObras === 'arquivadas' && `Obras Arquivadas (${displayObras.length})`}
+                        {filtroObras === 'todas' && `Todas as Obras (${displayObras.length})`}
+                    </h2>
+                </div>
+                {displayObras.length === 0 ? (
                     <div className="db-card">
                         <div className="db-empty">
                             <i className="ti ti-building-off" aria-hidden="true" />
-                            <p>Nenhuma obra ativa</p>
+                            <p>{filtroObras === 'arquivadas' ? 'Nenhuma obra arquivada' : 'Nenhuma obra ativa'}</p>
                         </div>
                     </div>
                 ) : (
                     <div className="db-obras-grid">
-                        {activeObras.map(obra => {
+                        {displayObras.map(obra => {
                             const id = obra.id ?? obra.obra_id;
                             const d = obraDetails[id];
                             const sumarios = d?.detail?.sumarios;
@@ -339,7 +368,7 @@ export default function Dashboard() {
                             return (
                                 <div
                                     key={id}
-                                    className="db-obra-tile"
+                                    className={`db-obra-tile${obra.arquivada ? ' db-obra-tile--arquivada' : ''}`}
                                     onClick={() => navigateToObra(id)}
                                     role="button"
                                     tabIndex={0}
@@ -349,7 +378,13 @@ export default function Dashboard() {
                                     <div className="db-obra-tile-header">
                                         <span className="db-obra-tile-name">{obra.nome}</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                                            {vencidos > 0 && (
+                                            {obra.arquivada && (
+                                                <span className="db-obra-badge-archived">
+                                                    <i className="ti ti-archive" aria-hidden="true" />
+                                                    Arquivada
+                                                </span>
+                                            )}
+                                            {!obra.arquivada && vencidos > 0 && (
                                                 <span className="db-obra-badge" style={{
                                                     background: 'var(--status-danger-bg)',
                                                     color: 'var(--status-danger)',
@@ -360,9 +395,11 @@ export default function Dashboard() {
                                             <ObraCardActions
                                                 obraId={id}
                                                 obraName={obra.nome}
+                                                obraArquivada={obra.arquivada}
                                                 onNavigate={() => navigateToObra(id)}
                                                 onDeleted={loadData}
                                                 onArchived={loadData}
+                                                onUnarchived={loadData}
                                             />
                                         </div>
                                     </div>
