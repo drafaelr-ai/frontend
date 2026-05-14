@@ -70,7 +70,12 @@ function App() {
     }
 
     if (selectedModule === 'admin') {
-        return <AppAdmin onBack={handleBackToSelector} />;
+        return (
+            <>
+                <ToastContainer />
+                <AppAdmin onBack={handleBackToSelector} />
+            </>
+        );
     }
 
     return (

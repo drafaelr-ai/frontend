@@ -820,6 +820,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
         data_pagamento: lancamento.data_pagamento || '',
         categoria_id: lancamento.categoria_id || '',
         observacoes: lancamento.observacoes || '',
+        pix: lancamento.pix || '',
     });
     const [comprovantePreview, setComprovantePreview] = useState(lancamento.comprovante_url || null);
     const [comprovanteBase64, setComprovanteBase64] = useState(undefined);
@@ -853,6 +854,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                 status: form.status,
                 categoria_id: Number(form.categoria_id),
                 observacoes: form.observacoes || null,
+                pix: form.pix || null,
                 data_lancamento: form.data_lancamento || undefined,
                 data_vencimento: form.data_vencimento || undefined,
                 data_pagamento: form.data_pagamento || undefined,
@@ -940,6 +942,11 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                     <div>
                         <label style={styles.label}>Observações</label>
                         <textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes:e.target.value }))} rows={2} style={{ ...styles.input, resize:'vertical' }} placeholder='Informações adicionais…' />
+                    </div>
+                    {/* PIX */}
+                    <div>
+                        <label style={styles.label}>Chave PIX</label>
+                        <input type='text' value={form.pix} onChange={e => setForm(f => ({ ...f, pix:e.target.value }))} style={styles.input} placeholder='CPF, e-mail, telefone ou chave aleatória' />
                     </div>
                     {/* Comprovante */}
                     <div>
@@ -1405,7 +1412,8 @@ const Lancamentos = () => {
         recorrente: false,
         recorrencia_meses: '1',
         qtd_parcelas: '12',
-        observacoes: ''
+        observacoes: '',
+        pix: ''
     });
 
     useEffect(() => {
@@ -1467,7 +1475,8 @@ const Lancamentos = () => {
                     recorrente: false,
                     recorrencia_meses: '1',
                     qtd_parcelas: '12',
-                    observacoes: ''
+                    observacoes: '',
+                    pix: ''
                 });
             }
         } catch (err) {
@@ -2026,6 +2035,18 @@ const Lancamentos = () => {
                                         ⏰ Este lançamento aparecerá nos alertas quando o vencimento estiver próximo
                                     </div>
                                 )}
+                            </div>
+
+                            {/* PIX */}
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Chave PIX</label>
+                                <input
+                                    type="text"
+                                    value={form.pix}
+                                    onChange={e => setForm({ ...form, pix: e.target.value })}
+                                    style={styles.input}
+                                    placeholder="CPF, e-mail, telefone ou chave aleatória"
+                                />
                             </div>
 
                             {/* Recorrência */}
