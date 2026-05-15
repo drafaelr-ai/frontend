@@ -968,7 +968,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                     </div>
                                 )}
                                 
-                                <div onClick={() => handleSelectObra(obra.id)} className="card-obra-content">
+                                <button type="button" onClick={() => handleSelectObra(obra.id)} className="card-obra-content" aria-label={`Selecionar obra ${obra.nome}`}>
                                     <h3>{obra.nome}</h3>
                                     <p>Cliente: {obra.cliente || 'N/A'}</p>
                                     
@@ -998,7 +998,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                             </strong>
                                         </div>
                                     </div>
-                                </div>
+                                </button>
                             </div>
                         ))
                     ) : (

@@ -644,7 +644,7 @@ const WindowsNavBar = ({
 
             {/* Backdrop para fechar menu */}
             {activeMenu && (
-                <div className="menu-backdrop" onClick={() => setActiveMenu(null)} />
+                <div className="menu-backdrop" onClick={() => setActiveMenu(null)} aria-hidden="true" />
             )}
         </>
     );

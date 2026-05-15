@@ -1,6 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import './App.css';
-const AppAdmin = lazy(() => import('./AppAdmin'));
 import { ToastContainer } from './utils/notify';
 import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
@@ -8,6 +7,8 @@ import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
+
+const AppAdmin = lazy(() => import('./AppAdmin'));
 
 function App() {
     const [user, setUser] = useState(null);

@@ -94,6 +94,13 @@ body {
 .card-obra-content {
     padding: 20px;
     cursor: pointer;
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
 }
 .card-obra-content:hover {
     background-color: var(--surface-subtle);
