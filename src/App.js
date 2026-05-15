@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import './App.css';
-import AppAdmin from './AppAdmin';
+const AppAdmin = lazy(() => import('./AppAdmin'));
 import { ToastContainer } from './utils/notify';
 import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
@@ -71,10 +71,10 @@ function App() {
 
     if (selectedModule === 'admin') {
         return (
-            <>
+            <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
                 <ToastContainer />
                 <AppAdmin onBack={handleBackToSelector} />
-            </>
+            </Suspense>
         );
     }
 
