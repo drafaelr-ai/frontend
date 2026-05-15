@@ -372,7 +372,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                             onChange={(e) => setBusca(e.target.value)}
                         />
                         {busca && (
-                            <button className="hpc-search-clear" onClick={() => setBusca('')} title="Limpar busca">
+                            <button className="hpc-search-clear" onClick={() => setBusca('')} title="Limpar busca" aria-label="Limpar busca">
                                 <i className="ti ti-x" aria-hidden="true" />
                             </button>
                         )}

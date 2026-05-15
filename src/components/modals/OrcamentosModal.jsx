@@ -361,6 +361,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                                 onClick={() => setViewingAnexos(orc)}
                                                 className="acao-icon-btn"
                                                 title={`${orc.anexos_count} anexo(s)`}
+                                                aria-label={`Ver ${orc.anexos_count} anexo(s)`}
                                                 style={{ fontSize: '1.3em', color: 'var(--status-info)' }}
                                             >
                                                 📎

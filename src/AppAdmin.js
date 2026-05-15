@@ -781,7 +781,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                         <td style={styles.td}>
                                             <div style={{ display:'flex', gap:'6px' }}>
                                                 <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
-                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }} title="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
+                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }} title="Remover" aria-label="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1245,7 +1245,7 @@ const Imoveis = () => {
                             <h2 style={styles.modalTitle}>
                                 {editando ? '✏️ Editar Imóvel' : '🏠 Novo Imóvel'}
                             </h2>
-                            <button onClick={closeModal} style={styles.closeButton}>×</button>
+                            <button onClick={closeModal} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={styles.modalBody}>
                             <div style={styles.formGroup}>
@@ -1726,7 +1726,7 @@ const Lancamentos = () => {
                     <div style={{ ...styles.modal, maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
                             <h2 style={styles.modalTitle}>💵 Registrar Pagamento</h2>
-                            <button onClick={() => setShowModalPagar(false)} style={styles.closeButton}>×</button>
+                            <button onClick={() => setShowModalPagar(false)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <div style={styles.modalBody}>
                             {/* Info do Lançamento */}
@@ -1828,7 +1828,7 @@ const Lancamentos = () => {
                     <div style={{ ...styles.modal, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
                             <h2 style={styles.modalTitle}>📎 Comprovante</h2>
-                            <button onClick={() => setShowComprovante(null)} style={styles.closeButton}>×</button>
+                            <button onClick={() => setShowComprovante(null)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <div style={{ padding: '24px', textAlign: 'center' }}>
                             <p style={{ marginBottom: '16px', color: 'var(--status-neutral)' }}>
@@ -1876,7 +1876,7 @@ const Lancamentos = () => {
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
                             <h2 style={styles.modalTitle}>💰 Novo Lançamento</h2>
-                            <button onClick={() => setShowModal(false)} style={styles.closeButton}>×</button>
+                            <button onClick={() => setShowModal(false)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={styles.modalBody}>
                             {/* Tipo */}
@@ -2228,7 +2228,7 @@ const GestaoBoletos = () => {
                     {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-copy" aria-hidden="true" /> Copiar Código</button>}
                     {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-eye" aria-hidden="true" /> Ver PDF</button>}
                     {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-circle-check" aria-hidden="true" /> Marcar Pago</button>}
-                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }} title="Excluir boleto"><i className="ti ti-trash" aria-hidden="true" /></button>
+                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }} title="Excluir boleto" aria-label="Excluir boleto"><i className="ti ti-trash" aria-hidden="true" /></button>
                 </div>
             </div>
         );
@@ -3240,7 +3240,7 @@ const Usuarios = () => {
                             <h2 style={styles.modalTitle}>
                                 {editando ? '✏️ Editar Usuário' : '👤 Novo Usuário'}
                             </h2>
-                            <button onClick={closeModal} style={styles.closeButton}>×</button>
+                            <button onClick={closeModal} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={styles.modalBody}>
                             {!editando && (

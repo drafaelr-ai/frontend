@@ -1156,17 +1156,19 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                             <span className="etapa-percent">{percentual.toFixed(0)}%</span>
                                                         </div>
                                                         <div className="etapa-actions" onClick={e => e.stopPropagation()}>
-                                                            <button 
+                                                            <button
                                                                 className="btn-icon"
                                                                 onClick={() => setEditingEtapaPai({ ...etapa, cronograma_id: servico.id })}
                                                                 title="Editar etapa"
+                                                                aria-label="Editar etapa"
                                                             >
                                                                 ✏️
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 className="btn-icon danger"
                                                                 onClick={() => handleDeleteEtapaPai(servico.id, etapa.id, etapa.nome)}
                                                                 title="Excluir etapa"
+                                                                aria-label="Excluir etapa"
                                                             >
                                                                 🗑️
                                                             </button>
@@ -1206,15 +1208,19 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                             <span className="subetapa-percent">{sub.percentual_conclusao}%</span>
                                                                         </div>
                                                                         <div className="subetapa-actions">
-                                                                            <button 
+                                                                            <button
                                                                                 className="btn-icon small"
                                                                                 onClick={() => setEditingSubetapa({ ...sub, cronograma_id: servico.id })}
+                                                                                aria-label="Editar subetapa"
+                                                                                title="Editar subetapa"
                                                                             >
                                                                                 ✏️
                                                                             </button>
-                                                                            <button 
+                                                                            <button
                                                                                 className="btn-icon small danger"
                                                                                 onClick={() => handleDeleteSubetapa(servico.id, sub.id, sub.nome)}
+                                                                                aria-label="Excluir subetapa"
+                                                                                title="Excluir subetapa"
                                                                             >
                                                                                 🗑️
                                                                             </button>

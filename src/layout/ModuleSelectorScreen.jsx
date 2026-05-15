@@ -25,7 +25,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
     ];
 
     return (
-        <div style={{
+        <main style={{
             minHeight: '100vh',
             background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
             display: 'flex',
@@ -166,7 +166,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
             }}>
                 © 2026 Obraly - Sistema de Gestão
             </p>
-        </div>
+        </main>
     );
 };
 
