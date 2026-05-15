@@ -134,4 +134,4 @@ const CadastrarPagamentoFuturoModal = ({ onClose, onSave, obraId, itensOrcamento
     );
 };
 
-export default CadastrarPagamentoFuturoModal;
+export default React.memo(CadastrarPagamentoFuturoModal);

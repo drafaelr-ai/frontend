@@ -73,4 +73,4 @@ const PartialPaymentModal = ({ item, onClose, onSave }) => {
     );
 };
 
-export default PartialPaymentModal;
+export default React.memo(PartialPaymentModal);

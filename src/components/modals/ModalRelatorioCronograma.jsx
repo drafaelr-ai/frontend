@@ -160,4 +160,4 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
     );
 };
 
-export default ModalRelatorioCronograma;
+export default React.memo(ModalRelatorioCronograma);

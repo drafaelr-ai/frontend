@@ -83,4 +83,4 @@ const ModalAprovarOrcamento = ({ orcamento, onClose, onConfirmar }) => {
     );
 };
 
-export default ModalAprovarOrcamento;
+export default React.memo(ModalAprovarOrcamento);

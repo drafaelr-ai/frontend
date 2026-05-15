@@ -332,4 +332,4 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
     );
 };
 
-export default RelatoriosModal;
+export default React.memo(RelatoriosModal);

@@ -158,4 +158,4 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
     );
 };
 
-export default EditLancamentoModal;
+export default React.memo(EditLancamentoModal);

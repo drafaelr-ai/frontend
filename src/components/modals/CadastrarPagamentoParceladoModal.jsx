@@ -392,4 +392,4 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
     );
 };
 
-export default CadastrarPagamentoParceladoModal;
+export default React.memo(CadastrarPagamentoParceladoModal);

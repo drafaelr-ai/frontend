@@ -84,4 +84,4 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
     );
 };
 
-export default ViewAnexosModal;
+export default React.memo(ViewAnexosModal);

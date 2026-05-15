@@ -53,4 +53,4 @@ const EditPrioridadeModal = ({ item, onClose, onSave }) => {
     );
 };
 
-export default EditPrioridadeModal;
+export default React.memo(EditPrioridadeModal);

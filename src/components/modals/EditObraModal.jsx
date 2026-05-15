@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { notify } from '../../utils/notify';
 import { API_URL } from '../../config';
 
-export default function EditObraModal({ isOpen, onClose, obraId, obraName, obraCliente, onSaved }) {
+function EditObraModal({ isOpen, onClose, obraId, obraName, obraCliente, onSaved }) {
     const [nome, setNome] = useState('');
     const [cliente, setCliente] = useState('');
     const [salvando, setSalvando] = useState(false);
@@ -94,3 +94,5 @@ export default function EditObraModal({ isOpen, onClose, obraId, obraName, obraC
         </Modal>
     );
 }
+
+export default React.memo(EditObraModal);

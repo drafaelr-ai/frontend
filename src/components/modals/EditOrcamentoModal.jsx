@@ -204,4 +204,4 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
     );
 };
 
-export default EditOrcamentoModal;
+export default React.memo(EditOrcamentoModal);

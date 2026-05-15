@@ -275,4 +275,4 @@ const AdminPanelModal = ({ allObras, onClose }) => {
     );
 };
 
-export default AdminPanelModal;
+export default React.memo(AdminPanelModal);

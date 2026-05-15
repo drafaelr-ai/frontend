@@ -631,4 +631,4 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
     );
 };
 
-export default InserirPagamentoModal;
+export default React.memo(InserirPagamentoModal);

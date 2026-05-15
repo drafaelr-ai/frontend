@@ -109,4 +109,4 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
     );
 };
 
-export default VisualizarNotaFiscalModal;
+export default React.memo(VisualizarNotaFiscalModal);

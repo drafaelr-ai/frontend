@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../../components/Modal/Modal';
 import CadastrarPagamentoFuturoModal from '../../components/modals/CadastrarPagamentoFuturoModal';
 import EditarPagamentoFuturoModal from '../../components/modals/EditarPagamentoFuturoModal';
@@ -43,6 +43,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         next.delete(key);
         return next;
     });
+
+    const pagamentosFuturosPrevisto = useMemo(
+        () => pagamentosFuturos.filter(pag => pag.status === 'Previsto'),
+        [pagamentosFuturos]
+    );
+    const pagamentosParceladosAtivo = useMemo(
+        () => pagamentosParcelados.filter(pag => pag.status === 'Ativo'),
+        [pagamentosParcelados]
+    );
 
     const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
@@ -774,9 +783,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                     {!isPagamentosFuturosCollapsed && (
                         <>
-                    {pagamentosFuturos.filter(pag => pag.status === 'Previsto').length > 0 ? (
+                    {pagamentosFuturosPrevisto.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {pagamentosFuturos.filter(pag => pag.status === 'Previsto').map(pag => (
+                            {pagamentosFuturosPrevisto.map(pag => (
                                 <div
                                     key={pag.id}
                                     className="cf-pagamento-futuro-item"
@@ -902,7 +911,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             <div className="cf-section-title">
                                 <i className="ti ti-clipboard-list" aria-hidden="true" /> Pagamentos Parcelados
                                 <span className="cf-badge cf-badge-purple">
-                                    {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length} ativos
+                                    {pagamentosParceladosAtivo.length} ativos
                                 </span>
                             </div>
                             <div className="cf-section-subtitle">
@@ -919,9 +928,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
                     {!isPagamentosParceladosCollapsed && (
                         <>
-                    {pagamentosParcelados.filter(pag => pag.status === 'Ativo').length > 0 ? (
+                    {pagamentosParceladosAtivo.length > 0 ? (
                         <div className="parcelas-cards-grid">
-                            {pagamentosParcelados.filter(pag => pag.status === 'Ativo').map(pag => {
+                            {pagamentosParceladosAtivo.map(pag => {
                                 const parcelasPagas = pag.parcelas_pagas || 0;
                                 const progresso = pag.numero_parcelas > 0 ? Math.round((parcelasPagas / pag.numero_parcelas) * 100) : 0;
 

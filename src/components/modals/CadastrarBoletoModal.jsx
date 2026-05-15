@@ -519,4 +519,4 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     );
 };
 
-export default CadastrarBoletoModal;
+export default React.memo(CadastrarBoletoModal);

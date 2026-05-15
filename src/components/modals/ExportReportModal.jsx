@@ -80,4 +80,4 @@ const ExportReportModal = ({ onClose }) => {
     );
 };
 
-export default ExportReportModal;
+export default React.memo(ExportReportModal);

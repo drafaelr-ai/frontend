@@ -229,4 +229,4 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
     );
 };
 
-export default ModalNovaMovimentacaoCaixa;
+export default React.memo(ModalNovaMovimentacaoCaixa);

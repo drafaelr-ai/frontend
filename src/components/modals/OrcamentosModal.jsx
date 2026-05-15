@@ -422,4 +422,4 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     );
 };
 
-export default OrcamentosModal;
+export default React.memo(OrcamentosModal);

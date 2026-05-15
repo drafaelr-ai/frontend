@@ -163,4 +163,4 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
     );
 };
 
-export default AddOrcamentoModal;
+export default React.memo(AddOrcamentoModal);

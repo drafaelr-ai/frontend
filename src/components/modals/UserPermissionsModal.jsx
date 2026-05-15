@@ -101,4 +101,4 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
     );
 };
 
-export default UserPermissionsModal;
+export default React.memo(UserPermissionsModal);

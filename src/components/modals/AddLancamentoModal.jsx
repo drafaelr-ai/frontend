@@ -122,4 +122,4 @@ const AddLancamentoModal = ({ onClose, onSave, itensOrcamento }) => {
     );
 };
 
-export default AddLancamentoModal;
+export default React.memo(AddLancamentoModal);

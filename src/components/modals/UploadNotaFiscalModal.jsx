@@ -116,4 +116,4 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
     );
 };
 
-export default UploadNotaFiscalModal;
+export default React.memo(UploadNotaFiscalModal);

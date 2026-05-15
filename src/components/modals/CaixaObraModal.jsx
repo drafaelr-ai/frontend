@@ -475,4 +475,4 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     );
 };
 
-export default CaixaObraModal;
+export default React.memo(CaixaObraModal);

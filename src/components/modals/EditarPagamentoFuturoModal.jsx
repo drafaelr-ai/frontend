@@ -135,4 +135,4 @@ const EditarPagamentoFuturoModal = ({ onClose, onSave, pagamento, itensOrcamento
     );
 };
 
-export default EditarPagamentoFuturoModal;
+export default React.memo(EditarPagamentoFuturoModal);

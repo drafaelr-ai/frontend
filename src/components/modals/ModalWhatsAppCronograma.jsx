@@ -221,4 +221,4 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
     );
 };
 
-export default ModalWhatsAppCronograma;
+export default React.memo(ModalWhatsAppCronograma);

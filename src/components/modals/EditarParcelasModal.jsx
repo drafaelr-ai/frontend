@@ -595,4 +595,4 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
     );
 };
 
-export default EditarParcelasModal;
+export default React.memo(EditarParcelasModal);

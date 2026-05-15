@@ -355,4 +355,4 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
     );
 };
 
-export default ModalOrcamentos;
+export default React.memo(ModalOrcamentos);
