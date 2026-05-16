@@ -583,10 +583,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
         const percentual = servico.percentual_conclusao || 0;
 
-        if (percentual >= 100) return { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅', key: 'concluido' };
-        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️', key: 'atrasado' };
-        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄', key: 'em_andamento' };
-        return { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳', key: 'a_iniciar' };
+        if (percentual >= 100) return { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check', key: 'concluido' };
+        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-alert-triangle', key: 'atrasado' };
+        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: 'ti-refresh', key: 'em_andamento' };
+        return { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock', key: 'a_iniciar' };
     };
 
     // NOVO: Calcular status EVM simplificado
@@ -599,18 +599,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const diferenca = percentualPago - percentualExecutado;
 
         if (percentualExecutado === 0 && percentualPago === 0) {
-            return { status: 'neutro', label: 'Não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' };
+            return { status: 'neutro', label: 'Não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' };
         }
         if (percentualExecutado >= 100 && percentualPago <= 105) {
-            return { status: 'concluido', label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' };
+            return { status: 'concluido', label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' };
         }
         if (diferenca <= -10) {
-            return { status: 'otimo', label: 'Saudável', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '🟢', msg: 'Executou mais do que pagou' };
+            return { status: 'otimo', label: 'Saudável', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-trending-up', msg: 'Executou mais do que pagou' };
         }
         if (diferenca <= 5) {
-            return { status: 'normal', label: 'No Prazo', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: '🟡', msg: 'Pagamento alinhado' };
+            return { status: 'normal', label: 'No Prazo', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: 'ti-minus', msg: 'Pagamento alinhado' };
         }
-        return { status: 'atencao', label: 'Atenção', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '🔴', msg: 'Pagando mais do que executou' };
+        return { status: 'atencao', label: 'Atenção', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-trending-down', msg: 'Pagando mais do que executou' };
     };
 
     const handleGerarPDF = async () => {
@@ -664,10 +664,10 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     }, [cronograma, servicosPorStatus]);
 
     const statusConfig = {
-        'a_iniciar': { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: '⏳' },
-        'em_andamento': { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: '🔄' },
-        'concluido': { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: '✅' },
-        'atrasado': { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: '⚠️' }
+        'a_iniciar': { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' },
+        'em_andamento': { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: 'ti-refresh' },
+        'concluido': { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' },
+        'atrasado': { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-alert-triangle' }
     };
 
     const getTimelineRange = useMemo(() => {
@@ -740,7 +740,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         return (
             <div className="evm-progress-section">
                 <div className="evm-progress-row">
-                    <span className="evm-progress-label">🔧 Exec</span>
+                    <span className="evm-progress-label">Exec</span>
                     <div className="evm-progress-bar">
                         <div 
                             className="evm-progress-fill executed"
@@ -750,7 +750,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <span className="evm-progress-value executed">{percentualExecutado}%</span>
                 </div>
                 <div className="evm-progress-row">
-                    <span className="evm-progress-label">💰 Pago</span>
+                    <span className="evm-progress-label">Pago</span>
                     <div className="evm-progress-bar">
                         <div 
                             className="evm-progress-fill paid"
@@ -764,7 +764,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         className="evm-status-badge"
                         style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
                     >
-                        {evmStatus.icon} {evmStatus.label}
+                        <i className={`ti ${evmStatus.icon}`} aria-hidden="true" /> {evmStatus.label}
                     </div>
                 )}
             </div>
@@ -792,7 +792,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
                             title={evmStatus.msg || evmStatus.label}
                         >
-                            {evmStatus.icon}
+                            <i className={`ti ${evmStatus.icon}`} aria-hidden="true" />
                         </span>
                     )}
                 </div>
@@ -821,7 +821,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
                 {/* Datas */}
                 <div className="kanban-card-dates">
-                    <span>📅 {formatDate(servico.data_inicio)} → {formatDate(servico.data_fim_prevista)}</span>
+                    <span>{formatDate(servico.data_inicio)} → {formatDate(servico.data_fim_prevista)}</span>
                 </div>
 
                 {/* Ações */}
@@ -831,7 +831,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         onClick={() => setEditingServico(servico)}
                         title="Editar"
                     >
-                        ✏️
+                        <i className="ti ti-edit" aria-hidden="true" />
                     </button>
                     <button 
                         className="kanban-action-btn"
@@ -851,14 +851,14 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         }}
                         title="Adicionar Etapa"
                     >
-                        ➕
+                        <i className="ti ti-plus" aria-hidden="true" />
                     </button>
                     <button 
                         className="kanban-action-btn danger"
                         onClick={() => handleDeleteServico(servico.id)}
                         title="Excluir"
                     >
-                        🗑️
+                        <i className="ti ti-trash" aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -874,7 +874,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         className="kanban-column-header"
                         style={{ backgroundColor: statusConfig[statusKey].bg }}
                     >
-                        <span className="kanban-status-icon">{statusConfig[statusKey].icon}</span>
+                        <span className="kanban-status-icon"><i className={`ti ${statusConfig[statusKey].icon}`} aria-hidden="true" /></span>
                         <span className="kanban-status-label" style={{ color: statusConfig[statusKey].color }}>
                             {statusConfig[statusKey].label}
                         </span>
@@ -936,7 +936,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                             className="timeline-evm-badge"
                                             style={{ backgroundColor: evmStatus.bg, color: evmStatus.color }}
                                         >
-                                            {evmStatus.icon}
+                                            <i className={`ti ${evmStatus.icon}`} aria-hidden="true" />
                                         </span>
                                     )}
                                 </div>
@@ -987,7 +987,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     className="status-badge"
                                     style={{ backgroundColor: status.color }}
                                 >
-                                    {status.icon} {status.label}
+                                    <i className={`ti ${status.icon}`} aria-hidden="true" /> {status.label}
                                 </span>
                                 {evmIndicator && (
                                     <span 
@@ -995,19 +995,19 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                         style={{ backgroundColor: evmIndicator.bg, color: evmIndicator.color }}
                                         title={evmIndicator.msg || ''}
                                     >
-                                        {evmIndicator.icon} {evmIndicator.label}
+                                        <i className={`ti ${evmIndicator.icon}`} aria-hidden="true" /> {evmIndicator.label}
                                     </span>
                                 )}
                             </div>
                             <div className="header-right">
                                 {servico.orcamento_etapa_id && (
                                     <span className="vinculo-badge" title={`Vinculado ao Orçamento: ${servico.orcamento_etapa_codigo || ''} - ${servico.orcamento_etapa_nome || ''}`}>
-                                        🔗 Orçamento
+                                        Orçamento
                                     </span>
                                 )}
                                 <span className="tipo-badge">
-                                    {servico.tipo_medicao === 'etapas' ? '📋 Por Etapas' : 
-                                     servico.tipo_medicao === 'area' ? '📐 Por Área' : '🔧 Empreitada'}
+                                    {servico.tipo_medicao === 'etapas' ? 'Por Etapas' : 
+                                     servico.tipo_medicao === 'area' ? 'Por Área' : 'Empreitada'}
                                 </span>
                             </div>
                         </div>
@@ -1031,26 +1031,26 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     }}
                                 ></div>
                             </div>
-                            <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>✏️ Clique para editar</span>
+                            <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>Clique para editar</span>
                         </div>
 
                         {/* EVM Simplificado */}
                         {evm && evm.valor_total > 0 && (
                             <div className="evm-section-new">
                                 <div className="evm-header-new">
-                                    <span>📊 Executado vs Pago</span>
+                                    <span>Executado vs Pago</span>
                                     {evmIndicator && (
                                         <span 
                                             className="evm-badge"
                                             style={{ backgroundColor: evmIndicator.bg, color: evmIndicator.color }}
                                         >
-                                            {evmIndicator.icon} {evmIndicator.label}
+                                            <i className={`ti ${evmIndicator.icon}`} aria-hidden="true" /> {evmIndicator.label}
                                         </span>
                                     )}
                                 </div>
                                 <div className="evm-bars-new">
                                     <div className="evm-bar-row-new">
-                                        <span className="evm-bar-label-new">🔧 Executado</span>
+                                        <span className="evm-bar-label-new">Executado</span>
                                         <div className="evm-bar-track">
                                             <div 
                                                 className="evm-bar-fill-new executed"
@@ -1060,7 +1060,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                         <span className="evm-bar-value executed">{(evm.percentual_executado || 0).toFixed(0)}%</span>
                                     </div>
                                     <div className="evm-bar-row-new">
-                                        <span className="evm-bar-label-new">💰 Pago</span>
+                                        <span className="evm-bar-label-new">Pago</span>
                                         <div className="evm-bar-track">
                                             <div 
                                                 className="evm-bar-fill-new paid"
@@ -1080,22 +1080,22 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         {/* Datas */}
                         <div className="datas-section">
                             <div className="data-item">
-                                <span className="data-label">📅 Início Previsto</span>
+                                <span className="data-label">Início Previsto</span>
                                 <span className="data-value">{formatDate(servico.data_inicio)}</span>
                             </div>
                             <div className="data-item">
-                                <span className="data-label">📅 Término Previsto</span>
+                                <span className="data-label">Término Previsto</span>
                                 <span className="data-value">{formatDate(servico.data_fim_prevista)}</span>
                             </div>
                             {servico.data_inicio_real && (
                                 <div className="data-item real">
-                                    <span className="data-label">▶️ Início Real</span>
+                                    <span className="data-label">Início Real</span>
                                     <span className="data-value">{formatDate(servico.data_inicio_real)}</span>
                                 </div>
                             )}
                             {servico.data_fim_real && (
                                 <div className="data-item real">
-                                    <span className="data-label">⏹️ Término Real</span>
+                                    <span className="data-label">Término Real</span>
                                     <span className="data-value">{formatDate(servico.data_fim_real)}</span>
                                 </div>
                             )}
@@ -1108,8 +1108,8 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 onClick={() => setEditingServico(servico)}
                                 style={{ cursor: 'pointer' }}
                             >
-                                <span>📐 Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
-                                <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>✏️ Clique para editar</span>
+                                <span>Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
+                                <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>Clique para editar</span>
                             </div>
                         )}
 
@@ -1118,7 +1118,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             <div className="etapas-section">
                                 <div className="etapas-header">
                                     <h4>
-                                        📋 Etapas ({servico.etapas.length}) - {
+                                        Etapas ({servico.etapas.length}) - {
                                             servico.etapas.reduce((acc, e) => acc + (e.total_dias || e.duracao_dias || 0), 0)
                                         } dias
                                     </h4>
@@ -1168,7 +1168,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                 title="Editar etapa"
                                                                 aria-label="Editar etapa"
                                                             >
-                                                                ✏️
+                                                                <i className="ti ti-edit" aria-hidden="true" />
                                                             </button>
                                                             <button
                                                                 className="btn-icon danger"
@@ -1176,7 +1176,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                 title="Excluir etapa"
                                                                 aria-label="Excluir etapa"
                                                             >
-                                                                🗑️
+                                                                <i className="ti ti-trash" aria-hidden="true" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1220,7 +1220,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                                 aria-label="Editar subetapa"
                                                                                 title="Editar subetapa"
                                                                             >
-                                                                                ✏️
+                                                                                <i className="ti ti-edit" aria-hidden="true" />
                                                                             </button>
                                                                             <button
                                                                                 className="btn-icon small danger"
@@ -1228,7 +1228,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                                 aria-label="Excluir subetapa"
                                                                                 title="Excluir subetapa"
                                                                             >
-                                                                                🗑️
+                                                                                <i className="ti ti-trash" aria-hidden="true" />
                                                                             </button>
                                                                         </div>
                                                                     </div>
@@ -1244,7 +1244,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                                 etapa_nome: etapa.nome
                                                             })}
                                                         >
-                                                            ➕ Adicionar Subetapa
+                                                            <i className="ti ti-plus" aria-hidden="true" /> Adicionar Subetapa
                                                         </button>
                                                     </div>
                                                 )}
@@ -1274,13 +1274,13 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     setShowAddEtapaPaiModal(servico.id);
                                 }}
                             >
-                                ➕ Adicionar Etapa
+                                <i className="ti ti-plus" aria-hidden="true" /> Adicionar Etapa
                             </button>
                             <button 
                                 className="btn-action"
                                 onClick={() => setEditingServico(servico)}
                             >
-                                ✏️ Editar
+                                <i className="ti ti-edit" aria-hidden="true" /> Editar
                             </button>
                             {servico.orcamento_etapa_id && (
                                 <button 
@@ -1288,14 +1288,14 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     onClick={() => handleSincronizarOrcamento(servico.id)}
                                     title="Sincronizar % com Orçamento"
                                 >
-                                    🔄 Sincronizar
+                                    <i className="ti ti-refresh" aria-hidden="true" /> Sincronizar
                                 </button>
                             )}
                             <button 
                                 className="btn-action danger"
                                 onClick={() => handleDeleteServico(servico.id)}
                             >
-                                🗑️ Excluir
+                                <i className="ti ti-trash" aria-hidden="true" /> Excluir
                             </button>
                         </div>
                     </div>
@@ -1380,7 +1380,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             style={filtroStatus === key ? { backgroundColor: config.color, color: 'white' } : {}}
                             onClick={() => setFiltroStatus(key)}
                         >
-                            {config.icon} {config.label} ({servicosPorStatus[key].length})
+                            <i className={`ti ${config.icon}`} aria-hidden="true" /> {config.label} ({servicosPorStatus[key].length})
                         </button>
                     ))}
                 </div>
@@ -1406,7 +1406,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>➕ Novo Serviço</h3>
+                        <h3>Novo Serviço</h3>
                         <div className="form-group">
                             <label>Nome do Serviço *</label>
                             <input type="text" value={novoServico.servico_nome} onChange={(e) => setNovoServico({...novoServico, servico_nome: e.target.value})} placeholder="Ex: Construção da Piscina" />
@@ -1414,9 +1414,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         <div className="form-group">
                             <label>Tipo de Medição</label>
                             <select value={novoServico.tipo_medicao} onChange={(e) => setNovoServico({...novoServico, tipo_medicao: e.target.value})}>
-                                <option value="etapas">📋 Por Etapas</option>
-                                <option value="empreitada">🔧 Empreitada</option>
-                                <option value="area">📐 Por Área</option>
+                                <option value="etapas">Por Etapas</option>
+                                <option value="empreitada">Empreitada</option>
+                                <option value="area">Por Área</option>
                             </select>
                         </div>
                         <div className="form-row">
@@ -1498,7 +1498,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         
                         {etapasOrcamento.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
-                                <p style={{ fontSize: '1.1rem', marginBottom: '10px' }}>📭 Nenhuma etapa encontrada no Orçamento.</p>
+                                <p style={{ fontSize: '1.1rem', marginBottom: '10px' }}>Nenhuma etapa encontrada no Orçamento.</p>
                                 <p style={{ fontSize: '0.9rem' }}>Crie etapas no módulo de Orçamento de Engenharia primeiro.</p>
                             </div>
                         ) : (
@@ -1507,7 +1507,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 <div className="import-config-section">
                                     <div className="form-row">
                                         <div className="form-group">
-                                            <label>📅 Data de Início</label>
+                                            <label>Data de Início</label>
                                             <input 
                                                 type="date" 
                                                 value={configImportacao.data_inicio}
@@ -1515,7 +1515,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label>⏱️ Duração Padrão (dias)</label>
+                                            <label>Duração Padrão (dias)</label>
                                             <input 
                                                 type="number" 
                                                 min="1"
@@ -1559,9 +1559,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                     )}
                                                 </div>
                                                 <div className="orcamento-item-details">
-                                                    <span>💰 {formatCurrency(etapa.total)}</span>
-                                                    <span>📦 {etapa.qtd_itens} itens</span>
-                                                    <span>📊 {etapa.percentual_pago}% pago</span>
+                                                    <span>{formatCurrency(etapa.total)}</span>
+                                                    <span>{etapa.qtd_itens} itens</span>
+                                                    <span>{etapa.percentual_pago}% pago</span>
                                                 </div>
                                             </div>
                                         </label>
@@ -1588,7 +1588,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 onClick={handleImportarOrcamento} 
                                 disabled={etapasOrcamentoSelecionadas.length === 0 || importandoOrcamento}
                             >
-                                {importandoOrcamento ? '⏳ Importando...' : `📥 Importar (${etapasOrcamentoSelecionadas.length})`}
+                                {importandoOrcamento ? 'Importando...' : `Importar (${etapasOrcamentoSelecionadas.length})`}
                             </button>
                         </div>
                     </div>
@@ -1599,7 +1599,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showAddEtapaPaiModal && (
                 <div className="modal-overlay" onClick={() => setShowAddEtapaPaiModal(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>➕ Nova Etapa</h3>
+                        <h3>Nova Etapa</h3>
                         <div className="form-group">
                             <label>Nome da Etapa *</label>
                             <input type="text" value={novaEtapaPai.nome} onChange={(e) => setNovaEtapaPai({...novaEtapaPai, nome: e.target.value})} placeholder="Ex: Infraestrutura" />
@@ -1633,7 +1633,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {showAddSubetapaModal && (
                 <div className="modal-overlay" onClick={() => setShowAddSubetapaModal(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>➕ Nova Subetapa - {showAddSubetapaModal.etapa_nome}</h3>
+                        <h3>Nova Subetapa - {showAddSubetapaModal.etapa_nome}</h3>
                         <div className="form-group">
                             <label>Nome da Subetapa *</label>
                             <input type="text" value={novaSubetapa.nome} onChange={(e) => setNovaSubetapa({...novaSubetapa, nome: e.target.value})} placeholder="Ex: Escavação" />
@@ -1660,7 +1660,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {editingEtapaPai && (
                 <div className="modal-overlay" onClick={() => setEditingEtapaPai(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar Etapa</h3>
+                        <h3>Editar Etapa</h3>
                         <div className="form-group">
                             <label>Nome *</label>
                             <input type="text" value={editingEtapaPai.nome} onChange={(e) => setEditingEtapaPai({...editingEtapaPai, nome: e.target.value})} />
@@ -1677,7 +1677,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {editingSubetapa && (
                 <div className="modal-overlay" onClick={() => setEditingSubetapa(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar Subetapa</h3>
+                        <h3>Editar Subetapa</h3>
                         <div className="form-group">
                             <label>Nome *</label>
                             <input type="text" value={editingSubetapa.nome} onChange={(e) => setEditingSubetapa({...editingSubetapa, nome: e.target.value})} />
@@ -1707,7 +1707,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             {editingServico && (
                 <div className="modal-overlay" onClick={() => setEditingServico(null)}>
                     <div className="modal-content large" onClick={e => e.stopPropagation()}>
-                        <h3>✏️ Editar: {editingServico.servico_nome}</h3>
+                        <h3>Editar: {editingServico.servico_nome}</h3>
                         <div className="form-group">
                             <label>Nome do Serviço *</label>
                             <input type="text" value={editingServico.servico_nome} onChange={(e) => setEditingServico({...editingServico, servico_nome: e.target.value})} />
@@ -1740,16 +1740,16 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 onChange={(e) => setEditingServico({...editingServico, tipo_medicao: e.target.value})}
                                 style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
                             >
-                                <option value="etapas">📋 Por Etapas</option>
-                                <option value="empreitada">🔧 Empreitada (% manual)</option>
-                                <option value="area">📐 Por Área</option>
+                                <option value="etapas">Por Etapas</option>
+                                <option value="empreitada">Empreitada (% manual)</option>
+                                <option value="area">Por Área</option>
                             </select>
                         </div>
                         
                         {/* Progresso por tipo */}
                         {editingServico.tipo_medicao === 'area' && (
                             <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>📐 Medição por Área</label>
+                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>Medição por Área</label>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px', marginBottom: '12px' }}>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ fontSize: '12px', color: '#555' }}>Área Total</label>
@@ -1786,7 +1786,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         
                         {editingServico.tipo_medicao === 'etapas' && (
                             <div className="form-group" style={{ backgroundColor: '#fff3e0', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#e65100', fontWeight: 'bold' }}>📋 Medição por Etapas</label>
+                                <label style={{ color: '#e65100', fontWeight: 'bold' }}>Medição por Etapas</label>
                                 <p style={{ margin: '10px 0', color: '#666' }}>O percentual é calculado automaticamente pelas etapas.</p>
                                 <div style={{ textAlign: 'center', fontWeight: 'bold' }}>Execução: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</div>
                             </div>
@@ -1794,7 +1794,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         
                         {(editingServico.tipo_medicao === 'empreitada' || !editingServico.tipo_medicao) && (
                             <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>🔧 Execução (%)</label>
+                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>Execução (%)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
                                     <input type="range" min="0" max="100" value={editingServico.percentual_conclusao || 0} 
                                         onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})} style={{ flex: 1 }} />
@@ -1826,7 +1826,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         <div className="detalhes-grid">
                             <div className="detalhe-item">
                                 <span className="detalhe-label">Status</span>
-                                <span className="status-badge" style={{ backgroundColor: getStatus(servicoDetalhes).color }}>{getStatus(servicoDetalhes).icon} {getStatus(servicoDetalhes).label}</span>
+                                <span className="status-badge" style={{ backgroundColor: getStatus(servicoDetalhes).color }}><i className={`ti ${getStatus(servicoDetalhes).icon}`} aria-hidden="true" /> {getStatus(servicoDetalhes).label}</span>
                             </div>
                             <div className="detalhe-item">
                                 <span className="detalhe-label">Execução</span>
@@ -1843,7 +1843,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         </div>
                         {evmData[servicoDetalhes.servico_nome] && (
                             <div className="evm-detalhes-section">
-                                <h4>📊 Executado vs Pago</h4>
+                                <h4>Executado vs Pago</h4>
                                 <EVMProgressBars servico={servicoDetalhes} compact={false} />
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                                     <span>Orçado: {formatCurrency(evmData[servicoDetalhes.servico_nome].valor_total)}</span>
@@ -1853,7 +1853,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         )}
                         <div className="modal-actions">
                             <button className="btn-cancel" onClick={() => setServicoDetalhes(null)}>Fechar</button>
-                            <button className="btn-save" onClick={() => { setEditingServico(servicoDetalhes); setServicoDetalhes(null); }}>✏️ Editar</button>
+                            <button className="btn-save" onClick={() => { setEditingServico(servicoDetalhes); setServicoDetalhes(null); }}><i className="ti ti-edit" aria-hidden="true" /> Editar</button>
                         </div>
                     </div>
                 </div>
