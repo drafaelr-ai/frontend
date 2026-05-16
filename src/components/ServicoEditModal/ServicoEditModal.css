@@ -133,11 +133,17 @@
 
 .sem-footer {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
     padding: 14px 20px;
     border-top: 0.5px solid var(--border-subtle);
     flex-shrink: 0;
+}
+
+.sem-footer-right {
+    display: flex;
+    gap: 10px;
 }
 
 .sem-btn {
@@ -173,6 +179,20 @@
 
 .sem-btn--save:hover:not(:disabled) {
     background: var(--brand-accent);
+}
+
+.sem-btn--concluir {
+    background: var(--status-success-bg);
+    border: 0.5px solid var(--status-success);
+    color: var(--status-success);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sem-btn--concluir:hover:not(:disabled) {
+    background: var(--status-success);
+    color: #fff;
 }
 
 @media (max-width: 480px) {

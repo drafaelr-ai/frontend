@@ -31,6 +31,35 @@ const ServicoEditModal = ({ servico, onClose, onSaved }) => {
     const set = (field) => (e) =>
         setForm(prev => ({ ...prev, [field]: e.target.value }));
 
+    const handleConcluir = async () => {
+        try {
+            setSaving(true);
+            const payload = {
+                ...servico,
+                ...form,
+                percentual_conclusao: 100,
+                data_fim_real: form.data_fim_real || new Date().toISOString().slice(0, 10),
+                data_inicio_real: form.data_inicio_real || null,
+                area_total: form.area_total !== '' ? parseFloat(form.area_total) : null,
+                area_executada: form.area_executada !== '' ? parseFloat(form.area_executada) : null,
+            };
+            const res = await fetchWithAuth(`${API_URL}/cronograma/${servico.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) throw new Error('Erro ao marcar como concluído.');
+            notify.success('Serviço marcado como concluído.');
+            onSaved?.();
+            onClose();
+        } catch (err) {
+            logger.error('ServicoEditModal concluir error:', err);
+            notify.error(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSave = async () => {
         if (!form.servico_nome?.trim()) {
             notify.error('Nome do serviço é obrigatório.');
@@ -159,12 +188,26 @@ const ServicoEditModal = ({ servico, onClose, onSaved }) => {
                 </div>
 
                 <div className="sem-footer">
-                    <button type="button" className="sem-btn sem-btn--cancel" onClick={onClose} disabled={saving}>
-                        Cancelar
-                    </button>
-                    <button type="button" className="sem-btn sem-btn--save" onClick={handleSave} disabled={saving}>
-                        {saving ? 'Salvando…' : 'Salvar'}
-                    </button>
+                    {(servico.percentual_conclusao || 0) < 100 && (
+                        <button
+                            type="button"
+                            className="sem-btn sem-btn--concluir"
+                            onClick={handleConcluir}
+                            disabled={saving}
+                            title="Marca 100% e preenche a data de fim real com hoje"
+                        >
+                            <i className="ti ti-circle-check" aria-hidden="true" />
+                            Concluído
+                        </button>
+                    )}
+                    <div className="sem-footer-right">
+                        <button type="button" className="sem-btn sem-btn--cancel" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </button>
+                        <button type="button" className="sem-btn sem-btn--save" onClick={handleSave} disabled={saving}>
+                            {saving ? 'Salvando…' : 'Salvar'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
