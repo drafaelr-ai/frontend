@@ -1,0 +1,338 @@
+/* ===================== EtapaCard ===================== */
+
+.etapa-card {
+    position: relative;
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-subtle);
+    border-left: 3px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.etapa-card:hover {
+    box-shadow: var(--shadow-card);
+}
+
+.etapa-card--concluido    { border-left-color: var(--status-success); }
+.etapa-card--atrasado     { border-left-color: var(--status-danger); }
+.etapa-card--em_andamento { border-left-color: var(--status-info); }
+.etapa-card--a_iniciar    { border-left-color: var(--status-neutral); }
+
+/* EVM top-right indicator */
+.etapa-card.evm-otimo::after  { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--status-success); }
+.etapa-card.evm-normal::after { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--status-warning); }
+.etapa-card.evm-atencao::after{ content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--status-danger); }
+
+/* Header */
+.etapa-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.etapa-card__header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.etapa-card__ordem {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.etapa-card__nome {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.etapa-card__badges {
+    flex-shrink: 0;
+}
+
+.etapa-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.etapa-card__badge--success { background: var(--status-success-bg); color: var(--status-success); }
+.etapa-card__badge--danger  { background: var(--status-danger-bg);  color: var(--status-danger); }
+.etapa-card__badge--info    { background: var(--status-info-bg);    color: var(--status-info); }
+.etapa-card__badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral); }
+
+/* Físico progress */
+.etapa-card__fisico {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.etapa-card__fisico-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--text-sm);
+}
+
+.etapa-card__fisico-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.etapa-card__fisico-pct {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.etapa-card__fisico-plan {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.etapa-card__bar-track {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: var(--surface-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.etapa-card__bar-target {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--border-default);
+    border-radius: 4px;
+    opacity: 0.5;
+}
+
+.etapa-card__bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+/* Tripé metrics */
+.etapa-card__metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.etapa-card__metric {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--surface-subtle);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+}
+
+.etapa-card__metric-icon {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.etapa-card__metric-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.etapa-card__metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.etapa-card__metric-value {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.etapa-card__metric-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Datas */
+.etapa-card__datas {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.etapa-card__datas i {
+    font-size: 0.85em;
+}
+
+.etapa-card__data--danger {
+    color: var(--status-danger);
+}
+
+/* Edit button */
+.etapa-card__edit-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-subtle);
+    background: var(--surface-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.etapa-card:hover .etapa-card__edit-btn {
+    opacity: 1;
+}
+
+.etapa-card__edit-btn:hover {
+    background: var(--surface-subtle);
+    color: var(--text-primary);
+}
+
+/* ===================== EtapasGrid ===================== */
+
+.etapas-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.etapas-grid__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.etapas-grid__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 100px;
+    border: 0.5px solid var(--border-subtle);
+    background: var(--surface-card);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    font-family: var(--font-sans);
+}
+
+.etapas-grid__chip:hover {
+    background: var(--surface-subtle);
+    color: var(--text-primary);
+}
+
+.etapas-grid__chip--active {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: var(--surface-card);
+}
+
+.etapas-grid__chip-count {
+    background: rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.etapas-grid__chip--active .etapas-grid__chip-count {
+    background: rgba(255,255,255,0.25);
+}
+
+.etapas-grid__chip:not(.etapas-grid__chip--active) .etapas-grid__chip-count {
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+}
+
+.etapas-grid__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+}
+
+.etapas-grid__empty,
+.etapas-grid__empty-filter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.etapas-grid__empty i,
+.etapas-grid__empty-filter i {
+    font-size: 2rem;
+}
+
+.etapas-grid__empty p,
+.etapas-grid__empty-filter p {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.etapas-grid__empty span {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+    .etapas-grid__cards {
+        grid-template-columns: 1fr;
+    }
+
+    .etapa-card__metrics {
+        grid-template-columns: 1fr;
+    }
+}
