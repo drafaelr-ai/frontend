@@ -36,6 +36,14 @@ const ServicoEditModal = ({ servico, onClose, onSaved }) => {
             notify.error('Nome do serviço é obrigatório.');
             return;
         }
+        if (!form.data_inicio) {
+            notify.error('Data de início é obrigatória.');
+            return;
+        }
+        if (!form.data_fim_prevista) {
+            notify.error('Data de fim prevista é obrigatória.');
+            return;
+        }
         try {
             setSaving(true);
             const payload = {
@@ -44,6 +52,8 @@ const ServicoEditModal = ({ servico, onClose, onSaved }) => {
                 percentual_conclusao: parseFloat(form.percentual_conclusao) || 0,
                 area_total: form.area_total !== '' ? parseFloat(form.area_total) : null,
                 area_executada: form.area_executada !== '' ? parseFloat(form.area_executada) : null,
+                data_inicio_real: form.data_inicio_real || null,
+                data_fim_real: form.data_fim_real || null,
             };
             const res = await fetchWithAuth(`${API_URL}/cronograma/${servico.id}`, {
                 method: 'PUT',
