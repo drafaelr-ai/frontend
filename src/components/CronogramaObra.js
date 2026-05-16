@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './CronogramaObra.css';
 import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
@@ -140,7 +140,13 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             setLoading(false);
         }
     }, [obraId]);
-
+    const refreshAfterMutation = useCallback(async () => {
+        const scrollY = window.scrollY;
+        await fetchCronograma();
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
+        });
+    }, [fetchCronograma]);
     // Buscar dados EVM
     const fetchEVMData = async (servicoNome) => {
         try {
@@ -209,7 +215,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
             if (!response.ok) throw new Error('Erro ao criar serviço');
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setShowAddModal(false);
             setNovoServico({
                 servico_nome: '',
@@ -249,7 +255,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 if (!response.ok) throw new Error(`Erro ao importar serviço: ${servico.nome}`);
             }
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setShowImportModal(false);
             setServicosSelecionados([]);
         } catch (err) {
@@ -339,7 +345,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             const result = await response.json();
             notify.success(`${result.total_importados} serviço(s) importado(s) com sucesso!`);
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setShowImportOrcamentoModal(false);
             setEtapasOrcamentoSelecionadas([]);
         } catch (err) {
@@ -358,7 +364,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             });
 
             if (!response.ok) throw new Error('Erro ao excluir serviço');
-            fetchCronograma();
+            await refreshAfterMutation();
         } catch (err) {
             notify.error(err.message);
         }
@@ -417,7 +423,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 throw new Error(err.error || 'Erro ao criar etapa');
             }
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setShowAddEtapaPaiModal(null);
             setNovaEtapaPai({
                 nome: '',
@@ -449,7 +455,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
             if (!response.ok) throw new Error('Erro ao atualizar etapa');
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setEditingEtapaPai(null);
         } catch (err) {
             notify.error(err.message);
@@ -466,7 +472,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             );
 
             if (!response.ok) throw new Error('Erro ao excluir etapa');
-            fetchCronograma();
+            await refreshAfterMutation();
         } catch (err) {
             notify.error(err.message);
         }
@@ -506,7 +512,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 throw new Error(err.error || 'Erro ao criar subetapa');
             }
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setShowAddSubetapaModal(null);
             setNovaSubetapa({
                 nome: '',
@@ -537,7 +543,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
 
             if (!response.ok) throw new Error('Erro ao atualizar subetapa');
 
-            fetchCronograma();
+            await refreshAfterMutation();
             setEditingSubetapa(null);
         } catch (err) {
             notify.error(err.message);
@@ -554,7 +560,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             );
 
             if (!response.ok) throw new Error('Erro ao excluir subetapa');
-            fetchCronograma();
+            await refreshAfterMutation();
         } catch (err) {
             notify.error(err.message);
         }
@@ -1803,7 +1809,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 try {
                                     const response = await fetchWithAuth(`${API_URL}/cronograma/${editingServico.id}`, { method: 'PUT', body: JSON.stringify(editingServico) });
                                     if (!response.ok) throw new Error('Erro ao atualizar');
-                                    fetchCronograma();
+                                    await refreshAfterMutation();
                                     setEditingServico(null);
                                 } catch (err) { notify.error(err.message); }
                             }}>Salvar</button>
