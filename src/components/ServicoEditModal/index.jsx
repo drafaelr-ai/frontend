@@ -188,18 +188,16 @@ const ServicoEditModal = ({ servico, onClose, onSaved }) => {
                 </div>
 
                 <div className="sem-footer">
-                    {(servico.percentual_conclusao || 0) < 100 && (
-                        <button
-                            type="button"
-                            className="sem-btn sem-btn--concluir"
-                            onClick={handleConcluir}
-                            disabled={saving}
-                            title="Marca 100% e preenche a data de fim real com hoje"
-                        >
-                            <i className="ti ti-circle-check" aria-hidden="true" />
-                            Concluído
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        className="sem-btn sem-btn--concluir"
+                        onClick={handleConcluir}
+                        disabled={saving}
+                        title="Marca 100% e preenche a data de fim real com hoje"
+                    >
+                        <i className="ti ti-circle-check" aria-hidden="true" />
+                        Concluído
+                    </button>
                     <div className="sem-footer-right">
                         <button type="button" className="sem-btn sem-btn--cancel" onClick={onClose} disabled={saving}>
                             Cancelar
