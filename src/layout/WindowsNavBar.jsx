@@ -433,6 +433,7 @@ const WindowsNavBar = ({
             label: 'Cronograma',
             items: [
                 { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: 'ti-clipboard-list', shortcut: 'F5' },
+                { id: 'cronograma-new',  label: 'Nova Visualização ✨',  icon: 'ti-layout-grid' },
             ]
         },
         {

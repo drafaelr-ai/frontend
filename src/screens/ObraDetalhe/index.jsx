@@ -10,6 +10,7 @@ import OrcamentoEngenharia from '../../components/OrcamentoEngenharia';
 import AgendaDemandas from '../../components/AgendaDemandas';
 import DiarioObras from '../../components/DiarioObras';
 import CronogramaObra from '../../components/CronogramaObra';
+import CronogramaNew from '../CronogramaNew';
 import DashboardObra from '../../components/DashboardObra';
 import EditLancamentoModal from '../../components/modals/EditLancamentoModal';
 import AddLancamentoModal from '../../components/modals/AddLancamentoModal';
@@ -1179,11 +1180,20 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                     {/* === PÁGINA: CRONOGRAMA DE OBRAS (com EVM e Etapas) === */}
                     {currentPage === 'cronograma-obra' && (
-                        <CronogramaObra 
+                        <CronogramaObra
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onClose={() => setCurrentPage('home')}
                             embedded={true}
+                        />
+                    )}
+
+                    {/* === PÁGINA: CRONOGRAMA NOVA VISUALIZAÇÃO (opt-in) === */}
+                    {currentPage === 'cronograma-new' && (
+                        <CronogramaNew
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            onSwitchToClassic={() => setCurrentPage('cronograma-obra')}
                         />
                     )}
 
