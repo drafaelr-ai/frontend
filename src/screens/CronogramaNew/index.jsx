@@ -62,6 +62,15 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
 
     const handleSetFiltro = (novoFiltro) => setFiltroStatus(novoFiltro);
 
+    const handleSaved = async () => {
+        const id = editingServico?.id;
+        await fetchServicos();
+        requestAnimationFrame(() => {
+            const el = document.querySelector(`[data-servico-id="${id}"]`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    };
+
     // onEdit abre o modal; __setFiltro permite que EtapasGrid mude o filtro de chips
     const handleEdit = (servico) => setEditingServico(servico);
     handleEdit.__setFiltro = handleSetFiltro;
@@ -165,7 +174,7 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
                 <ServicoEditModal
                     servico={editingServico}
                     onClose={() => setEditingServico(null)}
-                    onSaved={fetchServicos}
+                    onSaved={handleSaved}
                 />
             )}
         </main>

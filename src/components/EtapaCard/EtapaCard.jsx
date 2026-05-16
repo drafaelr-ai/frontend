@@ -95,7 +95,7 @@ const EtapaCard = ({ servico, evmData, onEdit }) => {
     })();
 
     return (
-        <article className={`etapa-card etapa-card--${status} ${evmStatusCls}`} aria-label={servico.servico_nome}>
+        <article className={`etapa-card etapa-card--${status} ${evmStatusCls}`} aria-label={servico.servico_nome} data-servico-id={servico.id}>
             <div className="etapa-card__header">
                 <div className="etapa-card__header-left">
                     {servico.ordem && (

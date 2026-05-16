@@ -62,6 +62,7 @@ const WeeklyCard = ({ servico, evmData, hoje, onEdit }) => {
         <article
             className={`wv-card wv-card--${status}`}
             aria-label={servico.servico_nome}
+            data-servico-id={servico.id}
         >
             <div className="wv-card__top">
                 <div className="wv-card__nome-row">
