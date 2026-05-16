@@ -181,13 +181,13 @@ const WeeklyView = ({ servicos = [], evmData = {} }) => {
 
             {/* Cards */}
             {servicosSemana.length === 0 ? (
-                <div className="wv-empty-week">
+                <div key={weekOffset} className="wv-empty-week">
                     <i className="ti ti-calendar-event" aria-hidden="true" />
                     <p>Nenhum serviço ativo nesta semana.</p>
                     <span>Navegue para semanas com serviços planejados.</span>
                 </div>
             ) : (
-                <div className="wv-cards">
+                <div key={weekOffset} className="wv-cards">
                     {servicosSemana.map(s => (
                         <WeeklyCard
                             key={s.id}

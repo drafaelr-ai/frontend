@@ -10,11 +10,12 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: box-shadow 0.15s, border-color 0.15s;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .etapa-card:hover {
     box-shadow: var(--shadow-card);
+    transform: translateY(-1px);
 }
 
 .etapa-card--concluido    { border-left-color: var(--status-success); }

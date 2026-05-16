@@ -260,6 +260,17 @@
     font-size: var(--text-sm);
 }
 
+/* ── Animação de troca de semana ── */
+@keyframes wv-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.wv-cards,
+.wv-empty-week {
+    animation: wv-fade-in 0.15s ease;
+}
+
 /* ── Responsive: desktop mostra 2 colunas ── */
 @media (min-width: 768px) {
     .wv-cards {

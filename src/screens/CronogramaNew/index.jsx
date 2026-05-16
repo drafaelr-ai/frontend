@@ -148,7 +148,7 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
             )}
 
             {/* Vista principal */}
-            <div className="cn-section">
+            <div key={viewMode} className="cn-section cn-section--animated">
                 {viewMode === 'semanal' ? (
                     <WeeklyView servicos={servicos} evmData={evmData} />
                 ) : (
