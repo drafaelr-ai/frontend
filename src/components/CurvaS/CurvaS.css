@@ -1,0 +1,84 @@
+.curva-s {
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.curva-s__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.curva-s__title {
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.curva-s__title i {
+    color: var(--brand-primary);
+    font-size: 1.1em;
+}
+
+.curva-s__avg {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.curva-s__avg strong {
+    color: var(--status-success);
+}
+
+.curva-s__tooltip {
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    box-shadow: var(--shadow-popup);
+    font-size: var(--text-sm);
+}
+
+.curva-s__tooltip-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+
+.curva-s__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 48px 24px;
+    background: var(--surface-card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.curva-s__empty i {
+    font-size: 2rem;
+    color: var(--text-muted);
+}
+
+.curva-s__empty p {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.curva-s__empty span {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
