@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CurvaS from '../../components/CurvaS';
 import EtapasGrid from '../../components/EtapaCard/EtapasGrid';
+import WeeklyView from '../../components/CronogramaSemanal/WeeklyView';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -8,7 +9,8 @@ import { notify } from '../../utils/notify';
 import './CronogramaNew.css';
 
 const VIEW_MODES = [
-    { id: 'cards', label: 'Cards', icon: 'ti-layout-grid' },
+    { id: 'cards',   label: 'Cards',   icon: 'ti-layout-grid' },
+    { id: 'semanal', label: 'Semanal', icon: 'ti-calendar-week' },
     { id: 'classic', label: 'Clássico', icon: 'ti-table' },
 ];
 
@@ -145,14 +147,18 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
                 </div>
             )}
 
-            {/* EtapasGrid */}
+            {/* Vista principal */}
             <div className="cn-section">
-                <EtapasGrid
-                    servicos={servicos}
-                    evmData={evmData}
-                    filtroStatus={filtroStatus}
-                    onEdit={editProxy}
-                />
+                {viewMode === 'semanal' ? (
+                    <WeeklyView servicos={servicos} evmData={evmData} />
+                ) : (
+                    <EtapasGrid
+                        servicos={servicos}
+                        evmData={evmData}
+                        filtroStatus={filtroStatus}
+                        onEdit={editProxy}
+                    />
+                )}
             </div>
 
             {/* Nota opt-in */}
