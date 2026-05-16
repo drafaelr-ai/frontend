@@ -50,7 +50,7 @@ const STATUS_CONFIG = {
     a_iniciar:    { label: 'A Iniciar',    cls: 'neutral',  icon: 'ti-clock' },
 };
 
-const WeeklyCard = ({ servico, evmData, hoje }) => {
+const WeeklyCard = ({ servico, evmData, hoje, onEdit }) => {
     const status = getStatusKey(servico, hoje);
     const cfg = STATUS_CONFIG[status];
     const pct = servico.percentual_conclusao || 0;
@@ -107,11 +107,22 @@ const WeeklyCard = ({ servico, evmData, hoje }) => {
                     Prazo: {new Date(servico.data_fim_prevista + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                 </div>
             )}
+
+            {onEdit && (
+                <button
+                    type="button"
+                    className="wv-card__edit-btn"
+                    onClick={() => onEdit(servico)}
+                    aria-label={`Editar ${servico.servico_nome}`}
+                >
+                    <i className="ti ti-edit" aria-hidden="true" />
+                </button>
+            )}
         </article>
     );
 };
 
-const WeeklyView = ({ servicos = [], evmData = {} }) => {
+const WeeklyView = ({ servicos = [], evmData = {}, onEdit }) => {
     const [weekOffset, setWeekOffset] = useState(0);
 
     const hoje = useMemo(() => {
@@ -194,6 +205,7 @@ const WeeklyView = ({ servicos = [], evmData = {} }) => {
                             servico={s}
                             evmData={evmData}
                             hoje={hoje}
+                            onEdit={onEdit}
                         />
                     ))}
                 </div>

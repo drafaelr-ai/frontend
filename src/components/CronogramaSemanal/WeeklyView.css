@@ -75,6 +75,7 @@
 
 /* ── WeeklyCard ── */
 .wv-card {
+    position: relative;
     background: var(--surface-card);
     border: 0.5px solid var(--border-subtle);
     border-left: 4px solid var(--border-subtle);
@@ -84,6 +85,35 @@
     flex-direction: column;
     gap: 12px;
     transition: box-shadow 0.15s;
+}
+
+/* ── Botão de editar ── */
+.wv-card__edit-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-subtle);
+    background: var(--surface-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.wv-card:hover .wv-card__edit-btn {
+    opacity: 1;
+}
+
+.wv-card__edit-btn:hover {
+    background: var(--surface-subtle);
+    color: var(--text-primary);
 }
 
 .wv-card:hover {

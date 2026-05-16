@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import CurvaS from '../../components/CurvaS';
 import EtapasGrid from '../../components/EtapaCard/EtapasGrid';
 import WeeklyView from '../../components/CronogramaSemanal/WeeklyView';
+import ServicoEditModal from '../../components/ServicoEditModal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
@@ -20,6 +21,7 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('cards');
     const [filtroStatus, setFiltroStatus] = useState('todos');
+    const [editingServico, setEditingServico] = useState(null);
 
     const fetchServicos = useCallback(async () => {
         try {
@@ -60,11 +62,9 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
 
     const handleSetFiltro = (novoFiltro) => setFiltroStatus(novoFiltro);
 
-    // Injeta o setter no onEdit para que EtapasGrid possa mudar filtroStatus
-    const editProxy = (servico) => {
-        notify.info(`Edição disponível na visualização Clássica.`);
-    };
-    editProxy.__setFiltro = handleSetFiltro;
+    // onEdit abre o modal; __setFiltro permite que EtapasGrid mude o filtro de chips
+    const handleEdit = (servico) => setEditingServico(servico);
+    handleEdit.__setFiltro = handleSetFiltro;
 
     const stats = {
         total: servicos.length,
@@ -150,26 +150,24 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
             {/* Vista principal */}
             <div key={viewMode} className="cn-section cn-section--animated">
                 {viewMode === 'semanal' ? (
-                    <WeeklyView servicos={servicos} evmData={evmData} />
+                    <WeeklyView servicos={servicos} evmData={evmData} onEdit={handleEdit} />
                 ) : (
                     <EtapasGrid
                         servicos={servicos}
                         evmData={evmData}
                         filtroStatus={filtroStatus}
-                        onEdit={editProxy}
+                        onEdit={handleEdit}
                     />
                 )}
             </div>
 
-            {/* Nota opt-in */}
-            <p className="cn-opt-in-note">
-                <i className="ti ti-info-circle" aria-hidden="true" />
-                Para editar serviços, use{' '}
-                <button type="button" className="cn-link-btn" onClick={onSwitchToClassic}>
-                    a visualização clássica
-                </button>.
-                O cronograma clássico permanece intacto.
-            </p>
+            {editingServico && (
+                <ServicoEditModal
+                    servico={editingServico}
+                    onClose={() => setEditingServico(null)}
+                    onSaved={fetchServicos}
+                />
+            )}
         </main>
     );
 };
