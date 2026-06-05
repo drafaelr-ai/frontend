@@ -5,10 +5,12 @@ import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
 import NotaFiscalIcon from '../../components/NotaFiscalIcon';
+import GerarSuperlinkModal from '../../components/modals/GerarSuperlinkModal';
 import './HistoricoPagamentos.css';
 
 const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, fetchObraData, obraId }) => {
     const [mostrarTodos, setMostrarTodos] = useState(false);
+    const [showSuperlink, setShowSuperlink] = useState(false);
     const [editandoItem, setEditandoItem] = useState(null);
     const [itensOrcamento, setItensOrcamento] = useState([]);
     const [loadingItens, setLoadingItens] = useState(false);
@@ -323,6 +325,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     ];
 
     return (
+        <>
         <div className="card" style={{ marginTop: '20px' }}>
 
             {/* === HEADER === */}
@@ -331,12 +334,24 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                     <h2 className="hpc-title">Histórico de Pagamentos</h2>
                     <span className="hpc-count-badge">{itemsPagos.length} pagos</span>
                 </div>
-                {itemsPagos.length > 0 && (
-                    <button onClick={exportarCSV} className="hpc-export-btn">
-                        <i className="ti ti-download" aria-hidden="true" />
-                        Exportar CSV
-                    </button>
-                )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {itemsAPagar.length > 0 && (
+                        <button
+                            onClick={() => setShowSuperlink(true)}
+                            className="hpc-export-btn"
+                            title="Gerar link de pagamento compartilhável"
+                        >
+                            <i className="ti ti-share-2" aria-hidden="true" />
+                            Superlink
+                        </button>
+                    )}
+                    {itemsPagos.length > 0 && (
+                        <button onClick={exportarCSV} className="hpc-export-btn">
+                            <i className="ti ti-download" aria-hidden="true" />
+                            Exportar CSV
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* === STAT CARDS === */}
@@ -735,6 +750,22 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 </div>
             )}
         </div>
+
+        {showSuperlink && (
+            <GerarSuperlinkModal
+                pagamentos={itemsAPagar.map(item => ({
+                    id:            item.id,
+                    descricao:     item.descricao,
+                    valor:         (item.valor_total || 0) - (item.valor_pago || 0),
+                    tipo:          item.tipo || 'servico',
+                    contexto:      item.fornecedor || item.servico_nome || '',
+                    pix_chave:     item.pix || item.pix_chave || '',
+                    codigo_barras: item.codigo_barras || '',
+                }))}
+                onClose={() => setShowSuperlink(false)}
+            />
+        )}
+        </>
     );
 };
 
