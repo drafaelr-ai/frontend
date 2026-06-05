@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.4",
-    "cross-env": "^10.1.0"
+    "cross-env": "^10.1.0",
+    "source-map-explorer": "^2.5.3"
   }
 }

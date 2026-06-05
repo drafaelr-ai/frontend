@@ -4,6 +4,7 @@ import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
+import GanttCronograma from './GanttCronograma';
 
 // Helper para formatar datas
 const formatDate = (dateStr) => {
@@ -1334,6 +1335,12 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             <i className="ti ti-timeline" aria-hidden="true" /> Timeline
                         </button>
                         <button
+                            className={`view-btn ${viewMode === 'gantt' ? 'active' : ''}`}
+                            onClick={() => setViewMode('gantt')}
+                        >
+                            <i className="ti ti-chart-gantt" aria-hidden="true" /> Gantt
+                        </button>
+                        <button
                             className={`view-btn ${viewMode === 'lista' ? 'active' : ''}`}
                             onClick={() => setViewMode('lista')}
                         >
@@ -1368,7 +1375,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
             </div>
 
             {/* Filtros */}
-            {(viewMode === 'lista' || viewMode === 'timeline') && (
+            {(viewMode === 'lista' || viewMode === 'timeline' || viewMode === 'gantt') && (
                 <div className="filtros-bar">
                     <button className={`filtro-chip ${filtroStatus === 'todos' ? 'active' : ''}`} onClick={() => setFiltroStatus('todos')}>
                         Todos ({cronograma.length})
@@ -1396,6 +1403,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 <>
                     {viewMode === 'kanban' && <KanbanView />}
                     {viewMode === 'timeline' && <TimelineView />}
+                    {viewMode === 'gantt' && <GanttCronograma servicos={servicosFiltrados} />}
                     {viewMode === 'lista' && <ListView />}
                 </>
             )}
