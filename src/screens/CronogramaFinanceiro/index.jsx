@@ -55,56 +55,71 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         [pagamentosParcelados]
     );
 
-    const pagamentosParaSuperlink = useMemo(() =>
-        itensSelecionados.map(({ tipo, id }) => {
+    // Monta item do superlink: pix vence sobre codigo_barras quando os dois existem
+    const _slItem = (id, descricao, valor, tipo, pix, codigoBarras) => ({
+        id,
+        descricao,
+        valor,
+        tipo,
+        contexto: obraNome,
+        pix_chave:     pix        ? pix        : '',
+        codigo_barras: pix        ? ''         : (codigoBarras || ''),
+    });
+
+    const pagamentosParaSuperlink = useMemo(() => {
+        // Sem seleção → todos os pagamentos futuros pendentes pré-selecionados
+        if (itensSelecionados.length === 0) {
+            return pagamentosFuturosPrevisto.map(pag =>
+                _slItem(
+                    String(pag.id).startsWith('servico-') ? pag.id : `futuro-${pag.id}`,
+                    pag.descricao,
+                    pag.valor,
+                    String(pag.id).startsWith('servico-') ? 'servico' : 'futuro',
+                    pag.pix,
+                    pag.codigo_barras,
+                )
+            );
+        }
+
+        return itensSelecionados.map(({ tipo, id }) => {
             if (tipo === 'futuro') {
                 const pag = pagamentosFuturos.find(p => p.id === id);
                 if (!pag) return null;
-                return {
-                    id: `futuro-${id}`,
-                    descricao: pag.descricao,
-                    valor: pag.valor,
-                    tipo: 'futuro',
-                    contexto: obraNome,
-                    pix_chave: '',
-                    codigo_barras: pag.codigo_barras || '',
-                };
+                return _slItem(`futuro-${id}`, pag.descricao, pag.valor, 'futuro', pag.pix, pag.codigo_barras);
             }
             if (tipo === 'servico') {
                 const pag = pagamentosServicoPendentes.find(p => p.id === id)
                          || pagamentosFuturos.find(p => p.id === id);
                 if (!pag) return null;
-                return {
-                    id: `servico-${id}`,
-                    descricao: pag.servico_nome || pag.descricao,
-                    valor: pag.valor_restante || pag.valor || 0,
-                    tipo: 'servico',
-                    contexto: obraNome,
-                    pix_chave: '',
-                    codigo_barras: '',
-                };
+                return _slItem(
+                    `servico-${id}`,
+                    pag.servico_nome || pag.descricao,
+                    pag.valor_restante || pag.valor || 0,
+                    'servico',
+                    pag.pix,
+                    null,
+                );
             }
             if (tipo === 'parcela') {
                 for (const pp of pagamentosParcelados) {
                     const parcela = pp.parcelas?.find(p => p.id === id);
                     if (parcela) {
-                        return {
-                            id: `parcela-${id}`,
-                            descricao: `${pp.descricao || pp.fornecedor || 'Parcelado'} · parcela`,
-                            valor: parcela.valor_parcela,
-                            tipo: 'parcelado',
-                            contexto: obraNome,
-                            pix_chave: '',
-                            codigo_barras: '',
-                        };
+                        return _slItem(
+                            `parcela-${id}`,
+                            `${pp.descricao || pp.fornecedor || 'Parcelado'} · parcela`,
+                            parcela.valor_parcela,
+                            'parcelado',
+                            pp.pix,
+                            null,
+                        );
                     }
                 }
                 return null;
             }
             return null;
-        }).filter(Boolean),
-        [itensSelecionados, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, obraNome]
-    );
+        }).filter(Boolean);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [itensSelecionados, pagamentosFuturosPrevisto, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, obraNome]);
 
     const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
@@ -687,11 +702,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         </button>
                     )}
 
-                    {!simplified && itensSelecionados.length > 0 && (
+                    {!simplified && (
                         <button
                             onClick={() => setShowSuperlink(true)}
                             className="m-btn-secondary"
-                            title="Gerar link de pagamento compartilhável com os itens selecionados"
+                            title="Gerar link de pagamento compartilhável"
                         >
                             <i className="ti ti-share-2" aria-hidden="true" /> Superlink
                         </button>
