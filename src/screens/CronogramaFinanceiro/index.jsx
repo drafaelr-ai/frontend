@@ -5,6 +5,7 @@ import EditarPagamentoFuturoModal from '../../components/modals/EditarPagamentoF
 import CadastrarPagamentoParceladoModal from '../../components/modals/CadastrarPagamentoParceladoModal';
 import EditarParcelasModal from '../../components/modals/EditarParcelasModal';
 import ModalWhatsAppCronograma from '../../components/modals/ModalWhatsAppCronograma';
+import GerarSuperlinkModal from '../../components/modals/GerarSuperlinkModal';
 import QuadroAlertasVencimento from '../../components/QuadroAlertasVencimento';
 import PrioridadeBadge from '../../components/PrioridadeBadge';
 import { fetchWithAuth, fetchWithAuthTimeout } from '../../auth/fetchWithAuth';
@@ -30,6 +31,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const [itensSelecionados, setItensSelecionados] = useState([]);
     const [isMarcarPagosVisible, setMarcarPagosVisible] = useState(false);
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+    const [showSuperlink, setShowSuperlink] = useState(false);
 
     const [processingIds, setProcessingIds] = useState(() => new Set());
     const isProcessing = (key) => processingIds.has(key);
@@ -51,6 +53,57 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const pagamentosParceladosAtivo = useMemo(
         () => pagamentosParcelados.filter(pag => pag.status === 'Ativo'),
         [pagamentosParcelados]
+    );
+
+    const pagamentosParaSuperlink = useMemo(() =>
+        itensSelecionados.map(({ tipo, id }) => {
+            if (tipo === 'futuro') {
+                const pag = pagamentosFuturos.find(p => p.id === id);
+                if (!pag) return null;
+                return {
+                    id: `futuro-${id}`,
+                    descricao: pag.descricao,
+                    valor: pag.valor,
+                    tipo: 'futuro',
+                    contexto: obraNome,
+                    pix_chave: '',
+                    codigo_barras: pag.codigo_barras || '',
+                };
+            }
+            if (tipo === 'servico') {
+                const pag = pagamentosServicoPendentes.find(p => p.id === id)
+                         || pagamentosFuturos.find(p => p.id === id);
+                if (!pag) return null;
+                return {
+                    id: `servico-${id}`,
+                    descricao: pag.servico_nome || pag.descricao,
+                    valor: pag.valor_restante || pag.valor || 0,
+                    tipo: 'servico',
+                    contexto: obraNome,
+                    pix_chave: '',
+                    codigo_barras: '',
+                };
+            }
+            if (tipo === 'parcela') {
+                for (const pp of pagamentosParcelados) {
+                    const parcela = pp.parcelas?.find(p => p.id === id);
+                    if (parcela) {
+                        return {
+                            id: `parcela-${id}`,
+                            descricao: `${pp.descricao || pp.fornecedor || 'Parcelado'} · parcela`,
+                            valor: parcela.valor_parcela,
+                            tipo: 'parcelado',
+                            contexto: obraNome,
+                            pix_chave: '',
+                            codigo_barras: '',
+                        };
+                    }
+                }
+                return null;
+            }
+            return null;
+        }).filter(Boolean),
+        [itensSelecionados, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, obraNome]
     );
 
     const showCronogramaToast = (msg, color = 'var(--status-success)') => {
@@ -633,6 +686,16 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             <i className="ti ti-check" aria-hidden="true" /> Marcar {itensSelecionados.length} Selecionado(s) como Pago
                         </button>
                     )}
+
+                    {!simplified && itensSelecionados.length > 0 && (
+                        <button
+                            onClick={() => setShowSuperlink(true)}
+                            className="m-btn-secondary"
+                            title="Gerar link de pagamento compartilhável com os itens selecionados"
+                        >
+                            <i className="ti ti-share-2" aria-hidden="true" /> Superlink
+                        </button>
+                    )}
                 </div>
 
                 {/* Previsão de Fluxo de Caixa */}
@@ -1164,6 +1227,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         onClose={() => setShowWhatsAppModal(false)}
                     />
                 )}
+
+                {showSuperlink && (
+                    <GerarSuperlinkModal
+                        pagamentos={pagamentosParaSuperlink}
+                        onClose={() => setShowSuperlink(false)}
+                    />
+                )}
             </>
         );
     }
@@ -1235,6 +1305,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     pagamentosFuturos={pagamentosFuturos}
                     pagamentosParcelados={pagamentosParcelados}
                     onClose={() => setShowWhatsAppModal(false)}
+                />
+            )}
+
+            {showSuperlink && (
+                <GerarSuperlinkModal
+                    pagamentos={pagamentosParaSuperlink}
+                    onClose={() => setShowSuperlink(false)}
                 />
             )}
         </Modal>
