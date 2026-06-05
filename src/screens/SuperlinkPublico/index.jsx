@@ -98,6 +98,13 @@ export default function SuperlinkPublico({ token }) {
 
   const { titulo, itens, valor_total, expira_em } = data;
 
+  // Deriva nome da obra a partir do contexto dos itens (campo confiável, setado como obraNome)
+  const contextos = [...new Set(itens.map(i => i.contexto).filter(Boolean))];
+  const obraUnica  = contextos.length === 1;
+  const headerTitulo = obraUnica ? `Pagamentos — ${contextos[0]}` : (titulo || 'Pagamentos pendentes');
+  // showCtx: mostra contexto nos cards só quando há múltiplas obras
+  const showCtx = !obraUnica;
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -106,7 +113,7 @@ export default function SuperlinkPublico({ token }) {
             <i className="ti ti-building-skyscraper" />
             Obraly <span className={styles.dot}>·</span> Cobrança
           </div>
-          <h1 className={styles.title}>{titulo}</h1>
+          <h1 className={styles.title}>{headerTitulo}</h1>
           <p className={styles.sub}>
             <i className="ti ti-receipt" />
             {itens.length} pagamento{itens.length !== 1 ? 's' : ''} pendente{itens.length !== 1 ? 's' : ''}
@@ -124,7 +131,7 @@ export default function SuperlinkPublico({ token }) {
             <div className={styles.cardHead}>
               <div>
                 <div className={styles.cardDesc}>{item.descricao}</div>
-                {item.contexto && (
+                {showCtx && item.contexto && (
                   <div className={styles.cardCtx}>
                     <i className="ti ti-building-skyscraper" />
                     {item.contexto}
