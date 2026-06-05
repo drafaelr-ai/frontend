@@ -7,6 +7,7 @@ import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
+import SuperlinkPublico from './screens/SuperlinkPublico';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
 
@@ -61,6 +62,13 @@ function App() {
         localStorage.removeItem('user');
         localStorage.removeItem('selectedModule');
     };
+
+    // Rota pública — fora do fluxo de autenticação
+    const _path = window.location.pathname;
+    if (_path.startsWith('/pagar/')) {
+        const _token = _path.replace('/pagar/', '').split('/')[0];
+        return <SuperlinkPublico token={_token} />;
+    }
 
     if (isLoading) {
         return <div className="loading-screen">Carregando...</div>;

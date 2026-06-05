@@ -9,6 +9,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
 import { fetchWithAuthAdmin } from './auth/fetchWithAuthAdmin';
+import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
 
 // ===================================================================================
 // CONFIGURAÇÃO
@@ -581,6 +582,7 @@ const Dashboard = () => {
 const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) => {
     const [lancamentos, setLancamentos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showSuperlink, setShowSuperlink] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -651,12 +653,24 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                     )}
                 </div>
 
-                <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--surface-subtle)', borderRadius: '0 0 16px 16px', textAlign: 'right' }}>
+                <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border-subtle)', background: 'var(--surface-subtle)', borderRadius: '0 0 16px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button
+                        onClick={() => setShowSuperlink(true)}
+                        disabled={lancamentos.length === 0}
+                        style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}>
+                        <i className="ti ti-share-2" /> Gerar superlink
+                    </button>
                     <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--surface-card)', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
                         Fechar
                     </button>
                 </div>
             </div>
+            {showSuperlink && (
+                <GerarSuperlinkAdminModal
+                    lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    onClose={() => setShowSuperlink(false)}
+                />
+            )}
         </div>
     );
 };

@@ -1,0 +1,177 @@
+.page {
+  min-height: 100vh;
+  background: var(--surface-page);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--text-primary);
+}
+
+/* ---- Header ---- */
+.header {
+  background: var(--surface-dark);
+  color: var(--text-on-dark);
+  padding: var(--space-6) var(--space-4);
+}
+.headerInner {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-on-dark);
+}
+.dot { color: var(--brand-accent); }
+.title {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  margin: var(--space-4) 0 4px;
+}
+.sub {
+  color: var(--text-on-dark-muted);
+  font-size: var(--text-md);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.totalRow {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-on-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.totalLabel { color: var(--text-on-dark-muted); font-size: var(--text-sm); }
+.totalValue { font-size: var(--text-3xl); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- List ---- */
+.list {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ---- Card ---- */
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.cardHead {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cardDesc { font-size: var(--text-md); font-weight: 500; color: var(--text-primary); }
+.cardCtx {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cardVal {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Payment section ---- */
+.paySection {
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-subtle);
+}
+.payLabel {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.payRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.payKey {
+  flex: 1;
+  font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copyBtn {
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: var(--brand-primary);
+  color: var(--text-on-dark);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: background .12s;
+}
+.copyBtn:hover { background: var(--brand-primary-soft); }
+.copyBtnDone { background: var(--status-success) !important; }
+.copyBtnGhost {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.copyBtnGhost:hover { border-color: var(--border-strong); background: var(--surface-card); }
+.copyBtnBlock { width: 100%; justify-content: center; }
+
+/* ---- Footer ---- */
+.footer {
+  max-width: 480px;
+  margin: 0 auto var(--space-8);
+  padding: 0 var(--space-4);
+  text-align: center;
+}
+.expireNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  padding: var(--space-3) var(--space-4);
+  background: var(--brand-accent-soft);
+  color: var(--status-warning-text);
+  border-radius: var(--radius-md);
+}
