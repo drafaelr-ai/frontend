@@ -19,11 +19,12 @@ const TIPO_CHIP = {
  * GerarSuperlinkModal (Main)
  *
  * Props:
- *   pagamentos  — array de objetos { id, descricao, valor, tipo, contexto, pix_chave?, codigo_barras? }
- *   onClose     — fn()
+ *   pagamentos    — array de objetos { id, descricao, valor, tipo, contexto, pix_chave?, codigo_barras? }
+ *   tituloDefault — string opcional; pré-preenche o campo título (ex: "Pagamentos pendentes — Alphaville")
+ *   onClose       — fn()
  */
-export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
-  const [titulo, setTitulo]         = useState('Pagamentos pendentes');
+export default function GerarSuperlinkModal({ pagamentos = [], tituloDefault = 'Pagamentos pendentes', onClose }) {
+  const [titulo, setTitulo]         = useState(tituloDefault);
   const [selecionados, setSel]      = useState(() => new Set(pagamentos.map(p => p.id)));
   const [pixMap, setPixMap]         = useState(() => {
     const m = {};
@@ -43,7 +44,8 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
       return m;
     });
     setLinkGerado(null);
-    setTitulo('Pagamentos pendentes');
+    setTitulo(tituloDefault);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagamentos]);
 
   const toggleItem = (id) => setSel(prev => {

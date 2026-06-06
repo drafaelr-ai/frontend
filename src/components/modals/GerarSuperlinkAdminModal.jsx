@@ -12,11 +12,12 @@ function fmtCurrency(v) {
  * GerarSuperlinkAdminModal
  *
  * Props:
- *   lancamentos — array de lancamentos admin (com pix_chave e codigo_barras)
- *   onClose     — fn()
+ *   lancamentos   — array de lancamentos admin (com pix_chave e codigo_barras)
+ *   tituloDefault — string opcional; pré-preenche o campo título (ex: "Cobranças — Ed. Aurora")
+ *   onClose       — fn()
  */
-export default function GerarSuperlinkAdminModal({ lancamentos = [], onClose }) {
-  const [titulo, setTitulo]         = useState('Cobranças');
+export default function GerarSuperlinkAdminModal({ lancamentos = [], tituloDefault = 'Cobranças', onClose }) {
+  const [titulo, setTitulo]         = useState(tituloDefault);
   const [selecionados, setSel]      = useState(() => new Set(lancamentos.map(l => l.id)));
   const [pixMap, setPixMap]         = useState(() => {
     const m = {};
@@ -35,6 +36,8 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], onClose }) 
       return m;
     });
     setLinkGerado(null);
+    setTitulo(tituloDefault);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lancamentos]);
 
   const toggle = (id) => setSel(prev => {

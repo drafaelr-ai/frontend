@@ -669,6 +669,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
                     lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    tituloDefault={titulo || 'Cobranças'}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
@@ -2134,6 +2135,10 @@ const Lancamentos = () => {
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
                     lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    tituloDefault={(() => {
+                        const imovel = imoveis.find(i => String(i.id) === String(filtros.imovel_id));
+                        return imovel ? `Cobranças — ${imovel.nome}` : 'Cobranças';
+                    })()}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
