@@ -11,6 +11,7 @@ import { logger } from './utils/logger';
 import { fetchWithAuthAdmin } from './auth/fetchWithAuthAdmin';
 import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
 
+
 // ===================================================================================
 // CONFIGURAÇÃO
 // ===================================================================================
@@ -834,7 +835,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
         data_pagamento: lancamento.data_pagamento || '',
         categoria_id: lancamento.categoria_id || '',
         observacoes: lancamento.observacoes || '',
-        pix: lancamento.pix || '',
+        pix_chave: lancamento.pix_chave || '',
     });
     const [comprovantePreview, setComprovantePreview] = useState(lancamento.comprovante_url || null);
     const [comprovanteBase64, setComprovanteBase64] = useState(undefined);
@@ -868,7 +869,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                 status: form.status,
                 categoria_id: Number(form.categoria_id),
                 observacoes: form.observacoes || null,
-                pix: form.pix || null,
+                pix_chave: form.pix_chave || null,
                 data_lancamento: form.data_lancamento || undefined,
                 data_vencimento: form.data_vencimento || undefined,
                 data_pagamento: form.data_pagamento || undefined,
@@ -960,7 +961,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                     {/* PIX */}
                     <div>
                         <label style={styles.label}>Chave PIX</label>
-                        <input type='text' value={form.pix} onChange={e => setForm(f => ({ ...f, pix:e.target.value }))} style={styles.input} placeholder='CPF, e-mail, telefone ou chave aleatória' />
+                        <input type='text' value={form.pix_chave} onChange={e => setForm(f => ({ ...f, pix_chave:e.target.value }))} style={styles.input} placeholder='CPF, e-mail, telefone ou chave aleatória' />
                     </div>
                     {/* Comprovante */}
                     <div>
@@ -1407,6 +1408,7 @@ const Lancamentos = () => {
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showSuperlink, setShowSuperlink] = useState(false);
     const [filtros, setFiltros] = useState({
         imovel_id: '',
         tipo: '',
@@ -1427,7 +1429,7 @@ const Lancamentos = () => {
         recorrencia_meses: '1',
         qtd_parcelas: '12',
         observacoes: '',
-        pix: ''
+        pix_chave: ''
     });
 
     useEffect(() => {
@@ -1490,7 +1492,7 @@ const Lancamentos = () => {
                     recorrencia_meses: '1',
                     qtd_parcelas: '12',
                     observacoes: '',
-                    pix: ''
+                    pix_chave: ''
                 });
             }
         } catch (err) {
@@ -1593,9 +1595,18 @@ const Lancamentos = () => {
             {/* Header */}
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>💰 Lançamentos</h1>
-                <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
-                    + Novo Lançamento
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                        onClick={() => setShowSuperlink(true)}
+                        disabled={lancamentos.length === 0}
+                        style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 600, background: 'var(--surface-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 8, padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}
+                    >
+                        <i className="ti ti-share-2" /> Superlink
+                    </button>
+                    <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
+                        + Novo Lançamento
+                    </button>
+                </div>
             </div>
 
             {/* Filtros */}
@@ -2056,8 +2067,8 @@ const Lancamentos = () => {
                                 <label style={styles.label}>Chave PIX</label>
                                 <input
                                     type="text"
-                                    value={form.pix}
-                                    onChange={e => setForm({ ...form, pix: e.target.value })}
+                                    value={form.pix_chave}
+                                    onChange={e => setForm({ ...form, pix_chave: e.target.value })}
                                     style={styles.input}
                                     placeholder="CPF, e-mail, telefone ou chave aleatória"
                                 />
@@ -2118,6 +2129,13 @@ const Lancamentos = () => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showSuperlink && (
+                <GerarSuperlinkAdminModal
+                    lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    onClose={() => setShowSuperlink(false)}
+                />
             )}
         </div>
     );
