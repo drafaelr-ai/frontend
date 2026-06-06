@@ -669,7 +669,6 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
                     lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
-                    tituloDefault={titulo || 'Cobranças'}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
@@ -1410,6 +1409,7 @@ const Lancamentos = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showSuperlink, setShowSuperlink] = useState(false);
+    const [boletosImovel, setBoletosImovel] = useState([]);
     const [filtros, setFiltros] = useState({
         imovel_id: '',
         tipo: '',
@@ -1436,6 +1436,15 @@ const Lancamentos = () => {
     useEffect(() => {
         fetchDados();
     }, [filtros]);
+
+    // Boletos: busca por imóvel quando filtro ativo; sem filtro = lista vazia
+    useEffect(() => {
+        if (!filtros.imovel_id) { setBoletosImovel([]); return; }
+        fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${filtros.imovel_id}/boletos`)
+            .then(r => r.ok ? r.json() : [])
+            .then(d => setBoletosImovel(Array.isArray(d) ? d.filter(b => b.status !== 'Pago') : []))
+            .catch(() => setBoletosImovel([]));
+    }, [filtros.imovel_id]);
 
     const fetchDados = async () => {
         try {
@@ -2135,10 +2144,8 @@ const Lancamentos = () => {
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
                     lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
-                    tituloDefault={(() => {
-                        const imovel = imoveis.find(i => String(i.id) === String(filtros.imovel_id));
-                        return imovel ? `Cobranças — ${imovel.nome}` : 'Cobranças';
-                    })()}
+                    boletos={boletosImovel}
+                    imovelNome={imoveis.find(i => String(i.id) === String(filtros.imovel_id))?.nome || ''}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}

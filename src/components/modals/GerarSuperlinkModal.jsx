@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { notify } from '../../utils/notify';
@@ -15,16 +15,25 @@ const TIPO_CHIP = {
   boleto:     { label: 'Boleto',     bg: 'var(--surface-muted)',      color: 'var(--text-muted)' },
 };
 
+function _autoTitulo(items, contexto) {
+  const hasBoleto = items.some(p => p.codigo_barras);
+  const hasPix    = items.some(p => !p.codigo_barras);
+  const suffix    = contexto ? ` — ${contexto}` : '';
+  if (hasBoleto && hasPix)  return `Pagamentos e boletos${suffix}`;
+  if (hasBoleto)             return `Boletos${suffix}`;
+  return `Pagamentos pendentes${suffix}`;
+}
+
 /**
  * GerarSuperlinkModal (Main)
  *
  * Props:
- *   pagamentos    — array de objetos { id, descricao, valor, tipo, contexto, pix_chave?, codigo_barras? }
- *   tituloDefault — string opcional; pré-preenche o campo título (ex: "Pagamentos pendentes — Alphaville")
- *   onClose       — fn()
+ *   pagamentos — array de objetos { id, descricao, valor, tipo, contexto, pix_chave?, codigo_barras? }
+ *   onClose    — fn()
  */
-export default function GerarSuperlinkModal({ pagamentos = [], tituloDefault = 'Pagamentos pendentes', onClose }) {
-  const [titulo, setTitulo]         = useState(tituloDefault);
+export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
+  const userEditedTitle             = useRef(false);
+  const [titulo, setTitulo]         = useState('');
   const [selecionados, setSel]      = useState(() => new Set(pagamentos.map(p => p.id)));
   const [pixMap, setPixMap]         = useState(() => {
     const m = {};
@@ -32,11 +41,21 @@ export default function GerarSuperlinkModal({ pagamentos = [], tituloDefault = '
     return m;
   });
   const [loading, setLoading]       = useState(false);
-  const [linkGerado, setLinkGerado] = useState(null); // { token, url }
+  const [linkGerado, setLinkGerado] = useState(null);
   const [copied, setCopied]         = useState(false);
 
-  // Limpa estado ao abrir
+  // Recalcula título quando seleção muda (a não ser que usuário tenha editado)
   useEffect(() => {
+    if (userEditedTitle.current) return;
+    const sel = pagamentos.filter(p => selecionados.has(p.id));
+    const base = sel.length > 0 ? sel : pagamentos;
+    const ctx  = pagamentos.find(p => p.contexto)?.contexto || '';
+    setTitulo(_autoTitulo(base, ctx));
+  }, [selecionados, pagamentos]);
+
+  // Limpa estado ao reabrir (pagamentos mudou = novo modal)
+  useEffect(() => {
+    userEditedTitle.current = false;
     setSel(new Set(pagamentos.map(p => p.id)));
     setPixMap(() => {
       const m = {};
@@ -44,7 +63,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], tituloDefault = '
       return m;
     });
     setLinkGerado(null);
-    setTitulo(tituloDefault);
+    // título será recalculado pelo effect acima
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagamentos]);
 
@@ -141,7 +160,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], tituloDefault = '
         <input
           className="m-input"
           value={titulo}
-          onChange={e => setTitulo(e.target.value)}
+          onChange={e => { userEditedTitle.current = true; setTitulo(e.target.value); }}
           placeholder="Ex: Pagamentos — Obra Alphaville"
           disabled={!!linkGerado}
         />

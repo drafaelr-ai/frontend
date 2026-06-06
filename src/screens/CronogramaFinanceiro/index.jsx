@@ -25,6 +25,8 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
 
     const [itensOrcamento, setItensOrcamento] = useState([]);
 
+    const [boletosObra, setBoletosObra] = useState([]);
+
     const [isPagamentosFuturosCollapsed, setIsPagamentosFuturosCollapsed] = useState(false);
     const [isPagamentosParceladosCollapsed, setIsPagamentosParceladosCollapsed] = useState(false);
 
@@ -66,10 +68,25 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         codigo_barras: pix        ? ''         : (codigoBarras || ''),
     });
 
+    // Boletos pendentes com codigo_barras — sempre incluídos no superlink
+    const boletosSuperlink = useMemo(() =>
+        boletosObra
+            .filter(b => b.status === 'Pendente' && b.codigo_barras)
+            .map(b => _slItem(
+                `boleto-${b.id}`,
+                b.descricao || b.beneficiario || 'Boleto',
+                b.valor || 0,
+                'boleto',
+                null,
+                b.codigo_barras,
+            )),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boletosObra, obraNome]);
+
     const pagamentosParaSuperlink = useMemo(() => {
-        // Sem seleção → todos os pagamentos futuros pendentes pré-selecionados
+        // Sem seleção → todos os pagamentos futuros pendentes + boletos pré-selecionados
         if (itensSelecionados.length === 0) {
-            return pagamentosFuturosPrevisto.map(pag =>
+            const pagItems = pagamentosFuturosPrevisto.map(pag =>
                 _slItem(
                     String(pag.id).startsWith('servico-') ? pag.id : `futuro-${pag.id}`,
                     pag.descricao,
@@ -79,9 +96,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     pag.codigo_barras,
                 )
             );
+            return [...pagItems, ...boletosSuperlink];
         }
 
-        return itensSelecionados.map(({ tipo, id }) => {
+        const selectedItems = itensSelecionados.map(({ tipo, id }) => {
             if (tipo === 'futuro') {
                 const pag = pagamentosFuturos.find(p => p.id === id);
                 if (!pag) return null;
@@ -118,8 +136,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
             return null;
         }).filter(Boolean);
+
+        // Boletos sempre incluídos (seleção na tela não afeta boletos)
+        return [...selectedItems, ...boletosSuperlink];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [itensSelecionados, pagamentosFuturosPrevisto, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, obraNome]);
+    }, [itensSelecionados, pagamentosFuturosPrevisto, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, boletosSuperlink, obraNome]);
 
     const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
@@ -245,12 +266,13 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes, itensOrcRes] = await Promise.all([
+            const [futuroRes, parceladoRes, previsoesRes, servicoPendentesRes, itensOrcRes, boletosRes] = await Promise.all([
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/sid/cronograma-financeiro/${obraId}/previsoes`).catch(e => ({ ok: false, error: e })),
                 fetchWithAuth(`${API_URL}/obras/${obraId}/pagamentos-servico-pendentes`).catch(e => ({ ok: false, error: e })),
-                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`).catch(e => ({ ok: false, error: e }))
+                fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`).catch(e => ({ ok: false, error: e })),
+                fetchWithAuth(`${API_URL}/obras/${obraId}/boletos`).catch(e => ({ ok: false, error: e }))
             ]);
 
             if (futuroRes.ok) {
@@ -286,6 +308,15 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     setItensOrcamento(data);
                 } catch (e) {
                     logger.error('Erro ao processar itens do orçamento:', e);
+                }
+            }
+
+            if (boletosRes.ok) {
+                try {
+                    const data = await boletosRes.json();
+                    setBoletosObra(Array.isArray(data) ? data : []);
+                } catch (e) {
+                    logger.error('Erro ao processar boletos:', e);
                 }
             }
 
