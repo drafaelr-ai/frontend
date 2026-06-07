@@ -3479,14 +3479,19 @@ const AppAdmin = ({ onBack }) => {
 
     useEffect(() => {
         const loadAuth = async () => {
-            const savedToken = await loadToken('token_admin');
-            const savedUser = await loadToken('user_admin');
+            try {
+                const savedToken = await loadToken('token_admin');
+                const savedUser = await loadToken('user_admin');
 
-            if (savedToken && savedUser) {
-                setToken(savedToken);
-                setUser(JSON.parse(savedUser));
+                if (savedToken && savedUser) {
+                    setToken(savedToken);
+                    setUser(JSON.parse(savedUser));
+                }
+            } catch (error) {
+                logger.error("Falha ao carregar dados de autenticação admin:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         loadAuth();
     }, []);

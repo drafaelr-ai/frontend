@@ -32,11 +32,12 @@ function App() {
                 }
             } catch (error) {
                 logger.error("Falha ao carregar dados de autenticação:", error);
-                await deleteToken('token');
-                await deleteToken('user');
-                await deleteToken('selectedModule');
+                try { await deleteToken('token'); } catch {}
+                try { await deleteToken('user'); } catch {}
+                try { await deleteToken('selectedModule'); } catch {}
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
         loadAuth();
     }, []);
