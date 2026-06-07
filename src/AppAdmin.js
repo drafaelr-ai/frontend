@@ -9,6 +9,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
 import { fetchWithAuthAdmin } from './auth/fetchWithAuthAdmin';
+import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
 import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
 
 
@@ -3477,28 +3478,31 @@ const AppAdmin = ({ onBack }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const savedToken = localStorage.getItem('token_admin');
-        const savedUser = localStorage.getItem('user_admin');
+        const loadAuth = async () => {
+            const savedToken = await loadToken('token_admin');
+            const savedUser = await loadToken('user_admin');
 
-        if (savedToken && savedUser) {
-            setToken(savedToken);
-            setUser(JSON.parse(savedUser));
-        }
-        setLoading(false);
+            if (savedToken && savedUser) {
+                setToken(savedToken);
+                setUser(JSON.parse(savedUser));
+            }
+            setLoading(false);
+        };
+        loadAuth();
     }, []);
 
-    const login = (data) => {
+    const login = async (data) => {
         setToken(data.access_token);
         setUser(data.user);
-        localStorage.setItem('token_admin', data.access_token);
-        localStorage.setItem('user_admin', JSON.stringify(data.user));
+        await storeToken('token_admin', data.access_token);
+        await storeToken('user_admin', JSON.stringify(data.user));
     };
 
-    const logout = () => {
+    const logout = async () => {
         setToken(null);
         setUser(null);
-        localStorage.removeItem('token_admin');
-        localStorage.removeItem('user_admin');
+        await deleteToken('token_admin');
+        await deleteToken('user_admin');
     };
 
     if (loading) {

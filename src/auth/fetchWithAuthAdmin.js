@@ -1,7 +1,8 @@
 import { notify } from '../utils/notify';
+import { getToken, removeToken } from './tokenStorage';
 
 export const fetchWithAuthAdmin = async (url, options = {}) => {
-    const token = localStorage.getItem('token_admin');
+    const token = await getToken('token_admin');
 
     const headers = {
         ...options.headers,
@@ -18,8 +19,8 @@ export const fetchWithAuthAdmin = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
 
     if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token_admin');
-        localStorage.removeItem('user_admin');
+        await removeToken('token_admin');
+        await removeToken('user_admin');
 
         notify.warning('Sua sessão admin expirou. Faça login novamente.');
 

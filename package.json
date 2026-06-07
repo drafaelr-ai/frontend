@@ -5,6 +5,7 @@
   "dependencies": {
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
+    "@capacitor/preferences": "^7.0.4",
     "@capacitor/splash-screen": "^7.0.5",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

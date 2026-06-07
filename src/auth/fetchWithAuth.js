@@ -1,7 +1,8 @@
 import { notify } from '../utils/notify';
+import { getToken, removeToken } from './tokenStorage';
 
 export const fetchWithAuth = async (url, options = {}) => {
-    const token = localStorage.getItem('token');
+    const token = await getToken('token');
 
     const headers = {
         ...options.headers,
@@ -18,8 +19,8 @@ export const fetchWithAuth = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
 
     if (response.status === 401 || response.status === 422) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        await removeToken('token');
+        await removeToken('user');
 
         notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
 

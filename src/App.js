@@ -3,6 +3,7 @@ import './App.css';
 import { ToastContainer } from './utils/notify';
 import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
+import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
 import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
@@ -18,49 +19,52 @@ function App() {
     const [selectedModule, setSelectedModule] = useState(null); // null = seletor, 'obras' ou 'admin'
 
     useEffect(() => {
-        try {
-            const savedToken = localStorage.getItem('token');
-            const savedUser = localStorage.getItem('user');
-            const savedModule = localStorage.getItem('selectedModule');
+        const loadAuth = async () => {
+            try {
+                const savedToken = await loadToken('token');
+                const savedUser = await loadToken('user');
+                const savedModule = await loadToken('selectedModule');
 
-            if (savedToken && savedUser) {
-                setToken(savedToken);
-                setUser(JSON.parse(savedUser));
-                setSelectedModule(savedModule || 'obras');
+                if (savedToken && savedUser) {
+                    setToken(savedToken);
+                    setUser(JSON.parse(savedUser));
+                    setSelectedModule(savedModule || 'obras');
+                }
+            } catch (error) {
+                logger.error("Falha ao carregar dados de autenticação:", error);
+                await deleteToken('token');
+                await deleteToken('user');
+                await deleteToken('selectedModule');
             }
-        } catch (error) {
-            logger.error("Falha ao carregar dados de autenticação:", error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('selectedModule');
-        }
-        setIsLoading(false);
+            setIsLoading(false);
+        };
+        loadAuth();
     }, []);
 
-    const handleSelectModule = (moduleId) => {
+    const handleSelectModule = async (moduleId) => {
         setSelectedModule(moduleId);
-        localStorage.setItem('selectedModule', moduleId);
+        await storeToken('selectedModule', moduleId);
     };
 
-    const handleBackToSelector = () => {
+    const handleBackToSelector = async () => {
         setSelectedModule(null);
-        localStorage.removeItem('selectedModule');
+        await deleteToken('selectedModule');
     };
 
-    const login = (data) => {
+    const login = async (data) => {
         setToken(data.access_token);
         setUser(data.user);
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        await storeToken('token', data.access_token);
+        await storeToken('user', JSON.stringify(data.user));
     };
 
-    const logout = () => {
+    const logout = async () => {
         setToken(null);
         setUser(null);
         setSelectedModule(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('selectedModule');
+        await deleteToken('token');
+        await deleteToken('user');
+        await deleteToken('selectedModule');
     };
 
     // Rota pública — fora do fluxo de autenticação
