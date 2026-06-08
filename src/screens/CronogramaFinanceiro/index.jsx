@@ -49,7 +49,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     });
 
     const pagamentosFuturosPrevisto = useMemo(
-        () => pagamentosFuturos.filter(pag => pag.status === 'Previsto'),
+        () => pagamentosFuturos.filter(pag => pag.status === 'Previsto' || pag.status === 'Vencido'),
         [pagamentosFuturos]
     );
     const pagamentosParceladosAtivo = useMemo(
@@ -68,10 +68,10 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         codigo_barras: pix        ? ''         : (codigoBarras || ''),
     });
 
-    // Boletos pendentes com codigo_barras — sempre incluídos no superlink
+    // Boletos não pagos com codigo_barras — sempre incluídos no superlink
     const boletosSuperlink = useMemo(() =>
         boletosObra
-            .filter(b => b.status === 'Pendente' && b.codigo_barras)
+            .filter(b => (b.status === 'Pendente' || b.status === 'Vencido') && b.codigo_barras)
             .map(b => _slItem(
                 `boleto-${b.id}`,
                 b.descricao || b.beneficiario || 'Boleto',

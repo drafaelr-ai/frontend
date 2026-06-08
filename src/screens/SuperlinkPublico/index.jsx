@@ -98,6 +98,9 @@ export default function SuperlinkPublico({ token }) {
 
   const { titulo, itens, valor_total, expira_em } = data;
 
+  const itensPendentes = itens.filter(i => !i.pago);
+  const qtdPagos = itens.length - itensPendentes.length;
+
   // Deriva nome da obra a partir do contexto dos itens (campo confiável, setado como obraNome)
   const contextos = [...new Set(itens.map(i => i.contexto).filter(Boolean))];
   const obraUnica  = contextos.length === 1;
@@ -116,7 +119,8 @@ export default function SuperlinkPublico({ token }) {
           <h1 className={styles.title}>{headerTitulo}</h1>
           <p className={styles.sub}>
             <i className="ti ti-receipt" />
-            {itens.length} pagamento{itens.length !== 1 ? 's' : ''} pendente{itens.length !== 1 ? 's' : ''}
+            {itensPendentes.length} pagamento{itensPendentes.length !== 1 ? 's' : ''} pendente{itensPendentes.length !== 1 ? 's' : ''}
+            {qtdPagos > 0 && ` · ${qtdPagos} pago${qtdPagos !== 1 ? 's' : ''}`}
           </p>
           <div className={styles.totalRow}>
             <span className={styles.totalLabel}>Total</span>
@@ -127,10 +131,22 @@ export default function SuperlinkPublico({ token }) {
 
       <div className={styles.list}>
         {itens.map((item, idx) => (
-          <div key={idx} className={styles.card}>
+          <div key={idx} className={styles.card} style={item.pago ? { opacity: 0.6 } : {}}>
             <div className={styles.cardHead}>
               <div>
-                <div className={styles.cardDesc}>{item.descricao}</div>
+                <div className={styles.cardDesc} style={item.pago ? { textDecoration: 'line-through' } : {}}>
+                  {item.descricao}
+                </div>
+                {item.pago && (
+                  <span style={{
+                    display: 'inline-block', marginTop: 4, fontSize: 11, fontWeight: 700,
+                    padding: '2px 8px', borderRadius: 999,
+                    background: 'var(--status-success-bg, #dcfce7)',
+                    color: 'var(--status-success, #16a34a)',
+                  }}>
+                    <i className="ti ti-check" /> pago
+                  </span>
+                )}
                 {showCtx && item.contexto && (
                   <div className={styles.cardCtx}>
                     <i className="ti ti-building-skyscraper" />
@@ -138,9 +154,12 @@ export default function SuperlinkPublico({ token }) {
                   </div>
                 )}
               </div>
-              <div className={styles.cardVal}>{formatCurrency(item.valor)}</div>
+              <div className={styles.cardVal} style={item.pago ? { textDecoration: 'line-through', color: 'var(--text-muted)' } : {}}>
+                {formatCurrency(item.valor)}
+              </div>
             </div>
 
+            {!item.pago && (
             <div className={styles.paySection}>
               {item.forma === 'pix' && item.pix_chave ? (
                 <>
@@ -190,6 +209,7 @@ export default function SuperlinkPublico({ token }) {
                 </>
               ) : null}
             </div>
+            )}
           </div>
         ))}
       </div>

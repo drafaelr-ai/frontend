@@ -2381,7 +2381,7 @@ const GestaoBoletos = () => {
 // ===================================================================================
 
 const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
-    const [form, setForm] = useState({ descricao: '', beneficiario: '', valor: '', data_vencimento: getTodayString(), codigo_barras: '' });
+    const [form, setForm] = useState({ descricao: '', beneficiario: '', valor: '', data_vencimento: getTodayString(), codigo_barras: '', orcamento_item_id: '' });
     const [arquivo, setArquivo] = useState(null);
     const [arquivoBase64, setArquivoBase64] = useState(null);
     const [extraindo, setExtraindo] = useState(false);
@@ -2453,7 +2453,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
         try {
             const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis/${imovelId}/boletos`, {
                 method: 'POST',
-                body: JSON.stringify({ ...form, valor: parseFloat(form.valor), arquivo_nome: arquivo?.name || null, arquivo_base64: arquivoBase64 })
+                body: JSON.stringify({ ...form, valor: parseFloat(form.valor), orcamento_item_id: form.orcamento_item_id ? parseInt(form.orcamento_item_id) : null, arquivo_nome: arquivo?.name || null, arquivo_base64: arquivoBase64 })
             });
             if (r.ok) { notify.success('Boleto cadastrado!'); onSave(); }
             else { const err = await r.json(); notify.error(`Erro: ${err.erro}`); }
@@ -2496,6 +2496,10 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                     <div style={styles.formGroup}>
                         <label style={styles.label}>Beneficiário</label>
                         <input type="text" value={form.beneficiario} onChange={e => setForm({ ...form, beneficiario: e.target.value })} style={styles.input} placeholder="Nome do beneficiário" />
+                    </div>
+                    <div style={styles.formGroup}>
+                        <label style={styles.label}>Vínculo Orçamento (item_id) <span style={{ fontWeight: 400, color: '#999' }}>(opcional)</span></label>
+                        <input type="number" min="1" value={form.orcamento_item_id} onChange={e => setForm({ ...form, orcamento_item_id: e.target.value })} style={styles.input} placeholder="ID do item de orçamento" />
                     </div>
                     <div style={styles.formRow}>
                         <div style={styles.formGroup}>

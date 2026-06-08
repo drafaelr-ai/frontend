@@ -76,6 +76,14 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
   const itensSelecionados = pagamentos.filter(p => selecionados.has(p.id));
   const total = itensSelecionados.reduce((s, p) => s + (Number(p.valor) || 0), 0);
 
+  const _TABLE_MAP = {
+    futuro:    'pagamento_futuro',
+    servico:   'pagamento_futuro',
+    boleto:    'boleto',
+    parcelado: 'parcela_individual',
+    parcela:   'parcela_individual',
+  };
+
   const handleGerar = async () => {
     if (!itensSelecionados.length) { notify.warning('Selecione ao menos um pagamento'); return; }
     if (!titulo.trim())            { notify.warning('Informe o título do link');         return; }
@@ -89,6 +97,18 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
       codigo_barras: p.codigo_barras || undefined,
     }));
 
+    const refs = itensSelecionados.map(p => {
+      const sid = String(p.id);
+      const dash = sid.indexOf('-');
+      if (dash > 0) {
+        const tipo   = sid.slice(0, dash);
+        const rid    = parseInt(sid.slice(dash + 1), 10);
+        const tabela = _TABLE_MAP[tipo];
+        return tabela ? { tabela, id: rid } : null;
+      }
+      return null;
+    });
+
     const semPix = itens.filter(i => i.forma === 'pix' && !i.pix_chave);
     if (semPix.length) {
       notify.warning(`${semPix.length} item(ns) sem chave Pix preenchida`);
@@ -99,7 +119,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
     try {
       const r = await fetchWithAuth(`${API_URL}/superlink`, {
         method: 'POST',
-        body: JSON.stringify({ titulo: titulo.trim(), itens }),
+        body: JSON.stringify({ titulo: titulo.trim(), itens, refs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.erro || 'Erro ao gerar link');
@@ -140,7 +160,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
               <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-                {itensSelecionados.length} selecionados · expira em 7 dias
+                {itensSelecionados.length} selecionados · expira em 5 dias
               </span>
               <span style={{ fontSize: 'var(--text-xl)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                 {fmtCurrency(total)}

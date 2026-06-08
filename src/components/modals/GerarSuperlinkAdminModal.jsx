@@ -98,6 +98,14 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
       codigo_barras: i.codigo_barras || undefined,
     }));
 
+    const refs = itensAtivos.map(i => {
+      const sid = String(i.id);
+      if (sid.startsWith('boleto-')) {
+        return { tabela: 'admin_boleto', id: parseInt(sid.replace('boleto-', ''), 10) };
+      }
+      return { tabela: 'admin_lancamento', id: parseInt(sid, 10) };
+    });
+
     const semPix = itens.filter(i => i.forma === 'pix' && !i.pix_chave);
     if (semPix.length) {
       notify.warning(`${semPix.length} item(ns) sem chave Pix preenchida`);
@@ -108,7 +116,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
     try {
       const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/admin/superlink`, {
         method: 'POST',
-        body: JSON.stringify({ titulo: titulo.trim(), itens }),
+        body: JSON.stringify({ titulo: titulo.trim(), itens, refs }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.erro || 'Erro ao gerar link');
@@ -238,7 +246,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
                 </button>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-                <i className="ti ti-clock" /> Expira em 7 dias
+                <i className="ti ti-clock" /> Expira em 5 dias
               </p>
             </div>
           )}
@@ -253,7 +261,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
           ) : (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{itensAtivos.length} selecionados · expira em 7 dias</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{itensAtivos.length} selecionados · expira em 5 dias</span>
                 <span style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtCurrency(total)}</span>
               </div>
               <button

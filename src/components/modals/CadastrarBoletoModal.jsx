@@ -13,7 +13,8 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
         valor: '',
         data_vencimento: getTodayString(),
         codigo_barras: '',
-        vinculado_servico_id: ''
+        vinculado_servico_id: '',
+        orcamento_item_id: ''
     });
     const [arquivo, setArquivo] = useState(null);
     const [arquivoBase64, setArquivoBase64] = useState(null);
@@ -22,6 +23,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
     const [multiplosboletos, setMultiplosBoletos] = useState(null);
     const [salvandoTodos, setSalvandoTodos] = useState(false);
     const [servicos, setServicos] = useState([]);
+    const [itensOrcamento, setItensOrcamento] = useState([]);
 
     useEffect(() => {
         const fetchServicos = async () => {
@@ -35,7 +37,19 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 logger.error('Erro ao carregar serviços:', error);
             }
         };
+        const fetchItens = async () => {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setItensOrcamento(data || []);
+                }
+            } catch (error) {
+                logger.error('Erro ao carregar itens de orçamento:', error);
+            }
+        };
         fetchServicos();
+        fetchItens();
     }, [obraId]);
 
     const handleFileChange = async (e) => {
@@ -202,6 +216,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     ...formData,
                     valor: parseFloat(formData.valor),
                     vinculado_servico_id: formData.vinculado_servico_id ? parseInt(formData.vinculado_servico_id) : null,
+                    orcamento_item_id: formData.orcamento_item_id ? parseInt(formData.orcamento_item_id) : null,
                     arquivo_nome: arquivo?.name || null,
                     arquivo_base64: arquivoBase64
                 })
@@ -512,6 +527,27 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                                 Boletos vinculados a serviços são somados ao orçamento. Boletos sem serviço vão para "Despesas Extras".
                             </small>
                         </div>
+
+                        {itensOrcamento.length > 0 && (
+                            <div className="m-field">
+                                <label className="m-label">Vincular ao Orçamento de Engenharia <span className="m-label-opt">(opcional)</span></label>
+                                <select
+                                    className="m-select"
+                                    value={formData.orcamento_item_id}
+                                    onChange={(e) => setFormData({ ...formData, orcamento_item_id: e.target.value || '' })}
+                                >
+                                    <option value="">-- Nenhum item --</option>
+                                    {itensOrcamento.map(item => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.nome_completo}
+                                        </option>
+                                    ))}
+                                </select>
+                                <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)', marginTop: 'var(--space-1)', display: 'block' }}>
+                                    Vincula o boleto a um item do orçamento de engenharia para conciliação automática.
+                                </small>
+                            </div>
+                        )}
                     </>
                 )}
             </form>
