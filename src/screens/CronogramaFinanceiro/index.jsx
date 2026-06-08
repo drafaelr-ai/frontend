@@ -68,18 +68,25 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         codigo_barras: pix        ? ''         : (codigoBarras || ''),
     });
 
-    // Boletos não pagos com codigo_barras — sempre incluídos no superlink
+    // Boletos não pagos com codigo_barras — vencidos + vencem nos próximos 5 dias
     const boletosSuperlink = useMemo(() =>
         boletosObra
-            .filter(b => (b.status === 'Pendente' || b.status === 'Vencido') && b.codigo_barras)
-            .map(b => _slItem(
-                `boleto-${b.id}`,
-                b.descricao || b.beneficiario || 'Boleto',
-                b.valor || 0,
-                'boleto',
-                null,
-                b.codigo_barras,
-            )),
+            .filter(b => (b.status === 'Pendente' || b.status === 'Vencido') &&
+                         b.codigo_barras &&
+                         (b.dias_para_vencer == null || b.dias_para_vencer <= 5))
+            .map(b => ({
+                ..._slItem(
+                    `boleto-${b.id}`,
+                    b.descricao || b.beneficiario || 'Boleto',
+                    b.valor || 0,
+                    'boleto',
+                    null,
+                    b.codigo_barras,
+                ),
+                diasParaVencer: b.dias_para_vencer,
+                dataVencimento: b.data_vencimento,
+                preSelecionar:  b.dias_para_vencer != null ? b.dias_para_vencer >= 0 : true,
+            })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [boletosObra, obraNome]);
 

@@ -31,21 +31,26 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
   const todosItens = useMemo(() => [
     ...lancamentos,
     ...boletos
-        .filter(b => b.codigo_barras)
+        .filter(b => b.codigo_barras &&
+                     (b.status === 'Pendente' || b.status === 'Vencido') &&
+                     (b.dias_para_vencer == null || b.dias_para_vencer <= 5))
         .map(b => ({
-            id:          `boleto-${b.id}`,
-            descricao:   b.descricao || b.beneficiario || 'Boleto',
-            valor:       b.valor || 0,
-            imovel_nome: b.imovel_nome || imovelNome,
-            pix_chave:   null,
-            codigo_barras: b.codigo_barras,
-            _isBoleto:   true,
+            id:             `boleto-${b.id}`,
+            descricao:      b.descricao || b.beneficiario || 'Boleto',
+            valor:          b.valor || 0,
+            imovel_nome:    b.imovel_nome || imovelNome,
+            pix_chave:      null,
+            codigo_barras:  b.codigo_barras,
+            _isBoleto:      true,
+            diasParaVencer: b.dias_para_vencer,
+            dataVencimento: b.data_vencimento,
+            preSelecionar:  b.dias_para_vencer != null ? b.dias_para_vencer >= 0 : true,
         })),
   ], [lancamentos, boletos, imovelNome]);
 
   const userEditedTitle             = useRef(false);
   const [titulo, setTitulo]         = useState('');
-  const [selecionados, setSel]      = useState(() => new Set(todosItens.map(i => i.id)));
+  const [selecionados, setSel]      = useState(() => new Set(todosItens.filter(i => i.preSelecionar !== false).map(i => i.id)));
   const [pixMap, setPixMap]         = useState(() => {
     const m = {};
     lancamentos.forEach(l => { m[l.id] = l.pix_chave || ''; });
@@ -66,7 +71,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
   // Reset ao reabrir
   useEffect(() => {
     userEditedTitle.current = false;
-    setSel(new Set(todosItens.map(i => i.id)));
+    setSel(new Set(todosItens.filter(i => i.preSelecionar !== false).map(i => i.id)));
     setPixMap(() => {
       const m = {};
       lancamentos.forEach(l => { m[l.id] = l.pix_chave || ''; });
@@ -189,15 +194,31 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
                 {todosItens.map(item => {
                   const sel = selecionados.has(item.id);
                   const isBoleto = !!item.codigo_barras;
+                  const boletoChip = isBoleto && item.diasParaVencer != null ? (() => {
+                    const d = item.diasParaVencer;
+                    if (d < 0) return { label: `Vencido há ${Math.abs(d)}d`, bg: 'var(--status-danger-bg)', color: 'var(--status-danger-text)' };
+                    if (d === 0) return { label: 'Vence HOJE', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+                    return { label: `${d}d para vencer`, bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+                  })() : null;
                   return (
                     <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: `1px solid ${sel ? 'var(--brand-primary)' : 'var(--border-subtle)'}`, borderRadius: 8, background: sel ? 'var(--surface-subtle)' : 'var(--surface-card)', cursor: 'pointer' }}>
                       <input type="checkbox" checked={sel} onChange={() => toggle(item.id)} style={{ width: 18, height: 18, accentColor: 'var(--brand-primary)', cursor: 'pointer' }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontWeight: 500, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           {item.descricao}
                           {isBoleto && (
                             <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 999, background: 'var(--surface-muted)', color: 'var(--text-muted)' }}>
                               Boleto
+                            </span>
+                          )}
+                          {boletoChip && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 6px', borderRadius: 999, background: boletoChip.bg, color: boletoChip.color }}>
+                              {boletoChip.label}
+                            </span>
+                          )}
+                          {isBoleto && item.dataVencimento && (
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                              {new Date(item.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                             </span>
                           )}
                         </div>

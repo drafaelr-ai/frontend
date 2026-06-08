@@ -34,7 +34,7 @@ function _autoTitulo(items, contexto) {
 export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
   const userEditedTitle             = useRef(false);
   const [titulo, setTitulo]         = useState('');
-  const [selecionados, setSel]      = useState(() => new Set(pagamentos.map(p => p.id)));
+  const [selecionados, setSel]      = useState(() => new Set(pagamentos.filter(p => p.preSelecionar !== false).map(p => p.id)));
   const [pixMap, setPixMap]         = useState(() => {
     const m = {};
     pagamentos.forEach(p => { m[p.id] = p.pix_chave || ''; });
@@ -56,7 +56,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
   // Limpa estado ao reabrir (pagamentos mudou = novo modal)
   useEffect(() => {
     userEditedTitle.current = false;
-    setSel(new Set(pagamentos.map(p => p.id)));
+    setSel(new Set(pagamentos.filter(p => p.preSelecionar !== false).map(p => p.id)));
     setPixMap(() => {
       const m = {};
       pagamentos.forEach(p => { m[p.id] = p.pix_chave || ''; });
@@ -194,6 +194,12 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
             {pagamentos.map(p => {
               const sel = selecionados.has(p.id);
               const chip = TIPO_CHIP[p.tipo] || TIPO_CHIP.servico;
+              const boletoChip = p.tipo === 'boleto' && p.diasParaVencer != null ? (() => {
+                const d = p.diasParaVencer;
+                if (d < 0) return { label: `Vencido há ${Math.abs(d)}d`, bg: 'var(--status-danger-bg)', color: 'var(--status-danger-text)' };
+                if (d === 0) return { label: 'Vence HOJE', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+                return { label: `${d}d para vencer`, bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+              })() : null;
               return (
                 <label
                   key={p.id}
@@ -214,8 +220,10 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 500, fontSize: 'var(--text-md)' }}>{p.descricao}</div>
-                    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
                       <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 'var(--text-xs)', fontWeight: 600, background: chip.bg, color: chip.color }}>{chip.label}</span>
+                      {boletoChip && <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 'var(--text-xs)', fontWeight: 600, background: boletoChip.bg, color: boletoChip.color }}>{boletoChip.label}</span>}
+                      {p.dataVencimento && p.tipo === 'boleto' && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{new Date(p.dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>}
                       {p.contexto && <><i className="ti ti-building-skyscraper" />{p.contexto}</>}
                     </div>
                     {sel && !p.codigo_barras && (
@@ -267,7 +275,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
             </button>
           </div>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-            <i className="ti ti-clock" /> Expira em 7 dias
+            <i className="ti ti-clock" /> Expira em 5 dias
           </p>
         </div>
       )}
