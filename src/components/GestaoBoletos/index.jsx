@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../Modal/Modal';
 import CadastrarBoletoModal from '../modals/CadastrarBoletoModal';
+import GerarSuperlinkModal from '../modals/GerarSuperlinkModal';
 import { API_URL } from '../../config';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { logger } from '../../utils/logger';
@@ -14,6 +15,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
     const [modalCadastro, setModalCadastro] = useState(false);
     const [modalPreview, setModalPreview] = useState(null);
     const [resumo, setResumo] = useState(null);
+    const [showSuperlink, setShowSuperlink] = useState(false);
 
     // Buscar boletos
     const fetchBoletos = async () => {
@@ -313,6 +315,14 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     Gestão de Boletos
                 </h2>
                 <div className="m-section-card-actions">
+                    <button
+                        className="m-btn-secondary"
+                        onClick={() => setShowSuperlink(true)}
+                        disabled={boletos.filter(b => (b.status === 'Pendente' || b.status === 'Vencido') && b.codigo_barras).length === 0}
+                        title="Gerar link de pagamento com os boletos"
+                    >
+                        <i className="ti ti-share-2" aria-hidden="true" /> Superlink
+                    </button>
                     <button className="m-btn-primary" onClick={() => setModalCadastro(true)}>
                         <i className="ti ti-plus" aria-hidden="true" /> Novo Boleto
                     </button>
@@ -447,6 +457,27 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Superlink — somente boletos */}
+            {showSuperlink && (
+                <GerarSuperlinkModal
+                    pagamentos={boletos
+                        .filter(b => (b.status === 'Pendente' || b.status === 'Vencido') && b.codigo_barras)
+                        .map(b => ({
+                            id: `boleto-${b.id}`,
+                            descricao: b.descricao || b.beneficiario || 'Boleto',
+                            valor: b.valor || 0,
+                            tipo: 'boleto',
+                            contexto: obraNome || '',
+                            pix_chave: '',
+                            codigo_barras: b.codigo_barras,
+                            diasParaVencer: b.dias_para_vencer,
+                            dataVencimento: b.data_vencimento,
+                            preSelecionar: b.dias_para_vencer == null || (b.dias_para_vencer >= 0 && b.dias_para_vencer <= 5),
+                        }))}
+                    onClose={() => setShowSuperlink(false)}
+                />
             )}
 
             {/* Modal de Cadastro */}

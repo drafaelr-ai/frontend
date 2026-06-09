@@ -2172,6 +2172,7 @@ const GestaoBoletos = () => {
     const [filtroStatus, setFiltroStatus] = useState('todos');
     const [modalCadastro, setModalCadastro] = useState(false);
     const [modalPreview, setModalPreview] = useState(null);
+    const [showSuperlink, setShowSuperlink] = useState(false);
 
     useEffect(() => {
         fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`)
@@ -2283,9 +2284,18 @@ const GestaoBoletos = () => {
         <div style={styles.content}>
             <div style={styles.pageHeader}>
                 <h1 style={styles.pageTitle}>📄 Boletos</h1>
-                <button onClick={() => imovelSelecionado ? setModalCadastro(true) : notify.warning('Selecione um imóvel primeiro')} style={styles.primaryButton}>
-                    + Novo Boleto
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                        onClick={() => setShowSuperlink(true)}
+                        disabled={boletos.filter(b => (b.status === 'Pendente' || b.status === 'Vencido') && b.codigo_barras).length === 0}
+                        style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 600, background: 'var(--surface-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                        <i className="ti ti-share-2" /> Superlink
+                    </button>
+                    <button onClick={() => imovelSelecionado ? setModalCadastro(true) : notify.warning('Selecione um imóvel primeiro')} style={styles.primaryButton}>
+                        + Novo Boleto
+                    </button>
+                </div>
             </div>
 
             {/* Seletor de imóvel */}
@@ -2339,6 +2349,16 @@ const GestaoBoletos = () => {
                         </>
                     )}
                 </>
+            )}
+
+            {/* Modal Superlink */}
+            {showSuperlink && (
+                <GerarSuperlinkAdminModal
+                    lancamentos={[]}
+                    boletos={boletos.filter(b => b.status !== 'Pago')}
+                    imovelNome={imoveis.find(i => String(i.id) === String(imovelSelecionado))?.nome || ''}
+                    onClose={() => setShowSuperlink(false)}
+                />
             )}
 
             {/* Modal Cadastro */}
