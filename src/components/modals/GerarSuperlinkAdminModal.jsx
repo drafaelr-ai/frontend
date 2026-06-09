@@ -26,7 +26,7 @@ function _autoTituloAdmin(items, imovelNome) {
  *   imovelNome  — nome do imóvel para o título automático; opcional
  *   onClose     — fn()
  */
-export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [], imovelNome = '', onClose }) {
+export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [], imovelNome = '', imovelId = null, onClose }) {
   // Combina lançamentos e boletos como itens unificados
   const todosItens = useMemo(() => [
     ...lancamentos,
@@ -121,7 +121,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
     try {
       const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/admin/superlink`, {
         method: 'POST',
-        body: JSON.stringify({ titulo: titulo.trim(), itens, refs }),
+        body: JSON.stringify({ titulo: titulo.trim(), itens, refs, imovel_id: imovelId || undefined }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.erro || 'Erro ao gerar link');

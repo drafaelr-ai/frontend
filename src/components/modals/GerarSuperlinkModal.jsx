@@ -31,7 +31,7 @@ function _autoTitulo(items, contexto) {
  *   pagamentos — array de objetos { id, descricao, valor, tipo, contexto, pix_chave?, codigo_barras? }
  *   onClose    — fn()
  */
-export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
+export default function GerarSuperlinkModal({ pagamentos = [], obraId = null, onClose }) {
   const userEditedTitle             = useRef(false);
   const [titulo, setTitulo]         = useState('');
   const [selecionados, setSel]      = useState(() => new Set(pagamentos.filter(p => p.preSelecionar !== false).map(p => p.id)));
@@ -120,7 +120,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
     try {
       const r = await fetchWithAuth(`${API_URL}/superlink`, {
         method: 'POST',
-        body: JSON.stringify({ titulo: titulo.trim(), itens, refs }),
+        body: JSON.stringify({ titulo: titulo.trim(), itens, refs, obra_id: obraId || undefined }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.erro || 'Erro ao gerar link');

@@ -2147,6 +2147,7 @@ const Lancamentos = () => {
                     lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
                     boletos={boletosImovel}
                     imovelNome={imoveis.find(i => String(i.id) === String(filtros.imovel_id))?.nome || ''}
+                    imovelId={filtros.imovel_id || null}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
@@ -2357,6 +2358,7 @@ const GestaoBoletos = () => {
                     lancamentos={[]}
                     boletos={boletos.filter(b => b.status !== 'Pago')}
                     imovelNome={imoveis.find(i => String(i.id) === String(imovelSelecionado))?.nome || ''}
+                    imovelId={imovelSelecionado || null}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}

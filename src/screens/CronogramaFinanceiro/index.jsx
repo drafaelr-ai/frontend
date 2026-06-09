@@ -1284,6 +1284,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 {showSuperlink && (
                     <GerarSuperlinkModal
                         pagamentos={pagamentosParaSuperlink}
+                        obraId={obraId}
                         tituloDefault={obraNome ? `Pagamentos pendentes — ${obraNome}` : 'Pagamentos pendentes'}
                         onClose={() => setShowSuperlink(false)}
                     />
@@ -1365,6 +1366,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             {showSuperlink && (
                 <GerarSuperlinkModal
                     pagamentos={pagamentosParaSuperlink}
+                    obraId={obraId}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}

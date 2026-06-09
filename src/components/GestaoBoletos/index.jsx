@@ -476,6 +476,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             dataVencimento: b.data_vencimento,
                             preSelecionar: b.dias_para_vencer == null || (b.dias_para_vencer >= 0 && b.dias_para_vencer <= 5),
                         }))}
+                    obraId={obraId}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
