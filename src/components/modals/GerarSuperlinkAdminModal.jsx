@@ -32,8 +32,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
     ...lancamentos,
     ...boletos
         .filter(b => b.codigo_barras &&
-                     (b.status === 'Pendente' || b.status === 'Vencido') &&
-                     (b.dias_para_vencer == null || b.dias_para_vencer <= 5))
+                     (b.status === 'Pendente' || b.status === 'Vencido'))
         .map(b => ({
             id:             `boleto-${b.id}`,
             descricao:      b.descricao || b.beneficiario || 'Boleto',
@@ -44,7 +43,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
             _isBoleto:      true,
             diasParaVencer: b.dias_para_vencer,
             dataVencimento: b.data_vencimento,
-            preSelecionar:  b.dias_para_vencer != null ? b.dias_para_vencer >= 0 : true,
+            preSelecionar:  b.dias_para_vencer == null || (b.dias_para_vencer >= 0 && b.dias_para_vencer <= 5),
         })),
   ], [lancamentos, boletos, imovelNome]);
 
