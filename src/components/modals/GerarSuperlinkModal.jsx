@@ -89,12 +89,13 @@ export default function GerarSuperlinkModal({ pagamentos = [], onClose }) {
     if (!titulo.trim())            { notify.warning('Informe o título do link');         return; }
 
     const itens = itensSelecionados.map(p => ({
-      descricao:     p.descricao,
-      valor:         Number(p.valor) || 0,
-      contexto:      p.contexto || '',
-      forma:         p.codigo_barras ? 'boleto' : 'pix',
-      pix_chave:     p.codigo_barras ? undefined : (pixMap[p.id] || ''),
-      codigo_barras: p.codigo_barras || undefined,
+      descricao:       p.descricao,
+      valor:           Number(p.valor) || 0,
+      contexto:        p.contexto || '',
+      forma:           p.codigo_barras ? 'boleto' : 'pix',
+      pix_chave:       p.codigo_barras ? undefined : (pixMap[p.id] || ''),
+      codigo_barras:   p.codigo_barras || undefined,
+      data_vencimento: p.dataVencimento || p.data_vencimento || undefined,
     }));
 
     const refs = itensSelecionados.map(p => {

@@ -94,12 +94,13 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
     if (!titulo.trim())       { notify.warning('Informe o título do link');   return; }
 
     const itens = itensAtivos.map(i => ({
-      descricao:     i.descricao,
-      valor:         Number(i.valor) || 0,
-      contexto:      i.imovel_nome || imovelNome || '',
-      forma:         i.codigo_barras ? 'boleto' : 'pix',
-      pix_chave:     i.codigo_barras ? undefined : (pixMap[i.id] || ''),
-      codigo_barras: i.codigo_barras || undefined,
+      descricao:       i.descricao,
+      valor:           Number(i.valor) || 0,
+      contexto:        i.imovel_nome || imovelNome || '',
+      forma:           i.codigo_barras ? 'boleto' : 'pix',
+      pix_chave:       i.codigo_barras ? undefined : (pixMap[i.id] || ''),
+      codigo_barras:   i.codigo_barras || undefined,
+      data_vencimento: i.dataVencimento || i.data_vencimento || undefined,
     }));
 
     const refs = itensAtivos.map(i => {

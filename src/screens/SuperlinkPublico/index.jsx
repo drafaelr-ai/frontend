@@ -17,6 +17,20 @@ function formatExpiry(isoStr) {
   } catch { return ''; }
 }
 
+function formatVencimento(isoStr) {
+  if (!isoStr) return null;
+  try {
+    const d = new Date(isoStr + 'T12:00:00');
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const diff = Math.round((d - hoje) / 86400000);
+    const label = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (diff < 0)  return { label: `Venceu em ${label}`, urgency: 'danger' };
+    if (diff === 0) return { label: `Vence HOJE`,         urgency: 'warning' };
+    if (diff <= 3)  return { label: `Vence em ${label}`,  urgency: 'warning' };
+    return          { label: `Vence em ${label}`,         urgency: 'neutral' };
+  } catch { return null; }
+}
+
 export default function SuperlinkPublico({ token }) {
   const [status, setStatus] = useState('loading'); // loading | ok | expired | notfound | error
   const [data, setData]     = useState(null);
@@ -147,6 +161,24 @@ export default function SuperlinkPublico({ token }) {
                     <i className="ti ti-check" /> pago
                   </span>
                 )}
+                {!item.pago && (() => {
+                  const v = formatVencimento(item.data_vencimento);
+                  if (!v) return null;
+                  const colors = {
+                    danger:  { bg: 'var(--status-danger-bg,  #fee2e2)', color: 'var(--status-danger,  #dc2626)' },
+                    warning: { bg: 'var(--status-warning-bg, #fef3c7)', color: 'var(--status-warning, #d97706)' },
+                    neutral: { bg: 'var(--surface-muted,    #f1f5f9)', color: 'var(--text-muted,     #64748b)' },
+                  }[v.urgency];
+                  return (
+                    <span style={{
+                      display: 'inline-block', marginTop: 4, fontSize: 11, fontWeight: 600,
+                      padding: '2px 8px', borderRadius: 999,
+                      background: colors.bg, color: colors.color,
+                    }}>
+                      <i className="ti ti-calendar-due" /> {v.label}
+                    </span>
+                  );
+                })()}
                 {showCtx && item.contexto && (
                   <div className={styles.cardCtx}>
                     <i className="ti ti-building-skyscraper" />
