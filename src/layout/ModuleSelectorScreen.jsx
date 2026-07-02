@@ -21,6 +21,15 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
             description: 'Controle custos de imóveis, aluguéis, despesas e receitas.',
             color: '#10b981',
             gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+        },
+        {
+            id: 'rh',
+            icon: <i className="ti ti-users-group" style={{ color: '#fff' }} />,
+            title: 'Pessoal / RH',
+            subtitle: 'Gestão de Pessoas',
+            description: 'Funcionários, convenções, pagamentos de salário e encargos de todas as obras.',
+            color: '#f59e0b',
+            gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
         }
     ];
 

@@ -11,6 +11,7 @@ import Dashboard from './screens/Dashboard';
 import SuperlinkPublico from './screens/SuperlinkPublico';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
+const RHModule = lazy(() => import('./screens/RH'));
 
 function App() {
     const [user, setUser] = useState(null);
@@ -89,6 +90,19 @@ function App() {
                 <ToastContainer />
                 <AppAdmin onBack={handleBackToSelector} />
             </Suspense>
+        );
+    }
+
+    if (selectedModule === 'rh') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                    {user
+                        ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><RHModule /></Suspense>
+                        : <LoginScreen onBack={handleBackToSelector} />}
+                </AuthContext.Provider>
+            </>
         );
     }
 

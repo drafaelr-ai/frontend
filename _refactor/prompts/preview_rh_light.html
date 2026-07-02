@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Obraly — RH (preview)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface-page:#fafaf9; --surface-card:#ffffff; --surface-muted:#f1f5f9;
+  --surface-subtle:#f8fafc; --surface-dark:#0b1220; --surface-dark-soft:#1e293b;
+  --text-primary:#0f172a; --text-secondary:#334155; --text-muted:#475569;
+  --text-on-dark:#ffffff; --text-on-dark-muted:rgba(255,255,255,.7);
+  --border-subtle:#e2e8f0; --border-default:#cbd5e1; --border-strong:#94a3b8;
+  --border-on-dark:rgba(255,255,255,.08);
+  --brand-primary:#0b1220; --brand-primary-soft:#1e293b;
+  --brand-accent:#f59e0b; --brand-accent-soft:#fef3c7;
+  --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:#047857;
+  --status-danger:#dc2626; --status-danger-bg:#fee2e2; --status-danger-text:#b91c1c;
+  --status-warning:#f59e0b; --status-warning-bg:#fef3c7; --status-warning-text:#b45309;
+  --status-info:#3b82f6; --status-info-bg:#dbeafe; --status-info-text:#1d4ed8;
+  --status-neutral:#64748b; --status-neutral-bg:#f1f5f9; --status-neutral-text:#334155;
+  --status-purple-bg:#ede9fe; --status-purple-text:#6b21a8;
+  --radius-sm:4px; --radius-md:6px; --radius-lg:8px; --radius-xl:10px; --radius-full:9999px;
+  --shadow-card:0 1px 2px rgba(15,23,42,.04),0 0 0 .5px rgba(15,23,42,.06);
+  --shadow-popup:0 4px 12px rgba(15,23,42,.08),0 0 0 .5px rgba(15,23,42,.08);
+  --shadow-modal:0 20px 60px rgba(15,23,42,.15),0 0 0 .5px rgba(15,23,42,.08);
+  --text-xs:11px; --text-sm:12px; --text-base:13px; --text-md:14px;
+  --text-lg:16px; --text-xl:18px; --text-2xl:22px; --text-3xl:28px;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:20px; --sp6:24px; --sp8:32px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:var(--text-base); color:var(--text-primary);
+  background:var(--surface-page); line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+.num,.tabular-nums{font-variant-numeric:tabular-nums}
+.valor{font-size:var(--text-md);font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+
+/* ===== top bar ===== */
+.navbar{background:var(--surface-dark);color:var(--text-on-dark);
+  display:flex;align-items:center;gap:var(--sp4);padding:0 var(--sp6);height:52px}
+.navbar .logo{display:flex;align-items:center;gap:var(--sp2);font-weight:600;font-size:var(--text-md)}
+.navbar .logo .dot{width:18px;height:18px;border-radius:var(--radius-sm);
+  background:var(--brand-accent);display:grid;place-items:center;color:var(--brand-primary);font-size:12px}
+.navbar .crumbs{color:var(--text-on-dark-muted);font-size:var(--text-sm);display:flex;align-items:center;gap:var(--sp2)}
+.navbar .crumbs b{color:var(--text-on-dark);font-weight:500}
+.navbar .spacer{flex:1}
+.navbar .user{display:flex;align-items:center;gap:var(--sp2);font-size:var(--text-sm);color:var(--text-on-dark-muted)}
+.navbar .user .av{width:26px;height:26px;border-radius:var(--radius-full);background:var(--brand-primary-soft);
+  display:grid;place-items:center;color:var(--text-on-dark);font-weight:500}
+
+/* ===== shell ===== */
+.shell{max-width:1180px;margin:0 auto;padding:var(--sp6)}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:var(--sp5)}
+.pagehead h1{font-size:var(--text-2xl);font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:var(--sp3)}
+.pagehead h1 i{color:var(--brand-accent)}
+.pagehead .sub{color:var(--text-muted);font-size:var(--text-base);margin-top:2px}
+
+/* ===== sub-tabs ===== */
+.tabs{display:flex;gap:var(--sp1);border-bottom:1px solid var(--border-subtle);margin-bottom:var(--sp5)}
+.tab{appearance:none;border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:var(--text-md);color:var(--text-muted);padding:var(--sp3) var(--sp4);
+  border-bottom:2px solid transparent;display:flex;align-items:center;gap:var(--sp2);margin-bottom:-1px}
+.tab:hover{color:var(--text-secondary)}
+.tab.active{color:var(--text-primary);font-weight:500;border-bottom-color:var(--brand-accent)}
+.tab .cnt{background:var(--surface-muted);color:var(--text-muted);font-size:var(--text-xs);
+  font-weight:500;padding:1px 7px;border-radius:var(--radius-full)}
+
+/* ===== cards/sections ===== */
+.section-card{background:var(--surface-card);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-xl);padding:var(--sp5) var(--sp6);box-shadow:var(--shadow-card);margin-bottom:var(--sp5)}
+.section-head{display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:var(--sp4);margin-bottom:var(--sp4);border-bottom:1px solid var(--border-subtle)}
+.section-title{display:flex;align-items:center;gap:var(--sp2);font-size:var(--text-lg);font-weight:600}
+.section-title i{color:var(--text-muted)}
+.section-actions{display:flex;gap:var(--sp2)}
+
+/* ===== buttons ===== */
+.btn{appearance:none;font-family:inherit;font-size:var(--text-base);font-weight:500;
+  border-radius:var(--radius-md);padding:var(--sp2) var(--sp4);cursor:pointer;
+  display:inline-flex;align-items:center;gap:var(--sp2);border:1px solid transparent;transition:.12s}
+.btn-primary{background:var(--brand-primary);color:#fff}
+.btn-primary:hover{background:var(--brand-primary-soft)}
+.btn-secondary{background:var(--surface-muted);color:var(--text-primary);border-color:var(--border-default)}
+.btn-secondary:hover{background:var(--surface-subtle)}
+.btn-text{background:none;color:var(--text-muted);padding:var(--sp2) var(--sp2)}
+.btn-text:hover{color:var(--text-primary)}
+.btn-sm{font-size:var(--text-sm);padding:var(--sp1) var(--sp3)}
+
+/* ===== badges ===== */
+.badge{font-size:var(--text-xs);font-weight:500;padding:2px 9px;border-radius:var(--radius-full);
+  display:inline-flex;align-items:center;gap:4px}
+.b-success{background:var(--status-success-bg);color:var(--status-success-text)}
+.b-warning{background:var(--status-warning-bg);color:var(--status-warning-text)}
+.b-danger{background:var(--status-danger-bg);color:var(--status-danger-text)}
+.b-info{background:var(--status-info-bg);color:var(--status-info-text)}
+.b-neutral{background:var(--status-neutral-bg);color:var(--status-neutral-text)}
+.b-purple{background:var(--status-purple-bg);color:var(--status-purple-text)}
+
+/* ===== table ===== */
+table{width:100%;border-collapse:collapse;font-size:var(--text-base)}
+thead th{text-align:left;font-size:var(--text-xs);font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--text-muted);padding:var(--sp2) var(--sp3);
+  background:var(--surface-muted);border-bottom:1px solid var(--border-subtle)}
+thead th:first-child{border-top-left-radius:var(--radius-md)}
+thead th:last-child{border-top-right-radius:var(--radius-md);text-align:right}
+tbody td{padding:var(--sp3);border-bottom:1px solid var(--border-subtle);vertical-align:middle}
+tbody td:last-child{text-align:right}
+tbody tr:hover{background:var(--surface-subtle)}
+.cell-main{font-weight:500;color:var(--text-primary)}
+.cell-sub{font-size:var(--text-sm);color:var(--text-muted)}
+.av-sm{width:30px;height:30px;border-radius:var(--radius-full);background:var(--brand-accent-soft);
+  color:var(--status-warning-text);display:inline-grid;place-items:center;font-weight:600;font-size:var(--text-sm)}
+.who{display:flex;align-items:center;gap:var(--sp3)}
+
+/* ===== kpi row ===== */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp4);margin-bottom:var(--sp5)}
+.kpi{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);
+  padding:var(--sp4) var(--sp5);box-shadow:var(--shadow-card)}
+.kpi .lbl{font-size:var(--text-sm);color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.kpi .val{font-size:var(--text-2xl);font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi.accent{border-left:3px solid var(--brand-accent)}
+.kpi.alert{border-left:3px solid var(--status-danger)}
+
+/* ===== upload / wizard ===== */
+.dropzone{border:1.5px dashed var(--border-strong);border-radius:var(--radius-lg);
+  padding:var(--sp8) var(--sp6);text-align:center;color:var(--text-muted);background:var(--surface-subtle);cursor:pointer}
+.dropzone:hover{border-color:var(--brand-accent);background:var(--brand-accent-soft)}
+.dropzone i{font-size:34px;color:var(--border-strong);display:block;margin-bottom:var(--sp3)}
+.dropzone b{color:var(--text-secondary);display:block;font-size:var(--text-md)}
+
+.steps{display:flex;gap:var(--sp2);margin-bottom:var(--sp5);align-items:center}
+.step{display:flex;align-items:center;gap:var(--sp2);font-size:var(--text-sm);color:var(--text-muted)}
+.step .n{width:22px;height:22px;border-radius:var(--radius-full);background:var(--surface-muted);
+  color:var(--text-muted);display:grid;place-items:center;font-weight:600;font-size:var(--text-xs)}
+.step.done .n{background:var(--status-success);color:#fff}
+.step.cur .n{background:var(--brand-primary);color:#fff}
+.step.cur{color:var(--text-primary);font-weight:500}
+.step-line{flex:1;height:1px;background:var(--border-subtle);max-width:40px}
+
+.review-banner{background:var(--status-info-bg);color:var(--status-info-text);
+  border-radius:var(--radius-md);padding:var(--sp3) var(--sp4);font-size:var(--text-sm);
+  display:flex;align-items:center;gap:var(--sp2);margin-bottom:var(--sp4)}
+
+.inp{font-family:inherit;font-size:var(--text-base);border:1px solid var(--border-default);
+  border-radius:var(--radius-md);padding:6px 8px;width:100%;color:var(--text-primary);background:var(--surface-card)}
+.inp:focus{outline:none;border-color:var(--brand-primary);box-shadow:0 0 0 3px rgba(11,18,32,.12)}
+.inp.money{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;max-width:130px}
+.inp.cat{max-width:200px;font-weight:500}
+td .conf{display:inline-flex;align-items:center;gap:4px;font-size:var(--text-xs);color:var(--status-success-text)}
+td .conf.low{color:var(--status-warning-text)}
+
+.bene-chip{display:inline-flex;align-items:center;gap:4px;font-size:var(--text-xs);
+  background:var(--surface-muted);color:var(--text-secondary);padding:2px 8px;border-radius:var(--radius-full);margin:2px 2px 2px 0}
+
+.hint{font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--sp3);display:flex;align-items:center;gap:6px}
+
+/* ===== form grid (modal-ish) ===== */
+.modal-wrap{background:var(--surface-card);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-xl);box-shadow:var(--shadow-modal);max-width:620px;margin:0 auto;overflow:hidden}
+.modal-head{padding:var(--sp4) var(--sp6);border-bottom:1px solid var(--border-subtle);
+  display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:var(--text-lg);font-weight:600;display:flex;gap:var(--sp2);align-items:center}
+.modal-body{padding:var(--sp6)}
+.modal-foot{padding:var(--sp4) var(--sp6);border-top:1px solid var(--border-subtle);
+  display:flex;justify-content:flex-end;gap:var(--sp2);background:var(--surface-subtle)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:var(--sp4)}
+.field label{font-size:var(--text-sm);font-weight:500;color:var(--text-secondary)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp4)}
+.inherit-note{font-size:var(--text-xs);color:var(--status-success-text);display:flex;align-items:center;gap:4px;margin-top:2px}
+
+/* ===== dashboard bars ===== */
+.dash-period{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp5)}
+.dash-period .ttl{font-size:var(--text-lg);font-weight:600;display:flex;align-items:center;gap:var(--sp2)}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp5);margin-bottom:var(--sp5)}
+.bar-row{display:flex;align-items:center;gap:var(--sp3);padding:7px 0}
+.bar-label{width:150px;font-size:var(--text-base);color:var(--text-secondary);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.bar-label i{color:var(--text-muted);font-size:13px}
+.bar-label .q{color:var(--text-muted);font-size:var(--text-xs);font-weight:400}
+.bar-track{flex:1;height:18px;background:var(--surface-muted);border-radius:var(--radius-sm);overflow:hidden}
+.bar-stack{height:100%;display:flex;border-radius:var(--radius-sm);overflow:hidden;min-width:4px}
+.seg{height:100%}
+.seg-sal{background:var(--brand-primary)}
+.seg-enc{background:var(--brand-accent)}
+.bar-fill{height:100%;border-radius:var(--radius-sm);background:var(--brand-primary);min-width:4px}
+.bar-fill.info{background:var(--status-info)}
+.bar-fill.purple{background:#7c3aed}
+.bar-fill.neutral{background:var(--status-neutral)}
+.bar-val{width:112px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:var(--text-base);flex-shrink:0}
+.legend{display:flex;gap:var(--sp5);font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--sp4);padding-top:var(--sp3);border-top:1px solid var(--border-subtle)}
+.legend .k{display:inline-flex;align-items:center;gap:6px}
+.legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.hide{display:none}
+.flex{display:flex;align-items:center;gap:var(--sp2)}
+.muted{color:var(--text-muted)}
+.right{text-align:right}
+.tag-obra{font-size:var(--text-xs);background:var(--surface-muted);color:var(--text-secondary);
+  padding:2px 8px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:4px}
+.tag-obra.none{color:var(--text-muted);font-style:italic}
+
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.row2,.dash-grid{grid-template-columns:1fr}.shell{padding:var(--sp4)}.bar-label{width:120px}}
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo"><span class="dot"><i class="ti ti-building"></i></span> Obraly</div>
+  <div class="crumbs"><i class="ti ti-chevron-right" style="font-size:13px"></i> <b>Pessoal / RH</b></div>
+  <div class="spacer"></div>
+  <div class="user"><span>Diego R.</span><span class="av">D</span></div>
+</div>
+
+<div class="shell">
+
+  <div class="pagehead">
+    <div>
+      <h1><i class="ti ti-users-group"></i> Pessoal</h1>
+      <div class="sub">Módulo centralizado — funcionários, convenções, pagamentos e encargos de todas as obras</div>
+    </div>
+    <button class="btn btn-secondary"><i class="ti ti-download"></i> Exportar</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dash"><i class="ti ti-layout-dashboard"></i> Visão geral</button>
+    <button class="tab" data-tab="func"><i class="ti ti-id-badge-2"></i> Funcionários <span class="cnt">18</span></button>
+    <button class="tab" data-tab="cct"><i class="ti ti-file-certificate"></i> Convenções <span class="cnt">3</span></button>
+    <button class="tab" data-tab="pag"><i class="ti ti-cash"></i> Pagamentos</button>
+    <button class="tab" data-tab="enc"><i class="ti ti-receipt-tax"></i> Encargos · DARF</button>
+  </div>
+
+  <!-- ============ VISÃO GERAL (DASHBOARD) ============ -->
+  <section id="tab-dash">
+    <div class="dash-period">
+      <div class="ttl"><i class="ti ti-calendar"></i> Junho / 2026</div>
+      <select class="inp" style="max-width:170px"><option>Junho / 2026</option><option>Maio / 2026</option><option>Acumulado 2026</option></select>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi accent"><div class="lbl"><i class="ti ti-wallet"></i> Folha (salários)</div><div class="val">R$ 44.180</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-receipt-tax"></i> Encargos</div><div class="val">R$ 18.640</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-coins"></i> Custo total de MO</div><div class="val">R$ 62.820</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-percentage"></i> Encargos / folha</div><div class="val">42%</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <!-- MO por obra -->
+      <div class="section-card" style="margin:0">
+        <div class="section-head"><div class="section-title"><i class="ti ti-building-community"></i> Mão de obra por obra</div></div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-building"></i> Alphaville</div>
+          <div class="bar-track"><div class="bar-stack" style="width:100%"><div class="seg seg-sal" style="flex:24500"></div><div class="seg seg-enc" style="flex:10350"></div></div></div>
+          <div class="bar-val">R$ 34.850</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-building"></i> Res. Aldeota</div>
+          <div class="bar-track"><div class="bar-stack" style="width:54%"><div class="seg seg-sal" style="flex:13200"></div><div class="seg seg-enc" style="flex:5600"></div></div></div>
+          <div class="bar-val">R$ 18.800</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-building"></i> Cond. Dunas</div>
+          <div class="bar-track"><div class="bar-stack" style="width:18%"><div class="seg seg-sal" style="flex:4480"></div><div class="seg seg-enc" style="flex:1900"></div></div></div>
+          <div class="bar-val">R$ 6.380</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label muted"><i class="ti ti-minus"></i> Sem obra</div>
+          <div class="bar-track"><div class="bar-stack" style="width:8%"><div class="seg seg-sal" style="flex:2000"></div><div class="seg seg-enc" style="flex:790"></div></div></div>
+          <div class="bar-val">R$ 2.790</div>
+        </div>
+        <div class="legend">
+          <span class="k"><span class="sw" style="background:var(--brand-primary)"></span> Salários</span>
+          <span class="k"><span class="sw" style="background:var(--brand-accent)"></span> Encargos</span>
+        </div>
+      </div>
+
+      <!-- por segmento -->
+      <div class="section-card" style="margin:0">
+        <div class="section-head"><div class="section-title"><i class="ti ti-chart-bar"></i> Folha por segmento</div></div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-tools"></i> Pedreiro <span class="q">·6</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+          <div class="bar-val">R$ 15.840</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-shovel"></i> Servente <span class="q">·6</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:69%"></div></div>
+          <div class="bar-val">R$ 10.920</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-ruler-2"></i> Carpinteiro <span class="q">·3</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:56%"></div></div>
+          <div class="bar-val">R$ 8.850</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-rebar"></i> Armador <span class="q">·2</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:28%"></div></div>
+          <div class="bar-val">R$ 4.370</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><i class="ti ti-hard-hat"></i> Mestre <span class="q">·1</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:27%"></div></div>
+          <div class="bar-val">R$ 4.200</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- encargos por tipo -->
+    <div class="section-card">
+      <div class="section-head"><div class="section-title"><i class="ti ti-receipt-tax"></i> Encargos por tipo</div>
+        <div class="section-actions"><span class="valor" style="font-size:var(--text-lg)">R$ 18.640</span></div></div>
+      <div class="dash-grid" style="margin:0">
+        <div>
+          <div class="bar-row">
+            <div class="bar-label"><span class="badge b-purple">INSS · DARF</span></div>
+            <div class="bar-track"><div class="bar-fill purple" style="width:100%"></div></div>
+            <div class="bar-val">R$ 11.200</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span class="badge b-info">FGTS</span></div>
+            <div class="bar-track"><div class="bar-fill info" style="width:34%"></div></div>
+            <div class="bar-val">R$ 3.825</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span class="badge b-neutral">eSocial · DAE</span></div>
+            <div class="bar-track"><div class="bar-fill neutral" style="width:32%"></div></div>
+            <div class="bar-val">R$ 3.615</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center">
+          <div class="hint" style="margin:0"><i class="ti ti-info-circle"></i> Encargos não vinculados a obra entram como custo geral. Para ver o custo por obra incluindo encargos, use o rateio no card "Mão de obra por obra".</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FUNCIONÁRIOS ============ -->
+  <section id="tab-func" class="hide">
+    <div class="kpis">
+      <div class="kpi accent"><div class="lbl"><i class="ti ti-users"></i> Funcionários ativos</div><div class="val">18</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-building-community"></i> Em obra</div><div class="val">15</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-user-question"></i> Sem obra</div><div class="val">3</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-wallet"></i> Folha base / mês</div><div class="val">R$ 47.820</div></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-title"><i class="ti ti-id-badge-2"></i> Funcionários</div>
+        <div class="section-actions">
+          <button class="btn btn-secondary btn-sm"><i class="ti ti-filter"></i> Filtrar por obra</button>
+          <button class="btn btn-primary" onclick="show('func-form')"><i class="ti ti-plus"></i> Novo funcionário</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Funcionário</th><th>Categoria</th><th>Obra</th><th>Salário</th><th>Admissão</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="who"><span class="av-sm">JS</span><div><div class="cell-main">João da Silva</div><div class="cell-sub">CPF 123.456.789-00</div></div></div></td>
+            <td>Pedreiro</td>
+            <td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Alphaville</span></td>
+            <td class="valor">R$ 2.640,00</td>
+            <td class="muted">12/03/2025</td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-dots"></i></button></td>
+          </tr>
+          <tr>
+            <td><div class="who"><span class="av-sm">MR</span><div><div class="cell-main">Marcos Rocha</div><div class="cell-sub">CPF 987.654.321-00</div></div></div></td>
+            <td>Servente</td>
+            <td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Alphaville</span></td>
+            <td class="valor">R$ 1.820,00</td>
+            <td class="muted">02/06/2025</td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-dots"></i></button></td>
+          </tr>
+          <tr>
+            <td><div class="who"><span class="av-sm">AC</span><div><div class="cell-main">Antônio Costa</div><div class="cell-sub">CPF 456.789.123-00</div></div></div></td>
+            <td>Carpinteiro</td>
+            <td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Residencial Aldeota</span></td>
+            <td class="valor">R$ 2.950,00 <span class="badge b-info" style="margin-left:6px">acima do piso</span></td>
+            <td class="muted">20/01/2025</td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-dots"></i></button></td>
+          </tr>
+          <tr>
+            <td><div class="who"><span class="av-sm">PL</span><div><div class="cell-main">Paulo Lima</div><div class="cell-sub">CPF 321.654.987-00</div></div></div></td>
+            <td>Mestre de obras</td>
+            <td><span class="tag-obra none"><i class="ti ti-minus" style="font-size:12px"></i> Sem obra</span></td>
+            <td class="valor">R$ 4.200,00</td>
+            <td class="muted">15/08/2024</td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-dots"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hint"><i class="ti ti-info-circle"></i> O salário é puxado do piso da convenção do estado da obra, e fica editável por funcionário (ex.: quem ganha acima do piso).</div>
+    </div>
+  </section>
+
+  <!-- ============ CONVENÇÕES ============ -->
+  <section id="tab-cct" class="hide">
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-title"><i class="ti ti-file-certificate"></i> Convenções coletivas (CCT)</div>
+        <div class="section-actions">
+          <button class="btn btn-primary" onclick="show('cct-upload')"><i class="ti ti-upload"></i> Nova convenção</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Estado</th><th>Sindicato</th><th>Vigência</th><th>Categorias</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="cell-main">Ceará (CE)</div></td>
+            <td class="cell-sub">SINTEPAV-CE</td>
+            <td class="muted">2025 — 2026</td>
+            <td>12 categorias</td>
+            <td><span class="badge b-success"><i class="ti ti-check" style="font-size:11px"></i> Confirmada</span></td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td><div class="cell-main">São Paulo (SP)</div></td>
+            <td class="cell-sub">SintraCon-SP</td>
+            <td class="muted">2025 — 2026</td>
+            <td>15 categorias</td>
+            <td><span class="badge b-success"><i class="ti ti-check" style="font-size:11px"></i> Confirmada</span></td>
+            <td><button class="btn btn-text btn-sm"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td><div class="cell-main">Bahia (BA)</div></td>
+            <td class="cell-sub">— em revisão —</td>
+            <td class="muted">2025 — 2026</td>
+            <td>11 categorias</td>
+            <td><span class="badge b-warning"><i class="ti ti-clock" style="font-size:11px"></i> Rascunho</span></td>
+            <td><button class="btn btn-text btn-sm" onclick="show('cct-review')"><i class="ti ti-pencil"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ CCT — UPLOAD (passo 1) ============ -->
+  <section id="cct-upload" class="hide">
+    <div class="steps">
+      <div class="step cur"><span class="n">1</span> Estado + arquivo</div><span class="step-line"></span>
+      <div class="step"><span class="n">2</span> Revisar extração</div><span class="step-line"></span>
+      <div class="step"><span class="n">3</span> Confirmar e salvar</div>
+    </div>
+    <div class="section-card" style="max-width:680px;margin:0 auto">
+      <div class="section-head"><div class="section-title"><i class="ti ti-upload"></i> Nova convenção coletiva</div></div>
+      <div class="row2" style="margin-bottom:var(--sp5)">
+        <div class="field"><label>Estado (UF)</label>
+          <select class="inp"><option>Bahia (BA)</option><option>Ceará (CE)</option><option>São Paulo (SP)</option><option>Pernambuco (PE)</option></select></div>
+        <div class="field"><label>Vigência</label>
+          <select class="inp"><option>2025 — 2026</option><option>2026 — 2027</option></select></div>
+      </div>
+      <div class="dropzone" onclick="show('cct-review')">
+        <i class="ti ti-file-type-pdf"></i>
+        <b>Solte o PDF da convenção aqui</b>
+        <span>ou clique para selecionar — o sistema lê e preenche as categorias automaticamente</span>
+      </div>
+      <div class="hint"><i class="ti ti-sparkles"></i> A leitura é automática (best-effort). Você revisa tudo antes de salvar — nada é gravado sem o seu OK.</div>
+      <div style="margin-top:var(--sp5);text-align:right"><button class="btn btn-text" onclick="show('cct')">Cancelar</button></div>
+    </div>
+  </section>
+
+  <!-- ============ CCT — REVIEW (passo 2) ============ -->
+  <section id="cct-review" class="hide">
+    <div class="steps">
+      <div class="step done"><span class="n"><i class="ti ti-check" style="font-size:12px"></i></span> Estado + arquivo</div><span class="step-line"></span>
+      <div class="step cur"><span class="n">2</span> Revisar extração</div><span class="step-line"></span>
+      <div class="step"><span class="n">3</span> Confirmar e salvar</div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-title"><i class="ti ti-file-search"></i> Revisar — CCT Bahia 2025/2026</div>
+        <div class="section-actions"><span class="badge b-neutral"><i class="ti ti-file-type-pdf" style="font-size:11px"></i> cct-ba-2025.pdf</span></div>
+      </div>
+
+      <div class="review-banner"><i class="ti ti-robot"></i>
+        Extraímos <b>11 categorias</b> do PDF. Confira os pisos e benefícios, ajuste o que precisar e confirme. Campos com confiança baixa estão marcados em amarelo.</div>
+
+      <table>
+        <thead><tr><th style="width:24%">Categoria</th><th style="width:18%">Piso mensal</th><th>Benefícios</th><th style="width:14%">Conferência</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><input class="inp cat" value="Pedreiro"></td>
+            <td><input class="inp money" value="2.640,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 22/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <span class="bene-chip"><i class="ti ti-basket"></i> Cesta básica R$ 180</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf"><i class="ti ti-circle-check-filled"></i> Alta</span></td>
+          </tr>
+          <tr>
+            <td><input class="inp cat" value="Servente"></td>
+            <td><input class="inp money" value="1.820,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 22/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <span class="bene-chip"><i class="ti ti-basket"></i> Cesta básica R$ 180</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf"><i class="ti ti-circle-check-filled"></i> Alta</span></td>
+          </tr>
+          <tr style="background:var(--status-warning-bg)">
+            <td><input class="inp cat" value="Meio-oficial"></td>
+            <td><input class="inp money" value="2.180,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 22/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf low"><i class="ti ti-alert-triangle-filled"></i> Conferir</span></td>
+          </tr>
+          <tr>
+            <td><input class="inp cat" value="Carpinteiro"></td>
+            <td><input class="inp money" value="2.640,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 22/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <span class="bene-chip"><i class="ti ti-basket"></i> Cesta básica R$ 180</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf"><i class="ti ti-circle-check-filled"></i> Alta</span></td>
+          </tr>
+          <tr>
+            <td><input class="inp cat" value="Armador"></td>
+            <td><input class="inp money" value="2.640,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 22/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf"><i class="ti ti-circle-check-filled"></i> Alta</span></td>
+          </tr>
+          <tr>
+            <td><input class="inp cat" value="Mestre de obras"></td>
+            <td><input class="inp money" value="4.180,00"></td>
+            <td>
+              <span class="bene-chip"><i class="ti ti-tools-kitchen-2"></i> Vale-refeição R$ 30/dia</span>
+              <span class="bene-chip"><i class="ti ti-bus"></i> Vale-transporte</span>
+              <span class="bene-chip"><i class="ti ti-shield-heart"></i> Seguro de vida</span>
+              <button class="btn btn-text btn-sm"><i class="ti ti-plus"></i></button>
+            </td>
+            <td><span class="conf"><i class="ti ti-circle-check-filled"></i> Alta</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hint"><i class="ti ti-plus"></i> Faltou alguma categoria? <button class="btn btn-text btn-sm">Adicionar manualmente</button></div>
+
+      <div class="section-head" style="border:none;padding-top:var(--sp5);margin:0;justify-content:flex-end;gap:var(--sp2)">
+        <button class="btn btn-text" onclick="show('cct')">Cancelar</button>
+        <button class="btn btn-secondary" onclick="show('cct-upload')"><i class="ti ti-arrow-left"></i> Voltar</button>
+        <button class="btn btn-primary" onclick="show('cct')"><i class="ti ti-check"></i> Confirmar e salvar convenção</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PAGAMENTOS ============ -->
+  <section id="tab-pag" class="hide">
+    <div class="kpis">
+      <div class="kpi accent"><div class="lbl"><i class="ti ti-cash"></i> Pago em jun/2026</div><div class="val">R$ 44.180</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-clock-dollar"></i> Vales / adiantamentos</div><div class="val">R$ 6.300</div></div>
+      <div class="kpi alert"><div class="lbl"><i class="ti ti-alert-circle"></i> Salários pendentes</div><div class="val">2</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-building"></i> Obras com folha</div><div class="val">4</div></div>
+    </div>
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-title"><i class="ti ti-cash"></i> Pagamentos — junho/2026</div>
+        <div class="section-actions">
+          <select class="inp" style="max-width:150px"><option>Junho / 2026</option><option>Maio / 2026</option></select>
+          <button class="btn btn-primary" onclick="show('pag-form')"><i class="ti ti-plus"></i> Registrar pagamento</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Funcionário</th><th>Tipo</th><th>Obra (no pagamento)</th><th>Data</th><th>Valor</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="cell-main">João da Silva</td><td><span class="badge b-success">Salário</span></td><td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Alphaville</span></td><td class="muted">05/06/2026</td><td class="valor">R$ 2.640,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-paperclip"></i></button></td></tr>
+          <tr><td class="cell-main">Marcos Rocha</td><td><span class="badge b-purple">Vale</span></td><td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Alphaville</span></td><td class="muted">20/06/2026</td><td class="valor">R$ 600,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-paperclip"></i></button></td></tr>
+          <tr><td class="cell-main">Antônio Costa</td><td><span class="badge b-success">Salário</span></td><td><span class="tag-obra"><i class="ti ti-building" style="font-size:12px"></i> Residencial Aldeota</span></td><td class="muted">05/06/2026</td><td class="valor">R$ 2.950,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-paperclip"></i></button></td></tr>
+        </tbody>
+      </table>
+      <div class="hint"><i class="ti ti-info-circle"></i> A obra é gravada junto com o pagamento. Se o funcionário migrar de obra depois, o histórico de custo de cada obra continua correto.</div>
+    </div>
+  </section>
+
+  <!-- ============ ENCARGOS / DARF ============ -->
+  <section id="tab-enc" class="hide">
+    <div class="kpis">
+      <div class="kpi accent"><div class="lbl"><i class="ti ti-receipt-tax"></i> Encargos jun/2026</div><div class="val">R$ 18.640</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-percentage"></i> FGTS</div><div class="val">R$ 3.825</div></div>
+      <div class="kpi"><div class="lbl"><i class="ti ti-building-bank"></i> INSS / DARF</div><div class="val">R$ 11.200</div></div>
+      <div class="kpi alert"><div class="lbl"><i class="ti ti-calendar-due"></i> A vencer (7 dias)</div><div class="val">2</div></div>
+    </div>
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-title"><i class="ti ti-receipt-tax"></i> Encargos · guias e DARF</div>
+        <div class="section-actions">
+          <button class="btn btn-secondary"><i class="ti ti-upload"></i> Importar da contabilidade</button>
+          <button class="btn btn-primary" onclick="show('enc-form')"><i class="ti ti-plus"></i> Registrar encargo</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Tipo</th><th>Competência</th><th>Vencimento</th><th>Obra</th><th>Status</th><th>Valor</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-info">FGTS</span></td><td class="muted">05/2026</td><td class="muted">07/06/2026</td><td><span class="tag-obra none"><i class="ti ti-minus" style="font-size:12px"></i> Geral</span></td><td><span class="badge b-success">Pago</span></td><td class="valor">R$ 3.825,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-file-type-pdf"></i></button></td></tr>
+          <tr><td><span class="badge b-purple">INSS · DARF</span></td><td class="muted">05/2026</td><td class="muted">20/06/2026</td><td><span class="tag-obra none"><i class="ti ti-minus" style="font-size:12px"></i> Geral</span></td><td><span class="badge b-success">Pago</span></td><td class="valor">R$ 11.200,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-file-type-pdf"></i></button></td></tr>
+          <tr><td><span class="badge b-neutral">eSocial · DAE</span></td><td class="muted">06/2026</td><td class="muted">07/07/2026</td><td><span class="tag-obra none"><i class="ti ti-minus" style="font-size:12px"></i> Geral</span></td><td><span class="badge b-warning">A vencer</span></td><td class="valor">R$ 3.615,00</td><td><button class="btn btn-text btn-sm"><i class="ti ti-file-type-pdf"></i></button></td></tr>
+        </tbody>
+      </table>
+      <div class="hint"><i class="ti ti-info-circle"></i> DARF/guias costumam ser agregados (empresa toda). Vínculo a obra ou funcionário é opcional, pra quando você quiser ratear.</div>
+    </div>
+  </section>
+
+  <!-- ============ FORM: novo funcionário ============ -->
+  <section id="func-form" class="hide">
+    <div class="modal-wrap">
+      <div class="modal-head"><h3><i class="ti ti-user-plus"></i> Novo funcionário</h3><button class="btn btn-text" onclick="show('func')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div class="field"><label>Nome completo</label><input class="inp" placeholder="Ex.: João da Silva"></div>
+        <div class="row2">
+          <div class="field"><label>CPF</label><input class="inp" placeholder="000.000.000-00"></div>
+          <div class="field"><label>Admissão</label><input class="inp" type="date"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Obra (opcional)</label>
+            <select class="inp"><option>— Sem obra (centralizado) —</option><option>Alphaville (CE)</option><option>Residencial Aldeota (CE)</option></select></div>
+          <div class="field"><label>Categoria</label>
+            <select class="inp"><option>Pedreiro</option><option>Servente</option><option>Carpinteiro</option><option>Mestre de obras</option></select></div>
+        </div>
+        <div class="field"><label>Salário</label><input class="inp money" style="max-width:none" value="2.640,00">
+          <span class="inherit-note"><i class="ti ti-arrow-down-circle"></i> Piso da convenção CE 2025/2026 para Pedreiro — editável</span></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-text" onclick="show('func')">Cancelar</button><button class="btn btn-primary" onclick="show('func')"><i class="ti ti-check"></i> Salvar funcionário</button></div>
+    </div>
+  </section>
+
+  <!-- ============ FORM: registrar pagamento ============ -->
+  <section id="pag-form" class="hide">
+    <div class="modal-wrap">
+      <div class="modal-head"><h3><i class="ti ti-cash"></i> Registrar pagamento</h3><button class="btn btn-text" onclick="show('pag')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div class="field"><label>Funcionário</label>
+          <select class="inp"><option>João da Silva — Pedreiro — Alphaville</option><option>Marcos Rocha — Servente — Alphaville</option></select></div>
+        <div class="row2">
+          <div class="field"><label>Tipo</label><select class="inp"><option>Salário</option><option>Vale / adiantamento</option><option>Outro</option></select></div>
+          <div class="field"><label>Competência</label><select class="inp"><option>Junho / 2026</option><option>Maio / 2026</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Valor</label><input class="inp money" style="max-width:none" value="2.640,00"></div>
+          <div class="field"><label>Data do pagamento</label><input class="inp" type="date"></div>
+        </div>
+        <div class="field"><label>Comprovante (opcional)</label>
+          <div class="dropzone" style="padding:var(--sp5)"><i class="ti ti-paperclip" style="font-size:24px"></i><b>Anexar comprovante</b></div></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-text" onclick="show('pag')">Cancelar</button><button class="btn btn-primary" onclick="show('pag')"><i class="ti ti-check"></i> Registrar</button></div>
+    </div>
+  </section>
+
+  <!-- ============ FORM: registrar encargo ============ -->
+  <section id="enc-form" class="hide">
+    <div class="modal-wrap">
+      <div class="modal-head"><h3><i class="ti ti-receipt-tax"></i> Registrar encargo</h3><button class="btn btn-text" onclick="show('enc')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div class="row2">
+          <div class="field"><label>Tipo</label><select class="inp"><option>FGTS</option><option>INSS · DARF</option><option>eSocial · DAE</option><option>Outro</option></select></div>
+          <div class="field"><label>Competência</label><select class="inp"><option>Junho / 2026</option><option>Maio / 2026</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Vencimento</label><input class="inp" type="date"></div>
+          <div class="field"><label>Valor</label><input class="inp money" style="max-width:none" value="3.825,00"></div>
+        </div>
+        <div class="field"><label>Vincular a obra (opcional)</label>
+          <select class="inp"><option>— Geral (empresa toda) —</option><option>Alphaville (CE)</option><option>Residencial Aldeota (CE)</option></select></div>
+        <div class="field"><label>Arquivo da guia / DARF</label>
+          <div class="dropzone" style="padding:var(--sp5)"><i class="ti ti-file-type-pdf" style="font-size:24px"></i><b>Anexar PDF da guia</b></div></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-text" onclick="show('enc')">Cancelar</button><button class="btn btn-primary" onclick="show('enc')"><i class="ti ti-check"></i> Registrar encargo</button></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const tabSections = {dash:'tab-dash',func:'tab-func',cct:'tab-cct',pag:'tab-pag',enc:'tab-enc'};
+const allSections = ['tab-dash','tab-func','tab-cct','tab-pag','tab-enc','cct-upload','cct-review','func-form','pag-form','enc-form'];
+function show(key){
+  const target = tabSections[key] || key;
+  allSections.forEach(id=>document.getElementById(id).classList.add('hide'));
+  document.getElementById(target).classList.remove('hide');
+  // tab highlight: map sub-screens back to their parent tab
+  const parent = {'cct-upload':'cct','cct-review':'cct','func-form':'func','pag-form':'pag','enc-form':'enc'}[target] || key;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===parent));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));
+</script>
+</body>
+</html>
