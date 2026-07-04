@@ -36,6 +36,7 @@ export default function PagamentoSalarioModal({ isOpen, funcionarios, competenci
         if (!form.data_pagamento) { notify.warning('Informe a data do pagamento.'); return; }
         setSalvando(true);
         try {
+            let r;
             if (arquivo) {
                 const fd = new FormData();
                 fd.append('funcionario_id', form.funcionario_id);
@@ -45,14 +46,14 @@ export default function PagamentoSalarioModal({ isOpen, funcionarios, competenci
                 fd.append('data_pagamento', form.data_pagamento);
                 if (form.observacao) fd.append('observacao', form.observacao);
                 fd.append('arquivo', arquivo);
-                await rhApi.criarPagamento(fd, true);
+                r = await rhApi.criarPagamento(fd, true);
             } else {
-                await rhApi.criarPagamento({
+                r = await rhApi.criarPagamento({
                     funcionario_id: form.funcionario_id, tipo: form.tipo, competencia: form.competencia,
                     valor: valorNum, data_pagamento: form.data_pagamento, observacao: form.observacao || null,
                 });
             }
-            notify.success('Pagamento registrado.');
+            if (r?.aviso) notify.warning(r.aviso); else notify.success('Pagamento registrado.');
             onSaved?.();
         } catch (e) {
             logger.error('salvar pagamento', e);

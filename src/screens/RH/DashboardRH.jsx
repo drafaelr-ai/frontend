@@ -42,6 +42,10 @@ export default function DashboardRH() {
     const maxSeg = Math.max(1, ...data.folha_por_segmento.map(s => s.total));
     const maxEnc = Math.max(1, ...data.encargos_por_tipo.map(e => e.total));
 
+    const vazio = (data.folha_total === 0 && data.encargos_total === 0
+        && data.mo_por_obra.length === 0 && data.folha_por_segmento.length === 0
+        && data.encargos_por_tipo.length === 0);
+
     return (
         <>
             <div className="rh-dash-period">
@@ -67,11 +71,23 @@ export default function DashboardRH() {
                 </div>
                 <div className="rh-kpi">
                     <div className="rh-kpi-lbl"><i className="ti ti-percentage" /> Encargos / folha</div>
-                    <div className="rh-kpi-val">{data.pct_encargos}%</div>
+                    <div className="rh-kpi-val">{data.pct_encargos == null ? '—' : `${data.pct_encargos}%`}</div>
                 </div>
             </div>
 
-            <div className="rh-dash-grid">
+            {vazio && (
+                <div className="rh-card" style={{ textAlign: 'center' }}>
+                    <div className="rh-empty">
+                        <i className="ti ti-inbox" style={{ fontSize: 40, display: 'block', marginBottom: 'var(--space-3)', color: 'var(--border-strong)' }} />
+                        Nenhum lançamento nesta competência.
+                        <div className="rh-hint" style={{ justifyContent: 'center', marginTop: 'var(--space-2)' }}>
+                            <i className="ti ti-info-circle" /> Registre pagamentos e encargos para ver os gráficos aqui.
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {!vazio && <div className="rh-dash-grid">
                 {/* MO por obra */}
                 <div className="rh-card" style={{ margin: 0 }}>
                     <div className="rh-card-head">
@@ -124,10 +140,10 @@ export default function DashboardRH() {
                         </div>
                     ))}
                 </div>
-            </div>
+            </div>}
 
             {/* Encargos por tipo */}
-            <div className="rh-card">
+            {!vazio && <div className="rh-card">
                 <div className="rh-card-head">
                     <div className="rh-card-title"><i className="ti ti-receipt-tax" /> Encargos por tipo</div>
                     <div className="rh-card-actions"><span className="rh-valor" style={{ fontSize: 'var(--text-lg)' }}>{brlShort(data.encargos_total)}</span></div>
@@ -154,7 +170,7 @@ export default function DashboardRH() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>}
         </>
     );
 }

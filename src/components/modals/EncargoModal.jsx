@@ -26,6 +26,7 @@ export default function EncargoModal({ isOpen, obras, competenciaDefault, onClos
         if (valorNum == null) { notify.warning('Informe o valor.'); return; }
         setSalvando(true);
         try {
+            let r;
             if (arquivo) {
                 const fd = new FormData();
                 fd.append('tipo', form.tipo);
@@ -35,14 +36,14 @@ export default function EncargoModal({ isOpen, obras, competenciaDefault, onClos
                 if (form.obra_id) fd.append('obra_id', form.obra_id);
                 if (form.observacao) fd.append('observacao', form.observacao);
                 fd.append('arquivo', arquivo);
-                await rhApi.criarEncargo(fd, true);
+                r = await rhApi.criarEncargo(fd, true);
             } else {
-                await rhApi.criarEncargo({
+                r = await rhApi.criarEncargo({
                     tipo: form.tipo, competencia: form.competencia, vencimento: form.vencimento || null,
                     valor: valorNum, obra_id: form.obra_id || null, observacao: form.observacao || null,
                 });
             }
-            notify.success('Encargo registrado.');
+            if (r?.aviso) notify.warning(r.aviso); else notify.success('Encargo registrado.');
             onSaved?.();
         } catch (e) {
             logger.error('salvar encargo', e);

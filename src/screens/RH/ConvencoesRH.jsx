@@ -65,16 +65,14 @@ export default function ConvencoesRH({ reloadRefs, setCounts }) {
                 confianca: c.confianca || 'alta',
             }));
             setCategorias(cats.length ? cats : [linhaVazia()]);
+            if (r.aviso) notify.warning(r.aviso);
             setView('review');
         } catch (e) {
-            logger.warn('extrair cct', e);
-            if (e.status === 503) {
-                notify.warning('Leitura automática indisponível (parser offline). Adicione as categorias manualmente.');
-                setCategorias([linhaVazia()]);
-                setView('review');
-            } else {
-                notify.error(e.message || 'Erro ao ler o PDF.');
-            }
+            // Falha inesperada (rede): ainda abre o review em modo manual.
+            logger.error('extrair cct', e);
+            notify.warning('Não consegui ler o PDF automaticamente. Adicione as categorias manualmente.');
+            setCategorias([linhaVazia()]);
+            setView('review');
         } finally {
             setProcessando(false);
         }
@@ -101,8 +99,8 @@ export default function ConvencoesRH({ reloadRefs, setCounts }) {
             fd.append('vigencia_fim', `${y2}-12-31`);
             fd.append('categorias', JSON.stringify(validas));
             if (arquivo) fd.append('arquivo', arquivo);
-            await rhApi.criarConvencao(fd);
-            notify.success('Convenção salva.');
+            const r = await rhApi.criarConvencao(fd);
+            if (r?.aviso) notify.warning(r.aviso); else notify.success('Convenção salva.');
             reloadRefs?.();
             setView('list');
         } catch (e) {
