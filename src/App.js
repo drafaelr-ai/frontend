@@ -12,6 +12,7 @@ import SuperlinkPublico from './screens/SuperlinkPublico';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
+const FrotaModule = lazy(() => import('./screens/Frota'));
 
 function App() {
     const [user, setUser] = useState(null);
@@ -100,6 +101,19 @@ function App() {
                 <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><RHModule /></Suspense>
+                        : <LoginScreen onBack={handleBackToSelector} />}
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
+    if (selectedModule === 'frota') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                    {user
+                        ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><FrotaModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
                 </AuthContext.Provider>
             </>

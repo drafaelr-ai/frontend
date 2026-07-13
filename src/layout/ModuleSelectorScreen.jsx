@@ -30,6 +30,15 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
             description: 'Funcionários, convenções, pagamentos de salário e encargos de todas as obras.',
             color: '#f59e0b',
             gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+        },
+        {
+            id: 'frota',
+            icon: <i className="ti ti-truck" style={{ color: '#fff' }} />,
+            title: 'Frota',
+            subtitle: 'Controle de Veículos',
+            description: 'Veículos alocados em obras e imóveis, documentos, manutenções, abastecimentos e multas.',
+            color: '#0ea5e9',
+            gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
         }
     ];
 
