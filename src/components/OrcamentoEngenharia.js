@@ -620,9 +620,10 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
     const handleSalvar = async () => {
         if (!nome.trim()) return;
         setSalvando(true);
-        await onSave({ nome: nome.trim(), codigo: codigo.trim() });
+        const sucesso = await onSave({ nome: nome.trim(), codigo: codigo.trim() });
         setSalvando(false);
-        
+        if (!sucesso) return;
+
         if (adicionarOutra) {
             // Limpa os campos para adicionar outra
             setNome('');
@@ -2399,6 +2400,110 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
 
 
 // =====================================================
+// MODAL: PAGAMENTOS QUE COMPÕEM O VALOR PAGO DE UM ITEM
+// =====================================================
+
+const DetalhePagamentosModal = ({ item, obraId, apiUrl, onClose }) => {
+    const [dados, setDados] = useState(null);
+    const [carregando, setCarregando] = useState(true);
+
+    useEffect(() => {
+        fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${item.id}/pagamentos`)
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw new Error(err.erro || 'Erro ao carregar'); });
+                return res.json();
+            })
+            .then(setDados)
+            .catch(err => {
+                logger.error('Erro ao carregar pagamentos do item:', err);
+                notify.error(err.message || 'Erro ao carregar pagamentos do item.');
+                onClose();
+            })
+            .finally(() => setCarregando(false));
+    }, [item.id, obraId, apiUrl, onClose]);
+
+    const fonteLabel = {
+        lancamento: 'Lançamento',
+        pagamento_futuro: 'Cronograma',
+        parcela: 'Parcela',
+        boleto: 'Boleto',
+    };
+
+    const fmtData = (iso) => {
+        if (!iso) return '—';
+        const [y, m, d] = iso.slice(0, 10).split('-');
+        return `${d}/${m}/${y}`;
+    };
+
+    return (
+        <div style={styles.modalOverlay} onClick={onClose}>
+            <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                <div style={styles.modalHeader}>
+                    <div>
+                        <h2 style={styles.modalTitle}>💰 Pagamentos do item</h2>
+                        <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                            {item.codigo ? `${item.codigo} · ` : ''}{item.descricao}
+                        </p>
+                    </div>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
+                </div>
+                <div style={styles.modalBody}>
+                    {carregando ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Carregando…</p>
+                    ) : !dados || dados.pagamentos.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
+                            Nenhum pagamento vinculado a este item.
+                        </p>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--border-subtle)' }}>
+                                    {['Data', 'Origem', 'Descrição', 'Tipo', 'Valor'].map(h => (
+                                        <th key={h} style={{ padding: '8px 10px', textAlign: h === 'Valor' ? 'right' : 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dados.pagamentos.map((p, i) => (
+                                    <tr key={`${p.fonte}-${p.id}-${i}`} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
+                                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>{fmtData(p.data)}</td>
+                                        <td style={{ padding: '8px 10px' }}>
+                                            <span style={{
+                                                fontSize: '11px', fontWeight: 600, padding: '2px 8px',
+                                                borderRadius: '999px', background: 'var(--surface-muted)',
+                                                color: 'var(--text-secondary)', whiteSpace: 'nowrap',
+                                            }}>
+                                                {fonteLabel[p.fonte] || p.fonte}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '8px 10px' }}>
+                                            {p.descricao}
+                                            {p.fornecedor && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.fornecedor}</div>}
+                                        </td>
+                                        <td style={{ padding: '8px 10px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{p.tipo || '—'}</td>
+                                        <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600, color: 'var(--status-success-text)', whiteSpace: 'nowrap' }}>
+                                            {formatCurrency(p.valor)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={4} style={{ padding: '10px', textAlign: 'right', fontWeight: 700 }}>Total pago</td>
+                                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700, color: 'var(--status-success-text)', whiteSpace: 'nowrap' }}>
+                                        {formatCurrency(dados.total)}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// =====================================================
 // COMPONENTE PRINCIPAL: ORÇAMENTO DE ENGENHARIA
 // =====================================================
 
@@ -2408,13 +2513,14 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const [error, setError] = useState(null);
     const [bdi, setBdi] = useState(0);
     const [etapasExpandidas, setEtapasExpandidas] = useState({});
-    
+
     // Modais
     const [showNovaEtapa, setShowNovaEtapa] = useState(false);
     const [showNovoItem, setShowNovoItem] = useState(false);
     const [etapaParaNovoItem, setEtapaParaNovoItem] = useState(null);
     const [showUploadPlanta, setShowUploadPlanta] = useState(false);
     const [itemParaEditar, setItemParaEditar] = useState(null);  // NOVO: para edição
+    const [detalhePagamentos, setDetalhePagamentos] = useState(null); // item p/ ver composição do pago
 
     // Carregar dados
     const carregarDados = useCallback(async () => {
@@ -2463,9 +2569,15 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             if (res.ok) {
                 // Não fecha o modal aqui - o modal controla isso internamente
                 carregarDados();
+                return true;
             }
+            const err = await res.json().catch(() => ({}));
+            notify.error(err.erro || 'Erro ao criar etapa');
+            return false;
         } catch (e) {
             logger.error(e);
+            notify.error('Erro ao criar etapa');
+            return false;
         }
     };
 
@@ -2522,32 +2634,40 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     // Deletar item
     const deletarItem = async (itemId) => {
         if (!await confirmDialog('Excluir este item e o serviço vinculado?', { danger: true, confirmText: 'Excluir' })) return;
-        
+
         try {
             const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
                 carregarDados();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                notify.error(err.erro || 'Erro ao excluir item');
             }
         } catch (e) {
             logger.error(e);
+            notify.error('Erro ao excluir item');
         }
     };
 
     // Deletar etapa
     const deletarEtapa = async (etapaId) => {
         if (!await confirmDialog('Excluir esta etapa e todos os seus itens?', { danger: true, confirmText: 'Excluir' })) return;
-        
+
         try {
             const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
                 carregarDados();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                notify.error(err.erro || 'Erro ao excluir etapa');
             }
         } catch (e) {
             logger.error(e);
+            notify.error('Erro ao excluir etapa');
         }
     };
 
@@ -2580,9 +2700,13 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             });
             if (res.ok) {
                 carregarDados();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                notify.error(err.erro || 'Erro ao reordenar etapas');
             }
         } catch (e) {
             logger.error(e);
+            notify.error('Erro ao reordenar etapas');
         }
     };
     
@@ -3095,7 +3219,21 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         formatCurrency(item.total)
                                                     )}
                                                 </td>
-                                                <td style={{ ...styles.td, ...styles.tdNumero, color: 'var(--status-success-text)', fontWeight: '600' }}>
+                                                <td
+                                                    style={{
+                                                        ...styles.td, ...styles.tdNumero,
+                                                        color: 'var(--status-success-text)', fontWeight: '600',
+                                                        cursor: item.total_pago > 0 ? 'pointer' : 'default',
+                                                        textDecoration: item.total_pago > 0 ? 'underline dotted' : 'none',
+                                                    }}
+                                                    title={item.total_pago > 0 ? 'Ver pagamentos que compõem este valor' : undefined}
+                                                    onClick={(e) => {
+                                                        if (item.total_pago > 0) {
+                                                            e.stopPropagation();
+                                                            setDetalhePagamentos(item);
+                                                        }
+                                                    }}
+                                                >
                                                     {formatCurrency(item.total_pago)}
                                                 </td>
                                                 <td style={{ ...styles.td, textAlign: 'center' }}>
@@ -3214,11 +3352,20 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             )}
             
             {showUploadPlanta && (
-                <UploadPlantaModal 
+                <UploadPlantaModal
                     onClose={() => setShowUploadPlanta(false)}
                     onImportar={carregarDados}
                     obraId={obraId}
                     apiUrl={apiUrl}
+                />
+            )}
+
+            {detalhePagamentos && (
+                <DetalhePagamentosModal
+                    item={detalhePagamentos}
+                    obraId={obraId}
+                    apiUrl={apiUrl}
+                    onClose={() => setDetalhePagamentos(null)}
                 />
             )}
         </div>

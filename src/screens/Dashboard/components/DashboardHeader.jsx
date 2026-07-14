@@ -52,6 +52,25 @@ export default function DashboardHeader() {
                 <span className="dh-logo">Obraly</span>
             </div>
             <div className="dh-right">
+                <button
+                    onClick={onBackToSelector}
+                    style={{
+                        background: 'none',
+                        border: '1px solid var(--border-default)',
+                        color: 'var(--text-secondary)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '6px 12px',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                    }}
+                >
+                    <i className="ti ti-layout-grid" aria-hidden="true" /> Módulos
+                </button>
                 <NotificacoesDropdown user={user} />
                 <div className="dh-avatar-wrap" ref={wrapRef}>
                     <button

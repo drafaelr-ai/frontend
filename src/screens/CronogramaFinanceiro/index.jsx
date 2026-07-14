@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../../components/Modal/Modal';
-import CadastrarPagamentoFuturoModal from '../../components/modals/CadastrarPagamentoFuturoModal';
 import EditarPagamentoFuturoModal from '../../components/modals/EditarPagamentoFuturoModal';
-import CadastrarPagamentoParceladoModal from '../../components/modals/CadastrarPagamentoParceladoModal';
 import EditarParcelasModal from '../../components/modals/EditarParcelasModal';
 import ModalWhatsAppCronograma from '../../components/modals/ModalWhatsAppCronograma';
 import GerarSuperlinkModal from '../../components/modals/GerarSuperlinkModal';
@@ -161,8 +159,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         setPagamentoParceladoSelecionado(pagamento);
         setEditarParcelasVisible(true);
     };
-    const [isCadastrarFuturoVisible, setCadastrarFuturoVisible] = useState(false);
-    const [isCadastrarParceladoVisible, setCadastrarParceladoVisible] = useState(false);
     const [isEditarFuturoVisible, setEditarFuturoVisible] = useState(false);
     const [pagamentoFuturoSelecionado, setPagamentoFuturoSelecionado] = useState(null);
 
@@ -379,30 +375,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         fetchData();
     }, [obraId]);
 
-    const handleSavePagamentoFuturo = async (formData) => {
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                }
-            );
-
-            if (res.ok) {
-                notify.success('Pagamento futuro cadastrado com sucesso!');
-                setCadastrarFuturoVisible(false);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            logger.error('Erro ao salvar pagamento futuro:', error);
-            notify.error('Erro ao salvar pagamento futuro');
-        }
-    };
-
     const handleEditarPagamentoFuturo = async (formData) => {
         try {
             const res = await fetchWithAuth(
@@ -425,30 +397,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         } catch (error) {
             logger.error('Erro ao editar pagamento futuro:', error);
             notify.error('Erro ao editar pagamento futuro');
-        }
-    };
-
-    const handleSavePagamentoParcelado = async (formData) => {
-        try {
-            const res = await fetchWithAuth(
-                `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-parcelados`,
-                {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                }
-            );
-
-            if (res.ok) {
-                notify.success('Pagamento parcelado cadastrado com sucesso!');
-                setCadastrarParceladoVisible(false);
-                fetchData();
-            } else {
-                const errorData = await res.json();
-                notify.error('Erro ao cadastrar: ' + (errorData.erro || 'Erro desconhecido'));
-            }
-        } catch (error) {
-            logger.error('Erro ao salvar pagamento parcelado:', error);
-            notify.error('Erro ao salvar pagamento parcelado');
         }
     };
 
@@ -1224,25 +1172,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             <>
                 {cronogramaContent}
 
-                {/* Modais de Cadastro */}
-                {isCadastrarFuturoVisible && (
-                    <CadastrarPagamentoFuturoModal
-                        onClose={() => setCadastrarFuturoVisible(false)}
-                        onSave={handleSavePagamentoFuturo}
-                        obraId={obraId}
-                        itensOrcamento={itensOrcamento}
-                    />
-                )}
-
-                {isCadastrarParceladoVisible && (
-                    <CadastrarPagamentoParceladoModal
-                        onClose={() => setCadastrarParceladoVisible(false)}
-                        onSave={handleSavePagamentoParcelado}
-                        obraId={obraId}
-                        itensOrcamento={itensOrcamento}
-                    />
-                )}
-
                 {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
                     <EditarPagamentoFuturoModal
                         onClose={() => {
@@ -1305,25 +1234,6 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
             }
         >
             {cronogramaContent}
-
-            {/* Modais de Cadastro */}
-            {isCadastrarFuturoVisible && (
-                <CadastrarPagamentoFuturoModal
-                    onClose={() => setCadastrarFuturoVisible(false)}
-                    onSave={handleSavePagamentoFuturo}
-                    obraId={obraId}
-                    itensOrcamento={itensOrcamento}
-                />
-            )}
-
-            {isCadastrarParceladoVisible && (
-                <CadastrarPagamentoParceladoModal
-                    onClose={() => setCadastrarParceladoVisible(false)}
-                    onSave={handleSavePagamentoParcelado}
-                    obraId={obraId}
-                    itensOrcamento={itensOrcamento}
-                />
-            )}
 
             {isEditarFuturoVisible && pagamentoFuturoSelecionado && (
                 <EditarPagamentoFuturoModal

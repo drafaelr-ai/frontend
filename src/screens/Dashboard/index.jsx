@@ -272,13 +272,13 @@ export default function Dashboard() {
             {/* KPI cards */}
             <div className="db-kpi-grid db-kpi-grid--5">
                 <StatCard
-                    label="Mão de obra (mês)"
-                    value={formatCurrency(hk?.mo_mes ?? 0)}
+                    label="Mão de obra (total)"
+                    value={formatCurrency(hk?.mo_total ?? 0)}
                     icon={<i className="ti ti-users" aria-hidden="true" />}
                 />
                 <StatCard
-                    label="Material (mês)"
-                    value={formatCurrency(hk?.material_mes ?? 0)}
+                    label="Material (total)"
+                    value={formatCurrency(hk?.material_total ?? 0)}
                     icon={<i className="ti ti-wall" aria-hidden="true" />}
                 />
                 <StatCard
@@ -450,12 +450,12 @@ export default function Dashboard() {
                                             )}
                                             <div className="db-obra-stats-row">
                                                 <div className="db-obra-stat">
-                                                    <span className="db-obra-stat-label">Mão de obra (mês)</span>
-                                                    <span className="db-obra-stat-value">{formatCurrency(h?.mo_mes ?? 0)}</span>
+                                                    <span className="db-obra-stat-label">Mão de obra (total)</span>
+                                                    <span className="db-obra-stat-value">{formatCurrency(h?.mo_total ?? 0)}</span>
                                                 </div>
                                                 <div className="db-obra-stat">
-                                                    <span className="db-obra-stat-label">Material (mês)</span>
-                                                    <span className="db-obra-stat-value">{formatCurrency(h?.material_mes ?? 0)}</span>
+                                                    <span className="db-obra-stat-label">Material (total)</span>
+                                                    <span className="db-obra-stat-value">{formatCurrency(h?.material_total ?? 0)}</span>
                                                 </div>
                                                 <div className="db-obra-stat">
                                                     <span className="db-obra-stat-label">Última atividade</span>

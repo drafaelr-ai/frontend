@@ -1,29 +1,35 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { rhApi } from './rhApi';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { brl, brlShort, dataBR, iniciais } from './rhFormat';
 import FuncionarioModal from '../../components/modals/FuncionarioModal';
+import ImportarFuncionariosModal from '../../components/modals/ImportarFuncionariosModal';
 
 export default function FuncionariosRH({ obras, categorias, reloadRefs, setCounts }) {
     const [lista, setLista] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroObra, setFiltroObra] = useState('');
     const [modal, setModal] = useState({ open: false, funcionario: null });
+    const [modalImportar, setModalImportar] = useState(false);
+    const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
+        const reqId = ++reqIdRef.current;
         setLoading(true);
         try {
             let q = '';
             if (filtroObra === 'sem') q = '?obra_id=sem';
             else if (filtroObra) q = `?obra_id=${filtroObra}`;
             const data = await rhApi.funcionarios(q);
+            if (reqIdRef.current !== reqId) return; // resposta obsoleta, filtro já mudou
             setLista(Array.isArray(data) ? data : []);
         } catch (e) {
+            if (reqIdRef.current !== reqId) return;
             logger.error('RH funcionarios', e);
             notify.error('Erro ao carregar funcionários.');
         } finally {
-            setLoading(false);
+            if (reqIdRef.current === reqId) setLoading(false);
         }
     }, [filtroObra]);
 
@@ -72,6 +78,9 @@ export default function FuncionariosRH({ obras, categorias, reloadRefs, setCount
                             <option value="sem">— Sem obra —</option>
                             {obras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.uf ? ` (${o.uf})` : ''}</option>)}
                         </select>
+                        <button className="rh-btn rh-btn-secondary" onClick={() => setModalImportar(true)}>
+                            <i className="ti ti-file-spreadsheet" /> Importar Excel
+                        </button>
                         <button className="rh-btn rh-btn-primary" onClick={() => setModal({ open: true, funcionario: null })}>
                             <i className="ti ti-plus" /> Novo funcionário
                         </button>
@@ -125,6 +134,12 @@ export default function FuncionariosRH({ obras, categorias, reloadRefs, setCount
                 categorias={categorias}
                 onClose={() => setModal({ open: false, funcionario: null })}
                 onSaved={onSaved}
+                onCategoriasChanged={reloadRefs}
+            />
+            <ImportarFuncionariosModal
+                isOpen={modalImportar}
+                onClose={() => setModalImportar(false)}
+                onImported={() => { carregar(); reloadRefs?.(); }}
             />
         </>
     );

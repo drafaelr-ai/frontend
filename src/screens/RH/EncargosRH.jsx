@@ -24,17 +24,21 @@ export default function EncargosRH({ obras }) {
     const [modalOpen, setModalOpen] = useState(false);
     const importInput = useRef(null);
     const opcoes = opcoesCompetencia(12);
+    const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
+        const reqId = ++reqIdRef.current;
         setLoading(true);
         try {
             const data = await rhApi.encargos(`?competencia=${competencia}`);
+            if (reqIdRef.current !== reqId) return; // resposta obsoleta, competência já mudou
             setLista(Array.isArray(data) ? data : []);
         } catch (e) {
+            if (reqIdRef.current !== reqId) return;
             logger.error('RH encargos', e);
             notify.error('Erro ao carregar encargos.');
         } finally {
-            setLoading(false);
+            if (reqIdRef.current === reqId) setLoading(false);
         }
     }, [competencia]);
 

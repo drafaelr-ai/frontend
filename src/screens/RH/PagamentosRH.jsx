@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { rhApi } from './rhApi';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
@@ -15,21 +15,25 @@ export default function PagamentosRH() {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const opcoes = opcoesCompetencia(12);
+    const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
+        const reqId = ++reqIdRef.current;
         setLoading(true);
         try {
             const [pags, funcs] = await Promise.all([
                 rhApi.pagamentos(`?competencia=${competencia}`),
                 rhApi.funcionarios('?status=ativo'),
             ]);
+            if (reqIdRef.current !== reqId) return; // resposta obsoleta, competência já mudou
             setLista(Array.isArray(pags) ? pags : []);
             setFuncionarios(Array.isArray(funcs) ? funcs : []);
         } catch (e) {
+            if (reqIdRef.current !== reqId) return;
             logger.error('RH pagamentos', e);
             notify.error('Erro ao carregar pagamentos.');
         } finally {
-            setLoading(false);
+            if (reqIdRef.current === reqId) setLoading(false);
         }
     }, [competencia]);
 

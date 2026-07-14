@@ -10,14 +10,39 @@ export default function EncargoModal({ isOpen, obras, competenciaDefault, onClos
     const [form, setForm] = useState(base);
     const [arquivo, setArquivo] = useState(null);
     const [salvando, setSalvando] = useState(false);
+    const [valorTocado, setValorTocado] = useState(false);
+    const [sugestaoNota, setSugestaoNota] = useState('');
     const opcoes = opcoesCompetencia(12);
 
     useEffect(() => {
         if (!isOpen) return;
         setForm({ ...base, competencia: competenciaDefault });
         setArquivo(null);
+        setValorTocado(false);
+        setSugestaoNota('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, competenciaDefault]);
+
+    // Sugestão automática: percentual federal sobre a folha da competência
+    // (FGTS 8%, INSS patronal 20%). Só preenche enquanto o valor não foi tocado.
+    useEffect(() => {
+        if (!isOpen || valorTocado || !form.tipo || form.tipo === 'outro' || !form.competencia) return;
+        let vivo = true;
+        rhApi.sugestaoEncargo(form.tipo, form.competencia, form.obra_id || '')
+            .then(r => {
+                if (!vivo) return;
+                if (r.valor_sugerido != null && r.valor_sugerido > 0) {
+                    setForm(f => ({ ...f, valor: String(r.valor_sugerido.toFixed(2)).replace('.', ',') }));
+                    setSugestaoNota(`${r.nota} · folha: R$ ${r.base_folha.toLocaleString('pt-BR')}`);
+                } else if (r.base_folha > 0) {
+                    setSugestaoNota(`${r.nota} · folha da competência: R$ ${r.base_folha.toLocaleString('pt-BR')}`);
+                } else {
+                    setSugestaoNota('');
+                }
+            })
+            .catch(e => logger.warn('sugestão encargo', e));
+        return () => { vivo = false; };
+    }, [isOpen, form.tipo, form.competencia, form.obra_id, valorTocado]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -80,7 +105,13 @@ export default function EncargoModal({ isOpen, obras, competenciaDefault, onClos
                 <div className="rh-field"><label>Vencimento</label>
                     <input className="rh-inp" type="date" value={form.vencimento} onChange={e => set('vencimento', e.target.value)} /></div>
                 <div className="rh-field"><label>Valor</label>
-                    <input className="rh-inp money" value={form.valor} onChange={e => set('valor', e.target.value)} placeholder="0,00" /></div>
+                    <input className="rh-inp money" value={form.valor}
+                        onChange={e => { set('valor', e.target.value); setValorTocado(true); }}
+                        placeholder="0,00" />
+                    {sugestaoNota && !valorTocado && (
+                        <span className="rh-inherit-note"><i className="ti ti-calculator" /> {sugestaoNota}</span>
+                    )}
+                </div>
             </div>
             <div className="rh-field"><label>Vincular a obra (opcional)</label>
                 <select className="rh-inp" value={form.obra_id} onChange={e => set('obra_id', e.target.value)}>

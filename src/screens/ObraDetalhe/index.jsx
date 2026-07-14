@@ -18,7 +18,6 @@ import AdminPanelModal from '../../components/modals/AdminPanelModal';
 import OrcamentosModal from '../../components/modals/OrcamentosModal';
 import InserirPagamentoModal from '../../components/modals/InserirPagamentoModal';
 import PartialPaymentModal from '../../components/modals/PartialPaymentModal';
-import EditPrioridadeModal from '../../components/modals/EditPrioridadeModal';
 import CaixaObraModal from '../../components/modals/CaixaObraModal';
 import ModalRelatorioCronograma from '../../components/modals/ModalRelatorioCronograma';
 import RelatoriosModal from '../../components/modals/RelatoriosModal';
@@ -49,9 +48,7 @@ function ObraDetalhe() {
     const [isAddLancamentoModalVisible, setAddLancamentoModalVisible] = useState(false);
     const [isAdminPanelVisible, setAdminPanelVisible] = useState(false);
     
-    const [isExportModalVisible, setExportModalVisible] = useState(false);
     const [isRelatorioCronogramaVisible, setRelatorioCronogramaVisible] = useState(false);
-    const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [orcamentos, setOrcamentos] = useState([]);
     const [isAddOrcamentoModalVisible, setAddOrcamentoModalVisible] = useState(false);
     
@@ -65,7 +62,6 @@ function ObraDetalhe() {
     const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
-    const [editingServicoPrioridade, setEditingServicoPrioridade] = useState(null);
     const [filtroPendencias, setFiltroPendencias] = useState('');
     
     // <--- NOVO: Estados para Notas Fiscais -->
@@ -503,12 +499,16 @@ const totalOrcamentosPendentes = useMemo(() => {
         .then(novaObra => { setObras(prevObras => [...prevObras, novaObra].sort((a, b) => a.nome.localeCompare(b.nome))); e.target.reset(); })
         .catch(error => logger.error('Erro ao adicionar obra:', error));
     };
-    const handleDeletarObra = (obraId, obraNome) => {
-        // ... (código inalterado)
+    const handleDeletarObra = async (obraId, obraNome) => {
+        const ok = await confirmDialog(
+            'Esta ação é irreversível. Todos os dados da obra serão removidos.',
+            { title: `Apagar "${obraNome}"?`, confirmText: 'Apagar', danger: true }
+        );
+        if (!ok) return;
         fetchWithAuth(`${API_URL}/obras/${obraId}`, { method: 'DELETE' })
         .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); })
-        .catch(error => logger.error('Erro ao deletar obra:', error));
+        .then(() => { setObras(prevObras => prevObras.filter(o => o.id !== obraId)); notify.success('Obra apagada com sucesso'); })
+        .catch(error => { logger.error('Erro ao deletar obra:', error); notify.error('Erro ao apagar obra: ' + error.message); });
     };
     
     // NOVO: Função para marcar obra como concluída/reabrir
@@ -531,27 +531,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => { logger.error('Erro ao concluir obra:', error); notify.error('Erro: ' + error.message); });
     };
     
-    // <--- MUDANÇA: Esta função (marcar pago 100%) será chamada pelo modal de edição, não mais pelo botão -->
-    const handleMarcarComoPago = (itemId) => {
-        const isLancamento = String(itemId).startsWith('lanc-');
-        const isServicoPag = String(itemId).startsWith('serv-pag-');
-        const actualId = String(itemId).split('-').pop(); 
-
-        let url = '';
-        if (isLancamento) {
-            url = `${API_URL}/lancamentos/${actualId}/pago`;
-        } else if (isServicoPag) {
-            url = `${API_URL}/servicos/pagamentos/${actualId}/status`;
-        } else {
-            return; 
-        }
-
-        logger.debug("Alternando status para:", itemId);
-        fetchWithAuth(url, { method: 'PATCH' })
-             .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-             .then(() => fetchObraData(obraSelecionada.id))
-             .catch(error => logger.error("Erro ao marcar como pago:", error));
-    };
+    // (handleMarcarComoPago removido — rota desativada; pagamentos via Cronograma Financeiro)
 
     const handleDeletarLancamento = (itemId) => {
         // ... (código inalterado)
@@ -695,54 +675,7 @@ const totalOrcamentosPendentes = useMemo(() => {
         .catch(error => logger.error("Erro ao rejeitar solicitação:", error));
     };
 
-    // Handler do PDF da Obra
-    const handleExportObraPDF = () => {
-        // ... (código inalterado)
-        if (!obraSelecionada) return;
-        
-        setIsExportingPDF(true);
-        const url = `${API_URL}/obras/${obraSelecionada.id}/export/pdf_pendentes`;
-
-        fetchWithAuth(url)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Falha ao gerar o PDF da obra.');
-                }
-                return res.blob();
-            })
-            .then(blob => {
-                const fileURL = URL.createObjectURL(blob);
-                window.open(fileURL);
-                setIsExportingPDF(false);
-            })
-            .catch(err => {
-                logger.error("Erro ao gerar PDF da obra:", err);
-                notify.error("Não foi possível gerar o PDF. Verifique o console para mais detalhes.");
-                setIsExportingPDF(false);
-            });
-    };
-
-    // Handler de Prioridade
-    const handleSaveServicoPrioridade = (novaPrioridade) => {
-        // ... (código inalterado)
-        if (!editingServicoPrioridade) return;
-
-        const pagamentoId = editingServicoPrioridade.pagamento_id;
-        
-        fetchWithAuth(`${API_URL}/servicos/pagamentos/${pagamentoId}/prioridade`, {
-            method: 'PATCH',
-            body: JSON.stringify({ prioridade: novaPrioridade })
-        })
-        .then(res => { if (!res.ok) { return res.json().then(err => { throw new Error(err.erro || 'Erro') }); } return res.json(); })
-        .then(() => {
-            setEditingServicoPrioridade(null);
-            fetchObraData(obraSelecionada.id);
-        })
-        .catch(error => {
-            logger.error("Erro ao salvar prioridade do serviço:", error);
-            notify.error(`Erro ao salvar prioridade: ${error.message}`);
-        });
-    };
+    // (handleExportObraPDF removido — rota desativada; relatório via Cronograma Financeiro)
 
     // <--- MUDANÇA: NOVA FUNÇÃO HANDLER PARA PAGAMENTO PARCIAL ---
     const handleSavePartialPayment = (valor_a_pagar) => {
@@ -824,7 +757,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     }
 
     if (!obraSelecionada) {
-        // ?? Se estiver na página de BI, mostrar dashboard
+        // Se estiver na página de BI, mostrar dashboard
         if (currentPage === 'bi') {
             return (
                 <BiDashboard
@@ -850,21 +783,21 @@ const totalOrcamentosPendentes = useMemo(() => {
                 <header className="dashboard-header">
                     <h1>Minhas Obras</h1>
                     <div className="header-actions">
-                        {/* ?? Botão BI Dashboard */}
-                        <button 
-                            onClick={() => setCurrentPage('bi')} 
-                            className="export-btn" 
+                        {/* Botão BI Dashboard */}
+                        <button
+                            onClick={() => setCurrentPage('bi')}
+                            className="export-btn"
                             style={{marginRight: '10px', backgroundColor: 'var(--status-purple-text)', borderColor: 'var(--status-purple-text)'}}
                         >
-                            ?? BI Dashboard
+                            <i className="ti ti-chart-bar" aria-hidden="true" /> BI Dashboard
                         </button>
-                        
-                        <button 
-                            onClick={() => setRelatorioCronogramaVisible(true)} 
-                            className="export-btn pdf" 
+
+                        <button
+                            onClick={() => setRelatorioCronogramaVisible(true)}
+                            className="export-btn pdf"
                             style={{marginRight: '10px'}}
                         >
-                            ?? Relatório Financeiro
+                            <i className="ti ti-file-text" aria-hidden="true" /> Relatório Financeiro
                         </button>
                         
                         {user.role === 'master' && (
@@ -937,7 +870,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         fontSize: '0.75em',
                                         fontWeight: 'bold'
                                     }}>
-                                        ? CONCLUÍDA
+                                        <i className="ti ti-check" aria-hidden="true" /> CONCLUÍDA
                                     </div>
                                 )}
                                 
@@ -957,14 +890,14 @@ const totalOrcamentosPendentes = useMemo(() => {
                                                 opacity: 0.7
                                             }}
                                         >
-                                            {obra.concluida ? '??' : '?'}
+                                            <i className={obra.concluida ? 'ti ti-rotate-clockwise' : 'ti ti-circle-check'} aria-hidden="true" />
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDeletarObra(obra.id, obra.nome); }}
                                             className="card-obra-delete-btn"
                                             title="Excluir Obra"
                                         >
-                                            ???
+                                            <i className="ti ti-trash" aria-hidden="true" />
                                         </button>
                                     </div>
                                 )}
@@ -1037,11 +970,13 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {/* === PÁGINA: HOME (Dashboard + Quadro Informativo) === */}
                     {currentPage === 'home' && (
                         <div className="home-page-container">
-                            {/* F0.4 — Voltar às Obras */}
+                            {/* F0.4 — Voltar às Obras: limpa a query ?obra p/ o App
+                                renderizar o Dashboard novo (antes só mudava o state e
+                                caía na lista legada embutida). */}
                             <button
                                 className="m-btn-secondary"
                                 style={{ marginBottom: '12px' }}
-                                onClick={() => { setObraSelecionada(null); setCurrentPage('obras'); }}
+                                onClick={() => { window.location.href = window.location.pathname; }}
                             >
                                 <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar às Obras
                             </button>
@@ -1301,11 +1236,34 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                     {/* === PÁGINA: GERENCIAR USUÁRIOS === */}
                     {currentPage === 'usuarios' && (
-                        <AdminPanelModal 
+                        <AdminPanelModal
                             allObras={obras}
-                            onClose={() => setCurrentPage('home')} 
+                            onClose={() => setCurrentPage('home')}
                             embedded={true}
                         />
+                    )}
+
+                    {/* === PÁGINAS AINDA NÃO IMPLEMENTADAS (evita tela em branco) === */}
+                    {['exportar', 'configuracoes', 'tutorial', 'atalhos', 'sobre'].includes(currentPage) && (
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px',
+                            padding: '60px 20px',
+                            textAlign: 'center',
+                            color: 'var(--text-muted)'
+                        }}>
+                            <i className="ti ti-tool" style={{ fontSize: '32px' }} aria-hidden="true" />
+                            <p style={{ margin: 0 }}>Esta funcionalidade ainda não está disponível.</p>
+                            <button
+                                className="m-btn-secondary"
+                                onClick={() => setCurrentPage('home')}
+                            >
+                                <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
+                            </button>
+                        </div>
                     )}
 
                     {/* Modais que aparecem por cima */}
@@ -1317,15 +1275,9 @@ const totalOrcamentosPendentes = useMemo(() => {
                         />
                     )}
 
-                    {editingServicoPrioridade && (
-                        <EditPrioridadeModal
-                            item={editingServicoPrioridade}
-                            onClose={() => setEditingServicoPrioridade(null)}
-                            onSave={handleSaveServicoPrioridade}
-                        />
-                    )}
-                    
-                    {editingLancamento && <EditLancamentoModal 
+                    {/* modal de prioridade de serviço removido (inalcançável; rota desativada) */}
+
+                    {editingLancamento && <EditLancamentoModal
                         lancamento={editingLancamento} 
                         onClose={() => setEditingLancamento(null)} 
                         onSave={handleSaveEdit}

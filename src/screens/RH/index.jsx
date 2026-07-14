@@ -31,20 +31,21 @@ export default function RHModule() {
     const [counts, setCounts] = useState({ func: null, cct: null });
 
     const loadRefs = async () => {
-        try {
-            const [o, c, f, cv] = await Promise.all([
-                rhApi.obras(), rhApi.categorias(),
-                rhApi.funcionarios('?status=ativo'), rhApi.convencoes(),
-            ]);
-            setObras(Array.isArray(o) ? o : []);
-            setCategorias(Array.isArray(c) ? c : []);
-            setCounts({
-                func: Array.isArray(f) ? f.length : null,
-                cct: Array.isArray(cv) ? cv.length : null,
-            });
-        } catch (e) {
-            logger.error('RH loadRefs', e);
+        const [oRes, cRes, fRes, cvRes] = await Promise.allSettled([
+            rhApi.obras(), rhApi.categorias(),
+            rhApi.funcionarios('?status=ativo'), rhApi.convencoes(),
+        ]);
+        const falhas = [oRes, cRes, fRes, cvRes].filter(r => r.status === 'rejected');
+        if (falhas.length) {
+            falhas.forEach(r => logger.error('RH loadRefs', r.reason));
+            notify.error('Não foi possível carregar todos os dados de referência do RH. Tente novamente.');
         }
+        if (oRes.status === 'fulfilled') setObras(Array.isArray(oRes.value) ? oRes.value : []);
+        if (cRes.status === 'fulfilled') setCategorias(Array.isArray(cRes.value) ? cRes.value : []);
+        setCounts({
+            func: fRes.status === 'fulfilled' && Array.isArray(fRes.value) ? fRes.value.length : null,
+            cct: cvRes.status === 'fulfilled' && Array.isArray(cvRes.value) ? cvRes.value.length : null,
+        });
     };
 
     useEffect(() => { loadRefs(); }, []);

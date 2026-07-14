@@ -6,13 +6,12 @@ const SEVERITY_CONFIG = {
     info:    { icon: 'ti-info-circle',    color: 'var(--status-info)',    bg: 'var(--status-info-bg)' },
 };
 
-const AlertStatCard = ({ label, value, severity = 'info', description, to, onClick }) => {
+const AlertStatCard = ({ label, value, severity = 'info', description, onClick }) => {
     const cfg = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
-    const isClickable = !!(to || onClick);
+    const isClickable = !!onClick;
 
     const handleClick = () => {
-        if (onClick) return onClick();
-        if (to) window.history.pushState({}, '', to);
+        if (onClick) onClick();
     };
 
     return (

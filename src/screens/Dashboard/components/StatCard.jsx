@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 
-const StatCard = ({ label, value, icon, trend, to, onClick }) => {
+const StatCard = ({ label, value, icon, trend, onClick }) => {
     const [hovered, setHovered] = useState(false);
-    const isClickable = !!(to || onClick);
+    const isClickable = !!onClick;
 
     const handleClick = () => {
-        if (onClick) return onClick();
-        if (to) window.history.pushState({}, '', to);
+        if (onClick) onClick();
     };
 
     return (

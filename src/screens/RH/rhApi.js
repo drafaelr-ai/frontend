@@ -17,6 +17,8 @@ export const rhApi = {
     // referência
     obras: () => fetchWithAuth(`${API_URL}/obras`).then(j),
     categorias: () => fetchWithAuth(`${base}/categorias`).then(j),
+    criarCategoria: (body) =>
+        fetchWithAuth(`${base}/categorias`, { method: 'POST', body: JSON.stringify(body) }).then(j),
 
     // convenções
     convencoes: () => fetchWithAuth(`${base}/convencoes`).then(j),
@@ -38,6 +40,8 @@ export const rhApi = {
         fetchWithAuth(`${base}/funcionarios`, { method: 'POST', body: JSON.stringify(body) }).then(j),
     editarFuncionario: (id, body) =>
         fetchWithAuth(`${base}/funcionarios/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then(j),
+    importarFuncionarios: (formData) =>
+        fetchWithAuth(`${base}/funcionarios/importar`, { method: 'POST', body: formData }).then(j),
     migrarObra: (id, obraId) =>
         fetchWithAuth(`${base}/funcionarios/${id}/obra`, {
             method: 'PATCH', body: JSON.stringify({ obra_id: obraId }),
@@ -56,6 +60,10 @@ export const rhApi = {
 
     // encargos
     encargos: (params = '') => fetchWithAuth(`${base}/encargos${params}`).then(j),
+    sugestaoEncargo: (tipo, competencia, obraId) =>
+        fetchWithAuth(
+            `${base}/encargos/sugestao?tipo=${tipo}&competencia=${competencia}&obra_id=${obraId || ''}`,
+        ).then(j),
     criarEncargo: (body, isForm) =>
         fetchWithAuth(`${base}/encargos`, {
             method: 'POST', body: isForm ? body : JSON.stringify(body),

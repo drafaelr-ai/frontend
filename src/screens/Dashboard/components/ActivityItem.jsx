@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 
-const ActivityItem = ({ icon, title, description, timestamp, obraName, to, onClick, isLast }) => {
+const ActivityItem = ({ icon, title, description, timestamp, obraName, onClick, isLast }) => {
     const [hovered, setHovered] = useState(false);
-    const isClickable = !!(to || onClick);
+    const isClickable = !!onClick;
 
     const handleClick = () => {
-        if (onClick) return onClick();
-        if (to) window.history.pushState({}, '', to);
+        if (onClick) onClick();
     };
 
     return (

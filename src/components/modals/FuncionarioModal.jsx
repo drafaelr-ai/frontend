@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import { rhApi } from '../../screens/RH/rhApi';
 import { logger } from '../../utils/logger';
@@ -7,18 +7,48 @@ import { moedaParaNumero } from '../../screens/RH/rhFormat';
 
 const vazio = { nome: '', cpf: '', data_admissao: '', obra_id: '', categoria_id: '', salario: '', status: 'ativo' };
 
-export default function FuncionarioModal({ isOpen, funcionario, obras, categorias, onClose, onSaved }) {
+export default function FuncionarioModal({ isOpen, funcionario, obras, categorias, onClose, onSaved, onCategoriasChanged }) {
     const [form, setForm] = useState(vazio);
     const [salarioTocado, setSalarioTocado] = useState(false);
     const [pisoNota, setPisoNota] = useState('');
     const [salvando, setSalvando] = useState(false);
+    const [novaCatAberta, setNovaCatAberta] = useState(false);
+    const [novaCatNome, setNovaCatNome] = useState('');
+    const [catsExtras, setCatsExtras] = useState([]);
+    // Categorias criadas inline aparecem imediatamente, mesmo antes do reload das refs.
+    const todasCategorias = [
+        ...categorias,
+        ...catsExtras.filter(c => !categorias.some(k => k.id === c.id)),
+    ];
+
+    const criarCategoria = async () => {
+        const nome = novaCatNome.trim();
+        if (!nome) { notify.warning('Informe o nome da categoria.'); return; }
+        try {
+            const cat = await rhApi.criarCategoria({ nome });
+            setCatsExtras(prev => [...prev, cat]);
+            setForm(f => ({ ...f, categoria_id: cat.id }));
+            setNovaCatAberta(false);
+            setNovaCatNome('');
+            notify.success(`Categoria "${cat.nome}" criada.`);
+            onCategoriasChanged?.();
+        } catch (e) {
+            logger.error('criar categoria', e);
+            notify.error(e.message || 'Erro ao criar categoria.');
+        }
+    };
     const editando = !!funcionario;
+    // Evita que a sugestão de piso sobrescreva o salário já cadastrado logo após
+    // abrir o modal de edição (a hidratação popula categoria_id, o que dispararia
+    // o efeito de piso sugerido antes de qualquer interação do usuário).
+    const skipPisoAutoFillRef = useRef(false);
 
     useEffect(() => {
         if (!isOpen) return;
         setSalarioTocado(false);
         setPisoNota('');
         if (funcionario) {
+            skipPisoAutoFillRef.current = true;
             setForm({
                 nome: funcionario.nome || '',
                 cpf: funcionario.cpf || '',
@@ -29,6 +59,7 @@ export default function FuncionarioModal({ isOpen, funcionario, obras, categoria
                 status: funcionario.status || 'ativo',
             });
         } else {
+            skipPisoAutoFillRef.current = false;
             setForm(vazio);
         }
     }, [isOpen, funcionario]);
@@ -36,6 +67,12 @@ export default function FuncionarioModal({ isOpen, funcionario, obras, categoria
     // Piso sugerido ao escolher categoria/obra (só se salário não foi tocado)
     useEffect(() => {
         if (!isOpen || salarioTocado || !form.categoria_id) return;
+        if (skipPisoAutoFillRef.current) {
+            // Pula apenas a passagem de hidratação inicial do funcionário em edição;
+            // qualquer troca manual de categoria/obra depois disso segue normalmente.
+            skipPisoAutoFillRef.current = false;
+            return;
+        }
         let vivo = true;
         rhApi.pisoSugerido(form.categoria_id, form.obra_id || '')
             .then(r => {
@@ -109,11 +146,39 @@ export default function FuncionarioModal({ isOpen, funcionario, obras, categoria
                         <option value="">— Sem obra (centralizado) —</option>
                         {obras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.uf ? ` (${o.uf})` : ''}</option>)}
                     </select></div>
-                <div className="rh-field"><label>Categoria</label>
-                    <select className="rh-inp" value={form.categoria_id} onChange={e => set('categoria_id', e.target.value)}>
-                        <option value="">Selecione…</option>
-                        {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select></div>
+                <div className="rh-field">
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        Categoria
+                        <button
+                            type="button"
+                            className="rh-btn rh-btn-text rh-btn-sm"
+                            style={{ padding: '0 4px' }}
+                            onClick={() => setNovaCatAberta(v => !v)}
+                        >
+                            <i className="ti ti-plus" /> Nova
+                        </button>
+                    </label>
+                    {novaCatAberta ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                                className="rh-inp"
+                                placeholder="Ex.: Pedreiro"
+                                value={novaCatNome}
+                                autoFocus
+                                onChange={e => setNovaCatNome(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); criarCategoria(); } }}
+                            />
+                            <button type="button" className="rh-btn rh-btn-primary rh-btn-sm" onClick={criarCategoria}>
+                                <i className="ti ti-check" />
+                            </button>
+                        </div>
+                    ) : (
+                        <select className="rh-inp" value={form.categoria_id} onChange={e => set('categoria_id', e.target.value)}>
+                            <option value="">{todasCategorias.length ? 'Selecione…' : 'Nenhuma — clique em + Nova'}</option>
+                            {todasCategorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                        </select>
+                    )}
+                </div>
             </div>
             <div className="rh-field">
                 <label>Salário</label>
