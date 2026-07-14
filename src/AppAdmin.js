@@ -808,8 +808,11 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
 
 const LancamentosImovelModal = ({ imovel, token, onClose }) => {
     const hoje = new Date();
-    const [mes, setMes] = useState(hoje.getMonth() + 1);
-    const [ano, setAno] = useState(hoje.getFullYear());
+    // Abre SEM filtro de período (mostra tudo) — antes vinha travado no mês
+    // atual e sumia lançamentos de meses passados (ex.: impostos lançados em
+    // junho não apareciam abrindo em julho, parecendo que "sumiram").
+    const [mes, setMes] = useState('');
+    const [ano, setAno] = useState('');
     const [tipo, setTipo] = useState('');
     const [lancamentos, setLancamentos] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -824,7 +827,9 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
     const carregar = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({ imovel_id: imovel.id, mes, ano });
+            const params = new URLSearchParams({ imovel_id: imovel.id });
+            if (mes) params.append('mes', mes);
+            if (ano) params.append('ano', ano);
             if (tipo) params.append('tipo', tipo);
             const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos?${params}`);
             const d = await r.json();
@@ -863,10 +868,12 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                 </div>
                 {/* Filtros */}
                 <div style={{ padding:'12px 24px', background:'var(--surface-subtle)', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'10px', flexWrap:'wrap' }}>
-                    <select value={mes} onChange={e => setMes(Number(e.target.value))} style={styles.select}>
+                    <select value={mes} onChange={e => setMes(e.target.value ? Number(e.target.value) : '')} style={styles.select}>
+                        <option value=''>Todos os meses</option>
                         {mesesNomes.map((m,i) => <option key={i+1} value={i+1}>{m}</option>)}
                     </select>
-                    <select value={ano} onChange={e => setAno(Number(e.target.value))} style={styles.select}>
+                    <select value={ano} onChange={e => setAno(e.target.value ? Number(e.target.value) : '')} style={styles.select}>
+                        <option value=''>Todos os anos</option>
                         {anos.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
                     <select value={tipo} onChange={e => setTipo(e.target.value)} style={styles.select}>
