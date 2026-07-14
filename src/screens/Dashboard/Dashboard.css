@@ -476,6 +476,80 @@
     color: var(--text-muted);
 }
 
+.db-kpi-previsao--clickable {
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.db-kpi-previsao--clickable:hover {
+    background: var(--surface-muted);
+}
+.db-kpi-previsao-chevron {
+    margin-left: auto;
+    font-size: 13px;
+}
+
+/* Lista expandida de "previsão a pagar" */
+.db-previsao-list {
+    background: var(--surface-card);
+    border: 1px solid var(--status-warning);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+.db-previsao-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.db-previsao-list-item:first-child {
+    border-top: none;
+}
+.db-previsao-list-item:hover {
+    background: var(--surface-muted);
+}
+.db-previsao-list-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.db-previsao-list-desc {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.db-previsao-list-sit {
+    font-size: var(--text-xs);
+    color: var(--status-warning-text);
+}
+.db-previsao-list-sit.vencido {
+    color: var(--status-danger-text);
+}
+.db-previsao-list-origem {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.db-previsao-list-valor {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 .db-alert-wrap {
     margin-bottom: 20px;
 }

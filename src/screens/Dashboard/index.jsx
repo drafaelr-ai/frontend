@@ -157,6 +157,7 @@ export default function Dashboard() {
     const [error, setError] = useState(null);
     const [filtroObras, setFiltroObras] = useState('ativas');
     const [vencidasListOpen, setVencidasListOpen] = useState(false);
+    const [previsaoListOpen, setPrevisaoListOpen] = useState(false);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -325,9 +326,15 @@ export default function Dashboard() {
                     icon={<i className="ti ti-chart-pie" aria-hidden="true" />}
                     trend={{ direction: 'none', value: `de ${formatCurrency(kpis.totalOrcamento)}` }}
                 />
-                <div className="db-kpi-previsao">
+                <div
+                    className={`db-kpi-previsao${(previsao?.qtd ?? 0) > 0 ? ' db-kpi-previsao--clickable' : ''}`}
+                    onClick={() => (previsao?.qtd ?? 0) > 0 && setPrevisaoListOpen(v => !v)}
+                >
                     <div className="db-kpi-previsao-label">
                         <i className="ti ti-calendar-due" aria-hidden="true" /> Previsão a pagar (mês)
+                        {(previsao?.qtd ?? 0) > 0 && (
+                            <i className={`ti ti-chevron-${previsaoListOpen ? 'up' : 'down'} db-kpi-previsao-chevron`} aria-hidden="true" />
+                        )}
                     </div>
                     <div className="db-kpi-previsao-value num">
                         {formatCurrency(previsao?.total ?? 0)}
@@ -337,6 +344,30 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {previsaoListOpen && (previsao?.itens?.length ?? 0) > 0 && (
+                <div className="db-previsao-list">
+                    {previsao.itens.map((p, i) => (
+                        <div
+                            key={i}
+                            className="db-previsao-list-item"
+                            onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao)}
+                        >
+                            <div className="db-previsao-list-main">
+                                <span className="db-previsao-list-desc">{p.descricao}</span>
+                                <span className={`db-previsao-list-sit${p.situacao === 'vencido' ? ' vencido' : ''}`}>
+                                    {situacaoPendenciaLabel(p)}
+                                </span>
+                            </div>
+                            <div className="db-previsao-list-origem">{p.origem || '—'}</div>
+                            <div className="db-previsao-list-valor">{formatCurrency(p.valor)}</div>
+                            {p.origem_id
+                                ? <i className="ti ti-chevron-right" aria-hidden="true" />
+                                : <span className="db-alert-list-none">indisponível</span>}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Alerta de vencidos */}
             {pendVencidas.length > 0 && (
