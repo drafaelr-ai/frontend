@@ -476,6 +476,10 @@
     color: var(--text-muted);
 }
 
+.db-alert-wrap {
+    margin-bottom: 20px;
+}
+
 .db-alert-banner {
     display: flex;
     align-items: center;
@@ -485,13 +489,15 @@
     border: 1px solid var(--status-danger);
     border-radius: 16px;
     padding: 10px 16px;
-    margin-bottom: 20px;
     color: var(--status-danger-text);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
 }
 .db-alert-banner i { color: var(--status-danger); }
 .db-alert-banner-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     background: none;
     border: none;
     color: var(--status-danger);
@@ -500,6 +506,75 @@
     cursor: pointer;
     font-family: inherit;
     padding: 0;
+}
+
+/* Lista expandida de pendências vencidas */
+.db-alert-list {
+    background: var(--surface-card);
+    border: 1px solid var(--status-danger);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.db-alert-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.db-alert-list-item:hover {
+    background: var(--surface-muted);
+}
+.db-alert-list-item--disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+.db-alert-list-item--disabled:hover {
+    background: none;
+}
+.db-alert-list-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.db-alert-list-desc {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.db-alert-list-sit {
+    font-size: var(--text-xs);
+    color: var(--status-danger-text);
+}
+.db-alert-list-origem {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.db-alert-list-valor {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.db-alert-list-none {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
 }
 
 .db-main-cols {

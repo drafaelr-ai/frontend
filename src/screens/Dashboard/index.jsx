@@ -33,6 +33,13 @@ function dataBRcurta(iso) {
     return `${d}/${m}`;
 }
 
+function situacaoPendenciaLabel(p) {
+    if (p.situacao === 'vencido') return `vencido há ${Math.abs(p.dias)} dia${Math.abs(p.dias) !== 1 ? 's' : ''}`;
+    if (p.situacao === 'vence_hoje') return 'vence hoje';
+    if (p.dias === 1) return 'vence amanhã';
+    return `vence ${dataBRcurta(p.data_vencimento)}`;
+}
+
 function formatTimestamp(dateStr) {
     if (!dateStr) return '';
     try {
@@ -127,6 +134,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filtroObras, setFiltroObras] = useState('ativas');
+    const [vencidasListOpen, setVencidasListOpen] = useState(false);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -310,21 +318,42 @@ export default function Dashboard() {
 
             {/* Alerta de vencidos */}
             {pendVencidas.length > 0 && (
-                <div className="db-alert-banner">
-                    <i className="ti ti-alert-triangle" aria-hidden="true" />
-                    <span>
-                        {pendVencidas.length} pendência{pendVencidas.length !== 1 ? 's' : ''} vencida{pendVencidas.length !== 1 ? 's' : ''}
-                        {' '}({formatCurrency(pendVencidas.reduce((s, p) => s + p.valor, 0))})
-                        {' '}— {[...new Set(pendVencidas.map(p => p.origem).filter(Boolean))].slice(0, 3).join(', ')}
-                    </span>
-                    <span style={{ flex: 1 }} />
-                    {pendVencidas[0]?.origem_id && (
+                <div className="db-alert-wrap">
+                    <div className="db-alert-banner">
+                        <i className="ti ti-alert-triangle" aria-hidden="true" />
+                        <span>
+                            {pendVencidas.length} pendência{pendVencidas.length !== 1 ? 's' : ''} vencida{pendVencidas.length !== 1 ? 's' : ''}
+                            {' '}({formatCurrency(pendVencidas.reduce((s, p) => s + p.valor, 0))})
+                            {' '}— {[...new Set(pendVencidas.map(p => p.origem).filter(Boolean))].slice(0, 3).join(', ')}
+                        </span>
+                        <span style={{ flex: 1 }} />
                         <button
                             className="db-alert-banner-cta"
-                            onClick={() => navigateToObra(pendVencidas[0].origem_id)}
+                            onClick={() => setVencidasListOpen(v => !v)}
                         >
-                            Resolver →
+                            {vencidasListOpen ? 'Ocultar' : 'Ver pendências'} <i className={`ti ti-chevron-${vencidasListOpen ? 'up' : 'down'}`} aria-hidden="true" />
                         </button>
+                    </div>
+                    {vencidasListOpen && (
+                        <div className="db-alert-list">
+                            {pendVencidas.map((p, i) => (
+                                <div
+                                    key={i}
+                                    className={`db-alert-list-item${p.origem_id ? '' : ' db-alert-list-item--disabled'}`}
+                                    onClick={() => p.origem_id && navigateToObra(p.origem_id)}
+                                >
+                                    <div className="db-alert-list-main">
+                                        <span className="db-alert-list-desc">{p.descricao}</span>
+                                        <span className="db-alert-list-sit">{situacaoPendenciaLabel(p)}</span>
+                                    </div>
+                                    <div className="db-alert-list-origem">{p.origem || '—'}</div>
+                                    <div className="db-alert-list-valor">{formatCurrency(p.valor)}</div>
+                                    {p.origem_id
+                                        ? <i className="ti ti-chevron-right" aria-hidden="true" />
+                                        : <span className="db-alert-list-none" title="Obra de origem não encontrada — pode ter sido arquivada ou excluída">indisponível</span>}
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             )}

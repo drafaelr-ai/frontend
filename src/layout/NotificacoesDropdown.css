@@ -16,12 +16,23 @@
     cursor: pointer;
     position: relative;
     transition: background var(--transition-fast);
-    color: var(--text-on-dark-muted);
+    /* Padrão para contexto de fundo CLARO (ex.: DashboardHeader). Dentro de
+       barras escuras (ex.: WindowsNavBar) o seletor abaixo sobrescreve. */
+    color: var(--text-secondary);
     font-size: 18px;
     flex-shrink: 0;
 }
 
 .nd-bell:hover {
+    background: var(--surface-muted);
+}
+
+/* Contexto de fundo escuro — sino precisa de cor clara pra não sumir. */
+.wnb-bar .nd-bell {
+    color: var(--text-on-dark-muted);
+}
+
+.wnb-bar .nd-bell:hover {
     background: rgba(255, 255, 255, 0.06);
 }
 
@@ -31,8 +42,8 @@
     right: 4px;
     min-width: 16px;
     height: 16px;
-    background: var(--brand-accent);
-    color: var(--surface-dark);
+    background: var(--status-danger);
+    color: var(--text-on-dark);
     font-size: 10px;
     font-weight: var(--weight-medium);
     border-radius: var(--radius-full);
