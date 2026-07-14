@@ -90,10 +90,15 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
         admin: alertas?.resumo?.admin?.vencidos || 0,
     };
 
+    // Mesmo mapeamento de tipo → aba usado na Obras Home, pra abrir direto
+    // na ocorrência (lançamento/boleto/parcela) em vez da home genérica.
+    const PAGINA_POR_TIPO = { lancamento: 'financeiro', parcela: 'financeiro', pagamento_futuro: 'financeiro', boleto: 'boletos' };
+
     const abrirPendencia = async (p) => {
         await onSelectModule(p.modulo === 'admin' ? 'admin' : 'obras');
         if (p.modulo === 'obras' && p.origem_id) {
-            window.location.href = `?obra=${p.origem_id}`;
+            const pagina = PAGINA_POR_TIPO[p.tipo];
+            window.location.href = pagina ? `?obra=${p.origem_id}&page=${pagina}` : `?obra=${p.origem_id}`;
         }
     };
 

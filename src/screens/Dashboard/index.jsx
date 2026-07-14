@@ -91,8 +91,18 @@ function ActivityIcon({ tipo }) {
     return map[tipo] ?? <i className="ti ti-dots-circle-horizontal" aria-hidden="true" />;
 }
 
-function navigateToObra(obraId) {
-    window.location.href = `?obra=${obraId}`;
+// Mapeia o tipo da pendência (vindo de /home/alertas) pra aba certa dentro
+// da obra, em vez de sempre cair na home genérica.
+const PAGINA_POR_TIPO = {
+    lancamento: 'financeiro',
+    parcela: 'financeiro',
+    pagamento_futuro: 'financeiro',
+    boleto: 'boletos',
+};
+
+function navigateToObra(obraId, tipo) {
+    const pagina = PAGINA_POR_TIPO[tipo];
+    window.location.href = pagina ? `?obra=${obraId}&page=${pagina}` : `?obra=${obraId}`;
 }
 
 // --- loading skeleton ---
@@ -340,7 +350,7 @@ export default function Dashboard() {
                                 <div
                                     key={i}
                                     className={`db-alert-list-item${p.origem_id ? '' : ' db-alert-list-item--disabled'}`}
-                                    onClick={() => p.origem_id && navigateToObra(p.origem_id)}
+                                    onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo)}
                                 >
                                     <div className="db-alert-list-main">
                                         <span className="db-alert-list-desc">{p.descricao}</span>
