@@ -138,6 +138,16 @@
 .rh-kpi.accent { border-left: 3px solid var(--module-rh); }
 .rh-kpi.alert { border-left: 3px solid var(--status-danger); }
 
+/* ===== totais de tabela (rodapé) ===== */
+.rh-table-totals {
+    display: flex; gap: var(--space-4); margin-top: var(--space-4);
+    padding-top: var(--space-4); border-top: 1px solid var(--border-subtle);
+}
+.rh-table-total { flex: 1; text-align: right; }
+.rh-table-total-lbl { font-size: var(--text-sm); color: var(--text-muted); display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.rh-table-total-val { font-size: var(--text-xl); font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.rh-table-total.accent .rh-table-total-val { color: var(--module-rh-dark); }
+
 /* ===== dashboard bars ===== */
 .rh-dash-period { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); gap: var(--space-3); }
 .rh-dash-period .rh-ttl { font-size: var(--text-lg); font-weight: 600; display: flex; align-items: center; gap: var(--space-2); }

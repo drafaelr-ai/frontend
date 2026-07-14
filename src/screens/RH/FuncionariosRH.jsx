@@ -39,6 +39,12 @@ export default function FuncionariosRH({ obras, categorias, reloadRefs, setCount
     const emObra = ativos.filter(f => f.obra_id != null).length;
     const semObra = ativos.filter(f => f.obra_id == null).length;
     const folhaBase = ativos.reduce((s, f) => s + (Number(f.salario) || 0), 0);
+    // Estimativa: FGTS 8% + INSS patronal 20% sobre a folha base (mesmos
+    // percentuais federais usados na sugestão de encargo, ver backend
+    // routes/rh.py::sugestao_encargo). É só uma estimativa por cadastro —
+    // o valor real do encargo é lançado por competência em Encargos.
+    const encargosEstimados = folhaBase * 0.28;
+    const totalGeralEstimado = folhaBase + encargosEstimados;
 
     const onSaved = () => {
         setModal({ open: false, funcionario: null });
@@ -124,7 +130,25 @@ export default function FuncionariosRH({ obras, categorias, reloadRefs, setCount
                         </tbody>
                     </table>
                 )}
-                <div className="rh-hint"><i className="ti ti-info-circle" /> O salário é puxado do piso da convenção do estado da obra, e fica editável por funcionário (ex.: quem ganha acima do piso).</div>
+
+                {!loading && ativos.length > 0 && (
+                    <div className="rh-table-totals">
+                        <div className="rh-table-total">
+                            <div className="rh-table-total-lbl"><i className="ti ti-wallet" /> Total estimado MO</div>
+                            <div className="rh-table-total-val">{brl(folhaBase)}</div>
+                        </div>
+                        <div className="rh-table-total">
+                            <div className="rh-table-total-lbl"><i className="ti ti-file-percent" /> Total encargos (est.)</div>
+                            <div className="rh-table-total-val">{brl(encargosEstimados)}</div>
+                        </div>
+                        <div className="rh-table-total accent">
+                            <div className="rh-table-total-lbl"><i className="ti ti-calculator" /> Total geral/mês (est.)</div>
+                            <div className="rh-table-total-val">{brl(totalGeralEstimado)}</div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="rh-hint"><i className="ti ti-info-circle" /> O salário é puxado do piso da convenção do estado da obra, e fica editável por funcionário (ex.: quem ganha acima do piso). Encargos estimados em FGTS 8% + INSS patronal 20% sobre a folha base — o valor real lançado em Encargos pode variar por competência.</div>
             </div>
 
             <FuncionarioModal
