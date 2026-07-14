@@ -3,6 +3,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { formatCurrency } from '../../utils/format';
+import { notify } from '../../utils/notify';
+import { logger } from '../../utils/logger';
 import StatCard from './components/StatCard';
 import ProgressBar from './components/ProgressBar';
 import ActivityItem from './components/ActivityItem';
@@ -159,6 +161,35 @@ export default function Dashboard() {
     const [vencidasListOpen, setVencidasListOpen] = useState(false);
     const [previsaoListOpen, setPrevisaoListOpen] = useState(false);
     const [detalhamentoOpen, setDetalhamentoOpen] = useState(false);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const [exportando, setExportando] = useState(false);
+
+    const exportarPendenciasPdf = async (escopo) => {
+        setExportMenuOpen(false);
+        setExportando(true);
+        try {
+            const res = await fetchWithAuth(`${API_URL}/home/pendencias/export-pdf?escopo=${escopo}`);
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                notify.error(body.mensagem || body.erro || 'Nenhuma pendência encontrada para esse filtro.');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pendencias_${escopo}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            logger.error('export pendências pdf', e);
+            notify.error('Erro ao exportar PDF.');
+        } finally {
+            setExportando(false);
+        }
+    };
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -352,10 +383,36 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <button className="db-section-link" onClick={() => setDetalhamentoOpen(v => !v)} style={{ marginBottom: detalhamentoOpen ? 0 : 20 }}>
-                {detalhamentoOpen ? 'Ocultar' : 'Ver'} detalhamento completo (Equipamento, Serviço, Despesa, Boleto)
-                <i className={`ti ti-chevron-${detalhamentoOpen ? 'up' : 'down'}`} aria-hidden="true" style={{ marginLeft: 4 }} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: detalhamentoOpen ? 0 : 20, flexWrap: 'wrap', gap: 8 }}>
+                <button className="db-section-link" onClick={() => setDetalhamentoOpen(v => !v)}>
+                    {detalhamentoOpen ? 'Ocultar' : 'Ver'} detalhamento completo (Equipamento, Serviço, Despesa, Boleto)
+                    <i className={`ti ti-chevron-${detalhamentoOpen ? 'up' : 'down'}`} aria-hidden="true" style={{ marginLeft: 4 }} />
+                </button>
+                <div className="db-export-wrap">
+                    <button
+                        className="db-section-link"
+                        disabled={exportando}
+                        onClick={() => setExportMenuOpen(v => !v)}
+                    >
+                        <i className="ti ti-file-type-pdf" aria-hidden="true" style={{ marginRight: 4 }} />
+                        {exportando ? 'Gerando PDF…' : 'Exportar pendências'}
+                        {!exportando && <i className={`ti ti-chevron-${exportMenuOpen ? 'up' : 'down'}`} aria-hidden="true" style={{ marginLeft: 4 }} />}
+                    </button>
+                    {exportMenuOpen && (
+                        <>
+                            <div className="db-export-overlay" onClick={() => setExportMenuOpen(false)} />
+                            <div className="db-export-menu">
+                                <button onClick={() => exportarPendenciasPdf('vencidas')}>
+                                    <i className="ti ti-alert-triangle" aria-hidden="true" /> Só vencidas
+                                </button>
+                                <button onClick={() => exportarPendenciasPdf('todas')}>
+                                    <i className="ti ti-calendar-due" aria-hidden="true" /> Vencidas + a vencer no mês
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
             {detalhamentoOpen && (
                 <div className="db-kpi-grid db-kpi-grid--4" style={{ marginBottom: 20 }}>
                     <StatCard label="Equipamento (total)" value={formatCurrency(hk?.equipamento_total ?? 0)}

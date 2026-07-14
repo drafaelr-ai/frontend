@@ -1,3 +1,45 @@
+.db-export-wrap {
+    position: relative;
+}
+.db-export-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+}
+.db-export-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 240px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popup);
+    padding: 6px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.db-export-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: var(--font-sans);
+}
+.db-export-menu button:hover {
+    background: var(--surface-muted);
+}
+
 .db-root {
     min-height: 100vh;
     background: var(--surface-page);
