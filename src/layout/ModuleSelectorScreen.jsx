@@ -58,7 +58,7 @@ function situacaoLabel(p) {
     return `vence ${dataBR(p.data_vencimento)}`;
 }
 
-const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess }) => {
+const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess, onChangePassword }) => {
     const [hoveredModule, setHoveredModule] = useState(null);
     const [alertas, setAlertas] = useState(null);
 
@@ -135,6 +135,11 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                 {onManageAccess && (
                     <button style={headerBtn} onClick={onManageAccess}>
                         <i className="ti ti-users-plus" /> Gerenciar acessos
+                    </button>
+                )}
+                {onChangePassword && (
+                    <button style={headerBtn} onClick={onChangePassword}>
+                        <i className="ti ti-key" /> Alterar senha
                     </button>
                 )}
                 {onLogout && (

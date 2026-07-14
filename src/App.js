@@ -12,6 +12,7 @@ import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
 import SuperlinkPublico from './screens/SuperlinkPublico';
 import AdminPanelModal from './components/modals/AdminPanelModal';
+import TrocarSenhaModal from './components/modals/TrocarSenhaModal';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
@@ -33,6 +34,7 @@ function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedModule, setSelectedModule] = useState(null); // null = seletor, 'obras' ou 'admin'
     const [accessPanelOpen, setAccessPanelOpen] = useState(false);
+    const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
     const [obrasParaPainel, setObrasParaPainel] = useState([]);
 
     // Lista de obras para o painel de acessos (aberto pelo master no seletor).
@@ -148,12 +150,16 @@ function App() {
                     onSelectModule={handleSelectModule}
                     onLogout={logout}
                     onManageAccess={user.role === 'master' ? () => setAccessPanelOpen(true) : undefined}
+                    onChangePassword={() => setTrocarSenhaOpen(true)}
                 />
                 {accessPanelOpen && (
                     <AdminPanelModal
                         allObras={obrasParaPainel}
                         onClose={() => setAccessPanelOpen(false)}
                     />
+                )}
+                {trocarSenhaOpen && (
+                    <TrocarSenhaModal onClose={() => setTrocarSenhaOpen(false)} />
                 )}
             </>
         );
