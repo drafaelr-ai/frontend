@@ -60,6 +60,9 @@ const CORES = {
     maoDeObra: 'var(--module-obras)',
     material: 'var(--status-success)',
     equipamento: 'var(--status-warning)',
+    servico: 'var(--status-info)',
+    despesa: 'var(--status-purple-text)',
+    boleto: 'var(--brand-accent)',
     outros: 'var(--status-neutral)'
 };
 
@@ -569,44 +572,39 @@ const MaterialDetalhesModal = ({ material, lancamentos, onClose }) => {
 // ============================================
 const DashboardObra = ({ obraId, obraNome, servicos, lancamentos, cronograma }) => {
     const [materialSelecionado, setMaterialSelecionado] = useState(null);
-    
-    // Calcular totais por categoria (MO, Material, Equipamento)
+    const [gastosPorCategoria, setGastosPorCategoria] = useState(null);
+
+    // Totais por categoria vêm de /home/obras — a MESMA fonte que alimenta o
+    // card da lista de Obras e os totais do dashboard geral, com os 6
+    // buckets reais (MO/Material/Equipamento/Serviço/Despesa/Boleto), em vez
+    // do cálculo local antigo que somava orçamento (não pago) e duplicava
+    // lançamentos vinculados a serviço.
+    useEffect(() => {
+        if (!obraId) return;
+        let cancelado = false;
+        fetchWithAuth(`${API_URL}/home/obras`)
+            .then(res => (res.ok ? res.json() : null))
+            .then(data => {
+                if (cancelado || !data) return;
+                const obra = (data.obras || []).find(o => o.id === obraId);
+                if (obra) setGastosPorCategoria(obra);
+            })
+            .catch(() => {});
+        return () => { cancelado = true; };
+    }, [obraId]);
+
     const dadosCategorias = useMemo(() => {
-        let totalMO = 0;
-        let totalMaterial = 0;
-        let totalEquipamento = 0;
-        
-        // Somar dos serviços
-        if (servicos && Array.isArray(servicos)) {
-            servicos.forEach(serv => {
-                totalMO += serv.valor_global_mao_de_obra || serv.valor_mao_de_obra || 0;
-                totalMaterial += serv.valor_global_material || serv.valor_material || 0;
-            });
-        }
-        
-        // Também somar dos lançamentos
-        if (lancamentos && Array.isArray(lancamentos)) {
-            lancamentos.forEach(l => {
-                const tipo = (l.tipo || l.categoria || '').toLowerCase();
-                const valor = l.valor || l.valor_total || 0;
-                
-                if (tipo.includes('mao') || tipo.includes('mão') || tipo.includes('obra') || tipo === 'mo') {
-                    totalMO += valor;
-                } else if (tipo.includes('material') || tipo.includes('mat')) {
-                    totalMaterial += valor;
-                } else if (tipo.includes('equip') || tipo.includes('ferramenta') || tipo.includes('aluguel')) {
-                    totalEquipamento += valor;
-                }
-            });
-        }
-        
+        if (!gastosPorCategoria) return [];
         return [
-            { label: 'Mão de Obra', value: totalMO, color: CORES.maoDeObra },
-            { label: 'Material', value: totalMaterial, color: CORES.material },
-            { label: 'Equipamento', value: totalEquipamento, color: CORES.equipamento }
+            { label: 'Mão de Obra', value: gastosPorCategoria.mo_total || 0, color: CORES.maoDeObra },
+            { label: 'Material', value: gastosPorCategoria.material_total || 0, color: CORES.material },
+            { label: 'Equipamento', value: gastosPorCategoria.equipamento_total || 0, color: CORES.equipamento },
+            { label: 'Serviço', value: gastosPorCategoria.servico_total || 0, color: CORES.servico },
+            { label: 'Despesa', value: gastosPorCategoria.despesa_total || 0, color: CORES.despesa },
+            { label: 'Boleto', value: gastosPorCategoria.boleto_total || 0, color: CORES.boleto },
         ].filter(item => item.value > 0);
-    }, [servicos, lancamentos]);
-    
+    }, [gastosPorCategoria]);
+
     // Calcular totais por tipo de material
     const dadosMateriais = useMemo(() => {
         const materiaisMap = {};

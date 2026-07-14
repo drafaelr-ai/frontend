@@ -333,6 +333,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                 >
                                     <option value="Material">Material</option>
                                     <option value="Mão de Obra">Mão de Obra</option>
+                                    <option value="Equipamento">Equipamento</option>
                                 </select>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>

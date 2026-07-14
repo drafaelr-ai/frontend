@@ -157,6 +157,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                         >
                             <option value="Material">Material</option>
                             <option value="Mão de Obra">Mão de Obra</option>
+                            <option value="Equipamento">Equipamento</option>
                         </select>
                     </div>
                     <div className="m-field">

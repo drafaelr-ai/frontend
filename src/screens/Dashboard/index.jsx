@@ -158,6 +158,7 @@ export default function Dashboard() {
     const [filtroObras, setFiltroObras] = useState('ativas');
     const [vencidasListOpen, setVencidasListOpen] = useState(false);
     const [previsaoListOpen, setPrevisaoListOpen] = useState(false);
+    const [detalhamentoOpen, setDetalhamentoOpen] = useState(false);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -350,6 +351,23 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            <button className="db-section-link" onClick={() => setDetalhamentoOpen(v => !v)} style={{ marginBottom: detalhamentoOpen ? 0 : 20 }}>
+                {detalhamentoOpen ? 'Ocultar' : 'Ver'} detalhamento completo (Equipamento, Serviço, Despesa, Boleto)
+                <i className={`ti ti-chevron-${detalhamentoOpen ? 'up' : 'down'}`} aria-hidden="true" style={{ marginLeft: 4 }} />
+            </button>
+            {detalhamentoOpen && (
+                <div className="db-kpi-grid db-kpi-grid--4" style={{ marginBottom: 20 }}>
+                    <StatCard label="Equipamento (total)" value={formatCurrency(hk?.equipamento_total ?? 0)}
+                        icon={<i className="ti ti-forklift" aria-hidden="true" />} />
+                    <StatCard label="Serviço (total)" value={formatCurrency(hk?.servico_total ?? 0)}
+                        icon={<i className="ti ti-tools" aria-hidden="true" />} />
+                    <StatCard label="Despesa (total)" value={formatCurrency(hk?.despesa_total ?? 0)}
+                        icon={<i className="ti ti-receipt-2" aria-hidden="true" />} />
+                    <StatCard label="Boleto (total)" value={formatCurrency(hk?.boleto_total ?? 0)}
+                        icon={<i className="ti ti-file-invoice" aria-hidden="true" />} />
+                </div>
+            )}
 
             {previsaoListOpen && (previsao?.itens?.length ?? 0) > 0 && (
                 <div className="db-previsao-list">
