@@ -237,6 +237,12 @@ export default function Dashboard() {
         [alertas]
     );
     const pendVencidas = pendObras.filter(p => p.situacao === 'vencido');
+    // Contagem/soma vêm de resumo (calculado no backend sobre a lista
+    // completa, sem corte) em vez de pendVencidas.length — se algum dia a
+    // API voltar a paginar/cortar a lista de itens, a contagem exibida
+    // continua correta mesmo assim.
+    const vencidosQtd = alertas?.resumo?.obras?.vencidos ?? pendVencidas.length;
+    const vencidosValor = alertas?.resumo?.obras?.valor_vencido ?? pendVencidas.reduce((s, p) => s + p.valor, 0);
 
     const activityFeed = useMemo(() => {
         const items = [];
@@ -292,7 +298,7 @@ export default function Dashboard() {
                     </h1>
                     <p>
                         {kpis.countObrasAtivas} obra{kpis.countObrasAtivas !== 1 ? 's' : ''} ativa{kpis.countObrasAtivas !== 1 ? 's' : ''}
-                        {pendVencidas.length > 0 ? ` · ${pendVencidas.length} pendência${pendVencidas.length !== 1 ? 's' : ''} vencida${pendVencidas.length !== 1 ? 's' : ''}` : ''}
+                        {vencidosQtd > 0 ? ` · ${vencidosQtd} pendência${vencidosQtd !== 1 ? 's' : ''} vencida${vencidosQtd !== 1 ? 's' : ''}` : ''}
                     </p>
                 </div>
                 <div className="db-period-toggle">
@@ -370,13 +376,13 @@ export default function Dashboard() {
             )}
 
             {/* Alerta de vencidos */}
-            {pendVencidas.length > 0 && (
+            {vencidosQtd > 0 && (
                 <div className="db-alert-wrap">
                     <div className="db-alert-banner">
                         <i className="ti ti-alert-triangle" aria-hidden="true" />
                         <span>
-                            {pendVencidas.length} pendência{pendVencidas.length !== 1 ? 's' : ''} vencida{pendVencidas.length !== 1 ? 's' : ''}
-                            {' '}({formatCurrency(pendVencidas.reduce((s, p) => s + p.valor, 0))})
+                            {vencidosQtd} pendência{vencidosQtd !== 1 ? 's' : ''} vencida{vencidosQtd !== 1 ? 's' : ''}
+                            {' '}({formatCurrency(vencidosValor)})
                             {' '}— {[...new Set(pendVencidas.map(p => p.origem).filter(Boolean))].slice(0, 3).join(', ')}
                         </span>
                         <span style={{ flex: 1 }} />
