@@ -94,7 +94,7 @@
 
 .db-section-link {
     font-size: var(--text-xs);
-    color: var(--status-info);
+    color: var(--module-obras);
     background: none;
     border: none;
     cursor: pointer;
@@ -109,8 +109,8 @@
 /* Card wrapper */
 .db-card {
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
     box-shadow: var(--shadow-card);
     overflow: hidden;
 }
@@ -125,8 +125,8 @@
 /* Obra tile */
 .db-obra-tile {
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
     padding: 20px;
     box-shadow: var(--shadow-card);
     cursor: pointer;
@@ -207,8 +207,8 @@
 /* Activity feed */
 .db-activity-list {
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
     box-shadow: var(--shadow-card);
     overflow: hidden;
 }
@@ -233,12 +233,12 @@
 
 .db-skeleton-kpi {
     height: 72px;
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
 }
 
 .db-skeleton-obra {
     height: 110px;
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
 }
 
 .db-skeleton-activity {
@@ -448,7 +448,7 @@
 .db-kpi-previsao {
     background: var(--surface-card);
     border: 1px solid var(--status-warning);
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
     padding: 14px;
     box-shadow: var(--shadow-card);
 }
@@ -483,7 +483,7 @@
     flex-wrap: wrap;
     background: var(--status-danger-bg);
     border: 1px solid var(--status-danger);
-    border-radius: var(--radius-lg);
+    border-radius: 16px;
     padding: 10px 16px;
     margin-bottom: 20px;
     color: var(--status-danger-text);

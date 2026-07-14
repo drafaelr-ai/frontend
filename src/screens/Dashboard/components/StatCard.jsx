@@ -12,8 +12,8 @@ const StatCard = ({ label, value, icon, trend, onClick }) => {
         <div
             style={{
                 background: hovered && isClickable ? 'var(--surface-page)' : 'var(--surface-card)',
-                border: '0.5px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '18px',
                 padding: '14px',
                 boxShadow: 'var(--shadow-card)',
                 cursor: isClickable ? 'pointer' : 'default',
@@ -28,8 +28,20 @@ const StatCard = ({ label, value, icon, trend, onClick }) => {
             onMouseLeave={() => setHovered(false)}
             onKeyDown={isClickable ? (e) => { if (e.key === 'Enter') handleClick(); } : undefined}
         >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                <span style={{ fontSize: 'var(--text-base)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '9px',
+                    background: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
+                    color: 'var(--module-obras)',
+                    fontSize: 'var(--text-base)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                }}>
                     {icon}
                 </span>
                 <span style={{

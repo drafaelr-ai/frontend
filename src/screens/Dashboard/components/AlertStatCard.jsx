@@ -18,9 +18,9 @@ const AlertStatCard = ({ label, value, severity = 'info', description, onClick }
         <div
             style={{
                 background: cfg.bg,
-                borderRadius: 'var(--radius-lg)',
+                borderRadius: '18px',
                 borderLeft: `3px solid ${cfg.color}`,
-                border: `0.5px solid var(--border-subtle)`,
+                border: `1px solid var(--border-subtle)`,
                 borderLeftWidth: '3px',
                 borderLeftColor: cfg.color,
                 padding: '12px 14px',

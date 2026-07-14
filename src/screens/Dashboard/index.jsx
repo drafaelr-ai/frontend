@@ -255,7 +255,10 @@ export default function Dashboard() {
             {/* Hero header — saudação + competência */}
             <div className="db-header">
                 <div className="db-header-left">
-                    <h1>{getGreeting()}{user?.username ? `, ${user.username.split(' ')[0]}` : ''} 👋</h1>
+                    <h1>
+                        {getGreeting()}{user?.username ? `, ${user.username.split(' ')[0]}` : ''}
+                        {' '}<i className="ti ti-hand-stop" aria-hidden="true" style={{ color: 'var(--module-obras)' }} />
+                    </h1>
                     <p>
                         {kpis.countObrasAtivas} obra{kpis.countObrasAtivas !== 1 ? 's' : ''} ativa{kpis.countObrasAtivas !== 1 ? 's' : ''}
                         {pendVencidas.length > 0 ? ` · ${pendVencidas.length} pendência${pendVencidas.length !== 1 ? 's' : ''} vencida${pendVencidas.length !== 1 ? 's' : ''}` : ''}

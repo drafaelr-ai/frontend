@@ -34,12 +34,12 @@ const ActivityItem = ({ icon, title, description, timestamp, obraName, onClick, 
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                background: 'var(--surface-subtle)',
+                background: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 'var(--text-sm)',
-                color: 'var(--text-muted)',
+                color: 'var(--module-obras)',
                 marginTop: '1px',
             }} aria-hidden="true">
                 {icon}
@@ -70,7 +70,7 @@ const ActivityItem = ({ icon, title, description, timestamp, obraName, onClick, 
                 {obraName && (
                     <div style={{
                         fontSize: 'var(--text-xs)',
-                        color: 'var(--status-info)',
+                        color: 'var(--module-obras)',
                         marginTop: '2px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',

@@ -117,8 +117,8 @@ export default function DashboardRH() {
                         );
                     })}
                     <div className="rh-legend">
-                        <span className="rh-legend-k"><span className="rh-legend-sw" style={{ background: 'var(--brand-primary)' }} /> Salários</span>
-                        <span className="rh-legend-k"><span className="rh-legend-sw" style={{ background: 'var(--brand-accent)' }} /> Encargos</span>
+                        <span className="rh-legend-k"><span className="rh-legend-sw" style={{ background: 'var(--module-rh)' }} /> Salários</span>
+                        <span className="rh-legend-k"><span className="rh-legend-sw" style={{ background: 'var(--module-rh-dark)' }} /> Encargos</span>
                     </div>
                 </div>
 

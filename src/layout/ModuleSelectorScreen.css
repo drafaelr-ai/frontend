@@ -1,0 +1,44 @@
+.ms-body {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 1080px;
+    align-items: stretch;
+}
+
+.ms-hero-card {
+    flex: 1 1 380px;
+    min-width: 320px;
+}
+
+.ms-hero-card--solo {
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.ms-rows-col {
+    flex: 1 1 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 280px;
+}
+
+.ms-row-card {
+    transition: background var(--transition-fast, 0.15s ease), border-color var(--transition-fast, 0.15s ease), transform var(--transition-fast, 0.15s ease);
+}
+
+.ms-row-card:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 760px) {
+    .ms-body {
+        flex-direction: column;
+    }
+
+    .ms-hero-card,
+    .ms-rows-col {
+        min-width: 0;
+    }
+}

@@ -101,7 +101,7 @@ export default function DashboardFrota() {
                     <div className="frota-card-head">
                         <div className="frota-card-title"><i className="ti ti-file-alert" /> Documentos vencidos / a vencer</div>
                     </div>
-                    {docsVencidos.length + docsAVencer.length === 0 && <div className="frota-empty">Nenhum documento vencendo. 🎉</div>}
+                    {docsVencidos.length + docsAVencer.length === 0 && <div className="frota-empty"><i className="ti ti-circle-check" style={{ marginRight: 6 }} /> Nenhum documento vencendo.</div>}
                     {[...docsVencidos, ...docsAVencer].slice(0, 8).map(d => (
                         <div className="frota-bar-row" key={d.id} style={{ justifyContent: 'space-between' }}>
                             <div className="frota-bar-label" style={{ width: 'auto', flex: 1 }}>
@@ -118,7 +118,7 @@ export default function DashboardFrota() {
                     <div className="frota-card-head">
                         <div className="frota-card-title"><i className="ti ti-id" /> CNHs vencendo (30 dias)</div>
                     </div>
-                    {cnhs.length === 0 && <div className="frota-empty">Nenhuma CNH vencendo. 🎉</div>}
+                    {cnhs.length === 0 && <div className="frota-empty"><i className="ti ti-circle-check" style={{ marginRight: 6 }} /> Nenhuma CNH vencendo.</div>}
                     {cnhs.slice(0, 8).map(c => (
                         <div className="frota-bar-row" key={c.id} style={{ justifyContent: 'space-between' }}>
                             <div className="frota-bar-label" style={{ width: 'auto', flex: 1 }}>

@@ -68,12 +68,12 @@ const getTodayString = () => {
 const SsoErrorScreen = ({ message, onRetry, onBack }) => (
     <div style={styles.loginContainer}>
         <button onClick={onBack} style={styles.backButton}>
-            ← Voltar
+            <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
         </button>
 
         <div style={styles.loginCard}>
             <div style={styles.loginHeader}>
-                <div style={styles.loginIcon}>🏢</div>
+                <div style={styles.loginIcon}><i className="ti ti-home-2" aria-hidden="true" /></div>
                 <h1 style={styles.loginTitle}>Administração</h1>
                 <p style={styles.loginSubtitle}>Gestão Patrimonial</p>
             </div>
@@ -90,24 +90,23 @@ const SsoErrorScreen = ({ message, onRetry, onBack }) => (
 // ===================================================================================
 
 const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, isOpen, onClose }) => {
+    // Guia "Usuários" removida: acesso agora é gerido pelo login central
+    // (painel "Gerenciar acessos" do app principal) — ver PUT /admin/users/<id>/modulos.
     const menuItems = [
-        { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-        { id: 'imoveis', icon: '🏠', label: 'Imóveis' },
-        { id: 'lancamentos', icon: '💰', label: 'Lançamentos' },
-        { id: 'boletos', icon: '📄', label: 'Boletos' },
-        { id: 'relatorios', icon: '📈', label: 'Relatórios' },
+        { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+        { id: 'imoveis', icon: 'building-community', label: 'Imóveis' },
+        { id: 'lancamentos', icon: 'receipt-2', label: 'Lançamentos' },
+        { id: 'boletos', icon: 'file-text', label: 'Boletos' },
+        { id: 'relatorios', icon: 'chart-line', label: 'Relatórios' },
     ];
-
-    // Menu de admin (apenas para role='admin')
-    if (user?.role === 'admin') {
-        menuItems.push({ id: 'usuarios', icon: '👥', label: 'Usuários' });
-    }
 
     return (
         <div className={`admin-sidebar${isOpen ? ' open' : ''}`} style={styles.sidebar}>
             {/* Logo */}
             <div style={styles.sidebarHeader}>
-                <span style={styles.sidebarLogo}>🏢</span>
+                <span style={styles.sidebarLogo}>
+                    <i className="ti ti-home-2" aria-hidden="true" />
+                </span>
                 <div style={{ flex: 1 }}>
                     <div style={styles.sidebarTitle}>Obraly</div>
                     <div style={styles.sidebarSubtitle}>Administração</div>
@@ -118,7 +117,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
                     aria-label="Fechar menu"
                     style={styles.sidebarCloseBtn}
                 >
-                    ✕
+                    <i className="ti ti-x" aria-hidden="true" />
                 </button>
             </div>
 
@@ -133,7 +132,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
                             ...(activeMenu === item.id ? styles.menuItemActive : {})
                         }}
                     >
-                        <span style={styles.menuIcon}>{item.icon}</span>
+                        <span style={styles.menuIcon}><i className={`ti ti-${item.icon}`} aria-hidden="true" /></span>
                         {item.label}
                     </button>
                 ))}
@@ -142,7 +141,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
             {/* User */}
             <div style={styles.sidebarFooter}>
                 <div style={styles.userInfo}>
-                    <div style={styles.userAvatar}>👤</div>
+                    <div style={styles.userAvatar}><i className="ti ti-user" aria-hidden="true" /></div>
                     <div>
                         <div style={styles.userName}>{user?.nome || 'Usuário'}</div>
                         <div style={styles.userRole}>{user?.role || 'operador'}</div>
@@ -150,11 +149,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
                 </div>
                 {onBackToModules && (
                     <button onClick={onBackToModules} style={{ ...styles.logoutButton, marginBottom: 8 }}>
-                        ← Voltar aos módulos
+                        <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar aos módulos
                     </button>
                 )}
                 <button onClick={onLogout} style={styles.logoutButton}>
-                    Sair
+                    <i className="ti ti-logout" aria-hidden="true" /> Sair
                 </button>
             </div>
         </div>
@@ -217,7 +216,7 @@ const AdminMobileStyles = () => (
                 height: 44px;
                 border-radius: 8px;
                 border: none;
-                background: #0F766E;
+                background: var(--module-admin-dark);
                 color: #fff;
                 font-size: 22px;
                 cursor: pointer;
@@ -243,7 +242,7 @@ const AdminMobileStyles = () => (
                 padding: 0 14px;
                 border-radius: 8px;
                 border: none;
-                background: #0F766E;
+                background: var(--module-admin-dark);
                 color: #fff;
                 font-size: 14px;
                 font-weight: 600;
@@ -366,8 +365,8 @@ const Dashboard = ({ onIrImoveis }) => {
 
     const statusChip = (status) => {
         const map = {
-            alugado: { label: 'Alugado', bg: '#dcfce7', fg: '#16a34a' },
-            alugado_terceiro: { label: 'Alugado', bg: '#dcfce7', fg: '#16a34a' },
+            alugado: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
+            alugado_terceiro: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
             proprio: { label: 'Próprio', bg: '#e0e7ff', fg: '#4f46e5' },
             a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: '#d97706' },
             em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: '#d97706' },
@@ -443,20 +442,20 @@ const Dashboard = ({ onIrImoveis }) => {
                 display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
                 gap: '12px', marginBottom: '16px'
             }}>
-                {kpiCard('↑', '#dcfce7',
+                {kpiCard(<i className="ti ti-arrow-up-right" aria-hidden="true" />, 'var(--status-success-bg)',
                     modo === 'acumulado' ? 'Total Receitas' : 'Receitas do mês',
-                    formatCurrency(dadosAtivos?.resumo?.receitas_mes || 0), '#16a34a',
+                    formatCurrency(dadosAtivos?.resumo?.receitas_mes || 0), 'var(--module-admin-dark)',
                     () => setModalLancamentos({ titulo: `Receitas — ${labelPeriodo}`, tipo: 'receita' }))}
-                {kpiCard('↓', 'var(--status-danger-bg)',
+                {kpiCard(<i className="ti ti-arrow-down-right" aria-hidden="true" />, 'var(--status-danger-bg)',
                     modo === 'acumulado' ? 'Total Despesas' : 'Despesas do mês',
                     formatCurrency(dadosAtivos?.resumo?.despesas_mes || 0), 'var(--status-danger)',
                     () => setModalLancamentos({ titulo: `Despesas — ${labelPeriodo}`, tipo: 'despesa' }))}
-                {kpiCard('Σ', (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? '#dcfce7' : 'var(--status-danger-bg)',
+                {kpiCard(<i className="ti ti-sum" aria-hidden="true" />, (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
                     modo === 'acumulado' ? 'Saldo acumulado' : 'Saldo do mês',
                     formatCurrency(dadosAtivos?.resumo?.saldo_mes || 0),
-                    (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? '#16a34a' : 'var(--status-danger)',
+                    (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? 'var(--module-admin-dark)' : 'var(--status-danger)',
                     () => setModalLancamentos({ titulo: `Todos — ${labelPeriodo}`, tipo: '' }))}
-                {kpiCard('⌂', '#e0e7ff', 'Ocupação',
+                {kpiCard(<i className="ti ti-building-community" aria-hidden="true" />, 'var(--status-success-bg)', 'Ocupação',
                     `${alugados} de ${imoveisFisicos.length}`, undefined, onIrImoveis,
                     imoveisFisicos.length ? `${Math.round((alugados / imoveisFisicos.length) * 100)}% alugados` : undefined)}
             </div>
@@ -484,7 +483,7 @@ const Dashboard = ({ onIrImoveis }) => {
                         <h2 style={{ ...styles.sectionTitle, margin: 0 }}>Imóveis</h2>
                         {onIrImoveis && (
                             <button onClick={onIrImoveis} style={{
-                                background: 'none', border: 'none', color: '#16a34a', fontWeight: 700,
+                                background: 'none', border: 'none', color: 'var(--module-admin-dark)', fontWeight: 700,
                                 fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit'
                             }}>
                                 Ver todos →
@@ -513,7 +512,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                             Despesas: {formatCurrency(cg.total_despesas || 0)}
                                         </div>
                                     </div>
-                                    <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: '#16a34a' }}>Ver →</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: 'var(--module-admin-dark)' }}>Ver →</span>
                                 </div>
                             ))}
                         </div>
@@ -557,7 +556,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         {[
                                             ['Aluguel', im.valor_aluguel ? `${formatCurrency(im.valor_aluguel)}/mês` : '—', 'var(--text-primary)'],
-                                            ['Receitas', formatCurrency(im.total_receitas || 0), '#16a34a'],
+                                            ['Receitas', formatCurrency(im.total_receitas || 0), 'var(--module-admin-dark)'],
                                             ['Despesas', formatCurrency(im.total_despesas || 0), 'var(--status-danger)'],
                                         ].map(([lb, vl, cor]) => (
                                             <div key={lb} style={{ flex: 1, minWidth: 0 }}>
@@ -610,7 +609,7 @@ const Dashboard = ({ onIrImoveis }) => {
 
             {/* Despesas por Categoria */}
             <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>💳 Despesas por Categoria</h2>
+                <h2 style={styles.sectionTitle}><i className="ti ti-chart-pie" aria-hidden="true" /> Despesas por Categoria</h2>
                 <div style={styles.categoryList}>
                     {dadosAtivos?.despesas_por_categoria?.length > 0 ? (
                         dadosAtivos.despesas_por_categoria.map((cat, i) => (
@@ -637,7 +636,7 @@ const Dashboard = ({ onIrImoveis }) => {
 
             {/* Últimos Lançamentos */}
             <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>📋 Últimos Lançamentos</h2>
+                <h2 style={styles.sectionTitle}><i className="ti ti-list" aria-hidden="true" /> Últimos Lançamentos</h2>
                 <div style={styles.tableContainer}>
                     {dadosAtivos?.ultimos_lancamentos?.length > 0 ? (
                         <table style={styles.table}>
@@ -662,13 +661,13 @@ const Dashboard = ({ onIrImoveis }) => {
                                         <td style={styles.td}>
                                             <span style={{
                                                 ...styles.badge,
-                                                backgroundColor: lanc.tipo === 'receita' ? '#dcfce7' : 'var(--status-danger-bg)',
-                                                color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)'
+                                                backgroundColor: lanc.tipo === 'receita' ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
+                                                color: lanc.tipo === 'receita' ? 'var(--module-admin-dark)' : 'var(--status-danger)'
                                             }}>
                                                 {lanc.tipo === 'receita' ? '↑ Receita' : '↓ Despesa'}
                                             </span>
                                         </td>
-                                        <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)', fontWeight: '600' }}>
+                                        <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? 'var(--module-admin-dark)' : 'var(--status-danger)', fontWeight: '600' }}>
                                             {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
                                         </td>
                                     </tr>
@@ -764,13 +763,13 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                                         <td style={{ padding: '10px 14px' }}>
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-                                                background: l.status === 'pago' ? '#dcfce7' : l.status === 'cancelado' ? 'var(--surface-muted)' : 'var(--status-warning-bg)',
-                                                color: l.status === 'pago' ? '#166534' : l.status === 'cancelado' ? 'var(--border-strong)' : '#92400e',
+                                                background: l.status === 'pago' ? 'var(--status-success-bg)' : l.status === 'cancelado' ? 'var(--surface-muted)' : 'var(--status-warning-bg)',
+                                                color: l.status === 'pago' ? 'var(--status-success-text)' : l.status === 'cancelado' ? 'var(--border-strong)' : '#92400e',
                                             }}>
                                                 {l.status === 'pago' ? '✓ Pago' : l.status === 'cancelado' ? 'Cancelado' : '⏳ Pendente'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? '#ef4444' : '#22c55e', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? '#ef4444' : 'var(--module-admin)', whiteSpace: 'nowrap' }}>
                                             {l.tipo === 'despesa' ? '-' : '+'}{formatCurrency(l.valor)}
                                         </td>
                                     </tr>
@@ -794,7 +793,9 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
             </div>
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
-                    lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    // Superlink é um link de cobrança: só faz sentido levar o que ainda
+                    // está pendente (itens já pagos/cancelados ficam de fora).
+                    lancamentos={lancamentos.filter(l => l.status === 'pendente')}
                     onClose={() => setShowSuperlink(false)}
                 />
             )}
@@ -814,6 +815,7 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
     const [mes, setMes] = useState('');
     const [ano, setAno] = useState('');
     const [tipo, setTipo] = useState('');
+    const [status, setStatus] = useState('');
     const [lancamentos, setLancamentos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editandoLanc, setEditandoLanc] = useState(null);
@@ -831,13 +833,14 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
             if (mes) params.append('mes', mes);
             if (ano) params.append('ano', ano);
             if (tipo) params.append('tipo', tipo);
+            if (status) params.append('status', status);
             const r = await fetchWithAuthAdmin(`${API_URL_ADMIN}/lancamentos?${params}`);
             const d = await r.json();
             setLancamentos(Array.isArray(d) ? d : []);
         } catch (e) { logger.error(e); } finally { setLoading(false); }
     };
 
-    useEffect(() => { carregar(); }, [mes, ano, tipo]);
+    useEffect(() => { carregar(); }, [mes, ano, tipo, status]);
 
     const handleDelete = async (id) => {
         if (!await confirmDialog('Remover este lançamento?', { danger: true, confirmText: 'Remover' })) return;
@@ -861,8 +864,8 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                 {/* Header */}
                 <div style={{ padding:'18px 24px', background:'var(--surface-dark-soft)', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                     <div>
-                        <h2 style={{ margin:0, color:'var(--surface-card)', fontSize:'17px', fontWeight:700 }}>📋 Lançamentos — {imovel.nome}</h2>
-                        <p style={{ margin:'2px 0 0', color:'var(--border-strong)', fontSize:'13px' }}>{imovel.status === 'proprio' ? '🏠 Imóvel próprio' : imovel.status}</p>
+                        <h2 style={{ margin:0, color:'var(--surface-card)', fontSize:'17px', fontWeight:700 }}><i className="ti ti-receipt-2" aria-hidden="true" /> Lançamentos — {imovel.nome}</h2>
+                        <p style={{ margin:'2px 0 0', color:'var(--border-strong)', fontSize:'13px' }}>{imovel.status === 'proprio' ? 'Imóvel próprio' : imovel.status}</p>
                     </div>
                     <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'var(--surface-card)', borderRadius:'8px', width:'34px', height:'34px', cursor:'pointer', fontSize:'18px' }}>×</button>
                 </div>
@@ -881,12 +884,18 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                         <option value='despesa'>Despesas</option>
                         <option value='receita'>Receitas</option>
                     </select>
+                    <select value={status} onChange={e => setStatus(e.target.value)} style={styles.select}>
+                        <option value=''>Todos os status</option>
+                        <option value='pendente'>Pendentes</option>
+                        <option value='pago'>Pagos</option>
+                        <option value='cancelado'>Cancelados</option>
+                    </select>
                 </div>
                 {/* Resumo */}
                 <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
                     <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Receitas </span><strong style={{ color:'#22c55e' }}>{formatCurrency(totalReceitas)}</strong></div>}
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? '#22c55e' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Receitas </span><strong style={{ color:'var(--module-admin)' }}>{formatCurrency(totalReceitas)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
                     {isProprio && <span style={{ fontSize:'12px', color:'var(--border-strong)', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
                     <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>{lancamentos.length} lançamentos</span></div>
                 </div>
@@ -911,16 +920,16 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                             {l.observacoes && <div style={{ fontSize:'11px', color:'var(--border-strong)' }}>{l.observacoes}</div>}
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.tipo==='despesa'?'var(--status-danger-bg)':'#dcfce7', color: l.tipo==='despesa'?'var(--status-danger-text)':'#15803d' }}>
+                                            <span style={{ ...styles.badge, background: l.tipo==='despesa'?'var(--status-danger-bg)':'var(--status-success-bg)', color: l.tipo==='despesa'?'var(--status-danger-text)':'var(--module-admin-dark)' }}>
                                                 {l.tipo === 'despesa' ? 'Despesa' : 'Receita'}
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.status==='pago'?'#dcfce7':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'#166534':l.status==='cancelado'?'var(--border-strong)':'#92400e' }}>
+                                            <span style={{ ...styles.badge, background: l.status==='pago'?'var(--status-success-bg)':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'var(--status-success-text)':l.status==='cancelado'?'var(--border-strong)':'#92400e' }}>
                                                 {l.status==='pago'?'✓ Pago':l.status==='cancelado'?'Cancelado':'⏳ Pendente'}
                                             </span>
                                         </td>
-                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'#ef4444':'#22c55e', fontWeight:700 }}>
+                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'#ef4444':'var(--module-admin)', fontWeight:700 }}>
                                             {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
                                         </td>
                                         <td style={{ ...styles.td, textAlign:'center' }}>
@@ -1032,9 +1041,9 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                         {['despesa','receita'].map(t => (
                             <button key={t} type='button' onClick={() => setForm(f => ({ ...f, tipo:t, categoria_id:'' }))}
                                 style={{ flex:1, padding:'10px', borderRadius:'10px', border:'2px solid', cursor:'pointer', fontWeight:700, fontSize:'14px',
-                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'#22c55e') : 'var(--border-subtle)',
-                                    background: form.tipo===t ? (t==='despesa'?'var(--status-danger-bg)':'#dcfce7') : 'var(--surface-card)',
-                                    color: form.tipo===t ? (t==='despesa'?'var(--status-danger-text)':'#15803d') : 'var(--border-strong)' }}>
+                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'var(--module-admin)') : 'var(--border-subtle)',
+                                    background: form.tipo===t ? (t==='despesa'?'var(--status-danger-bg)':'var(--status-success-bg)') : 'var(--surface-card)',
+                                    color: form.tipo===t ? (t==='despesa'?'var(--status-danger-text)':'var(--module-admin-dark)') : 'var(--border-strong)' }}>
                                 {t==='despesa'?'📤 Despesa':'📥 Receita'}
                             </button>
                         ))}
@@ -1318,10 +1327,10 @@ const Imoveis = () => {
 
     const statusImovel = [
         { value: 'proprio', label: 'Próprio', icon: '🏠', cor: '#e0e7ff', corTexto: '#4f46e5' },
-        { value: 'alugado', label: 'Alugado', icon: '💰', cor: '#dcfce7', corTexto: '#16a34a' },
+        { value: 'alugado', label: 'Alugado', icon: '💰', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
         { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: '🔑', cor: 'var(--status-info-bg)', corTexto: '#2563eb' },
         { value: 'a_venda', label: 'À Venda', icon: '🏷️', cor: 'var(--status-warning-bg)', corTexto: '#d97706' },
-        { value: 'vendido', label: 'Vendido', icon: '✅', cor: 'var(--status-success-bg)', corTexto: '#059669' },
+        { value: 'vendido', label: 'Vendido', icon: '✅', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
         { value: 'em_obra', label: 'Em Obra', icon: '🏗️', cor: '#fae8ff', corTexto: '#a855f7' },
         { value: 'em_espera', label: 'Em Espera', icon: '⏸️', cor: 'var(--surface-muted)', corTexto: 'var(--status-neutral)' },
         { value: 'inativo', label: 'Inativo', icon: '🚫', cor: 'var(--status-danger-bg)', corTexto: 'var(--status-danger)' },
@@ -1335,7 +1344,7 @@ const Imoveis = () => {
         <div style={styles.content}>
             {/* Header */}
             <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>🏠 Imóveis</h1>
+                <h1 style={styles.pageTitle}><i className="ti ti-building-community" aria-hidden="true" /> Imóveis</h1>
                 <button onClick={() => openModal()} style={styles.primaryButton}>
                     + Novo Imóvel
                 </button>
@@ -1379,7 +1388,7 @@ const Imoveis = () => {
                                 {imovel.status !== 'proprio' && (
                                     <div style={styles.imovelStat}>
                                         <span style={styles.statLabel}>Receitas</span>
-                                        <span style={{ ...styles.statValue, color: '#16a34a' }}>
+                                        <span style={{ ...styles.statValue, color: 'var(--module-admin-dark)' }}>
                                             {formatCurrency(imovel.total_receitas || 0)}
                                         </span>
                                     </div>
@@ -1389,7 +1398,7 @@ const Imoveis = () => {
                                         <span style={styles.statLabel}>Saldo</span>
                                         <span style={{ 
                                             ...styles.statValue, 
-                                            color: (imovel.saldo || 0) >= 0 ? '#16a34a' : 'var(--status-danger)' 
+                                            color: (imovel.saldo || 0) >= 0 ? 'var(--module-admin-dark)' : 'var(--status-danger)' 
                                         }}>
                                             {formatCurrency(imovel.saldo || 0)}
                                         </span>
@@ -1633,6 +1642,7 @@ const Lancamentos = () => {
     const [filtros, setFiltros] = useState({
         imovel_id: '',
         tipo: '',
+        status: '',
         mes: new Date().getMonth() + 1,
         ano: new Date().getFullYear()
     });
@@ -1672,6 +1682,7 @@ const Lancamentos = () => {
             let url = `${API_URL_ADMIN}/lancamentos?mes=${filtros.mes}&ano=${filtros.ano}`;
             if (filtros.imovel_id) url += `&imovel_id=${filtros.imovel_id}`;
             if (filtros.tipo) url += `&tipo=${filtros.tipo}`;
+            if (filtros.status) url += `&status=${filtros.status}`;
 
             const [lancRes, imovRes, catRes] = await Promise.all([
                 fetchWithAuthAdmin(url),
@@ -1832,7 +1843,7 @@ const Lancamentos = () => {
         <div style={styles.content}>
             {/* Header */}
             <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>💰 Lançamentos</h1>
+                <h1 style={styles.pageTitle}><i className="ti ti-receipt-2" aria-hidden="true" /> Lançamentos</h1>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button
                         onClick={() => setShowSuperlink(true)}
@@ -1867,6 +1878,16 @@ const Lancamentos = () => {
                     <option value="">Todos os tipos</option>
                     <option value="despesa">Despesas</option>
                     <option value="receita">Receitas</option>
+                </select>
+                <select
+                    value={filtros.status}
+                    onChange={e => setFiltros({ ...filtros, status: e.target.value })}
+                    style={styles.select}
+                >
+                    <option value="">Todos os status</option>
+                    <option value="pendente">Pendentes</option>
+                    <option value="pago">Pagos</option>
+                    <option value="cancelado">Cancelados</option>
                 </select>
                 <select
                     value={filtros.mes}
@@ -1916,9 +1937,9 @@ const Lancamentos = () => {
                                     <td style={styles.td}>
                                         <span style={{
                                             ...styles.badge,
-                                            backgroundColor: lanc.status === 'pago' ? '#dcfce7' : 
+                                            backgroundColor: lanc.status === 'pago' ? 'var(--status-success-bg)' : 
                                                             lanc.status === 'pendente' ? 'var(--status-warning-bg)' : 'var(--status-danger-bg)',
-                                            color: lanc.status === 'pago' ? '#16a34a' : 
+                                            color: lanc.status === 'pago' ? 'var(--module-admin-dark)' : 
                                                    lanc.status === 'pendente' ? '#d97706' : 'var(--status-danger)'
                                         }}>
                                             {lanc.status === 'pago' ? '✓ Pago' : 
@@ -1927,7 +1948,7 @@ const Lancamentos = () => {
                                     </td>
                                     <td style={{
                                         ...styles.tdRight,
-                                        color: lanc.tipo === 'receita' ? '#16a34a' : 'var(--status-danger)',
+                                        color: lanc.tipo === 'receita' ? 'var(--module-admin-dark)' : 'var(--status-danger)',
                                         fontWeight: '600'
                                     }}>
                                         {lanc.tipo === 'receita' ? '+' : '-'} {formatCurrency(lanc.valor)}
@@ -1937,7 +1958,7 @@ const Lancamentos = () => {
                                             {lanc.status === 'pendente' && (
                                                 <button
                                                     onClick={() => abrirModalPagar(lanc)}
-                                                    style={{ ...styles.smallButton, color: '#16a34a', fontWeight: '600' }}
+                                                    style={{ ...styles.smallButton, color: 'var(--module-admin-dark)', fontWeight: '600' }}
                                                     title="Registrar pagamento"
                                                 >
                                                     <i className="ti ti-currency-dollar" aria-hidden="true" /> Pagar
@@ -1988,7 +2009,7 @@ const Lancamentos = () => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalPagar(false)}>
                     <div style={{ ...styles.modal, maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>💵 Registrar Pagamento</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-cash" aria-hidden="true" /> Registrar Pagamento</h2>
                             <button onClick={() => setShowModalPagar(false)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <div style={styles.modalBody}>
@@ -2090,7 +2111,7 @@ const Lancamentos = () => {
                 <div style={styles.modalOverlay} onClick={() => setShowComprovante(null)}>
                     <div style={{ ...styles.modal, maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>📎 Comprovante</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-paperclip" aria-hidden="true" /> Comprovante</h2>
                             <button onClick={() => setShowComprovante(null)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <div style={{ padding: '24px', textAlign: 'center' }}>
@@ -2138,7 +2159,7 @@ const Lancamentos = () => {
                 <div style={styles.modalOverlay} onClick={() => setShowModal(false)}>
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>💰 Novo Lançamento</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-receipt-2" aria-hidden="true" /> Novo Lançamento</h2>
                             <button onClick={() => setShowModal(false)} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={styles.modalBody}>
@@ -2371,7 +2392,10 @@ const Lancamentos = () => {
 
             {showSuperlink && (
                 <GerarSuperlinkAdminModal
-                    lancamentos={lancamentos.filter(l => l.status !== 'cancelado')}
+                    // Superlink é um link de cobrança: só faz sentido levar o que ainda
+                    // está pendente (itens já pagos/cancelados ficam de fora). Boletos
+                    // (boletosImovel) já vêm filtrados para status != 'Pago'.
+                    lancamentos={lancamentos.filter(l => l.status === 'pendente')}
                     boletos={boletosImovel}
                     imovelNome={imoveis.find(i => String(i.id) === String(filtros.imovel_id))?.nome || ''}
                     imovelId={filtros.imovel_id || null}
@@ -2513,7 +2537,7 @@ const GestaoBoletos = () => {
     return (
         <div style={styles.content}>
             <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>📄 Boletos</h1>
+                <h1 style={styles.pageTitle}><i className="ti ti-file-text" aria-hidden="true" /> Boletos</h1>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button
                         onClick={() => setShowSuperlink(true)}
@@ -2546,7 +2570,7 @@ const GestaoBoletos = () => {
                             {[
                                 { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: '#ffebee', color: '#d32f2f' },
                                 { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: '#fff3e0', color: '#f57c00' },
-                                { label: 'Pagos', val: resumo.total_pago, qtd: resumo.quantidade_pago, bg: '#e8f5e9', color: '#388e3c' },
+                                { label: 'Pagos', val: resumo.total_pago, qtd: resumo.quantidade_pago, bg: 'var(--status-success-bg)', color: 'var(--module-admin-dark)' },
                             ].map(k => (
                                 <div key={k.label} style={{ background: k.bg, padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
                                     <div style={{ fontSize: '0.85em', color: k.color }}>{k.label}</div>
@@ -2575,7 +2599,7 @@ const GestaoBoletos = () => {
                             {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#f57c00' }}>🚨 URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
                             {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#ffa000' }}>⚠️ Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
                             {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#666' }}>📄 Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
-                            {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#388e3c' }}>✅ Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
+                            {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--module-admin-dark)' }}>✅ Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
                         </>
                     )}
                 </>
@@ -2607,7 +2631,7 @@ const GestaoBoletos = () => {
                 <div style={styles.modalOverlay} onClick={() => setModalPreview(null)}>
                     <div style={{ ...styles.modal, maxWidth: '700px' }} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-file-text" aria-hidden="true" /> {modalPreview.arquivo_nome || 'Boleto'}</h2>
                             <button onClick={() => setModalPreview(null)} style={styles.closeButton}>×</button>
                         </div>
                         <div style={{ padding: '24px', textAlign: 'center' }}>
@@ -2716,7 +2740,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
         <div style={styles.modalOverlay} onClick={onClose}>
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>📄 Novo Boleto</h2>
+                    <h2 style={styles.modalTitle}><i className="ti ti-file-text" aria-hidden="true" /> Novo Boleto</h2>
                     <button onClick={onClose} style={styles.closeButton}>×</button>
                 </div>
                 <form onSubmit={handleSubmit} style={styles.modalBody}>
@@ -3032,7 +3056,7 @@ const Relatorios = () => {
         --border-subtle:#e2e8f0; --surface-muted:#f1f5f9; --surface-subtle:#f8fafc;
         --surface-card:#fff; --status-danger:#dc2626; --status-danger-bg:#fee2e2;
         --status-danger-text:#b91c1c; --status-warning:#f59e0b; --status-warning-bg:#fef3c7;
-        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:#047857;
+        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:var(--status-success-text);
         --status-info:#3b82f6; --status-info-bg:#dbeafe;
     }
     * { box-sizing: border-box; }
@@ -3046,13 +3070,13 @@ const Relatorios = () => {
     .kpi span { display: block; font-size: 10px; color: var(--status-neutral); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
     .kpi strong { font-size: 18px; font-weight: 800; }
     .kpi.red strong { color: var(--status-danger); }
-    .kpi.green strong { color: #16a34a; }
+    .kpi.green strong { color: var(--module-admin-dark); }
     table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
     th { background: var(--surface-subtle); padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; }
     th.r, td.r { text-align: right; }
     td { padding: 8px 12px; border-bottom: 1px solid var(--surface-muted); }
     td.red { color: var(--status-danger); font-weight: 600; }
-    td.green { color: #16a34a; font-weight: 600; }
+    td.green { color: var(--module-admin-dark); font-weight: 600; }
     td.muted { color: var(--border-strong); font-size: 11px; }
     tfoot td { background: var(--surface-subtle); border-top: 2px solid var(--border-subtle); padding: 10px 12px; border-bottom: none; }
     .empty-row td { opacity: 0.4; }
@@ -3063,19 +3087,19 @@ const Relatorios = () => {
     .dre-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
     .dre-head span { font-weight: 700; font-size: 14px; }
     .dre-head strong { font-size: 17px; font-weight: 800; }
-    .green-bg { background: #dcfce7; color: #166534; }
+    .green-bg { background: var(--status-success-bg); color: var(--status-success-text); }
     .red-bg { background: var(--status-danger-bg); color: #991b1b; }
     .resultado { padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
     .resultado div { display: flex; flex-direction: column; }
     .resultado span { font-weight: 700; color: var(--status-neutral); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
     .resultado small { color: var(--border-strong); font-size: 11px; margin-top: 2px; }
     .resultado strong { font-size: 26px; font-weight: 900; }
-    .green-box { background: #f0fdf4; border: 2px solid #bbf7d0; }
-    .green-box strong { color: #16a34a; }
+    .green-box { background: var(--status-success-bg); border: 2px solid var(--status-success-bg); }
+    .green-box strong { color: var(--module-admin-dark); }
     .red-box { background: #fff1f2; border: 2px solid #fecdd3; }
     .red-box strong { color: var(--status-danger); }
     .empty { text-align: center; color: var(--border-strong); padding: 24px; margin: 0; font-style: italic; }
-    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #059669; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: var(--module-admin-dark); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     @media print {
         body { margin: 14mm; }
         .print-btn { display: none; }
@@ -3119,14 +3143,14 @@ const Relatorios = () => {
         <div style={styles.content}>
             {/* Header */}
             <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>📈 Relatórios</h1>
+                <h1 style={styles.pageTitle}><i className="ti ti-chart-line" aria-hidden="true" /> Relatórios</h1>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button onClick={exportarPDF} disabled={exportando}
                         style={{ ...styles.primaryButton, background: 'var(--status-danger)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <i className="ti ti-printer" aria-hidden="true" /> {exportando ? '...' : 'Exportar PDF'}
                     </button>
                     <button onClick={exportarCSV} disabled={exportando}
-                        style={{ ...styles.primaryButton, background: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        style={{ ...styles.primaryButton, background: 'var(--module-admin-dark)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <i className="ti ti-download" aria-hidden="true" /> {exportando ? '...' : 'Exportar CSV'}
                     </button>
                 </div>
@@ -3172,8 +3196,8 @@ const Relatorios = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
                         {[
                             { label: 'Total Despesas', val: totalFluxo.despesas, color: 'var(--status-danger)', bg: 'var(--status-danger-bg)' },
-                            { label: 'Total Receitas', val: totalFluxo.receitas, color: '#16a34a', bg: '#dcfce7' },
-                            { label: 'Saldo Anual', val: totalFluxo.saldo, color: totalFluxo.saldo >= 0 ? '#16a34a' : 'var(--status-danger)', bg: totalFluxo.saldo >= 0 ? '#dcfce7' : 'var(--status-danger-bg)' },
+                            { label: 'Total Receitas', val: totalFluxo.receitas, color: 'var(--module-admin-dark)', bg: 'var(--status-success-bg)' },
+                            { label: 'Saldo Anual', val: totalFluxo.saldo, color: totalFluxo.saldo >= 0 ? 'var(--module-admin-dark)' : 'var(--status-danger)', bg: totalFluxo.saldo >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-bg)' },
                         ].map(k => (
                             <div key={k.label} style={{ background: k.bg, borderRadius: '12px', padding: '18px 20px' }}>
                                 <div style={{ fontSize: '12px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '6px' }}>{k.label}</div>
@@ -3190,7 +3214,7 @@ const Relatorios = () => {
                                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', height: '100%', justifyContent: 'flex-end' }}>
                                     <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', width: '100%' }}>
                                         <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: '#ef4444', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
-                                        <div title={`Receitas: ${fmtCur(m.receitas)}`} style={{ flex: 1, background: '#22c55e', borderRadius: '3px 3px 0 0', height: `${(m.receitas / maxFluxo) * 130}px`, minHeight: m.receitas > 0 ? '2px' : 0 }} />
+                                        <div title={`Receitas: ${fmtCur(m.receitas)}`} style={{ flex: 1, background: 'var(--module-admin)', borderRadius: '3px 3px 0 0', height: `${(m.receitas / maxFluxo) * 130}px`, minHeight: m.receitas > 0 ? '2px' : 0 }} />
                                     </div>
                                     <div style={{ fontSize: '10px', color: 'var(--border-strong)', marginTop: '4px' }}>{m.mes}</div>
                                 </div>
@@ -3198,7 +3222,7 @@ const Relatorios = () => {
                         </div>
                         <div style={{ display: 'flex', gap: '16px', marginTop: '8px', justifyContent: 'center' }}>
                             <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
-                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#22c55e', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
+                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: 'var(--module-admin)', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
                         </div>
                     </div>
 
@@ -3217,15 +3241,15 @@ const Relatorios = () => {
                                     <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)', opacity: m.despesas === 0 && m.receitas === 0 ? 0.4 : 1 }}>
                                         <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{m.mes}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>{m.receitas > 0 ? fmtCur(m.receitas) : '—'}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{m.receitas > 0 ? fmtCur(m.receitas) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
                                     </tr>
                                 ))}
                                 <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                     <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(totalFluxo.despesas)}</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#22c55e' }}>{fmtCur(totalFluxo.receitas)}</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{fmtCur(totalFluxo.saldo)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(totalFluxo.receitas)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(totalFluxo.saldo)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -3258,9 +3282,9 @@ const Relatorios = () => {
                                                 </span>
                                             </td>
                                             <td style={{ padding: '12px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{fmtCur(i.despesas)}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>{i.receitas > 0 ? fmtCur(i.receitas) : '—'}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{fmtCur(i.saldo)}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? '#22c55e' : '#ef4444' }}>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{i.receitas > 0 ? fmtCur(i.receitas) : '—'}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(i.saldo)}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? 'var(--module-admin)' : '#ef4444' }}>
                                                 {i.rentabilidade != null ? `${i.rentabilidade}%` : '—'}
                                             </td>
                                         </tr>
@@ -3268,8 +3292,8 @@ const Relatorios = () => {
                                     <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                         <td colSpan={2} style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#22c55e' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.receitas, 0))}</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? '#22c55e' : '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.receitas, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
                                         <td style={{ padding: '12px 16px' }} />
                                     </tr>
                                 </tbody>
@@ -3284,9 +3308,9 @@ const Relatorios = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     {/* Receitas */}
                     <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-                        <div style={{ background: '#dcfce7', padding: '14px 16px', borderBottom: '1px solid #bbf7d0' }}>
-                            <h3 style={{ margin: 0, color: '#166534', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-up" aria-hidden="true" /> Receitas</h3>
-                            <div style={{ fontSize: '20px', fontWeight: 800, color: '#166534', marginTop: '4px' }}>{fmtCur(totalDREReceitas)}</div>
+                        <div style={{ background: 'var(--status-success-bg)', padding: '14px 16px', borderBottom: '1px solid var(--status-success-bg)' }}>
+                            <h3 style={{ margin: 0, color: 'var(--status-success-text)', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-up" aria-hidden="true" /> Receitas</h3>
+                            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--status-success-text)', marginTop: '4px' }}>{fmtCur(totalDREReceitas)}</div>
                         </div>
                         {dreReceitas.length === 0 ? <p style={{ padding: '16px', color: 'var(--border-strong)', textAlign: 'center' }}>Nenhuma receita</p> : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -3294,7 +3318,7 @@ const Relatorios = () => {
                                     {dreReceitas.map((c, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
                                             <td style={{ padding: '10px 16px', color: '#374151' }}>{c.icone} {c.nome}</td>
-                                            <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: '#16a34a' }}>{fmtCur(c.total)}</td>
+                                            <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--module-admin-dark)' }}>{fmtCur(c.total)}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
                                     ))}
@@ -3325,12 +3349,12 @@ const Relatorios = () => {
                     </div>
 
                     {/* Resultado */}
-                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? '#f0fdf4' : '#fff1f2', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? '#bbf7d0' : '#fecdd3'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fff1f2', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fecdd3'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                             <div style={{ fontSize: '13px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase' }}>Resultado do Período</div>
                             <div style={{ fontSize: '13px', color: 'var(--border-strong)', marginTop: '2px' }}>Receitas − Despesas</div>
                         </div>
-                        <div style={{ fontSize: '28px', fontWeight: 900, color: resultadoDRE >= 0 ? '#16a34a' : 'var(--status-danger)' }}>
+                        <div style={{ fontSize: '28px', fontWeight: 900, color: resultadoDRE >= 0 ? 'var(--module-admin-dark)' : 'var(--status-danger)' }}>
                             {resultadoDRE >= 0 ? '+' : ''}{fmtCur(resultadoDRE)}
                         </div>
                     </div>
@@ -3340,331 +3364,6 @@ const Relatorios = () => {
     );
 };
 
-// ===================================================================================
-// COMPONENTE: USUÁRIOS (Admin Only)
-// ===================================================================================
-
-const Usuarios = () => {
-    const { token } = useAuthAdmin();
-    const [usuarios, setUsuarios] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [editando, setEditando] = useState(null);
-    const [form, setForm] = useState({
-        username: '',
-        nome: '',
-        email: '',
-        password: '',
-        role: 'operador'
-    });
-    const [erro, setErro] = useState('');
-
-    useEffect(() => {
-        fetchUsuarios();
-    }, []);
-
-    const fetchUsuarios = async () => {
-        try {
-            const response = await fetchWithAuthAdmin(`${API_URL_ADMIN}/usuarios`);
-            if (response.ok) {
-                const data = await response.json();
-                setUsuarios(data);
-            }
-        } catch (err) {
-            logger.error('Erro ao carregar usuários:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setErro('');
-        
-        try {
-            const url = editando 
-                ? `${API_URL_ADMIN}/usuarios/${editando.id}`
-                : `${API_URL_ADMIN}/usuarios`;
-            
-            const body = editando 
-                ? { nome: form.nome, email: form.email, role: form.role, ...(form.password ? { password: form.password } : {}) }
-                : form;
-            
-            const response = await fetchWithAuthAdmin(url, {
-                method: editando ? 'PUT' : 'POST',
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                setErro(data.erro || 'Erro ao salvar usuário');
-                return;
-            }
-
-            fetchUsuarios();
-            closeModal();
-        } catch (err) {
-            setErro('Erro ao salvar usuário');
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!await confirmDialog('Tem certeza que deseja desativar este usuário?', { danger: true, confirmText: 'Desativar' })) return;
-        
-        try {
-            await fetchWithAuthAdmin(`${API_URL_ADMIN}/usuarios/${id}`, {
-                method: 'DELETE'
-            });
-            fetchUsuarios();
-        } catch (err) {
-            logger.error('Erro ao desativar usuário:', err);
-        }
-    };
-
-    const openModal = (usuario = null) => {
-        if (usuario) {
-            setEditando(usuario);
-            setForm({
-                username: usuario.username,
-                nome: usuario.nome || '',
-                email: usuario.email || '',
-                password: '',
-                role: usuario.role || 'operador'
-            });
-        } else {
-            setEditando(null);
-            setForm({
-                username: '',
-                nome: '',
-                email: '',
-                password: '',
-                role: 'operador'
-            });
-        }
-        setErro('');
-        setShowModal(true);
-    };
-
-    const closeModal = () => {
-        setShowModal(false);
-        setEditando(null);
-        setErro('');
-    };
-
-    if (loading) {
-        return <div style={styles.loading}>Carregando...</div>;
-    }
-
-    return (
-        <div style={styles.content}>
-            {/* Header */}
-            <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>👥 Usuários</h1>
-                <button onClick={() => openModal()} style={styles.primaryButton}>
-                    + Novo Usuário
-                </button>
-            </div>
-
-            {/* Lista de Usuários */}
-            <div style={styles.section}>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.th}>Usuário</th>
-                            <th style={styles.th}>Nome</th>
-                            <th style={styles.th}>Email</th>
-                            <th style={styles.th}>Perfil</th>
-                            <th style={styles.th}>Criado em</th>
-                            <th style={styles.th}>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usuarios.map(usuario => (
-                            <tr key={usuario.id} style={styles.tr}>
-                                <td style={styles.td}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={styles.avatarSmall}>
-                                            {usuario.nome?.charAt(0)?.toUpperCase() || '👤'}
-                                        </div>
-                                        <strong>{usuario.username}</strong>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>{usuario.nome}</td>
-                                <td style={styles.td}>{usuario.email || '-'}</td>
-                                <td style={styles.td}>
-                                    <span style={{
-                                        ...styles.badge,
-                                        backgroundColor: usuario.role === 'admin' ? 'var(--status-danger-bg)' : '#e0e7ff',
-                                        color: usuario.role === 'admin' ? 'var(--status-danger)' : '#4f46e5'
-                                    }}>
-                                        {usuario.role === 'admin' ? '👑 Admin' : '👤 Operador'}
-                                    </span>
-                                </td>
-                                <td style={styles.td}>
-                                    {usuario.created_at ? new Date(usuario.created_at).toLocaleDateString('pt-BR') : '-'}
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button
-                                            onClick={() => openModal(usuario)}
-                                            style={styles.smallButton}
-                                            title="Editar"
-                                        >
-                                            <i className="ti ti-pencil" aria-hidden="true" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(usuario.id)}
-                                            style={{ ...styles.smallButton, color: 'var(--status-danger)' }}
-                                            title="Desativar"
-                                        >
-                                            <i className="ti ti-user-off" aria-hidden="true" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                
-                {usuarios.length === 0 && (
-                    <div style={styles.emptyState}>
-                        <div style={styles.emptyIcon}>👥</div>
-                        <p>Nenhum usuário cadastrado</p>
-                        <button onClick={() => openModal()} style={styles.primaryButton}>
-                            Cadastrar primeiro usuário
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* Modal */}
-            {showModal && (
-                <div style={styles.modalOverlay} onClick={closeModal}>
-                    <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
-                        <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>
-                                {editando ? '✏️ Editar Usuário' : '👤 Novo Usuário'}
-                            </h2>
-                            <button onClick={closeModal} style={styles.closeButton} aria-label="Fechar">×</button>
-                        </div>
-                        <form onSubmit={handleSubmit} style={styles.modalBody}>
-                            {!editando && (
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Username *</label>
-                                    <input
-                                        type="text"
-                                        value={form.username}
-                                        onChange={e => setForm({ ...form, username: e.target.value })}
-                                        style={styles.input}
-                                        placeholder="usuario123"
-                                        required
-                                    />
-                                </div>
-                            )}
-
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Nome Completo *</label>
-                                <input
-                                    type="text"
-                                    value={form.nome}
-                                    onChange={e => setForm({ ...form, nome: e.target.value })}
-                                    style={styles.input}
-                                    placeholder="João da Silva"
-                                    required
-                                />
-                            </div>
-
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Email</label>
-                                <input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={e => setForm({ ...form, email: e.target.value })}
-                                    style={styles.input}
-                                    placeholder="email@exemplo.com"
-                                />
-                            </div>
-
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>
-                                    {editando ? 'Nova Senha (deixe vazio para manter)' : 'Senha *'}
-                                </label>
-                                <input
-                                    type="password"
-                                    value={form.password}
-                                    onChange={e => setForm({ ...form, password: e.target.value })}
-                                    style={styles.input}
-                                    placeholder="Mínimo 6 caracteres"
-                                    {...(!editando && { required: true, minLength: 6 })}
-                                />
-                            </div>
-
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Perfil de Acesso</label>
-                                <div style={styles.roleSelector}>
-                                    <label 
-                                        style={{
-                                            ...styles.roleOption,
-                                            ...(form.role === 'operador' ? styles.roleOptionActive : {})
-                                        }}
-                                        onClick={() => setForm({ ...form, role: 'operador' })}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="role"
-                                            value="operador"
-                                            checked={form.role === 'operador'}
-                                            onChange={() => {}}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <span style={{ fontSize: '24px' }}>👤</span>
-                                        <div>
-                                            <div style={{ fontWeight: '600' }}>Operador</div>
-                                            <div style={{ fontSize: '11px', color: 'var(--status-neutral)' }}>Acesso básico</div>
-                                        </div>
-                                    </label>
-                                    <label 
-                                        style={{
-                                            ...styles.roleOption,
-                                            ...(form.role === 'admin' ? styles.roleOptionActiveAdmin : {})
-                                        }}
-                                        onClick={() => setForm({ ...form, role: 'admin' })}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="role"
-                                            value="admin"
-                                            checked={form.role === 'admin'}
-                                            onChange={() => {}}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <span style={{ fontSize: '24px' }}>👑</span>
-                                        <div>
-                                            <div style={{ fontWeight: '600' }}>Administrador</div>
-                                            <div style={{ fontSize: '11px', color: 'var(--status-neutral)' }}>Acesso total</div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {erro && <p style={styles.error}>{erro}</p>}
-
-                            <div style={styles.modalFooter}>
-                                <button type="button" onClick={closeModal} style={styles.cancelButton}>
-                                    Cancelar
-                                </button>
-                                <button type="submit" style={styles.primaryButton}>
-                                    {editando ? 'Salvar Alterações' : 'Criar Usuário'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
 
 // ===================================================================================
 // COMPONENTE: DASHBOARD PRINCIPAL (Layout)
@@ -3695,7 +3394,6 @@ const DashboardAdmin = ({ onBackToModules }) => {
             case 'lancamentos': return <Lancamentos />;
             case 'boletos': return <GestaoBoletos />;
             case 'relatorios': return <Relatorios />;
-            case 'usuarios': return <Usuarios />;
             default: return <Dashboard />;
         }
     };
@@ -3708,7 +3406,7 @@ const DashboardAdmin = ({ onBackToModules }) => {
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Abrir menu"
             >
-                ☰
+                <i className="ti ti-menu-2" aria-hidden="true" />
             </button>
             {onBackToModules && (
                 <button
@@ -3716,7 +3414,7 @@ const DashboardAdmin = ({ onBackToModules }) => {
                     onClick={onBackToModules}
                     aria-label="Voltar aos módulos"
                 >
-                    ← Módulos
+                    <i className="ti ti-arrow-left" aria-hidden="true" /> Módulos
                 </button>
             )}
             <div
@@ -3849,7 +3547,7 @@ const styles = {
     // Sidebar
     sidebar: {
         width: '260px',
-        backgroundColor: 'var(--surface-dark-soft)',
+        background: 'linear-gradient(180deg, var(--module-admin-dark) 0%, #0b1220 130%)',
         color: 'var(--surface-card)',
         display: 'flex',
         flexDirection: 'column',
@@ -3862,10 +3560,18 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        borderBottom: '1px solid var(--text-secondary)',
+        borderBottom: '1px solid rgba(255,255,255,0.12)',
     },
     sidebarLogo: {
-        fontSize: '32px',
+        width: '40px',
+        height: '40px',
+        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.16)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '20px',
+        flexShrink: 0,
     },
     sidebarTitle: {
         fontSize: '20px',
@@ -3873,12 +3579,12 @@ const styles = {
     },
     sidebarSubtitle: {
         fontSize: '12px',
-        color: 'var(--border-strong)',
+        color: 'rgba(255,255,255,0.65)',
     },
     sidebarCloseBtn: {
         background: 'transparent',
         border: 'none',
-        color: 'var(--border-strong)',
+        color: 'rgba(255,255,255,0.75)',
         fontSize: '20px',
         cursor: 'pointer',
         padding: '4px 8px',
@@ -3894,10 +3600,10 @@ const styles = {
         alignItems: 'center',
         gap: '12px',
         padding: '12px 16px',
-        borderRadius: '8px',
+        borderRadius: '10px',
         border: 'none',
         backgroundColor: 'transparent',
-        color: 'var(--border-default)',
+        color: 'rgba(255,255,255,0.75)',
         fontSize: '15px',
         cursor: 'pointer',
         transition: 'all 0.2s',
@@ -3905,15 +3611,18 @@ const styles = {
         marginBottom: '4px',
     },
     menuItemActive: {
-        backgroundColor: 'var(--status-success)',
+        backgroundColor: 'rgba(255,255,255,0.16)',
         color: 'var(--surface-card)',
     },
     menuIcon: {
-        fontSize: '18px',
+        fontSize: '17px',
+        width: '20px',
+        display: 'inline-flex',
+        justifyContent: 'center',
     },
     sidebarFooter: {
         padding: '16px',
-        borderTop: '1px solid var(--text-secondary)',
+        borderTop: '1px solid rgba(255,255,255,0.12)',
     },
     userInfo: {
         display: 'flex',
@@ -3925,7 +3634,7 @@ const styles = {
         width: '40px',
         height: '40px',
         borderRadius: '50%',
-        backgroundColor: 'var(--text-secondary)',
+        backgroundColor: 'rgba(255,255,255,0.16)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -3937,15 +3646,15 @@ const styles = {
     },
     userRole: {
         fontSize: '12px',
-        color: 'var(--border-strong)',
+        color: 'rgba(255,255,255,0.65)',
     },
     logoutButton: {
         width: '100%',
         padding: '10px',
         borderRadius: '8px',
-        border: '1px solid var(--text-muted)',
+        border: '1px solid rgba(255,255,255,0.2)',
         backgroundColor: 'transparent',
-        color: 'var(--border-strong)',
+        color: 'rgba(255,255,255,0.85)',
         cursor: 'pointer',
         fontSize: '14px',
     },
@@ -3984,7 +3693,7 @@ const styles = {
         color: 'var(--surface-card)',
     },
     cardGreen: {
-        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        background: 'linear-gradient(135deg, var(--module-admin) 0%, var(--module-admin-dark) 100%)',
         color: 'var(--surface-card)',
     },
     cardRed: {
@@ -4218,7 +3927,7 @@ const styles = {
         padding: '12px 24px',
         borderRadius: '10px',
         border: 'none',
-        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        background: 'linear-gradient(135deg, var(--module-admin) 0%, var(--module-admin-dark) 100%)',
         color: 'var(--surface-card)',
         fontSize: '15px',
         fontWeight: '600',
@@ -4368,15 +4077,15 @@ const styles = {
         color: 'var(--status-danger)',
     },
     tipoButtonActiveReceita: {
-        borderColor: 'var(--status-success)',
-        backgroundColor: '#dcfce7',
-        color: '#059669',
+        borderColor: 'var(--module-admin)',
+        backgroundColor: 'var(--status-success-bg)',
+        color: 'var(--module-admin-dark)',
     },
 
     // Login
     loginContainer: {
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)',
+        background: 'linear-gradient(135deg, var(--module-navy) 0%, var(--module-admin-dark) 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -4411,13 +4120,13 @@ const styles = {
         width: '70px',
         height: '70px',
         borderRadius: '18px',
-        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        background: 'linear-gradient(135deg, var(--module-admin) 0%, var(--module-admin-dark) 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '32px',
         margin: '0 auto 16px',
-        boxShadow: '0 10px 30px rgba(16,185,129,0.3)',
+        boxShadow: '0 10px 30px rgba(37,182,99,0.35)',
     },
     loginTitle: {
         fontSize: '28px',
@@ -4439,7 +4148,7 @@ const styles = {
         padding: '14px',
         borderRadius: '12px',
         border: 'none',
-        background: 'linear-gradient(135deg, var(--status-success) 0%, #059669 100%)',
+        background: 'linear-gradient(135deg, var(--module-admin) 0%, var(--module-admin-dark) 100%)',
         color: 'var(--surface-card)',
         fontSize: '16px',
         fontWeight: '600',
@@ -4635,7 +4344,7 @@ const styles = {
         marginBottom: '8px',
     },
     uploadedText: {
-        color: '#16a34a',
+        color: 'var(--module-admin-dark)',
         fontWeight: '600',
     },
     removeFileButton: {
@@ -4674,8 +4383,8 @@ const styles = {
         backgroundColor: '#fffbeb',
     },
     statusOptionActivePago: {
-        borderColor: 'var(--status-success)',
-        backgroundColor: '#dcfce7',
+        borderColor: 'var(--module-admin)',
+        backgroundColor: 'var(--status-success-bg)',
     },
     statusIcon: {
         fontSize: '28px',

@@ -2,44 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
+import './ModuleSelectorScreen.css';
 
 const MODULES = [
     {
         id: 'obras',
-        icon: '🏗️',
+        icon: 'building-skyscraper',
         title: 'Obras',
         description: 'Gestão de construções, orçamentos e pagamentos.',
-        color: '#6366f1',
-        gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+        color: '#0061FC',
+        colorDark: '#0138A5',
+        gradient: 'linear-gradient(135deg, #0061FC 0%, #0138A5 100%)'
     },
     {
         id: 'admin',
-        icon: '🏢',
+        icon: 'home-2',
         title: 'Administração',
         description: 'Patrimônio: imóveis, aluguéis e despesas.',
-        color: '#10b981',
-        gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+        color: '#25B663',
+        colorDark: '#108C54',
+        gradient: 'linear-gradient(135deg, #25B663 0%, #108C54 100%)'
     },
     {
         id: 'rh',
-        icon: <i className="ti ti-users-group" style={{ color: '#fff' }} />,
+        icon: 'users-group',
         title: 'Pessoal / RH',
         description: 'Funcionários, convenções e encargos.',
-        color: '#f59e0b',
-        gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+        color: '#FE6901',
+        colorDark: '#CD4E00',
+        gradient: 'linear-gradient(135deg, #FE6901 0%, #CD4E00 100%)'
     },
     {
         id: 'frota',
-        icon: <i className="ti ti-truck" style={{ color: '#fff' }} />,
+        icon: 'truck',
         title: 'Frota',
         description: 'Veículos, manutenções e documentos.',
-        color: '#0ea5e9',
-        gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+        color: '#632ED6',
+        colorDark: '#4818A8',
+        gradient: 'linear-gradient(135deg, #632ED6 0%, #4818A8 100%)'
     }
 ];
 
 const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA' };
-const MOD_COLOR = { obras: '#818cf8', admin: '#34d399', rh: '#fbbf24', frota: '#38bdf8' };
+const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6' };
 
 function dataBR(iso) {
     if (!iso) return '';
@@ -58,8 +63,14 @@ function situacaoLabel(p) {
     return `vence ${dataBR(p.data_vencimento)}`;
 }
 
+function saudacao() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Bom dia';
+    if (h < 18) return 'Boa tarde';
+    return 'Boa noite';
+}
+
 const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess, onChangePassword }) => {
-    const [hoveredModule, setHoveredModule] = useState(null);
     const [alertas, setAlertas] = useState(null);
 
     useEffect(() => {
@@ -101,16 +112,18 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
     };
 
     const pendencias = alertas?.pendencias || [];
+    const heroModule = visibleModules[0];
+    const restModules = visibleModules.slice(1);
 
     return (
         <main style={{
             minHeight: '100vh',
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
+            background: 'linear-gradient(160deg, var(--module-navy) 0%, var(--module-navy-soft) 100%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             padding: '20px',
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            fontFamily: 'var(--font-sans)'
         }}>
             {/* Topbar */}
             <div style={{
@@ -123,7 +136,11 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                 paddingTop: '4px'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 22, height: 22, borderRadius: 6, background: '#6366f1', display: 'inline-block' }} />
+                    <span style={{
+                        width: 26, height: 26, borderRadius: 8,
+                        background: 'linear-gradient(135deg, var(--module-obras) 0%, var(--module-frota) 100%)',
+                        display: 'inline-block'
+                    }} />
                     <span style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>Obraly</span>
                 </div>
                 <span style={{ flex: 1 }} />
@@ -150,100 +167,134 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
             </div>
 
             {/* Saudação */}
-            <div style={{ margin: '42px 0 26px', textAlign: 'center' }}>
+            <div style={{ margin: '40px 0 28px', textAlign: 'center', maxWidth: '640px' }}>
                 <h1 style={{
-                    fontSize: '30px', fontWeight: '700', color: '#fff', margin: 0,
-                    letterSpacing: '-0.5px', textShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                    fontSize: '28px', fontWeight: '700', color: '#fff', margin: 0,
+                    letterSpacing: '-0.5px'
                 }}>
-                    Obraly
+                    {saudacao()}{user?.username ? `, ${user.username}` : ''}
                 </h1>
-                <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', marginTop: '6px' }}>
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.65)', marginTop: '6px' }}>
                     {visibleModules.length > 0
                         ? 'Escolha um módulo para continuar'
                         : 'Seu usuário não tem acesso a nenhum módulo — fale com o administrador.'}
                 </p>
             </div>
 
-            {/* Cards de módulo */}
-            <div style={{
-                display: 'flex', gap: '18px', flexWrap: 'wrap',
-                justifyContent: 'center', maxWidth: '1080px'
-            }}>
-                {visibleModules.map(module => {
-                    const vencidos = vencidosPorModulo[module.id] || 0;
-                    const hovered = hoveredModule === module.id;
-                    return (
-                        <div
-                            key={module.id}
-                            onClick={() => onSelectModule(module.id)}
-                            onMouseEnter={() => setHoveredModule(module.id)}
-                            onMouseLeave={() => setHoveredModule(null)}
-                            style={{
-                                width: '244px',
-                                padding: '22px',
-                                borderRadius: '20px',
-                                background: hovered ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.08)',
-                                backdropFilter: 'blur(20px)',
-                                border: hovered ? `1.5px solid ${module.color}` : '1.5px solid rgba(255,255,255,0.14)',
-                                cursor: 'pointer',
-                                transition: 'all 0.25s ease',
-                                transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
-                                boxShadow: hovered
-                                    ? `0 16px 34px rgba(0,0,0,0.4), 0 0 50px ${module.color}30`
-                                    : '0 8px 24px rgba(0,0,0,0.2)'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <div style={{
-                                    width: '52px', height: '52px', borderRadius: '14px',
-                                    background: module.gradient,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '24px',
-                                    boxShadow: `0 8px 22px ${module.color}55`
-                                }}>
-                                    {module.icon}
-                                </div>
-                                {vencidos > 0 && (
-                                    <span style={{
-                                        background: '#ef4444', color: '#fff', fontSize: '11px',
-                                        fontWeight: 700, padding: '3px 9px', borderRadius: '999px'
-                                    }}>
-                                        {vencidos} vencido{vencidos !== 1 ? 's' : ''}
-                                    </span>
-                                )}
-                            </div>
-                            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', margin: '14px 0 4px' }}>
-                                {module.title}
-                            </h2>
-                            <p style={{
-                                fontSize: '13px', color: 'rgba(255,255,255,0.6)',
-                                margin: 0, lineHeight: '1.5', minHeight: '39px'
-                            }}>
-                                {module.description}
-                            </p>
+            {heroModule && (
+                <div className="ms-body">
+                    {/* Card hero — módulo principal */}
+                    <div
+                        className={`ms-hero-card${restModules.length === 0 ? ' ms-hero-card--solo' : ''}`}
+                        onClick={() => onSelectModule(heroModule.id)}
+                        style={{
+                            borderRadius: '24px',
+                            background: heroModule.gradient,
+                            padding: '26px 28px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '16px',
+                            boxShadow: `0 12px 32px ${heroModule.color}40`
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                             <div style={{
-                                marginTop: '16px', padding: '8px 0', borderRadius: '10px',
-                                background: hovered ? module.gradient : 'rgba(255,255,255,0.12)',
-                                color: '#fff', fontSize: '13px', fontWeight: '600',
-                                textAlign: 'center', transition: 'all 0.25s ease'
+                                width: '58px', height: '58px', borderRadius: '17px',
+                                background: 'rgba(255,255,255,0.18)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}>
-                                Entrar →
+                                <i className={`ti ti-${heroModule.icon}`} style={{ color: '#fff', fontSize: 26 }} />
                             </div>
+                            {vencidosPorModulo[heroModule.id] > 0 && (
+                                <span style={{
+                                    background: 'var(--status-danger-bg)', color: 'var(--status-danger-text)',
+                                    fontSize: '11px', fontWeight: 700, padding: '5px 10px', borderRadius: '999px'
+                                }}>
+                                    {vencidosPorModulo[heroModule.id]} vencido{vencidosPorModulo[heroModule.id] !== 1 ? 's' : ''}
+                                </span>
+                            )}
                         </div>
-                    );
-                })}
-            </div>
+                        <div>
+                            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>
+                                {heroModule.title}
+                            </h2>
+                            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.85)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                                {heroModule.description}
+                            </p>
+                        </div>
+                        <div style={{
+                            marginTop: 'auto', padding: '13px 0', borderRadius: '12px',
+                            background: '#fff', color: heroModule.color, fontSize: '14px', fontWeight: '700',
+                            textAlign: 'center'
+                        }}>
+                            Entrar em {heroModule.title} →
+                        </div>
+                    </div>
+
+                    {/* Demais módulos — linhas compactas */}
+                    {restModules.length > 0 && (
+                        <div className="ms-rows-col">
+                            {restModules.map(module => {
+                                const vencidos = vencidosPorModulo[module.id] || 0;
+                                return (
+                                    <div
+                                        key={module.id}
+                                        className="ms-row-card"
+                                        onClick={() => onSelectModule(module.id)}
+                                        style={{
+                                            flex: 1,
+                                            display: 'flex', alignItems: 'center', gap: '16px',
+                                            background: 'rgba(255,255,255,0.06)',
+                                            border: '1px solid rgba(255,255,255,0.12)',
+                                            borderRadius: '20px',
+                                            padding: '18px 20px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '46px', height: '46px', borderRadius: '14px',
+                                            background: `${module.color}38`,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            flexShrink: 0
+                                        }}>
+                                            <i className={`ti ti-${module.icon}`} style={{ color: module.color, fontSize: 20 }} />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>{module.title}</span>
+                                                {vencidos > 0 && (
+                                                    <span style={{
+                                                        background: 'var(--status-danger-bg)', color: 'var(--status-danger-text)',
+                                                        fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px'
+                                                    }}>
+                                                        {vencidos} vencido{vencidos !== 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', margin: '2px 0 0' }}>
+                                                {module.description}
+                                            </p>
+                                        </div>
+                                        <i className="ti ti-chevron-right" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18 }} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Painel Atenção hoje */}
             {pendencias.length > 0 && (
                 <div style={{
-                    width: '100%', maxWidth: '1060px', marginTop: '28px',
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1.5px solid rgba(255,255,255,0.13)',
+                    width: '100%', maxWidth: '1080px', marginTop: '20px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '20px', padding: '18px 22px 14px'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                        <span style={{ color: '#fbbf24', fontSize: '15px' }}>⚠</span>
+                        <i className="ti ti-alert-triangle" style={{ color: 'var(--status-warning)', fontSize: 16 }} />
                         <span style={{ color: '#fff', fontSize: '15px', fontWeight: 700 }}>Atenção hoje</span>
                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
                             · {pendencias.length} pendência{pendencias.length !== 1 ? 's' : ''} vencida{pendencias.length !== 1 ? 's' : ''} ou vencendo
@@ -279,7 +330,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                 {p.descricao} — {brl(p.valor)}
                             </span>
                             <span style={{
-                                color: p.situacao === 'vencido' ? '#f87171' : '#fbbf24',
+                                color: p.situacao === 'vencido' ? '#f87171' : 'var(--status-warning)',
                                 fontSize: '12px', fontWeight: 500
                             }}>
                                 · {situacaoLabel(p)}

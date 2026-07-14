@@ -2,11 +2,11 @@ import React from 'react';
 import { formatCurrency } from '../../../utils/format';
 
 const VARIANT_COLORS = {
-    info:    'var(--status-info)',
+    info:    'var(--module-obras)',
     success: 'var(--status-success)',
     warning: 'var(--status-warning)',
     danger:  'var(--status-danger)',
-    default: 'var(--status-info)',
+    default: 'var(--module-obras)',
 };
 
 function getBudgetVariant(pct) {
