@@ -105,7 +105,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
             {/* Logo */}
             <div style={styles.sidebarHeader}>
                 <span style={styles.sidebarLogo}>
-                    <i className="ti ti-home-2" aria-hidden="true" />
+                    <img src="/obraly-mark.png" alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />
                 </span>
                 <div style={{ flex: 1 }}>
                     <div style={styles.sidebarTitle}>Obraly</div>

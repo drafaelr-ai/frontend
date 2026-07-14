@@ -57,7 +57,7 @@ export default function RHModule() {
         <div className="rh-shell">
             <div className="rh-navbar">
                 <div className="rh-logo">
-                    <span className="rh-logo-dot"><i className="ti ti-building" /></span> Obraly
+                    <img src="/obraly-mark.png" alt="" className="rh-logo-dot" /> Obraly
                 </div>
                 <div className="rh-crumbs">
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Pessoal / RH</b>

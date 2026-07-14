@@ -55,13 +55,7 @@ const WindowsNavStyles = () => (
         .wnb-logo-box {
             width: 22px;
             height: 22px;
-            background: var(--brand-accent);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--surface-dark);
-            font-size: 13px;
+            object-fit: contain;
             flex-shrink: 0;
         }
 
@@ -535,9 +529,7 @@ const WindowsNavBar = ({
                         onClick={() => { window.location.href = window.location.pathname; }}
                         title="Voltar ao Dashboard"
                     >
-                        <div className="wnb-logo-box">
-                            <i className="ti ti-building-skyscraper" aria-hidden="true"></i>
-                        </div>
+                        <img src="/obraly-mark.png" alt="" className="wnb-logo-box" />
                         <span className="wnb-logo-text">Obraly</span>
                     </div>
 

@@ -42,9 +42,7 @@ const LoginScreen = ({ onBack }) => {
             {/* Painel escuro esquerdo — 42% */}
             <div className="ls-dark">
                 <div className="ls-logo">
-                    <div className="ls-logo-box">
-                        <i className="ti ti-building-skyscraper" aria-hidden="true"></i>
-                    </div>
+                    <img src="/obraly-mark.png" alt="" className="ls-logo-box" />
                     <span className="ls-logo-text">Obraly</span>
                 </div>
 

@@ -66,7 +66,7 @@ export default function FrotaModule() {
         <div className="frota-shell">
             <div className="frota-navbar">
                 <div className="frota-logo">
-                    <span className="frota-logo-dot"><i className="ti ti-building" /></span> Obraly
+                    <img src="/obraly-mark.png" alt="" className="frota-logo-dot" /> Obraly
                 </div>
                 <div className="frota-crumbs">
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Frota</b>

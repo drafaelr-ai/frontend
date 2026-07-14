@@ -28,8 +28,7 @@
 }
 .frota-logo { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; font-size: var(--text-md); }
 .frota-logo-dot {
-    width: 18px; height: 18px; border-radius: var(--radius-sm); background: var(--frota-accent);
-    display: grid; place-items: center; color: #fff; font-size: 12px;
+    width: 18px; height: 18px; object-fit: contain;
 }
 .frota-crumbs { color: var(--text-on-dark-muted); font-size: var(--text-sm); display: flex; align-items: center; gap: var(--space-2); }
 .frota-crumbs b { color: var(--text-on-dark); font-weight: 500; }

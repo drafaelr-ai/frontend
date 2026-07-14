@@ -49,6 +49,7 @@ export default function DashboardHeader() {
     return (
         <header className="dh-root">
             <div className="dh-left">
+                <img src="/obraly-mark.png" alt="" className="dh-logo-mark" />
                 <span className="dh-logo">Obraly</span>
             </div>
             <div className="dh-right">

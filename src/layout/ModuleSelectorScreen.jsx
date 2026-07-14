@@ -136,11 +136,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                 paddingTop: '4px'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                        width: 26, height: 26, borderRadius: 8,
-                        background: 'linear-gradient(135deg, var(--module-obras) 0%, var(--module-frota) 100%)',
-                        display: 'inline-block'
-                    }} />
+                    <img src="/obraly-mark.png" alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />
                     <span style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>Obraly</span>
                 </div>
                 <span style={{ flex: 1 }} />

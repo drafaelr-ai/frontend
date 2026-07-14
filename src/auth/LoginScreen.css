@@ -29,13 +29,7 @@
 .ls-logo-box {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, var(--module-obras) 0%, var(--module-frota) 100%);
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-on-dark);
-    font-size: 18px;
+    object-fit: contain;
     flex-shrink: 0;
 }
 

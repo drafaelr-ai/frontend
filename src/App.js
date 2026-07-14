@@ -90,6 +90,12 @@ function App() {
     }, []);
 
     const handleSelectModule = async (moduleId) => {
+        // Entrar em Obras pelo seletor deve sempre abrir a Dashboard nova —
+        // um ?obra= preso na URL de uma sessão anterior faria cair na tela
+        // antiga (ObraDetalhe/WindowsNavBar) sem essa limpeza.
+        if (moduleId === 'obras' && window.location.search) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
         setSelectedModule(moduleId);
         await storeToken('selectedModule', moduleId);
     };
