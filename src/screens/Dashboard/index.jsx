@@ -4,7 +4,6 @@ import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { formatCurrency } from '../../utils/format';
 import StatCard from './components/StatCard';
-import AlertStatCard from './components/AlertStatCard';
 import ProgressBar from './components/ProgressBar';
 import ActivityItem from './components/ActivityItem';
 import DashboardHeader from './components/DashboardHeader';
@@ -18,6 +17,20 @@ function getGreeting() {
     if (h < 12) return 'Bom dia';
     if (h < 18) return 'Boa tarde';
     return 'Boa noite';
+}
+
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+function mesAtualLabel() {
+    const d = new Date();
+    return `${MESES[d.getMonth()]} / ${d.getFullYear()}`;
+}
+
+function dataBRcurta(iso) {
+    if (!iso) return '';
+    const [, m, d] = String(iso).slice(0, 10).split('-');
+    return `${d}/${m}`;
 }
 
 function formatTimestamp(dateStr) {
@@ -34,6 +47,18 @@ function formatTimestamp(dateStr) {
     } catch {
         return '';
     }
+}
+
+function ultimaAtividadeLabel(historico) {
+    if (!Array.isArray(historico) || historico.length === 0) return '—';
+    const datas = historico
+        .map(h => h.data ?? h.data_lancamento ?? h.created_at)
+        .filter(Boolean)
+        .sort()
+        .reverse();
+    if (!datas.length) return '—';
+    const label = formatTimestamp(datas[0]);
+    return label ? (label === 'Hoje' || label === 'Ontem' ? label.toLowerCase() : `há ${label.replace('d atrás', ' dias')}`.replace('há Hoje', 'hoje')) : '—';
 }
 
 function getObraProgressVariant(pct) {
@@ -74,10 +99,7 @@ function LoadingSkeleton() {
                 </div>
             </div>
             <div className="db-kpi-grid" style={{ marginBottom: 12 }}>
-                {[0,1,2,3].map(i => <div key={i} className="db-skeleton db-skeleton-kpi" />)}
-            </div>
-            <div className="db-alert-row">
-                {[0,1,2].map(i => <div key={i} className="db-skeleton db-skeleton-kpi" />)}
+                {[0,1,2,3,4].map(i => <div key={i} className="db-skeleton db-skeleton-kpi" />)}
             </div>
             <div className="db-section">
                 <div className="db-skeleton" style={{ width: 80, height: 12, marginBottom: 10 }} />
@@ -99,54 +121,52 @@ function LoadingSkeleton() {
 export default function Dashboard() {
     const { user } = useAuth();
     const [obras, setObras] = useState([]);
-    const [obraDetails, setObraDetails] = useState({});  // { [id]: { caixa, boletos, detail } }
+    const [obraDetails, setObraDetails] = useState({});  // { [id]: { detail } }
+    const [homeData, setHomeData] = useState(null);      // /home/obras (MO, material, previsão)
+    const [alertas, setAlertas] = useState(null);        // /home/alertas
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [period, setPeriod] = useState('mes');  // 'mes' | 'acumulado' — visual toggle, data uses mes
     const [filtroObras, setFiltroObras] = useState('ativas');
 
     const loadData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            // Phase 1: fetch obra list
-            const obrasRes = await fetchWithAuth(`${API_URL}/obras?incluir_arquivadas=true`);
-            if (!obrasRes.ok) throw new Error('Falha ao carregar obras');
-            const obrasData = await obrasRes.json();
-
+            // Fase 1: lista de obras + agregados da home em paralelo
+            const [obrasRes, homeRes, alertasRes] = await Promise.allSettled([
+                fetchWithAuth(`${API_URL}/obras?incluir_arquivadas=true`),
+                fetchWithAuth(`${API_URL}/home/obras`),
+                fetchWithAuth(`${API_URL}/home/alertas`),
+            ]);
+            if (obrasRes.status !== 'fulfilled' || !obrasRes.value.ok) {
+                throw new Error('Falha ao carregar obras');
+            }
+            const obrasData = await obrasRes.value.json();
             const list = Array.isArray(obrasData) ? obrasData
                 : Array.isArray(obrasData.obras) ? obrasData.obras
                 : [];
-
             setObras(list);
 
-            // Phase 2: parallel per-obra detail fetches (active only — skip archived)
+            if (homeRes.status === 'fulfilled' && homeRes.value.ok) {
+                setHomeData(await homeRes.value.json());
+            }
+            if (alertasRes.status === 'fulfilled' && alertasRes.value.ok) {
+                setAlertas(await alertasRes.value.json());
+            }
+
+            // Fase 2: detalhe por obra ativa (orçamento executado + histórico)
             const activeObras = list.filter(o => !o.concluida && !o.arquivada);
             const results = await Promise.allSettled(
                 activeObras.map(async (obra) => {
                     const id = obra.id ?? obra.obra_id;
-                    const [caixaRes, boletosRes, detailRes] = await Promise.allSettled([
-                        fetchWithAuth(`${API_URL}/obras/${id}/caixa`),
-                        fetchWithAuth(`${API_URL}/obras/${id}/boletos/resumo`),
-                        fetchWithAuth(`${API_URL}/obras/${id}`),
-                    ]);
-
-                    const caixa = caixaRes.status === 'fulfilled' && caixaRes.value.ok
-                        ? await caixaRes.value.json() : null;
-                    const boletos = boletosRes.status === 'fulfilled' && boletosRes.value.ok
-                        ? await boletosRes.value.json() : null;
-                    const detail = detailRes.status === 'fulfilled' && detailRes.value.ok
-                        ? await detailRes.value.json() : null;
-
-                    return { id, caixa, boletos, detail };
+                    const detailRes = await fetchWithAuth(`${API_URL}/obras/${id}`);
+                    const detail = detailRes.ok ? await detailRes.json() : null;
+                    return { id, detail };
                 })
             );
-
             const detailMap = {};
             results.forEach(r => {
-                if (r.status === 'fulfilled') {
-                    detailMap[r.value.id] = r.value;
-                }
+                if (r.status === 'fulfilled') detailMap[r.value.id] = r.value;
             });
             setObraDetails(detailMap);
         } catch (err) {
@@ -158,61 +178,42 @@ export default function Dashboard() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    // --- KPI aggregation ---
+    // --- agregações ---
     const kpis = useMemo(() => {
-        let totalSaldoAtual = 0;
-        let totalSaidasMes = 0;
-        let totalEntradasMes = 0;
-        let totalBoletosVencidos = 0;
-        let totalBoletosPendentes = 0;
         let totalOrcamento = 0;
         let totalPago = 0;
         let countObrasAtivas = 0;
-
         obras.filter(o => !o.concluida && !o.arquivada).forEach(obra => {
             const id = obra.id ?? obra.obra_id;
             const d = obraDetails[id];
             countObrasAtivas++;
-
-            if (d?.caixa) {
-                totalSaldoAtual += d.caixa.saldo_atual ?? 0;
-                totalSaidasMes  += d.caixa.total_saidas_mes ?? 0;
-                totalEntradasMes += d.caixa.total_entradas_mes ?? 0;
-            }
-            if (d?.boletos) {
-                totalBoletosVencidos  += d.boletos.quantidade_vencido ?? 0;
-                totalBoletosPendentes += d.boletos.quantidade_pendente ?? 0;
-            }
             if (d?.detail?.sumarios) {
                 totalOrcamento += d.detail.sumarios.orcamento_total ?? 0;
                 totalPago      += d.detail.sumarios.valores_pagos ?? 0;
             }
         });
-
-        return {
-            totalSaldoAtual,
-            totalSaidasMes,
-            totalEntradasMes,
-            totalBoletosVencidos,
-            totalBoletosPendentes,
-            totalOrcamento,
-            totalPago,
-            countObrasAtivas,
-            countObrasConcluidas: obras.filter(o => o.concluida).length,
-        };
+        return { totalOrcamento, totalPago, countObrasAtivas };
     }, [obras, obraDetails]);
 
-    // --- Activity feed: flatten historico_unificado across obras, sort by date, take 10 ---
+    const homePorObra = useMemo(() => {
+        const map = {};
+        (homeData?.obras || []).forEach(o => { map[o.id] = o; });
+        return map;
+    }, [homeData]);
+
+    const pendObras = useMemo(
+        () => (alertas?.pendencias || []).filter(p => p.modulo === 'obras'),
+        [alertas]
+    );
+    const pendVencidas = pendObras.filter(p => p.situacao === 'vencido');
+
     const activityFeed = useMemo(() => {
         const items = [];
         obras.filter(o => !o.concluida && !o.arquivada).forEach(obra => {
             const id = obra.id ?? obra.obra_id;
-            const d = obraDetails[id];
-            const historico = d?.detail?.historico_unificado;
+            const historico = obraDetails[id]?.detail?.historico_unificado;
             if (!Array.isArray(historico)) return;
-            historico.forEach(h => {
-                items.push({ ...h, obraId: id, obraName: obra.nome });
-            });
+            historico.forEach(h => items.push({ ...h, obraId: id, obraName: obra.nome }));
         });
         items.sort((a, b) => {
             const da = new Date(a.data ?? a.data_lancamento ?? a.created_at ?? 0);
@@ -244,239 +245,268 @@ export default function Dashboard() {
         );
     }
 
+    const hk = homeData?.kpis;
+    const previsao = hk?.previsao_pagar;
+    const pctOrc = kpis.totalOrcamento > 0 ? (kpis.totalPago / kpis.totalOrcamento) * 100 : 0;
+
     return (
         <div className="db-root">
             <DashboardHeader />
-            {/* Hero header — greeting + period toggle */}
+            {/* Hero header — saudação + competência */}
             <div className="db-header">
                 <div className="db-header-left">
-                    <h1>{getGreeting()}{user?.nome ? `, ${user.nome.split(' ')[0]}` : ''}</h1>
-                    <p>{kpis.countObrasAtivas} obra{kpis.countObrasAtivas !== 1 ? 's' : ''} ativa{kpis.countObrasAtivas !== 1 ? 's' : ''}</p>
+                    <h1>{getGreeting()}{user?.username ? `, ${user.username.split(' ')[0]}` : ''} 👋</h1>
+                    <p>
+                        {kpis.countObrasAtivas} obra{kpis.countObrasAtivas !== 1 ? 's' : ''} ativa{kpis.countObrasAtivas !== 1 ? 's' : ''}
+                        {pendVencidas.length > 0 ? ` · ${pendVencidas.length} pendência${pendVencidas.length !== 1 ? 's' : ''} vencida${pendVencidas.length !== 1 ? 's' : ''}` : ''}
+                    </p>
                 </div>
                 <div className="db-period-toggle">
-                    <button
-                        className={`db-period-btn${period === 'mes' ? ' active' : ''}`}
-                        onClick={() => setPeriod('mes')}
-                    >
-                        Mês
-                    </button>
-                    <button
-                        className={`db-period-btn${period === 'acumulado' ? ' active' : ''}`}
-                        onClick={() => setPeriod('acumulado')}
-                    >
-                        Total
-                    </button>
+                    <span className="db-period-btn active" style={{ cursor: 'default' }}>
+                        <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 4 }} />
+                        {mesAtualLabel()}
+                    </span>
                 </div>
             </div>
 
             {/* KPI cards */}
-            <div className="db-kpi-grid">
+            <div className="db-kpi-grid db-kpi-grid--5">
                 <StatCard
-                    label="Saldo Atual"
-                    value={formatCurrency(kpis.totalSaldoAtual)}
-                    icon={<i className="ti ti-wallet" aria-hidden="true" />}
+                    label="Mão de obra (mês)"
+                    value={formatCurrency(hk?.mo_mes ?? 0)}
+                    icon={<i className="ti ti-users" aria-hidden="true" />}
                 />
                 <StatCard
-                    label="Entradas no Mês"
-                    value={formatCurrency(kpis.totalEntradasMes)}
-                    icon={<i className="ti ti-trending-up" aria-hidden="true" />}
-                    trend={{ direction: 'up', value: 'entradas' }}
+                    label="Material (mês)"
+                    value={formatCurrency(hk?.material_mes ?? 0)}
+                    icon={<i className="ti ti-wall" aria-hidden="true" />}
                 />
                 <StatCard
                     label="Saídas no Mês"
-                    value={formatCurrency(kpis.totalSaidasMes)}
+                    value={formatCurrency(hk?.saidas_mes ?? 0)}
                     icon={<i className="ti ti-trending-down" aria-hidden="true" />}
-                    trend={{ direction: 'down', value: 'saídas' }}
                 />
                 <StatCard
-                    label="Total Pago / Orçamento"
-                    value={`${kpis.totalOrcamento > 0 ? ((kpis.totalPago / kpis.totalOrcamento) * 100).toFixed(0) : 0}%`}
+                    label="Orçamento executado"
+                    value={`${pctOrc.toFixed(0)}%`}
                     icon={<i className="ti ti-chart-pie" aria-hidden="true" />}
+                    trend={{ direction: 'none', value: `de ${formatCurrency(kpis.totalOrcamento)}` }}
                 />
-            </div>
-
-            {/* Alert cards */}
-            <div className="db-alert-row">
-                <AlertStatCard
-                    label="Boletos Vencidos"
-                    value={kpis.totalBoletosVencidos}
-                    severity={kpis.totalBoletosVencidos > 0 ? 'danger' : 'info'}
-                    description={kpis.totalBoletosVencidos > 0 ? 'Requer atenção' : 'Nenhum vencido'}
-                />
-                <AlertStatCard
-                    label="Boletos Pendentes"
-                    value={kpis.totalBoletosPendentes}
-                    severity={kpis.totalBoletosPendentes > 3 ? 'warning' : 'info'}
-                    description="A vencer"
-                />
-                <AlertStatCard
-                    label="Obras Concluídas"
-                    value={kpis.countObrasConcluidas}
-                    severity="info"
-                    description={`${obras.filter(o => !o.arquivada).length} total`}
-                />
-            </div>
-
-            {/* Obras */}
-            <div className="db-section">
-                <div className="db-filtro-obras">
-                    <button
-                        className={`db-filtro-chip${filtroObras === 'ativas' ? ' active' : ''}`}
-                        onClick={() => setFiltroObras('ativas')}
-                    >
-                        Ativas
-                    </button>
-                    <button
-                        className={`db-filtro-chip${filtroObras === 'arquivadas' ? ' active' : ''}`}
-                        onClick={() => setFiltroObras('arquivadas')}
-                    >
-                        Arquivadas
-                    </button>
-                    <button
-                        className={`db-filtro-chip${filtroObras === 'todas' ? ' active' : ''}`}
-                        onClick={() => setFiltroObras('todas')}
-                    >
-                        Todas
-                    </button>
-                </div>
-                <div className="db-section-header">
-                    <h2 className="db-section-title">
-                        {filtroObras === 'ativas' && `Obras Ativas (${displayObras.length})`}
-                        {filtroObras === 'arquivadas' && `Obras Arquivadas (${displayObras.length})`}
-                        {filtroObras === 'todas' && `Todas as Obras (${displayObras.length})`}
-                    </h2>
-                </div>
-                {displayObras.length === 0 ? (
-                    <div className="db-card">
-                        <div className="db-empty">
-                            <i className="ti ti-building-off" aria-hidden="true" />
-                            <p>{filtroObras === 'arquivadas' ? 'Nenhuma obra arquivada' : 'Nenhuma obra ativa'}</p>
-                        </div>
+                <div className="db-kpi-previsao">
+                    <div className="db-kpi-previsao-label">
+                        <i className="ti ti-calendar-due" aria-hidden="true" /> Previsão a pagar (mês)
                     </div>
-                ) : (
-                    <div className="db-obras-grid">
-                        {displayObras.map(obra => {
-                            const id = obra.id ?? obra.obra_id;
-                            const d = obraDetails[id];
-                            const sumarios = d?.detail?.sumarios;
-                            const orcTotal = sumarios?.orcamento_total ?? 0;
-                            const pago = sumarios?.valores_pagos ?? 0;
-                            const pct = orcTotal > 0 ? (pago / orcTotal) * 100 : 0;
-                            const saldo = d?.caixa?.saldo_atual;
-                            const vencidos = d?.boletos?.quantidade_vencido ?? 0;
+                    <div className="db-kpi-previsao-value num">
+                        {formatCurrency(previsao?.total ?? 0)}
+                    </div>
+                    <div className="db-kpi-previsao-sub">
+                        {previsao?.qtd ?? 0} título{(previsao?.qtd ?? 0) !== 1 ? 's' : ''} até {dataBRcurta(previsao?.ate)}
+                    </div>
+                </div>
+            </div>
 
-                            return (
-                                <div
-                                    key={id}
-                                    className={`db-obra-tile${obra.arquivada ? ' db-obra-tile--arquivada' : ''}`}
-                                    onClick={() => navigateToObra(id)}
-                                    role="button"
-                                    tabIndex={0}
-                                    aria-label={`Abrir obra ${obra.nome}`}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') navigateToObra(id); }}
-                                >
-                                    <div className="db-obra-tile-header">
-                                        <span className="db-obra-tile-name">{obra.nome}</span>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                                            {obra.arquivada && (
-                                                <span className="db-obra-badge-archived">
-                                                    <i className="ti ti-archive" aria-hidden="true" />
-                                                    Arquivada
-                                                </span>
-                                            )}
-                                            {!obra.arquivada && vencidos > 0 && (
-                                                <span className="db-obra-badge" style={{
-                                                    background: 'var(--status-danger-bg)',
-                                                    color: 'var(--status-danger)',
-                                                }}>
-                                                    {vencidos} venc.
-                                                </span>
-                                            )}
-                                            <ObraCardActions
-                                                obraId={id}
-                                                obraName={obra.nome}
-                                                obraCliente={obra.cliente}
-                                                obraArquivada={obra.arquivada}
-                                                onNavigate={() => navigateToObra(id)}
-                                                onDeleted={loadData}
-                                                onArchived={loadData}
-                                                onUnarchived={loadData}
-                                                onEdited={loadData}
-                                            />
-                                        </div>
-                                    </div>
-                                    {obra.cliente && (
-                                        <div className="db-obra-tile-client">{obra.cliente}</div>
-                                    )}
-                                    {orcTotal > 0 && (
-                                        <ProgressBar
-                                            current={pago}
-                                            total={orcTotal}
-                                            showLabels={false}
-                                            variant={getObraProgressVariant(pct)}
-                                            height={4}
-                                        />
-                                    )}
-                                    <div className="db-obra-stats-row">
-                                        {saldo != null && (
-                                            <div className="db-obra-stat">
-                                                <span className="db-obra-stat-label">Saldo</span>
-                                                <span className="db-obra-stat-value">{formatCurrency(saldo)}</span>
-                                            </div>
-                                        )}
-                                        {orcTotal > 0 && (
-                                            <div className="db-obra-stat">
-                                                <span className="db-obra-stat-label">Orçamento</span>
-                                                <span
-                                                    className="db-obra-stat-value"
-                                                    style={{ color: getPctColor(pct), fontWeight: 700 }}
-                                                >
-                                                    {pct.toFixed(0)}%
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
+            {/* Alerta de vencidos */}
+            {pendVencidas.length > 0 && (
+                <div className="db-alert-banner">
+                    <i className="ti ti-alert-triangle" aria-hidden="true" />
+                    <span>
+                        {pendVencidas.length} pendência{pendVencidas.length !== 1 ? 's' : ''} vencida{pendVencidas.length !== 1 ? 's' : ''}
+                        {' '}({formatCurrency(pendVencidas.reduce((s, p) => s + p.valor, 0))})
+                        {' '}— {[...new Set(pendVencidas.map(p => p.origem).filter(Boolean))].slice(0, 3).join(', ')}
+                    </span>
+                    <span style={{ flex: 1 }} />
+                    {pendVencidas[0]?.origem_id && (
+                        <button
+                            className="db-alert-banner-cta"
+                            onClick={() => navigateToObra(pendVencidas[0].origem_id)}
+                        >
+                            Resolver →
+                        </button>
+                    )}
+                </div>
+            )}
+
+            <div className="db-main-cols">
+                <div>
+                    {/* Obras */}
+                    <div className="db-section">
+                        <div className="db-filtro-obras">
+                            <button
+                                className={`db-filtro-chip${filtroObras === 'ativas' ? ' active' : ''}`}
+                                onClick={() => setFiltroObras('ativas')}
+                            >
+                                Ativas
+                            </button>
+                            <button
+                                className={`db-filtro-chip${filtroObras === 'arquivadas' ? ' active' : ''}`}
+                                onClick={() => setFiltroObras('arquivadas')}
+                            >
+                                Arquivadas
+                            </button>
+                            <button
+                                className={`db-filtro-chip${filtroObras === 'todas' ? ' active' : ''}`}
+                                onClick={() => setFiltroObras('todas')}
+                            >
+                                Todas
+                            </button>
+                        </div>
+                        <div className="db-section-header">
+                            <h2 className="db-section-title">
+                                {filtroObras === 'ativas' && `Obras Ativas (${displayObras.length})`}
+                                {filtroObras === 'arquivadas' && `Obras Arquivadas (${displayObras.length})`}
+                                {filtroObras === 'todas' && `Todas as Obras (${displayObras.length})`}
+                            </h2>
+                        </div>
+                        {displayObras.length === 0 ? (
+                            <div className="db-card">
+                                <div className="db-empty">
+                                    <i className="ti ti-building-off" aria-hidden="true" />
+                                    <p>{filtroObras === 'arquivadas' ? 'Nenhuma obra arquivada' : 'Nenhuma obra ativa'}</p>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+                            </div>
+                        ) : (
+                            <div className="db-obras-grid">
+                                {displayObras.map(obra => {
+                                    const id = obra.id ?? obra.obra_id;
+                                    const d = obraDetails[id];
+                                    const h = homePorObra[id];
+                                    const sumarios = d?.detail?.sumarios;
+                                    const orcTotal = sumarios?.orcamento_total ?? 0;
+                                    const pago = sumarios?.valores_pagos ?? 0;
+                                    const pct = orcTotal > 0 ? (pago / orcTotal) * 100 : 0;
+                                    const vencidos = h?.vencidos_qtd ?? 0;
 
-            {/* Activity feed */}
-            <div className="db-section">
-                <div className="db-section-header">
-                    <h2 className="db-section-title">Atividade Recente</h2>
+                                    return (
+                                        <div
+                                            key={id}
+                                            className={`db-obra-tile${obra.arquivada ? ' db-obra-tile--arquivada' : ''}`}
+                                            onClick={() => navigateToObra(id)}
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={`Abrir obra ${obra.nome}`}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') navigateToObra(id); }}
+                                        >
+                                            <div className="db-obra-tile-header">
+                                                <span className="db-obra-tile-name">
+                                                    <span
+                                                        className="db-obra-status-dot"
+                                                        style={{ background: vencidos > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}
+                                                    />
+                                                    {obra.nome}
+                                                </span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                                    {obra.arquivada && (
+                                                        <span className="db-obra-badge-archived">
+                                                            <i className="ti ti-archive" aria-hidden="true" />
+                                                            Arquivada
+                                                        </span>
+                                                    )}
+                                                    {!obra.arquivada && vencidos > 0 && (
+                                                        <span className="db-obra-badge" style={{
+                                                            background: 'var(--status-danger-bg)',
+                                                            color: 'var(--status-danger)',
+                                                        }}>
+                                                            {vencidos} vencido{vencidos !== 1 ? 's' : ''}
+                                                        </span>
+                                                    )}
+                                                    {!obra.arquivada && vencidos === 0 && (
+                                                        <span className="db-obra-badge" style={{
+                                                            background: 'var(--status-success-bg)',
+                                                            color: 'var(--status-success-text)',
+                                                        }}>
+                                                            Em dia
+                                                        </span>
+                                                    )}
+                                                    <ObraCardActions
+                                                        obraId={id}
+                                                        obraName={obra.nome}
+                                                        obraCliente={obra.cliente}
+                                                        obraArquivada={obra.arquivada}
+                                                        onNavigate={() => navigateToObra(id)}
+                                                        onDeleted={loadData}
+                                                        onArchived={loadData}
+                                                        onUnarchived={loadData}
+                                                        onEdited={loadData}
+                                                    />
+                                                </div>
+                                            </div>
+                                            {obra.cliente && (
+                                                <div className="db-obra-tile-client">{obra.cliente}</div>
+                                            )}
+                                            {orcTotal > 0 && (
+                                                <>
+                                                    <div className="db-obra-progress-row">
+                                                        <span>Pago {formatCurrency(pago)} de {formatCurrency(orcTotal)}</span>
+                                                        <span style={{ color: getPctColor(pct), fontWeight: 700 }}>{pct.toFixed(0)}%</span>
+                                                    </div>
+                                                    <ProgressBar
+                                                        current={pago}
+                                                        total={orcTotal}
+                                                        showLabels={false}
+                                                        variant={getObraProgressVariant(pct)}
+                                                        height={4}
+                                                    />
+                                                </>
+                                            )}
+                                            <div className="db-obra-stats-row">
+                                                <div className="db-obra-stat">
+                                                    <span className="db-obra-stat-label">Mão de obra (mês)</span>
+                                                    <span className="db-obra-stat-value">{formatCurrency(h?.mo_mes ?? 0)}</span>
+                                                </div>
+                                                <div className="db-obra-stat">
+                                                    <span className="db-obra-stat-label">Material (mês)</span>
+                                                    <span className="db-obra-stat-value">{formatCurrency(h?.material_mes ?? 0)}</span>
+                                                </div>
+                                                <div className="db-obra-stat">
+                                                    <span className="db-obra-stat-label">Última atividade</span>
+                                                    <span className="db-obra-stat-value">
+                                                        {ultimaAtividadeLabel(d?.detail?.historico_unificado)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
-                {activityFeed.length === 0 ? (
-                    <div className="db-card">
-                        <div className="db-empty">
-                            <i className="ti ti-history" aria-hidden="true" />
-                            <p>Sem atividade recente</p>
+
+                {/* Activity feed (coluna lateral no desktop) */}
+                <div className="db-section db-activity-col">
+                    <div className="db-section-header">
+                        <h2 className="db-section-title">Atividade Recente</h2>
+                    </div>
+                    {activityFeed.length === 0 ? (
+                        <div className="db-card">
+                            <div className="db-empty">
+                                <i className="ti ti-history" aria-hidden="true" />
+                                <p>Sem atividade recente</p>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="db-activity-list">
-                        {activityFeed.map((item, idx) => {
-                            const tipo = item.tipo ?? item.type ?? 'lancamento';
-                            const title = item.descricao ?? item.titulo ?? item.nome ?? tipo;
-                            const description = item.valor != null ? formatCurrency(item.valor) : undefined;
-                            const dateKey = item.data ?? item.data_lancamento ?? item.created_at;
-                            return (
-                                <ActivityItem
-                                    key={`${item.obraId}-${idx}`}
-                                    icon={<ActivityIcon tipo={tipo} />}
-                                    title={title}
-                                    description={description}
-                                    timestamp={formatTimestamp(dateKey)}
-                                    obraName={item.obraName}
-                                    isLast={idx === activityFeed.length - 1}
-                                    onClick={() => navigateToObra(item.obraId)}
-                                />
-                            );
-                        })}
-                    </div>
-                )}
+                    ) : (
+                        <div className="db-activity-list">
+                            {activityFeed.map((item, idx) => {
+                                const tipo = item.tipo ?? item.type ?? 'lancamento';
+                                const title = item.descricao ?? item.titulo ?? item.nome ?? tipo;
+                                const description = item.valor != null ? formatCurrency(item.valor) : undefined;
+                                const dateKey = item.data ?? item.data_lancamento ?? item.created_at;
+                                return (
+                                    <ActivityItem
+                                        key={`${item.obraId}-${idx}`}
+                                        icon={<ActivityIcon tipo={tipo} />}
+                                        title={title}
+                                        description={description}
+                                        timestamp={formatTimestamp(dateKey)}
+                                        obraName={item.obraName}
+                                        isLast={idx === activityFeed.length - 1}
+                                        onClick={() => navigateToObra(item.obraId)}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

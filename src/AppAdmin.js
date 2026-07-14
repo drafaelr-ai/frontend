@@ -167,6 +167,15 @@ const AdminMobileStyles = () => (
         .admin-overlay { display: none; }
         .admin-sidebar-close { display: none; }
 
+        .adm-home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+        .adm-imoveis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        @media (max-width: 1100px) {
+            .adm-home-cols { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .adm-imoveis-grid { grid-template-columns: 1fr; }
+        }
+
         @media (max-width: 768px) {
             .admin-sidebar {
                 position: fixed !important;
@@ -253,10 +262,12 @@ const AdminMobileStyles = () => (
 // COMPONENTE: DASHBOARD
 // ===================================================================================
 
-const Dashboard = () => {
+const Dashboard = ({ onIrImoveis }) => {
     const { token } = useAuthAdmin();
     const [dados, setDados] = useState(null);
     const [dadosAcumulado, setDadosAcumulado] = useState(null);
+    const [imoveis, setImoveis] = useState([]);
+    const [imovelModal, setImovelModal] = useState(null);
     const [loading, setLoading] = useState(true);
     const [modo, setModo] = useState('mes'); // 'mes' | 'acumulado'
     const [mesAno, setMesAno] = useState({
@@ -273,6 +284,13 @@ const Dashboard = () => {
     useEffect(() => {
         fetchDashboard();
     }, [mesAno]);
+
+    useEffect(() => {
+        fetchWithAuthAdmin(`${API_URL_ADMIN}/imoveis`)
+            .then(r => r.json())
+            .then(d => setImoveis(Array.isArray(d) ? d : []))
+            .catch(err => logger.error('Erro ao carregar imóveis:', err));
+    }, []);
 
     useEffect(() => {
         if (modo === 'acumulado' && !dadosAcumulado) fetchAcumulado();
@@ -334,11 +352,59 @@ const Dashboard = () => {
 
     if (loading) return <div style={styles.loading}>Carregando...</div>;
 
+    const alugados = imoveis.filter(i => ['alugado', 'alugado_terceiro'].includes(i.status)).length;
+    const vencidos = dados?.alertas?.vencidos || [];
+    const aVencer = dados?.alertas?.a_vencer || [];
+    const vencidosPorImovel = {};
+    vencidos.forEach(v => { vencidosPorImovel[v.imovel_nome] = (vencidosPorImovel[v.imovel_nome] || 0) + 1; });
+
+    const statusChip = (status) => {
+        const map = {
+            alugado: { label: 'Alugado', bg: '#dcfce7', fg: '#16a34a' },
+            alugado_terceiro: { label: 'Alugado', bg: '#dcfce7', fg: '#16a34a' },
+            proprio: { label: 'Próprio', bg: '#e0e7ff', fg: '#4f46e5' },
+            a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: '#d97706' },
+            em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: '#d97706' },
+        };
+        return map[status] || { label: status || '—', bg: 'var(--surface-muted)', fg: 'var(--text-muted)' };
+    };
+
+    const kpiCard = (icone, iconeBg, label, valor, cor, onClick, sub) => (
+        <div
+            onClick={onClick}
+            style={{
+                background: 'var(--surface-card)', border: '1px solid var(--border-subtle)',
+                borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center',
+                gap: '12px', cursor: onClick ? 'pointer' : 'default',
+                boxShadow: '0 2px 6px rgba(15,23,42,0.05)'
+            }}
+            title={onClick ? 'Clique para ver lançamentos' : undefined}
+        >
+            <div style={{
+                width: '38px', height: '38px', borderRadius: '10px', background: iconeBg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '17px', flexShrink: 0
+            }}>{icone}</div>
+            <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>{label}</div>
+                <div className="num" style={{ fontSize: '19px', fontWeight: 700, color: cor || 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+                    {valor}
+                </div>
+                {sub && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{sub}</div>}
+            </div>
+        </div>
+    );
+
     return (
         <div style={styles.content}>
             {/* Header */}
             <div style={styles.pageHeader}>
-                <h1 style={styles.pageTitle}>📊 Dashboard</h1>
+                <div>
+                    <h1 style={{ ...styles.pageTitle, marginBottom: 2 }}>Patrimônio</h1>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {imoveis.length} imóve{imoveis.length === 1 ? 'l' : 'is'} · {alugados} alugado{alugados !== 1 ? 's' : ''}
+                        {vencidos.length > 0 ? ` · ${vencidos.length} vencido${vencidos.length !== 1 ? 's' : ''}` : ''}
+                    </div>
+                </div>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {/* Toggle Modo */}
                     <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
@@ -366,115 +432,148 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Cards Resumo — clicáveis */}
-            <div style={styles.cardsGrid}>
-                <div style={{ ...styles.card, ...styles.cardBlue }}>
-                    <div style={styles.cardIcon}>🏠</div>
-                    <div style={styles.cardInfo}>
-                        <div style={styles.cardValue}>{dados?.resumo?.total_imoveis || 0}</div>
-                        <div style={styles.cardLabel}>Imóveis</div>
+            {/* KPIs — clicáveis */}
+            <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                gap: '12px', marginBottom: '16px'
+            }}>
+                {kpiCard('↑', '#dcfce7',
+                    modo === 'acumulado' ? 'Total Receitas' : 'Receitas do mês',
+                    formatCurrency(dadosAtivos?.resumo?.receitas_mes || 0), '#16a34a',
+                    () => setModalLancamentos({ titulo: `Receitas — ${labelPeriodo}`, tipo: 'receita' }))}
+                {kpiCard('↓', 'var(--status-danger-bg)',
+                    modo === 'acumulado' ? 'Total Despesas' : 'Despesas do mês',
+                    formatCurrency(dadosAtivos?.resumo?.despesas_mes || 0), 'var(--status-danger)',
+                    () => setModalLancamentos({ titulo: `Despesas — ${labelPeriodo}`, tipo: 'despesa' }))}
+                {kpiCard('Σ', (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? '#dcfce7' : 'var(--status-danger-bg)',
+                    modo === 'acumulado' ? 'Saldo acumulado' : 'Saldo do mês',
+                    formatCurrency(dadosAtivos?.resumo?.saldo_mes || 0),
+                    (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? '#16a34a' : 'var(--status-danger)',
+                    () => setModalLancamentos({ titulo: `Todos — ${labelPeriodo}`, tipo: '' }))}
+                {kpiCard('⌂', '#e0e7ff', 'Ocupação',
+                    `${alugados} de ${imoveis.length}`, undefined, onIrImoveis,
+                    imoveis.length ? `${Math.round((alugados / imoveis.length) * 100)}% alugados` : undefined)}
+            </div>
+
+            {/* Banner de vencidos */}
+            {vencidos.length > 0 && (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
+                    background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)',
+                    borderRadius: '12px', padding: '10px 16px', marginBottom: '16px',
+                    color: 'var(--status-danger)', fontSize: '13px', fontWeight: 600
+                }}>
+                    <span>⚠</span>
+                    <span>
+                        {vencidos.length} vencido{vencidos.length !== 1 ? 's' : ''} ({formatCurrency(dados?.alertas?.total_vencido || 0)})
+                        {' '}— {[...new Set(vencidos.map(v => v.imovel_nome).filter(Boolean))].slice(0, 3).join(', ')}
+                    </span>
+                </div>
+            )}
+
+            {/* Imóveis + Próximos vencimentos */}
+            <div className="adm-home-cols">
+                <div style={styles.section}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <h2 style={{ ...styles.sectionTitle, margin: 0 }}>Imóveis</h2>
+                        {onIrImoveis && (
+                            <button onClick={onIrImoveis} style={{
+                                background: 'none', border: 'none', color: '#16a34a', fontWeight: 700,
+                                fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit'
+                            }}>
+                                Ver todos →
+                            </button>
+                        )}
+                    </div>
+                    <div className="adm-imoveis-grid">
+                        {imoveis.slice(0, 6).map(im => {
+                            const chip = statusChip(im.status);
+                            const nVenc = vencidosPorImovel[im.nome] || 0;
+                            return (
+                                <div
+                                    key={im.id}
+                                    onClick={() => setImovelModal(im)}
+                                    style={{
+                                        background: 'var(--surface-card)', border: '1px solid var(--border-subtle)',
+                                        borderRadius: '14px', padding: '14px 16px', cursor: 'pointer',
+                                        boxShadow: '0 2px 6px rgba(15,23,42,0.05)'
+                                    }}
+                                    title="Ver lançamentos do imóvel"
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{im.nome}</span>
+                                        <span style={{ flex: 1 }} />
+                                        {nVenc > 0 && (
+                                            <span style={{
+                                                background: 'var(--status-danger-bg)', color: 'var(--status-danger)',
+                                                fontSize: '10px', fontWeight: 700, padding: '3px 9px', borderRadius: '999px'
+                                            }}>
+                                                {nVenc} vencido{nVenc !== 1 ? 's' : ''}
+                                            </span>
+                                        )}
+                                        <span style={{
+                                            background: chip.bg, color: chip.fg, fontSize: '10px',
+                                            fontWeight: 700, padding: '3px 9px', borderRadius: '999px'
+                                        }}>
+                                            {chip.label}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 10px' }}>
+                                        {[im.endereco, im.cidade].filter(Boolean).join(' · ') || '—'}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        {[
+                                            ['Aluguel', im.valor_aluguel ? `${formatCurrency(im.valor_aluguel)}/mês` : '—', 'var(--text-primary)'],
+                                            ['Receitas', formatCurrency(im.total_receitas || 0), '#16a34a'],
+                                            ['Despesas', formatCurrency(im.total_despesas || 0), 'var(--status-danger)'],
+                                        ].map(([lb, vl, cor]) => (
+                                            <div key={lb} style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>{lb}</div>
+                                                <div className="num" style={{ fontSize: '13px', fontWeight: 700, color: cor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{vl}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {imoveis.length === 0 && <p style={styles.emptyText}>Nenhum imóvel cadastrado.</p>}
                     </div>
                 </div>
 
-                <div
-                    style={{ ...styles.card, ...styles.cardRed, cursor: 'pointer', transition: 'transform 0.15s', ':hover': { transform: 'scale(1.02)' } }}
-                    onClick={() => setModalLancamentos({ titulo: `Despesas — ${labelPeriodo}`, tipo: 'despesa' })}
-                    title="Clique para ver lançamentos"
-                >
-                    <div style={styles.cardIcon}>📉</div>
-                    <div style={styles.cardInfo}>
-                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.despesas_mes || 0)}</div>
-                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Total Despesas' : 'Despesas do Mês'}</div>
-                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
-                    </div>
-                </div>
-
-                <div
-                    style={{ ...styles.card, ...styles.cardGreen, cursor: 'pointer' }}
-                    onClick={() => setModalLancamentos({ titulo: `Receitas — ${labelPeriodo}`, tipo: 'receita' })}
-                    title="Clique para ver lançamentos"
-                >
-                    <div style={styles.cardIcon}>📈</div>
-                    <div style={styles.cardInfo}>
-                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.receitas_mes || 0)}</div>
-                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Total Receitas' : 'Receitas do Mês'}</div>
-                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
-                    </div>
-                </div>
-
-                <div
-                    style={{ ...styles.card, ...(dadosAtivos?.resumo?.saldo_mes >= 0 ? styles.cardGreen : styles.cardRed), cursor: 'pointer' }}
-                    onClick={() => setModalLancamentos({ titulo: `Todos — ${labelPeriodo}`, tipo: '' })}
-                    title="Clique para ver todos os lançamentos"
-                >
-                    <div style={styles.cardIcon}>💰</div>
-                    <div style={styles.cardInfo}>
-                        <div style={styles.cardValue}>{formatCurrency(dadosAtivos?.resumo?.saldo_mes || 0)}</div>
-                        <div style={styles.cardLabel}>{modo === 'acumulado' ? 'Saldo Acumulado' : 'Saldo do Mês'}</div>
-                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>👆 ver lançamentos</div>
+                <div style={styles.section}>
+                    <h2 style={{ ...styles.sectionTitle, marginBottom: '12px' }}>Próximos vencimentos</h2>
+                    <div style={{
+                        background: 'var(--surface-card)', border: '1px solid var(--border-subtle)',
+                        borderRadius: '14px', padding: '6px 14px'
+                    }}>
+                        {[...vencidos.map(v => ({ ...v, _v: true })), ...aVencer].slice(0, 8).map((l, i) => (
+                            <div key={i} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: '10px',
+                                padding: '10px 0', borderBottom: '1px solid var(--surface-muted)'
+                            }}>
+                                <div style={{
+                                    width: '30px', height: '30px', borderRadius: '999px', flexShrink: 0,
+                                    background: l._v ? 'var(--status-danger-bg)' : 'var(--status-warning-bg)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px'
+                                }}>{l.categoria_icone || '🧾'}</div>
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                        {l.descricao} — {formatCurrency(l.valor)}
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: l._v ? 'var(--status-danger)' : 'var(--text-muted)' }}>
+                                        {l.imovel_nome} · {l._v
+                                            ? `vencido há ${Math.abs(l.dias_para_vencer)} dia${Math.abs(l.dias_para_vencer) !== 1 ? 's' : ''}`
+                                            : (l.dias_para_vencer === 0 ? 'vence hoje' : `vence em ${l.dias_para_vencer} dia${l.dias_para_vencer !== 1 ? 's' : ''}`)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {vencidos.length + aVencer.length === 0 && (
+                            <p style={{ ...styles.emptyText, padding: '14px 0' }}>Nada vencendo nos próximos dias. 🎉</p>
+                        )}
                     </div>
                 </div>
             </div>
-
-            {/* Alertas de Vencimento — sempre visíveis independente do modo/mês */}
-            {(dados?.alertas?.vencidos?.length > 0 || dados?.alertas?.a_vencer?.length > 0) && (
-                <div style={styles.alertasSection}>
-                    {dados?.alertas?.vencidos?.length > 0 && (
-                        <div style={styles.alertaVencido}>
-                            <div style={styles.alertaHeader}>
-                                <span style={styles.alertaIcon}>🚨</span>
-                                <div>
-                                    <strong>VENCIDOS</strong>
-                                    <span style={styles.alertaTotal}>{formatCurrency(dados.alertas.total_vencido)}</span>
-                                </div>
-                            </div>
-                            <div style={styles.alertaItems}>
-                                {dados.alertas.vencidos.map((lanc, i) => (
-                                    <div key={i} style={styles.alertaItem}>
-                                        <div>
-                                            <span style={styles.alertaCategoria}>{lanc.categoria_icone}</span>
-                                            <strong>{lanc.descricao}</strong>
-                                            <span style={styles.alertaImovel}> - {lanc.imovel_nome}</span>
-                                        </div>
-                                        <div style={styles.alertaInfo}>
-                                            <span style={styles.alertaDias}>{Math.abs(lanc.dias_para_vencer)} dia(s) atraso</span>
-                                            <span style={styles.alertaValor}>{formatCurrency(lanc.valor)}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    {dados?.alertas?.a_vencer?.length > 0 && (
-                        <div style={styles.alertaAVencer}>
-                            <div style={styles.alertaHeader}>
-                                <span style={styles.alertaIcon}>⏰</span>
-                                <div>
-                                    <strong>A VENCER (próx. 7 dias)</strong>
-                                    <span style={styles.alertaTotal}>{formatCurrency(dados.alertas.total_a_vencer)}</span>
-                                </div>
-                            </div>
-                            <div style={styles.alertaItems}>
-                                {dados.alertas.a_vencer.map((lanc, i) => (
-                                    <div key={i} style={styles.alertaItem}>
-                                        <div>
-                                            <span style={styles.alertaCategoria}>{lanc.categoria_icone}</span>
-                                            <strong>{lanc.descricao}</strong>
-                                            <span style={styles.alertaImovel}> - {lanc.imovel_nome}</span>
-                                        </div>
-                                        <div style={styles.alertaInfo}>
-                                            <span style={styles.alertaDiasVencer}>
-                                                {lanc.dias_para_vencer === 0 ? 'Vence HOJE!' : `Vence em ${lanc.dias_para_vencer} dia(s)`}
-                                            </span>
-                                            <span style={styles.alertaValor}>{formatCurrency(lanc.valor)}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
 
             {/* Despesas por Categoria */}
             <div style={styles.section}>
@@ -558,6 +657,15 @@ const Dashboard = () => {
                     ano={modo === 'mes' ? mesAno.ano : null}
                     token={token}
                     onClose={() => setModalLancamentos(null)}
+                />
+            )}
+
+            {/* Lançamentos do imóvel clicado */}
+            {imovelModal && (
+                <LancamentosImovelModal
+                    imovel={imovelModal}
+                    token={token}
+                    onClose={() => setImovelModal(null)}
                 />
             )}
         </div>
@@ -3459,7 +3567,7 @@ const DashboardAdmin = ({ onBackToModules }) => {
 
     const renderContent = () => {
         switch (activeMenu) {
-            case 'dashboard': return <Dashboard />;
+            case 'dashboard': return <Dashboard onIrImoveis={() => handleMenuSelect('imoveis')} />;
             case 'imoveis': return <Imoveis />;
             case 'lancamentos': return <Lancamentos />;
             case 'boletos': return <GestaoBoletos />;
