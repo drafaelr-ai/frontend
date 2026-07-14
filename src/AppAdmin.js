@@ -163,6 +163,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
 const AdminMobileStyles = () => (
     <style>{`
         .admin-hamburger { display: none; }
+        .admin-back-modules { display: none; }
         .admin-overlay { display: none; }
         .admin-sidebar-close { display: none; }
 
@@ -218,6 +219,28 @@ const AdminMobileStyles = () => (
                 display: flex;
                 align-items: center;
                 justify-content: center;
+            }
+            .admin-back-modules {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                position: fixed;
+                top: 12px;
+                right: 12px;
+                height: 44px;
+                padding: 0 14px;
+                border-radius: 8px;
+                border: none;
+                background: #0F766E;
+                color: #fff;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                z-index: 1001;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
             }
             .admin-main {
                 padding-top: 56px;
@@ -3456,6 +3479,15 @@ const DashboardAdmin = ({ onBackToModules }) => {
             >
                 ☰
             </button>
+            {onBackToModules && (
+                <button
+                    className="admin-back-modules"
+                    onClick={onBackToModules}
+                    aria-label="Voltar aos módulos"
+                >
+                    ← Módulos
+                </button>
+            )}
             <div
                 className={`admin-overlay${sidebarOpen ? ' open' : ''}`}
                 onClick={() => setSidebarOpen(false)}
