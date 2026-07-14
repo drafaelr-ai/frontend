@@ -132,6 +132,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                         className="m-btn-primary"
                         onClick={compartilhar}
                         disabled={selecionados.size === 0}
+                        style={{ background: 'var(--module-obras)' }}
                     >
                         <i className="ti ti-brand-whatsapp" aria-hidden="true"></i>
                         Compartilhar ({selecionados.size})
@@ -163,7 +164,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 <span style={{ marginLeft: 'auto', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                     {selecionados.size} de {todosPendentes.length}
                 </span>
-                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--brand-primary)' }}>
+                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--module-obras)' }}>
                     {formatCurrency(totalSelecionado)}
                 </span>
             </div>
@@ -200,9 +201,13 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                                 <span style={{
                                     fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)',
                                     padding: '2px var(--space-2)', borderRadius: 'var(--radius-full)',
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
                                     background: item.vencido ? 'var(--status-danger-bg)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-bg)' : 'var(--status-warning-bg)',
                                     color: item.vencido ? 'var(--status-danger-text)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-text)' : 'var(--status-warning-text)',
-                                }}>{item.tipo}</span>
+                                }}>
+                                    <i className={`ti ${item.vencido ? 'ti-alert-triangle' : item.tipo === '📦 Parcela' ? 'ti-package' : 'ti-clock'}`} aria-hidden="true"></i>
+                                    {item.tipo.replace(/^\S+\s*/, '')}
+                                </span>
                                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{item.descricao}</span>
                             </div>
                             <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-1)', fontSize: 'var(--text-sm)', color: 'var(--text-muted)', flexWrap: 'wrap' }}>

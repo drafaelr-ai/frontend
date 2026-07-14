@@ -252,14 +252,14 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                     <td style={{ textAlign: 'center', display: 'flex', gap: 'var(--space-1)', justifyContent: 'center' }}>
                                         <button
                                             className="acao-btn"
-                                            style={{ backgroundColor: 'var(--status-info)', color: 'white' }}
+                                            style={{ backgroundColor: 'var(--status-info)', color: 'var(--text-on-dark)' }}
                                             onClick={() => setUserToEdit(user)}
                                         >
                                             Permissões
                                         </button>
                                         <button
                                             className="acao-btn"
-                                            style={{ backgroundColor: 'var(--status-danger)', color: 'white' }}
+                                            style={{ backgroundColor: 'var(--status-danger)', color: 'var(--text-on-dark)' }}
                                             onClick={() => handleDeleteUser(user)}
                                         >
                                             Excluir

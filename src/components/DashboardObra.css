@@ -24,10 +24,11 @@
 
 .dashboard-section {
     background: var(--surface-card);
-    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
 }
 
 .dashboard-charts-row {
@@ -156,9 +157,9 @@
 }
 
 .gantt-controls button.active {
-    background: var(--brand-primary);
+    background: var(--module-obras);
     color: white;
-    border-color: var(--brand-primary);
+    border-color: var(--module-obras);
 }
 
 .gantt-chart {
@@ -224,8 +225,8 @@
 
 /* Header de Serviço */
 .gantt-row.gantt-servico-header {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
-    border-left: 4px solid var(--brand-accent);
+    background: linear-gradient(135deg, var(--module-obras) 0%, var(--module-obras-dark) 100%);
+    border-left: 4px solid var(--status-warning);
     margin-top: 10px;
 }
 
@@ -252,7 +253,7 @@
 }
 
 .gantt-servico-bar {
-    background: rgba(30, 58, 95, 0.3);
+    background: rgba(0, 97, 252, 0.18);
 }
 
 .gantt-bar-servico {
@@ -416,14 +417,15 @@
 
 .modal-content {
     background: var(--surface-card);
-    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
     width: 100%;
     max-width: 700px;
     max-height: 80vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-modal);
 }
 
 .modal-header {

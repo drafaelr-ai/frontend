@@ -82,7 +82,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                 fetchBoletos();
                 fetchResumo();
                 if (onUpdate) onUpdate(); // Atualizar tela principal
-                notify.success('✅ Boleto marcado como pago!');
+                notify.success('Boleto marcado como pago!');
             }
         } catch (error) {
             logger.error('Erro ao marcar como pago:', error);
@@ -153,30 +153,30 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
             <div key={boleto.id} style={{
                 background: cor.bg,
                 border: `2px solid ${cor.border}`,
-                borderRadius: '10px',
+                borderRadius: '16px',
                 padding: '15px',
                 marginBottom: '10px'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                     <div>
-                        <h4 style={{ margin: '0 0 5px 0', color: '#333' }}>
-                            📄 {boleto.descricao}
+                        <h4 style={{ margin: '0 0 5px 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <i className="ti ti-file-text" aria-hidden="true" /> {boleto.descricao}
                         </h4>
                         {boleto.beneficiario && (
-                            <span style={{ fontSize: '0.85em', color: '#666' }}>
+                            <span style={{ fontSize: '0.85em', color: 'var(--text-secondary)' }}>
                                 Beneficiário: {boleto.beneficiario}
                             </span>
                         )}
                         {boleto.servico_nome && (
                             <div style={{
                                 fontSize: '0.8em',
-                                color: '#1976d2',
+                                color: 'var(--status-info)',
                                 marginTop: '3px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '5px'
                             }}>
-                                🔗 Vinculado: <strong>{boleto.servico_nome}</strong>
+                                <i className="ti ti-link" aria-hidden="true" /> Vinculado: <strong>{boleto.servico_nome}</strong>
                             </div>
                         )}
                     </div>
@@ -186,25 +186,29 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         padding: '4px 10px',
                         borderRadius: '12px',
                         fontSize: '0.8em',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        whiteSpace: 'nowrap'
                     }}>
-                        {boleto.status === 'Pago' ? '✅ Pago' :
+                        {boleto.status === 'Pago' ? <><i className="ti ti-circle-check" aria-hidden="true" /> Pago</> :
                          boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
-                         boleto.dias_para_vencer === 0 ? '⚠️ Vence HOJE' :
+                         boleto.dias_para_vencer === 0 ? <><i className="ti ti-alert-triangle" aria-hidden="true" /> Vence HOJE</> :
                          `${boleto.dias_para_vencer}d para vencer`}
                     </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
                     <div>
-                        <span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span>
-                        <div style={{ fontWeight: 'bold' }}>
+                        <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Vencimento</span>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>
                             {new Date(boleto.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </div>
                     </div>
                     <div>
                         <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Valor</span>
-                        <div style={{ fontWeight: 'bold', color: 'var(--brand-primary)', fontSize: '1.1em' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--module-obras)', fontSize: '1.1em' }}>
                             {formatCurrency(boleto.valor)}
                         </div>
                     </div>
@@ -220,15 +224,16 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
 
                 {boleto.codigo_barras && (
                     <div style={{
-                        background: 'white',
+                        background: 'var(--surface-card)',
                         padding: '10px',
-                        borderRadius: '5px',
+                        borderRadius: 'var(--radius-sm)',
                         marginBottom: '10px',
-                        fontFamily: 'monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: '0.9em',
-                        wordBreak: 'break-all'
+                        wordBreak: 'break-all',
+                        color: 'var(--text-primary)'
                     }}>
-                        <span style={{ fontSize: '0.8em', color: '#666', display: 'block', marginBottom: '5px' }}>
+                        <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
                             Código de Barras:
                         </span>
                         {boleto.codigo_barras}
@@ -244,12 +249,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: 'var(--status-success)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '5px',
+                                borderRadius: 'var(--radius-sm)',
                                 cursor: 'pointer',
-                                fontSize: '0.85em'
+                                fontSize: '0.85em',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
                             }}
                         >
-                            📋 Copiar Código
+                            <i className="ti ti-copy" aria-hidden="true" /> Copiar Código
                         </button>
                     )}
 
@@ -261,12 +269,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: 'var(--status-info)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '5px',
+                                borderRadius: 'var(--radius-sm)',
                                 cursor: 'pointer',
-                                fontSize: '0.85em'
+                                fontSize: '0.85em',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
                             }}
                         >
-                            📄 Ver PDF
+                            <i className="ti ti-file-text" aria-hidden="true" /> Ver PDF
                         </button>
                     )}
 
@@ -278,12 +289,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: 'var(--status-warning)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '5px',
+                                borderRadius: 'var(--radius-sm)',
                                 cursor: 'pointer',
-                                fontSize: '0.85em'
+                                fontSize: '0.85em',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
                             }}
                         >
-                            ✅ Marcar Pago
+                            <i className="ti ti-circle-check" aria-hidden="true" /> Marcar Pago
                         </button>
                     )}
 
@@ -294,12 +308,14 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             background: 'var(--status-danger)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '5px',
+                            borderRadius: 'var(--radius-sm)',
                             cursor: 'pointer',
-                            fontSize: '0.85em'
+                            fontSize: '0.85em',
+                            display: 'inline-flex',
+                            alignItems: 'center'
                         }}
                     >
-                        🗑️
+                        <i className="ti ti-trash" aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -337,7 +353,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     gap: '15px',
                     marginBottom: '20px'
                 }}>
-                    <div style={{ background: 'var(--status-danger-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ background: 'var(--status-danger-bg)', padding: '15px', borderRadius: '16px', textAlign: 'center' }}>
                         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-danger-text)' }}>Vencidos</div>
                         <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-danger)' }}>
                             {formatCurrency(resumo.total_vencido)}
@@ -345,7 +361,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{resumo.quantidade_vencido} boletos</div>
                     </div>
 
-                    <div style={{ background: 'var(--status-warning-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ background: 'var(--status-warning-bg)', padding: '15px', borderRadius: '16px', textAlign: 'center' }}>
                         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-warning-text)' }}>Pendentes</div>
                         <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-warning)' }}>
                             {formatCurrency(resumo.total_pendente)}
@@ -353,7 +369,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{resumo.quantidade_pendente} boletos</div>
                     </div>
 
-                    <div style={{ background: 'var(--status-success-bg)', padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ background: 'var(--status-success-bg)', padding: '15px', borderRadius: '16px', textAlign: 'center' }}>
                         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--status-success)' }}>Pagos</div>
                         <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: 'var(--status-success)' }}>
                             {formatCurrency(resumo.total_pago)}
@@ -498,13 +514,15 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
             {/* Modal de Preview do PDF */}
             {modalPreview && (
                 <Modal onClose={() => setModalPreview(null)}>
-                    <h2>📄 {modalPreview.arquivo_nome || 'Boleto'}</h2>
+                    <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <i className="ti ti-file-text" aria-hidden="true" /> {modalPreview.arquivo_nome || 'Boleto'}
+                    </h2>
                     <div style={{ height: '70vh', marginTop: '15px', position: 'relative' }}>
                         {/* Usar object em vez de iframe para evitar disparo de impressão */}
                         <object
                             data={`data:application/pdf;base64,${modalPreview.arquivo_base64}#toolbar=1&navpanes=0&scrollbar=1`}
                             type="application/pdf"
-                            style={{ width: '100%', height: '100%', border: '1px solid #ddd', borderRadius: '5px' }}
+                            style={{ width: '100%', height: '100%', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
                         >
                             <div style={{
                                 display: 'flex',
@@ -513,7 +531,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 justifyContent: 'center',
                                 height: '100%',
                                 background: 'var(--surface-muted)',
-                                borderRadius: '5px'
+                                borderRadius: 'var(--radius-sm)'
                             }}>
                                 <p>Seu navegador não suporta visualização de PDF.</p>
                                 <a
@@ -521,14 +539,17 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                     download={modalPreview.arquivo_nome || 'boleto.pdf'}
                                     style={{
                                         padding: '10px 20px',
-                                        background: 'var(--brand-primary)',
+                                        background: 'var(--module-obras)',
                                         color: 'white',
                                         textDecoration: 'none',
-                                        borderRadius: '5px',
-                                        marginTop: '10px'
+                                        borderRadius: 'var(--radius-sm)',
+                                        marginTop: '10px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
                                     }}
                                 >
-                                    ⬇️ Baixar PDF
+                                    <i className="ti ti-download" aria-hidden="true" /> Baixar PDF
                                 </a>
                             </div>
                         </object>
@@ -542,20 +563,23 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                                 background: 'var(--status-success)',
                                 color: 'white',
                                 textDecoration: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer'
+                                borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px'
                             }}
                         >
-                            ⬇️ Baixar PDF
+                            <i className="ti ti-download" aria-hidden="true" /> Baixar PDF
                         </a>
                         <button
                             onClick={() => setModalPreview(null)}
                             style={{
                                 padding: '10px 20px',
-                                background: '#666',
+                                background: 'var(--status-neutral)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '5px',
+                                borderRadius: 'var(--radius-sm)',
                                 cursor: 'pointer'
                             }}
                         >

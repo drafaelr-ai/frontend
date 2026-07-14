@@ -68,10 +68,10 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
 
     const getStatusIcon = (status) => {
         switch(status) {
-            case 'Aprovado': return '✅';
-            case 'Rejeitado': return '❌';
-            case 'Pendente': return '⏳';
-            default: return '📋';
+            case 'Aprovado': return 'ti-circle-check';
+            case 'Rejeitado': return 'ti-circle-x';
+            case 'Pendente': return 'ti-clock';
+            default: return 'ti-clipboard-list';
         }
     };
 
@@ -107,9 +107,9 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                         onClick={() => setFiltro(statusFiltro)}
                         style={{
                             padding: '8px 16px',
-                            border: `2px solid ${filtro === statusFiltro ? 'var(--brand-primary)' : 'var(--border-default)'}`,
-                            borderRadius: '20px',
-                            background: filtro === statusFiltro ? 'var(--brand-primary)' : 'var(--surface-card)',
+                            border: `2px solid ${filtro === statusFiltro ? 'var(--module-obras)' : 'var(--border-default)'}`,
+                            borderRadius: 'var(--radius-full)',
+                            background: filtro === statusFiltro ? 'var(--module-obras)' : 'var(--surface-card)',
                             color: filtro === statusFiltro ? 'white' : 'var(--text-primary)',
                             cursor: 'pointer',
                             fontSize: '0.9em',
@@ -131,13 +131,13 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 maxHeight: '500px',
                 overflowY: 'auto',
                 border: `1px solid var(--border-default)`,
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-lg)',
                 padding: '15px',
                 background: 'var(--surface-subtle)'
             }}>
                 {isLoading ? (
                     <div style={{ textAlign: 'center', padding: '40px' }}>
-                        <p>⏳ Carregando orçamentos...</p>
+                        <p><i className="ti ti-loader-2" aria-hidden="true"></i> Carregando orçamentos...</p>
                     </div>
                 ) : error ? (
                     <div style={{
@@ -145,16 +145,16 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                         padding: '40px',
                         color: 'var(--status-danger)'
                     }}>
-                        <p>❌ {error}</p>
+                        <p><i className="ti ti-alert-circle" aria-hidden="true"></i> {error}</p>
                         <button
                             onClick={carregarOrcamentos}
                             style={{
                                 marginTop: '15px',
                                 padding: '8px 16px',
-                                background: 'var(--brand-primary)',
+                                background: 'var(--module-obras)',
                                 color: 'white',
                                 border: 'none',
-                                borderRadius: '5px',
+                                borderRadius: 'var(--radius-md)',
                                 cursor: 'pointer'
                             }}
                         >
@@ -163,7 +163,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                     </div>
                 ) : orcamentosFiltrados.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                        <p>📋 Nenhuma solicitação {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
+                        <p><i className="ti ti-clipboard-list" aria-hidden="true"></i> Nenhuma solicitação {filtro !== 'Todos' ? filtro.toLowerCase() : ''} encontrado.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -173,9 +173,9 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                 style={{
                                     background: 'var(--surface-card)',
                                     padding: '20px',
-                                    borderRadius: '8px',
+                                    borderRadius: 'var(--radius-lg)',
                                     border: `0.5px solid ${getStatusBorder(orc.status)}`,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                    boxShadow: 'var(--shadow-card)'
                                 }}
                             >
                                 {/* Header com status */}
@@ -188,7 +188,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                     <div>
                                         <h3 style={{
                                             margin: '0 0 5px 0',
-                                            color: 'var(--brand-primary)',
+                                            color: 'var(--module-obras)',
                                             fontSize: '1.1em'
                                         }}>
                                             {orc.descricao}
@@ -199,20 +199,23 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                                 fontSize: '0.85em',
                                                 color: 'var(--text-muted)'
                                             }}>
-                                                🔗 Serviço: {orc.servico_nome}
+                                                <i className="ti ti-link" aria-hidden="true"></i> Serviço: {orc.servico_nome}
                                             </p>
                                         )}
                                     </div>
                                     <span style={{
                                         padding: '6px 12px',
-                                        borderRadius: '20px',
+                                        borderRadius: 'var(--radius-full)',
                                         background: getStatusColor(orc.status),
                                         color: 'white',
                                         fontSize: '0.9em',
                                         fontWeight: 'bold',
-                                        whiteSpace: 'nowrap'
+                                        whiteSpace: 'nowrap',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
                                     }}>
-                                        {getStatusIcon(orc.status)} {orc.status}
+                                        <i className={`ti ${getStatusIcon(orc.status)}`} aria-hidden="true"></i> {orc.status}
                                     </span>
                                 </div>
 
@@ -237,7 +240,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                         </strong>
                                         <p style={{
                                             margin: '2px 0 0 0',
-                                            color: 'var(--brand-primary)',
+                                            color: 'var(--module-obras)',
                                             fontWeight: 'bold',
                                             fontSize: '1.1em'
                                         }}>
@@ -270,8 +273,8 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                         marginBottom: '15px',
                                         padding: '10px',
                                         background: 'var(--surface-subtle)',
-                                        borderRadius: '5px',
-                                        borderLeft: `3px solid var(--brand-primary)`
+                                        borderRadius: 'var(--radius-md)',
+                                        borderLeft: `3px solid var(--module-obras)`
                                     }}>
                                         <strong style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>
                                             Observações:
@@ -291,7 +294,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                             display: 'block',
                                             marginBottom: '8px'
                                         }}>
-                                            📎 Anexos ({orc.anexos.length}):
+                                            <i className="ti ti-paperclip" aria-hidden="true"></i> Anexos ({orc.anexos.length}):
                                         </strong>
                                         <div style={{
                                             display: 'flex',
@@ -306,7 +309,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                                         padding: '8px 12px',
                                                         background: 'var(--status-info-bg)',
                                                         border: `1px solid var(--status-info)`,
-                                                        borderRadius: '5px',
+                                                        borderRadius: 'var(--radius-md)',
                                                         cursor: 'pointer',
                                                         fontSize: '0.85em',
                                                         color: 'var(--status-info)',
@@ -324,7 +327,7 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                                                         e.currentTarget.style.color = 'var(--status-info)';
                                                     }}
                                                 >
-                                                    <span>📄</span>
+                                                    <i className="ti ti-file-text" aria-hidden="true"></i>
                                                     {anexo.filename}
                                                 </button>
                                             ))}
@@ -342,13 +345,13 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
                 marginTop: '20px',
                 padding: '15px',
                 background: 'var(--surface-subtle)',
-                borderRadius: '8px'
+                borderRadius: 'var(--radius-lg)'
             }}>
-                <div style={{ fontSize: '0.9em', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.9em', color: 'var(--text-muted)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px' }}>
                     <strong>Resumo:</strong> {contadores.total} solicitação(ões) •
-                    ✅ {contadores.aprovados} aprovado(s) •
-                    ❌ {contadores.rejeitados} rejeitado(s) •
-                    ⏳ {contadores.pendentes} pendente(s)
+                    <i className="ti ti-circle-check" aria-hidden="true" style={{ color: 'var(--status-success)' }}></i> {contadores.aprovados} aprovado(s) •
+                    <i className="ti ti-circle-x" aria-hidden="true" style={{ color: 'var(--status-danger)' }}></i> {contadores.rejeitados} rejeitado(s) •
+                    <i className="ti ti-clock" aria-hidden="true" style={{ color: 'var(--status-warning)' }}></i> {contadores.pendentes} pendente(s)
                 </div>
             </div>
         </Modal>

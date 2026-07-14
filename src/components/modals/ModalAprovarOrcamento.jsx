@@ -26,7 +26,7 @@ const ModalAprovarOrcamento = ({ orcamento, onClose, onConfirmar }) => {
                     <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isSubmitting}>
                         Cancelar
                     </button>
-                    <button type="button" className="m-btn-primary" onClick={handleAprovar} disabled={isSubmitting}>
+                    <button type="button" className="m-btn-primary" onClick={handleAprovar} disabled={isSubmitting} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-check" aria-hidden="true"></i>
                         {isSubmitting ? 'Aprovando...' : 'Aprovar Compra'}
                     </button>

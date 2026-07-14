@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { compressImages } from '../utils/imageCompression'; // ⭐ COMPRESSÃO DE IMAGENS
+import { compressImages } from '../utils/imageCompression'; // Compressão de imagens
 import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
@@ -54,11 +54,11 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 backgroundColor: 'var(--surface-muted)',
                 borderRadius: '8px'
             }}>
-                <span>⏳ Carregando...</span>
+                <span><i className="ti ti-loader-2" aria-hidden="true" /> Carregando...</span>
             </div>
         );
     }
-    
+
     if (error) {
         return (
             <div style={{
@@ -71,14 +71,14 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 backgroundColor: 'var(--status-danger-bg)',
                 borderRadius: '8px'
             }}>
-                <span>❌ {error}</span>
+                <span style={{ color: 'var(--status-danger-text)' }}><i className="ti ti-alert-circle" aria-hidden="true" /> {error}</span>
                 <button onClick={loadImage} style={{ marginTop: '10px', padding: '5px 10px', cursor: 'pointer' }}>
-                    🔄 Tentar novamente
+                    <i className="ti ti-refresh" aria-hidden="true" /> Tentar novamente
                 </button>
             </div>
         );
     }
-    
+
     if (!imageData) {
         return (
             <div style={{
@@ -91,7 +91,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 borderRadius: '8px',
                 cursor: 'pointer'
             }} onClick={loadImage}>
-                <span>📷 Clique para carregar</span>
+                <span><i className="ti ti-camera" aria-hidden="true" /> Clique para carregar</span>
             </div>
         );
     }
@@ -109,7 +109,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                 borderRadius: '8px',
                 position: 'relative'
             }}>
-                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📄</div>
+                <i className="ti ti-file-type-pdf" aria-hidden="true" style={{ fontSize: '48px', marginBottom: '10px', color: 'var(--status-danger)' }} />
                 <div style={{ fontSize: '0.9em', fontWeight: 'bold', textAlign: 'center', padding: '0 10px' }}>
                     {arquivoNome || 'Documento PDF'}
                 </div>
@@ -119,14 +119,14 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                     style={{
                         marginTop: '10px',
                         padding: '5px 10px',
-                        backgroundColor: 'var(--brand-primary)',
+                        backgroundColor: 'var(--module-obras)',
                         color: 'var(--text-on-dark)',
                         borderRadius: '4px',
                         textDecoration: 'none',
                         fontSize: '0.85em'
                     }}
                 >
-                    📥 Baixar
+                    <i className="ti ti-download" aria-hidden="true" /> Baixar
                 </a>
                 {onDelete && (
                     <button
@@ -144,13 +144,13 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                             cursor: 'pointer'
                         }}
                     >
-                        🗑️
+                        <i className="ti ti-trash" aria-hidden="true" />
                     </button>
                 )}
             </div>
         );
     }
-    
+
     return (
         <div style={{ position: 'relative', ...style }}>
             <img
@@ -179,7 +179,7 @@ const LazyImage = ({ imagemId, arquivoNome, legenda, onDelete, style }) => {
                         cursor: 'pointer'
                     }}
                 >
-                    🗑️
+                    <i className="ti ti-trash" aria-hidden="true" />
                 </button>
             )}
             {legenda && (
@@ -317,14 +317,15 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
             padding: '20px'
         },
         content: {
-            background: 'white',
-            borderRadius: '8px',
+            background: 'var(--surface-card)',
+            borderRadius: '20px',
             padding: '30px',
             maxWidth: '800px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-modal)'
         },
         formGroup: {
             marginBottom: '20px'
@@ -420,10 +421,10 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                                 style={modalStyles.input}
                             >
                                 <option value="">Selecione...</option>
-                                <option value="Ensolarado">☀️ Ensolarado</option>
-                                <option value="Parcialmente nublado">⛅ Parcialmente nublado</option>
-                                <option value="Nublado">☁️ Nublado</option>
-                                <option value="Chuvoso">🌧️ Chuvoso</option>
+                                <option value="Ensolarado">Ensolarado</option>
+                                <option value="Parcialmente nublado">Parcialmente nublado</option>
+                                <option value="Nublado">Nublado</option>
+                                <option value="Chuvoso">Chuvoso</option>
                             </select>
                         </div>
                         <div style={modalStyles.formGroup}>
@@ -490,7 +491,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
 
                     {/* Campo de Anexos */}
                     <div style={modalStyles.formGroup}>
-                        <label style={modalStyles.label}>📎 Anexos (Fotos e PDFs)</label>
+                        <label style={modalStyles.label}><i className="ti ti-paperclip" aria-hidden="true" /> Anexos (Fotos e PDFs)</label>
                         <input
                             type="file"
                             multiple
@@ -522,8 +523,8 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '1.2em' }}>
-                                                    {arquivo.type.startsWith('image/') ? '🖼️' : '📄'}
+                                                <span style={{ fontSize: '1.2em', color: 'var(--text-muted)' }}>
+                                                    <i className={`ti ${arquivo.type.startsWith('image/') ? 'ti-photo' : 'ti-file-text'}`} aria-hidden="true" />
                                                 </span>
                                                 <span style={{ fontSize: '0.9em' }}>
                                                     {arquivo.name}
@@ -676,14 +677,15 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
             padding: '20px'
         },
         content: {
-            background: 'white',
-            borderRadius: '8px',
+            background: 'var(--surface-card)',
+            borderRadius: '20px',
             padding: '30px',
             maxWidth: '900px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-modal)'
         },
         section: {
             marginBottom: '20px',
@@ -695,7 +697,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
             fontWeight: 'bold',
             color: 'var(--text-primary)',
             marginBottom: '10px',
-            fontSize: '1.1em'
+            fontSize: '1.1em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
         },
         imageGrid: {
             display: 'grid',
@@ -749,14 +754,14 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
                 {entrada.descricao && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>📝 Descrição</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-file-description" aria-hidden="true" /> Descrição</div>
                         <div>{entrada.descricao}</div>
                     </div>
                 )}
 
                 {(entrada.clima || entrada.temperatura) && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>🌤️ Condições Climáticas</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-cloud" aria-hidden="true" /> Condições Climáticas</div>
                         <div>
                             {entrada.clima && <span><strong>Clima:</strong> {entrada.clima}</span>}
                             {entrada.clima && entrada.temperatura && <span> | </span>}
@@ -767,43 +772,43 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
                 {entrada.atividades_realizadas && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>✅ Atividades Realizadas</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-checklist" aria-hidden="true" /> Atividades Realizadas</div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.atividades_realizadas}</div>
                     </div>
                 )}
 
                 {entrada.equipe_presente && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>👷 Equipe Presente</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-users" aria-hidden="true" /> Equipe Presente</div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.equipe_presente}</div>
                     </div>
                 )}
 
                 {entrada.materiais_utilizados && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>🧱 Materiais Utilizados</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-bricks" aria-hidden="true" /> Materiais Utilizados</div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.materiais_utilizados}</div>
                     </div>
                 )}
 
                 {entrada.equipamentos_utilizados && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>🔧 Equipamentos Utilizados</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-tool" aria-hidden="true" /> Equipamentos Utilizados</div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.equipamentos_utilizados}</div>
                     </div>
                 )}
 
                 {entrada.observacoes && (
                     <div style={modalStyles.section}>
-                        <div style={modalStyles.sectionTitle}>💭 Observações</div>
+                        <div style={modalStyles.sectionTitle}><i className="ti ti-message-circle" aria-hidden="true" /> Observações</div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{entrada.observacoes}</div>
                     </div>
                 )}
 
                 {/* Seção de Anexos */}
                 <div style={modalStyles.section}>
-                    <div style={modalStyles.sectionTitle}>📎 Anexos (Fotos e PDFs)</div>
-                    
+                    <div style={modalStyles.sectionTitle}><i className="ti ti-paperclip" aria-hidden="true" /> Anexos (Fotos e PDFs)</div>
+
                     {/* Upload de novos anexos */}
                     <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'var(--surface-card)', borderRadius: '4px' }}>
                         <input
@@ -852,10 +857,10 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
                     </button>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button onClick={() => onEdit(entrada)} className="submit-btn" style={{ backgroundColor: 'var(--status-neutral)' }}>
-                            ✏️ Editar
+                            <i className="ti ti-pencil" aria-hidden="true" /> Editar
                         </button>
                         <button onClick={() => onDelete(entrada.id)} className="voltar-btn">
-                            🗑️ Excluir
+                            <i className="ti ti-trash" aria-hidden="true" /> Excluir
                         </button>
                     </div>
                 </div>
@@ -986,7 +991,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
     if (!obraData?.id) {
         if (embedded) {
             return (
-                <div style={{ padding: '30px', textAlign: 'center', background: 'white' }}>
+                <div style={{ padding: '30px', textAlign: 'center', background: 'var(--surface-card)' }}>
                     <p>Carregando dados da obra...</p>
                 </div>
             );
@@ -998,7 +1003,7 @@ const DiarioObras = ({ obra, obraId, obraNome, onClose, embedded }) => {
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                 zIndex: 9999, padding: '20px'
             }}>
-                <div style={{ background: 'white', borderRadius: '8px', padding: '30px', textAlign: 'center' }}>
+                <div style={{ background: 'var(--surface-card)', borderRadius: '20px', padding: '30px', textAlign: 'center' }}>
                     <p>Carregando dados da obra...</p>
                     <button onClick={onClose} className="voltar-btn">Fechar</button>
                 </div>

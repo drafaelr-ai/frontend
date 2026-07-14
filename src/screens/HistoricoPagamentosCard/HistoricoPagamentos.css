@@ -168,9 +168,9 @@
 }
 
 .hpc-chip.active {
-    background: var(--brand-primary);
+    background: var(--module-obras);
     color: var(--surface-card);
-    border-color: var(--brand-primary);
+    border-color: var(--module-obras);
 }
 
 .hpc-filter-select {

@@ -123,7 +123,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 dadosPagamento.valor_entrada = valorEntrada;
                 dadosPagamento.data_entrada = dataEntrada;
                 dadosPagamento.valor_parcela = valorParcela;
-                logger.debug("🔍 DEBUG ENTRADA (frontend):", {
+                logger.debug("DEBUG ENTRADA (frontend):", {
                     temEntrada,
                     percentualEntrada,
                     valorEntrada,
@@ -132,7 +132,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 });
             }
 
-            logger.debug("📤 Dados de parcelamento a enviar:", dadosPagamento);
+            logger.debug("Dados de parcelamento a enviar:", dadosPagamento);
 
             if (meioPagamento === 'Boleto') {
                 dadosPagamento.parcelas_customizadas = boletosConfig;
@@ -144,7 +144,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
             if (salvarENovo) {
                 setContadorInseridos(prev => prev + 1);
-                mostrarToast(`✅ Pagamento "${descricao}" inserido com sucesso!`);
+                mostrarToast(`Pagamento "${descricao}" inserido com sucesso!`);
                 limparCamposParaNovo();
             }
         } catch (error) {
@@ -171,7 +171,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                         <i className="ti ti-plus" aria-hidden="true"></i>
                         {isSubmitting ? '...' : 'Salvar e Novo'}
                     </button>
-                    <button type="submit" form="form-inserir-pagamento" className="m-btn-primary" disabled={isSubmitting}>
+                    <button type="submit" form="form-inserir-pagamento" className="m-btn-primary" disabled={isSubmitting} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-device-floppy" aria-hidden="true"></i>
                         {isSubmitting ? '...' : 'Salvar e Fechar'}
                     </button>
@@ -504,8 +504,8 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                                     onClick={() => copiarCodigo(boleto.codigo_barras)}
                                                     style={{
                                                         padding: 'var(--space-1) var(--space-2)',
-                                                        background: 'var(--brand-primary)',
-                                                        color: 'white',
+                                                        background: 'var(--module-obras)',
+                                                        color: 'var(--text-on-dark)',
                                                         border: 'none',
                                                         borderRadius: 'var(--radius-sm)',
                                                         cursor: 'pointer'
@@ -562,8 +562,8 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                     onClick={() => copiarCodigo(codigoBarras)}
                                     style={{
                                         padding: 'var(--space-2) var(--space-3)',
-                                        background: 'var(--brand-primary)',
-                                        color: 'white',
+                                        background: 'var(--module-obras)',
+                                        color: 'var(--text-on-dark)',
                                         border: 'none',
                                         borderRadius: 'var(--radius-sm)',
                                         cursor: 'pointer',
@@ -617,10 +617,10 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                     left: '50%',
                     transform: 'translateX(-50%)',
                     backgroundColor: 'var(--status-success)',
-                    color: 'white',
+                    color: 'var(--text-on-dark)',
                     padding: 'var(--space-3) var(--space-6)',
                     borderRadius: 'var(--radius-md)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    boxShadow: 'var(--shadow-popup)',
                     zIndex: 10000,
                     fontWeight: 'var(--weight-medium)'
                 }}>

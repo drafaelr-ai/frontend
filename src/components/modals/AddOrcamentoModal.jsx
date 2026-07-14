@@ -58,7 +58,7 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
             footer={
                 <>
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button type="submit" form="form-add-orcamento" className="m-btn-primary">
+                    <button type="submit" form="form-add-orcamento" className="m-btn-primary" style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-send" aria-hidden="true"></i>
                         Enviar para Aprovação
                     </button>
@@ -132,9 +132,13 @@ const AddOrcamentoModal = ({ onClose, onSave, servicos }) => {
                         padding: 'var(--space-2) var(--space-3)',
                         borderRadius: 'var(--radius-md)',
                         marginBottom: 'var(--space-3)',
-                        fontSize: 'var(--text-sm)'
+                        fontSize: 'var(--text-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)'
                     }}>
-                        💡 <strong>{numeroParcelas}x</strong> de <strong>{formatCurrency(valorParcela)}</strong> ({periodicidade.toLowerCase()})
+                        <i className="ti ti-bulb" aria-hidden="true" style={{ color: 'var(--module-obras)' }}></i>
+                        <span><strong>{numeroParcelas}x</strong> de <strong>{formatCurrency(valorParcela)}</strong> ({periodicidade.toLowerCase()})</span>
                     </div>
                 )}
 

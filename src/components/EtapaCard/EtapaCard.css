@@ -3,18 +3,19 @@
 .etapa-card {
     position: relative;
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
     border-left: 3px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-shadow: var(--shadow-card);
     transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .etapa-card:hover {
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-popup);
     transform: translateY(-1px);
 }
 
@@ -271,8 +272,8 @@
 }
 
 .etapas-grid__chip--active {
-    background: var(--brand-primary);
-    border-color: var(--brand-primary);
+    background: var(--module-obras);
+    border-color: var(--module-obras);
     color: var(--surface-card);
 }
 

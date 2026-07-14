@@ -11,7 +11,7 @@ function fmtCurrency(v) {
 const TIPO_CHIP = {
   servico:    { label: 'Serviço',    bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)' },
   futuro:     { label: 'Futuro',     bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' },
-  parcelado:  { label: 'Parcelado',  bg: '#ede9fe',                   color: '#6b21a8' },
+  parcelado:  { label: 'Parcelado',  bg: 'var(--status-purple-bg)',   color: 'var(--status-purple-text)' },
   boleto:     { label: 'Boleto',     bg: 'var(--surface-muted)',      color: 'var(--text-muted)' },
 };
 
@@ -167,7 +167,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], obraId = null, on
                 {fmtCurrency(total)}
               </span>
             </div>
-            <button className="m-btn-primary" onClick={handleGerar} disabled={loading}>
+            <button className="m-btn-primary" onClick={handleGerar} disabled={loading} style={{ background: 'var(--module-obras)' }}>
               <i className="ti ti-link" />
               {loading ? 'Gerando…' : 'Gerar superlink'}
             </button>
@@ -207,7 +207,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], obraId = null, on
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '10px 14px',
-                    border: `1px solid ${sel ? 'var(--brand-primary)' : 'var(--border-subtle)'}`,
+                    border: `1px solid ${sel ? 'var(--module-obras)' : 'var(--border-subtle)'}`,
                     borderRadius: 'var(--radius-lg)',
                     background: sel ? 'var(--surface-subtle)' : 'var(--surface-card)',
                     cursor: 'pointer',
@@ -217,7 +217,7 @@ export default function GerarSuperlinkModal({ pagamentos = [], obraId = null, on
                     type="checkbox"
                     checked={sel}
                     onChange={() => toggleItem(p.id)}
-                    style={{ width: 18, height: 18, accentColor: 'var(--brand-primary)', cursor: 'pointer' }}
+                    style={{ width: 18, height: 18, accentColor: 'var(--module-obras)', cursor: 'pointer' }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 500, fontSize: 'var(--text-md)' }}>{p.descricao}</div>

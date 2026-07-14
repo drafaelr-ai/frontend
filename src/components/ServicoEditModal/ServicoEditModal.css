@@ -17,14 +17,14 @@
 
 .sem-content {
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
     width: 100%;
     max-width: 520px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-popup);
+    box-shadow: var(--shadow-modal);
     animation: sem-slide-in 0.15s ease;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .sem-title i {
-    color: var(--brand-primary);
+    color: var(--module-obras);
 }
 
 .sem-close {
@@ -123,7 +123,7 @@
 
 .sem-input:focus {
     outline: none;
-    border-color: var(--brand-primary);
+    border-color: var(--module-obras);
 }
 
 .sem-textarea {
@@ -172,13 +172,13 @@
 }
 
 .sem-btn--save {
-    background: var(--brand-primary);
+    background: var(--module-obras);
     border: none;
     color: #fff;
 }
 
 .sem-btn--save:hover:not(:disabled) {
-    background: var(--brand-accent);
+    background: var(--module-obras-dark);
 }
 
 .sem-btn--concluir {

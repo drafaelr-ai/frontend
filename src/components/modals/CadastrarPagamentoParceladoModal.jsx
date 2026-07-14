@@ -99,7 +99,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
             footer={
                 <>
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button type="submit" form="form-cadastrar-parcelado" className="m-btn-primary" disabled={!valoresValidos}>
+                    <button type="submit" form="form-cadastrar-parcelado" className="m-btn-primary" disabled={!valoresValidos} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-check" aria-hidden="true"></i>
                         Cadastrar
                     </button>
@@ -140,8 +140,9 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                             <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}
                     </select>
-                    <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 'var(--space-1)', fontSize: 'var(--text-xs)' }}>
-                        💡 Ao pagar, o valor será contabilizado no orçamento do item selecionado
+                    <small style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', marginTop: 'var(--space-1)', fontSize: 'var(--text-xs)' }}>
+                        <i className="ti ti-bulb" aria-hidden="true" style={{ color: 'var(--module-obras)' }}></i>
+                        Ao pagar, o valor será contabilizado no orçamento do item selecionado
                     </small>
                 </div>
 
@@ -266,7 +267,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                 {(formData.forma_pagamento === 'Boleto' || !valoresIguais) && parcelasCustomizadas.length > 0 && (
                     <div style={{
                         border: '0.5px solid var(--border-default)',
-                        borderRadius: 'var(--radius-md)',
+                        borderRadius: 'var(--radius-lg)',
                         padding: 'var(--space-2)',
                         marginBottom: 'var(--space-2)',
                         background: 'var(--surface-subtle)',
@@ -281,7 +282,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                             <div key={index} style={{
                                 background: 'var(--surface-card)',
                                 border: '0.5px solid var(--border-subtle)',
-                                borderRadius: 'var(--radius-sm)',
+                                borderRadius: 'var(--radius-md)',
                                 padding: 'var(--space-2)',
                                 marginBottom: 'var(--space-2)'
                             }}>
@@ -340,7 +341,7 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                                                         onClick={() => copiarCodigo(parcela.codigo_barras)}
                                                         style={{
                                                             padding: 'var(--space-1) var(--space-2)',
-                                                            background: 'var(--brand-primary)',
+                                                            background: 'var(--module-obras)',
                                                             color: 'white',
                                                             border: 'none',
                                                             borderRadius: 'var(--radius-sm)',
@@ -369,8 +370,9 @@ const CadastrarPagamentoParceladoModal = ({ onClose, onSave, obraId, itensOrcame
                             }}>
                                 <strong>Soma das parcelas:</strong> {formatCurrency(somaValoresParcelas)}
                                 {!valoresValidos && (
-                                    <span style={{ color: 'var(--status-danger-text)', marginLeft: 'var(--space-2)' }}>
-                                        ⚠️ Diferença de {formatCurrency(diferencaValor)}
+                                    <span style={{ color: 'var(--status-danger-text)', marginLeft: 'var(--space-2)', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                                        <i className="ti ti-alert-triangle" aria-hidden="true"></i>
+                                        Diferença de {formatCurrency(diferencaValor)}
                                     </span>
                                 )}
                             </div>

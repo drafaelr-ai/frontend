@@ -69,7 +69,7 @@ const ViewAnexosModal = ({ orcamento, onClose }) => {
                                 href="#"
                                 onClick={(e) => { e.preventDefault(); handleOpenAnexo(anexo.id); }}
                                 title={`Abrir ${anexo.filename}`}
-                                style={{ color: 'var(--status-info)', textDecoration: 'underline', cursor: 'pointer' }}
+                                style={{ color: 'var(--module-obras)', textDecoration: 'underline', cursor: 'pointer' }}
                             >
                                 <i className="ti ti-paperclip" aria-hidden="true" style={{ marginRight: 'var(--space-1)' }}></i>
                                 {anexo.filename}

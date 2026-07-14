@@ -82,7 +82,7 @@ const UploadNotaFiscalModal = ({ item, obraId, onClose, onSuccess }) => {
                     <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isUploading}>
                         Cancelar
                     </button>
-                    <button type="submit" form="form-upload-nota-fiscal" className="m-btn-primary" disabled={isUploading}>
+                    <button type="submit" form="form-upload-nota-fiscal" className="m-btn-primary" disabled={isUploading} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-upload" aria-hidden="true"></i>
                         {isUploading ? 'Enviando...' : 'Anexar Nota Fiscal'}
                     </button>

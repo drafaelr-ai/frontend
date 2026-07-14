@@ -103,7 +103,7 @@ const EditOrcamentoModal = ({ orcamento, onClose, onSave, servicos }) => {
             footer={
                 <>
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button type="submit" form="form-edit-orcamento" className="m-btn-primary">
+                    <button type="submit" form="form-edit-orcamento" className="m-btn-primary" style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-device-floppy" aria-hidden="true"></i>
                         Salvar Alterações
                     </button>

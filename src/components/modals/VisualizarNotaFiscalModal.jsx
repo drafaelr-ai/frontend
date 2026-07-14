@@ -65,7 +65,7 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
                         </button>
                     )}
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
-                    <button type="button" className="m-btn-primary" onClick={handleDownload}>
+                    <button type="button" className="m-btn-primary" onClick={handleDownload} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-download" aria-hidden="true"></i>
                         Baixar
                     </button>

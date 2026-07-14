@@ -32,7 +32,7 @@
 }
 
 .cn-title i {
-    color: var(--brand-primary);
+    color: var(--module-obras);
 }
 
 .cn-obra-nome {
@@ -104,7 +104,7 @@
 }
 
 .cn-view-btn--active {
-    background: var(--brand-primary);
+    background: var(--module-obras);
     color: var(--surface-card);
 }
 
@@ -126,7 +126,7 @@
 .cn-link-btn {
     background: none;
     border: none;
-    color: var(--brand-primary);
+    color: var(--module-obras);
     font-size: inherit;
     cursor: pointer;
     padding: 0;
@@ -135,7 +135,7 @@
 }
 
 .cn-link-btn:hover {
-    color: var(--brand-accent);
+    color: var(--module-obras-dark);
 }
 
 /* ── View transition ── */

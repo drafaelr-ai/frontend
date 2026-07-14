@@ -121,9 +121,12 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                                     fontWeight: '600',
                                     background: categoria.corBg,
                                     padding: '3px 8px',
-                                    borderRadius: '12px'
+                                    borderRadius: '12px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
                                 }}>
-                                    Ver →
+                                    Ver <i className="ti ti-arrow-right" aria-hidden="true" />
                                 </span>
                             )}
                         </div>
@@ -176,7 +179,7 @@ const QuadroAlertasVencimento = ({ obraId }) => {
                         className="cf-btn cf-btn-outline"
                         style={{ marginTop: '16px' }}
                     >
-                        ← Fechar detalhes
+                        <i className="ti ti-arrow-left" aria-hidden="true" /> Fechar detalhes
                     </button>
                 </div>
             )}

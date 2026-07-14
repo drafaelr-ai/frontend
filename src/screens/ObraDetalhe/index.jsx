@@ -1006,7 +1006,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         gap: '10px',
                                         color: 'var(--text-primary)'
                                     }}>
-                                        <i className="ti ti-home" aria-hidden="true" /> Início - {obraSelecionada.nome}
+                                        <i className="ti ti-home" aria-hidden="true" style={{ color: 'var(--module-obras)' }} /> Início - {obraSelecionada.nome}
                                     </h1>
                                     <p style={{
                                         margin: '4px 0 0 0',
@@ -1042,13 +1042,13 @@ const totalOrcamentosPendentes = useMemo(() => {
 
                                     <div style={{
                                         padding: '8px 14px',
-                                        background: 'var(--status-info-bg)',
+                                        background: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
                                         borderRadius: 'var(--radius-md)',
-                                        borderLeft: '4px solid var(--status-info)',
+                                        borderLeft: '4px solid var(--module-obras)',
                                         minWidth: '130px'
                                     }}>
                                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '2px' }}>Valores Pagos</div>
-                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--status-info)' }}>
+                                        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--module-obras)' }}>
                                             {formatCurrency(sumarios?.valores_pagos || 0)}
                                         </div>
                                     </div>
@@ -1314,17 +1314,55 @@ const totalOrcamentosPendentes = useMemo(() => {
                     margin-bottom: 20px;
                     padding: 0 10px;
                 }
-                
+
                 .page-top-header .submit-btn {
                     padding: 10px 20px;
                     font-size: 14px;
                     border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+                    box-shadow: 0 2px 8px rgba(0,97,252,0.3);
                 }
-                
+
                 @media (max-width: 768px) {
                     .page-top-header {
                         margin-top: 10px;
+                    }
+                }
+
+                .windows-status-bar {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    height: 26px;
+                    padding: 0 14px;
+                    background: var(--module-navy);
+                    flex-shrink: 0;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                }
+
+                .status-bar-left,
+                .status-bar-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .status-bar-item {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 11px;
+                    color: var(--text-on-dark-muted);
+                    white-space: nowrap;
+                }
+
+                .status-bar-item .ti {
+                    font-size: 12px;
+                }
+
+                @media (max-width: 768px) {
+                    .status-bar-right {
+                        display: none;
                     }
                 }
             `}</style>

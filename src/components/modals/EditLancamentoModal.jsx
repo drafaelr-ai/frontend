@@ -75,7 +75,7 @@ const EditLancamentoModal = ({ lancamento, onClose, onSave, itensOrcamento }) =>
             footer={
                 <>
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
-                    <button type="submit" form="form-edit-lancamento" className="m-btn-primary">
+                    <button type="submit" form="form-edit-lancamento" className="m-btn-primary" style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-check" aria-hidden="true"></i>
                         Salvar Alterações
                     </button>

@@ -65,6 +65,7 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
                         className="m-btn-primary"
                         onClick={handleGerarRelatorio}
                         disabled={isLoading || !obraSelecionada}
+                        style={{ background: 'var(--module-obras)' }}
                     >
                         <i className="ti ti-file-type-pdf" aria-hidden="true"></i>
                         {isLoading ? 'Gerando...' : 'Gerar Relatório PDF'}
@@ -106,12 +107,12 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
                         style={{
                             padding: 'var(--space-3)',
                             border: obraSelecionada?.id === obra.id
-                                ? `2px solid var(--brand-primary)`
+                                ? `2px solid var(--module-obras)`
                                 : '0.5px solid var(--border-default)',
                             borderRadius: 'var(--radius-md)',
                             cursor: 'pointer',
                             background: obraSelecionada?.id === obra.id
-                                ? 'var(--status-info-bg)'
+                                ? 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))'
                                 : 'var(--surface-card)',
                             transition: 'all var(--transition-fast)',
                         }}
@@ -122,7 +123,7 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
                         }}
                         onMouseLeave={(e) => {
                             e.currentTarget.style.background = obraSelecionada?.id === obra.id
-                                ? 'var(--status-info-bg)'
+                                ? 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))'
                                 : 'var(--surface-card)';
                         }}
                     >
@@ -136,7 +137,7 @@ const ModalRelatorioCronograma = ({ onClose, obras }) => {
                                 </p>
                             </div>
                             {obraSelecionada?.id === obra.id && (
-                                <i className="ti ti-check" aria-hidden="true" style={{ color: 'var(--brand-primary)', fontSize: '18px' }}></i>
+                                <i className="ti ti-check" aria-hidden="true" style={{ color: 'var(--module-obras)', fontSize: '18px' }}></i>
                             )}
                         </div>
                     </div>

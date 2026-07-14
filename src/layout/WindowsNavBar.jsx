@@ -32,7 +32,7 @@ const WindowsNavStyles = () => (
             justify-content: space-between;
             height: 48px;
             padding: 0 20px;
-            background: var(--surface-dark);
+            background: linear-gradient(135deg, var(--module-navy) 0%, var(--module-navy-soft) 100%);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -122,14 +122,14 @@ const WindowsNavStyles = () => (
         }
 
         .wnb-obra-selector option {
-            background: var(--surface-dark);
+            background: var(--module-navy);
             color: var(--text-on-dark);
         }
 
         .wnb-avatar {
             width: 28px;
             height: 28px;
-            background: var(--surface-dark-soft);
+            background: var(--module-obras);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -217,8 +217,8 @@ const WindowsNavStyles = () => (
         }
 
         .menu-dropdown-item.active {
-            background: var(--status-info-bg);
-            color: var(--status-info-text);
+            background: color-mix(in srgb, var(--module-obras) 12%, var(--surface-card));
+            color: var(--module-obras);
         }
 
         .menu-item-left {
@@ -290,8 +290,8 @@ const WindowsNavStyles = () => (
         }
 
         .toolbar-btn.active {
-            background: var(--status-info-bg);
-            border-color: var(--border-default);
+            background: color-mix(in srgb, var(--module-obras) 12%, var(--surface-card));
+            border-color: color-mix(in srgb, var(--module-obras) 35%, var(--border-default));
         }
 
         .toolbar-icon {
@@ -304,8 +304,9 @@ const WindowsNavStyles = () => (
             font-weight: 500;
         }
 
-        .toolbar-btn.active .toolbar-label {
-            color: var(--status-info-text);
+        .toolbar-btn.active .toolbar-label,
+        .toolbar-btn.active .toolbar-icon {
+            color: var(--module-obras);
         }
 
         .toolbar-actions {
@@ -328,12 +329,12 @@ const WindowsNavStyles = () => (
         }
 
         .toolbar-action-btn.primary {
-            background: var(--brand-primary);
+            background: var(--module-obras);
             color: var(--text-on-dark);
         }
 
         .toolbar-action-btn.primary:hover {
-            background: var(--brand-primary-soft);
+            background: var(--module-obras-dark);
         }
 
         /* === RESPONSIVE === */
@@ -427,7 +428,7 @@ const WindowsNavBar = ({
             label: 'Cronograma',
             items: [
                 { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: 'ti-clipboard-list', shortcut: 'F5' },
-                { id: 'cronograma-new',  label: 'Nova Visualização ✨',  icon: 'ti-layout-grid' },
+                { id: 'cronograma-new',  label: 'Nova Visualização',  icon: 'ti-sparkles' },
             ]
         },
         {

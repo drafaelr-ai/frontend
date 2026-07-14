@@ -142,7 +142,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
             if (response.ok) {
                 const toast = document.createElement('div');
                 toast.className = 'cf-toast';
-                toast.textContent = '✅ Pagamento atualizado com sucesso!';
+                toast.innerHTML = '<i class="ti ti-circle-check" aria-hidden="true"></i> Pagamento atualizado com sucesso!';
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 3000);
                 if (fetchObraData && obraId) fetchObraData(obraId);
@@ -609,7 +609,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                                 borderRadius: 'var(--radius-md)',
                                                 border: '1.5px solid',
                                                 borderColor: isActive
-                                                    ? (isMao ? 'var(--status-warning)' : 'var(--brand-accent)')
+                                                    ? (isMao ? 'var(--status-warning)' : 'var(--module-obras)')
                                                     : 'var(--border-subtle)',
                                                 backgroundColor: isActive
                                                     ? (isMao ? 'var(--status-warning-bg)' : 'var(--surface-subtle)')

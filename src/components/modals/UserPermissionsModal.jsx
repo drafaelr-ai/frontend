@@ -6,10 +6,10 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 
 const MODULOS = [
-    { id: 'obras', label: 'Obras', icon: 'ti-building' },
-    { id: 'admin', label: 'Administração (patrimônio)', icon: 'ti-building-bank' },
-    { id: 'rh', label: 'Pessoal / RH', icon: 'ti-users-group' },
-    { id: 'frota', label: 'Frota', icon: 'ti-truck' },
+    { id: 'obras', label: 'Obras', icon: 'ti-building', color: 'var(--module-obras)' },
+    { id: 'admin', label: 'Administração (patrimônio)', icon: 'ti-building-bank', color: 'var(--module-admin)' },
+    { id: 'rh', label: 'Pessoal / RH', icon: 'ti-users-group', color: 'var(--module-rh)' },
+    { id: 'frota', label: 'Frota', icon: 'ti-truck', color: 'var(--module-frota)' },
 ];
 
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
@@ -160,7 +160,14 @@ const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {
                                                     checked={selectedModulos.has(m.id)}
                                                     onChange={() => handleModuloChange(m.id)}
                                                 />
-                                                <i className={`ti ${m.icon}`} aria-hidden="true" style={{ color: 'var(--text-muted)' }} /> {m.label}
+                                                <span
+                                                    aria-hidden="true"
+                                                    style={{
+                                                        width: 8, height: 8, borderRadius: 'var(--radius-full)',
+                                                        background: m.color, flexShrink: 0,
+                                                    }}
+                                                />
+                                                <i className={`ti ${m.icon}`} aria-hidden="true" style={{ color: m.color }} /> {m.label}
                                             </label>
                                         ))}
                                     </div>

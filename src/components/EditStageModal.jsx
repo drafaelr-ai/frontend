@@ -172,7 +172,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
             <div className="modal-content edit-stage-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2>Editar Etapa</h2>
-                    <button className="modal-close" onClick={onClose}>×</button>
+                    <button className="modal-close" onClick={onClose}><i className="ti ti-x" aria-hidden="true" /></button>
                 </div>
 
                 <div className="modal-body">
@@ -230,7 +230,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
                     {/* SEÇÃO DE PLANEJAMENTO */}
                     <div className="section-box planning-section">
                         <div className="section-header">
-                            <span className="section-icon">📅</span>
+                            <i className="ti ti-calendar section-icon" aria-hidden="true" />
                             <h3>PLANEJAMENTO (Datas Previstas)</h3>
                         </div>
 
@@ -264,7 +264,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
 
                         {formData.data_inicio_prevista && formData.data_termino_prevista && (
                             <div className="info-box">
-                                <span className="info-icon">⏱️</span>
+                                <i className="ti ti-hourglass-high info-icon" aria-hidden="true" />
                                 <span>
                                     {Math.ceil(
                                         (new Date(formData.data_termino_prevista) - 
@@ -286,7 +286,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
                     {/* SEÇÃO DE EXECUÇÃO REAL */}
                     <div className="section-box execution-section">
                         <div className="section-header">
-                            <span className="section-icon">🎯</span>
+                            <i className="ti ti-target section-icon" aria-hidden="true" />
                             <h3>EXECUÇÃO REAL (Atualizar Manualmente)</h3>
                         </div>
 
@@ -323,7 +323,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
 
                         {formData.data_inicio_real && (
                             <div className="info-box">
-                                <span className="info-icon">⏰</span>
+                                <i className="ti ti-clock info-icon" aria-hidden="true" />
                                 <span>{daysExecuted} dias executados</span>
                                 <span className={`status-badge ${status.class}`}>{status.text}</span>
                             </div>
@@ -402,7 +402,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
                                         ></div>
                                     </div>
                                     <div className="percentual-warning">
-                                        <span className="warning-icon">⚠️</span>
+                                        <i className="ti ti-alert-triangle warning-icon" aria-hidden="true" />
                                         <span>Este é o avanço físico REAL da obra, não é calculado pelos dias!</span>
                                     </div>
                                 </div>
@@ -430,7 +430,7 @@ const EditStageModal = ({ stage, obraId, onClose, onSave }) => {
                                         ></div>
                                     </div>
                                     <div className="percentual-warning">
-                                        <span className="warning-icon">⚠️</span>
+                                        <i className="ti ti-alert-triangle warning-icon" aria-hidden="true" />
                                         <span>Este é o avanço físico REAL da obra, não é calculado pelos dias!</span>
                                     </div>
                                 </div>

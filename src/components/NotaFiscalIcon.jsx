@@ -99,11 +99,11 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
     if (isLoading) {
         return (
             <span style={{
-                fontSize: '1.2em',
-                color: '#ccc',
+                fontSize: '1.1em',
+                color: 'var(--text-muted)',
                 cursor: 'default'
             }}>
-                ⏳
+                <i className="ti ti-loader-2" aria-hidden="true" />
             </span>
         );
     }
@@ -129,9 +129,9 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
                             : 'Sem nota fiscal'
                 }
                 style={{
-                    fontSize: '1.2em',
+                    fontSize: '1.1em',
                     cursor: (nota || canUpload) ? 'pointer' : 'default',
-                    color: nota ? 'var(--cor-acento)' : '#ccc',
+                    color: nota ? 'var(--module-obras)' : 'var(--text-muted)',
                     transition: 'all 0.2s',
                     display: 'inline-block',
                     marginLeft: '8px'
@@ -145,7 +145,13 @@ const NotaFiscalIcon = ({ item, itemType, obraId, onNotaAdded }) => {
                     e.target.style.transform = 'scale(1)';
                 }}
             >
-                {isUploading ? '⏳' : nota ? '📄' : canUpload ? '📎' : ''}
+                {isUploading
+                    ? <i className="ti ti-loader-2" aria-hidden="true" />
+                    : nota
+                        ? <i className="ti ti-file-text" aria-hidden="true" />
+                        : canUpload
+                            ? <i className="ti ti-paperclip" aria-hidden="true" />
+                            : ''}
             </span>
 
             {showVisualizacao && nota && (

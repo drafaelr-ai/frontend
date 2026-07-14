@@ -256,7 +256,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 <>
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Cancelar</button>
                     {!multiplosboletos && (
-                        <button type="submit" form="form-cadastrar-boleto" className="m-btn-primary" disabled={salvando}>
+                        <button type="submit" form="form-cadastrar-boleto" className="m-btn-primary" disabled={salvando} style={{ background: 'var(--module-obras)' }}>
                             <i className="ti ti-device-floppy" aria-hidden="true"></i>
                             {salvando ? 'Salvando...' : 'Salvar Boleto'}
                         </button>
@@ -272,7 +272,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     padding: 'var(--space-5)',
                     textAlign: 'center',
                     marginBottom: 'var(--space-4)',
-                    background: arquivo ? 'var(--status-info-bg)' : 'var(--surface-muted)'
+                    background: arquivo ? 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))' : 'var(--surface-muted)'
                 }}>
                     <input
                         type="file"
@@ -285,7 +285,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                         {extraindo ? (
                             <span>Extraindo dados do PDF...</span>
                         ) : arquivo ? (
-                            <span style={{ color: 'var(--status-info)' }}>✅ {arquivo.name}</span>
+                            <span style={{ color: 'var(--module-obras)' }}><i className="ti ti-circle-check" aria-hidden="true"></i> {arquivo.name}</span>
                         ) : (
                             <span>Clique para selecionar o PDF do boleto</span>
                         )}
@@ -297,16 +297,16 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                     <div style={{
                         marginBottom: 'var(--space-4)',
                         padding: 'var(--space-3)',
-                        background: 'var(--status-info-bg)',
+                        background: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
                         borderRadius: 'var(--radius-md)',
-                        border: '0.5px solid var(--status-info)',
+                        border: '0.5px solid var(--module-obras)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 'var(--space-3)'
                     }}>
-                        <i className="ti ti-check" aria-hidden="true" style={{ fontSize: '24px', color: 'var(--status-info)' }}></i>
+                        <i className="ti ti-check" aria-hidden="true" style={{ fontSize: '24px', color: 'var(--module-obras)' }}></i>
                         <div>
-                            <strong style={{ color: 'var(--status-info)' }}>PDF carregado com sucesso!</strong>
+                            <strong style={{ color: 'var(--module-obras)' }}>PDF carregado com sucesso!</strong>
                             <br />
                             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{arquivo?.name}</span>
                         </div>
@@ -358,7 +358,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                                 onClick={cadastrarTodosBoletos}
                                 disabled={salvandoTodos}
                                 className="m-btn-primary"
-                                style={{ width: '100%' }}
+                                style={{ width: '100%', background: 'var(--module-obras)' }}
                             >
                                 <i className="ti ti-check" aria-hidden="true"></i>
                                 {salvandoTodos ? 'Cadastrando...' : `Cadastrar Todos os ${multiplosboletos.length} Boletos`}
@@ -386,11 +386,11 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                                         alignItems: 'center',
                                         transition: 'all var(--transition-fast)'
                                     }}
-                                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--status-info-bg)'}
+                                    onMouseOver={(e) => e.currentTarget.style.background = 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))'}
                                     onMouseOut={(e) => e.currentTarget.style.background = 'var(--surface-card)'}
                                 >
                                     <div>
-                                        <strong style={{ color: 'var(--status-info)', fontSize: 'var(--text-sm)' }}>
+                                        <strong style={{ color: 'var(--module-obras)', fontSize: 'var(--text-sm)' }}>
                                             Parcela {index + 1}
                                         </strong>
                                         <br />
@@ -419,7 +419,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             fontSize: 'var(--text-xs)',
                             color: 'var(--status-success-text)'
                         }}>
-                            💡 <strong>Total:</strong> {formatCurrency(multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0))}
+                            <i className="ti ti-info-circle" aria-hidden="true"></i> <strong>Total:</strong> {formatCurrency(multiplosboletos.reduce((sum, b) => sum + (b.valor || 0), 0))}
                             {multiplosboletos[0]?.beneficiario && (
                                 <span> | <strong>Beneficiário:</strong> {multiplosboletos[0].beneficiario}</span>
                             )}
@@ -494,7 +494,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                                         onClick={copiarCodigo}
                                         style={{
                                             padding: 'var(--space-2) var(--space-3)',
-                                            background: 'var(--brand-primary)',
+                                            background: 'var(--module-obras)',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: 'var(--radius-sm)',

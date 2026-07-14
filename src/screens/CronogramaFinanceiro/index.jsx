@@ -841,7 +841,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosFuturosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosFuturosCollapsed ? '▼ Expandir' : '▲ Recolher'}
+                            {isPagamentosFuturosCollapsed
+                                ? <><i className="ti ti-chevron-down" aria-hidden="true" /> Expandir</>
+                                : <><i className="ti ti-chevron-up" aria-hidden="true" /> Recolher</>}
                         </button>
                     </div>
 
@@ -870,7 +872,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 width: '18px',
                                                 height: '18px',
                                                 marginRight: '12px',
-                                                accentColor: 'var(--brand-primary)'
+                                                accentColor: 'var(--module-obras)'
                                             }}
                                         />
                                     )}
@@ -894,7 +896,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                         }}
                                     >
                                         <div className="cf-pagamento-futuro-desc" style={{
-                                            color: pag.status === 'Previsto' ? 'var(--brand-primary)' : 'var(--text-primary)'
+                                            color: pag.status === 'Previsto' ? 'var(--module-obras)' : 'var(--text-primary)'
                                         }}>
                                             {pag.descricao}
                                         </div>
@@ -986,7 +988,9 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                             className="cf-btn cf-btn-outline"
                             onClick={() => setIsPagamentosParceladosCollapsed(prev => !prev)}
                         >
-                            {isPagamentosParceladosCollapsed ? '▼ Expandir' : '▲ Recolher'}
+                            {isPagamentosParceladosCollapsed
+                                ? <><i className="ti ti-chevron-down" aria-hidden="true" /> Expandir</>
+                                : <><i className="ti ti-chevron-up" aria-hidden="true" /> Recolher</>}
                         </button>
                     </div>
 

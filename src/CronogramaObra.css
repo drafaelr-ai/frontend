@@ -3,10 +3,11 @@
    ============================================================================ */
 
 .cronograma-container {
-    background: var(--cor-card, #ffffff);
+    background: var(--surface-card);
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    box-shadow: var(--shadow-card);
     margin-bottom: 20px;
 }
 
@@ -39,45 +40,45 @@
    ============================================================================ */
 
 .card-cronograma {
-    background: white;
-    border-radius: 12px;
+    background: var(--surface-card);
+    border-radius: 18px;
     padding: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--cor-primaria, #4f46e5);
+    box-shadow: var(--shadow-card);
+    border-left: 4px solid var(--module-obras);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card-cronograma:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-popup);
 }
 
 /* Cores por status */
 .card-cronograma.nao_iniciado {
-    border-left-color: #6c757d;
+    border-left-color: var(--status-neutral);
     opacity: 0.9;
 }
 
 .card-cronograma.em_andamento {
-    border-left-color: #3b82f6;
+    border-left-color: var(--status-info);
 }
 
 .card-cronograma.concluido {
-    border-left-color: #10b981;
+    border-left-color: var(--status-success);
     opacity: 0.7;
 }
 
 .card-cronograma.atrasado {
-    border-left-color: #ef4444;
+    border-left-color: var(--status-danger);
     animation: pulse-red 2s infinite;
 }
 
 @keyframes pulse-red {
     0%, 100% {
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
     }
     50% {
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+        box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
     }
 }
 
@@ -103,15 +104,15 @@
 .cronograma-title h4 {
     margin: 0;
     font-size: 1.1em;
-    color: var(--cor-texto, #1a202c);
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .ordem-badge {
-    background: var(--cor-fundo, #f4f7f6);
-    color: var(--cor-texto-secundario, #4a5568);
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
     padding: 2px 8px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: bold;
 }
@@ -132,7 +133,7 @@
 
 .progress-container {
     position: relative;
-    background: #e9ecef;
+    background: var(--surface-muted);
     height: 28px;
     border-radius: 14px;
     margin: 12px 0;
@@ -141,7 +142,7 @@
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #4f46e5, #10b981);
+    background: linear-gradient(90deg, var(--module-obras), var(--status-success));
     transition: width 0.5s ease;
     display: flex;
     align-items: center;
@@ -167,7 +168,7 @@
     flex-direction: column;
     gap: 8px;
     font-size: 0.9em;
-    color: var(--cor-texto-secundario, #4a5568);
+    color: var(--text-secondary);
     margin: 12px 0;
 }
 
@@ -180,7 +181,7 @@
 }
 
 .timeline-dates .arrow {
-    color: var(--cor-primaria, #4f46e5);
+    color: var(--module-obras);
     font-weight: bold;
 }
 
@@ -192,7 +193,7 @@
 }
 
 .text-danger {
-    color: #ef4444;
+    color: var(--status-danger);
     font-weight: bold;
 }
 
@@ -203,20 +204,20 @@
 .mini-timeline {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-subtle);
 }
 
 .timeline-track {
     position: relative;
     height: 8px;
-    background: #e9ecef;
+    background: var(--surface-muted);
     border-radius: 4px;
     overflow: visible;
 }
 
 .timeline-progress {
     height: 100%;
-    background: #10b981;
+    background: var(--status-success);
     border-radius: 4px;
     transition: width 0.5s ease;
 }
@@ -224,7 +225,7 @@
 .timeline-marker {
     position: absolute;
     top: -6px;
-    background: var(--cor-primaria, #4f46e5);
+    background: var(--module-obras);
     color: white;
     padding: 2px 8px;
     border-radius: 10px;
@@ -246,7 +247,7 @@
     height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 4px solid var(--cor-primaria, #4f46e5);
+    border-top: 4px solid var(--module-obras);
 }
 
 /* ============================================================================
@@ -254,15 +255,15 @@
    ============================================================================ */
 
 .cronograma-obs {
-    background: #f8f9fa;
+    background: var(--surface-subtle);
     padding: 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin: 12px 0;
-    border-left: 3px solid var(--cor-info, #3b82f6);
+    border-left: 3px solid var(--status-info);
 }
 
 .cronograma-obs small {
-    color: var(--cor-texto-secundario, #4a5568);
+    color: var(--text-secondary);
     font-size: 0.85em;
     line-height: 1.4;
 }
@@ -276,38 +277,39 @@
     gap: 8px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-subtle);
 }
 
 .cronograma-actions button {
     flex: 1;
     padding: 8px 12px;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.85em;
     font-weight: 600;
     cursor: pointer;
+    font-family: var(--font-sans);
     transition: all 0.2s;
 }
 
 .btn-editar {
-    background: var(--cor-primaria, #4f46e5);
+    background: var(--module-obras);
     color: white;
 }
 
 .btn-editar:hover {
-    background: #4338ca;
+    background: var(--module-obras-dark);
     transform: translateY(-1px);
 }
 
 .btn-delete {
-    background: #f8f9fa;
-    color: var(--cor-vermelho, #ef4444);
-    border: 1px solid #e9ecef;
+    background: var(--surface-subtle);
+    color: var(--status-danger);
+    border: 1px solid var(--border-subtle);
 }
 
 .btn-delete:hover {
-    background: var(--cor-vermelho, #ef4444);
+    background: var(--status-danger);
     color: white;
 }
 
@@ -317,10 +319,11 @@
 
 .filtro-status {
     padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
     font-size: 0.9em;
-    background: white;
+    background: var(--surface-card);
+    color: var(--text-primary);
     cursor: pointer;
 }
 
@@ -331,7 +334,7 @@
 .empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: var(--cor-texto-secundario, #4a5568);
+    color: var(--text-secondary);
 }
 
 .empty-state p {
@@ -366,7 +369,7 @@
     flex: 1;
     height: 8px;
     border-radius: 4px;
-    background: #e9ecef;
+    background: var(--surface-muted);
     outline: none;
     -webkit-appearance: none;
 }
@@ -377,7 +380,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--cor-primaria, #4f46e5);
+    background: var(--module-obras);
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s;
@@ -392,7 +395,7 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--cor-primaria, #4f46e5);
+    background: var(--module-obras);
     cursor: pointer;
     border: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -406,7 +409,7 @@
 
 .slider-value {
     font-weight: bold;
-    color: var(--cor-primaria, #4f46e5);
+    color: var(--module-obras);
     font-size: 1.1em;
     min-width: 45px;
     text-align: right;

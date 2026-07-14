@@ -1,7 +1,8 @@
 .curva-s {
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    box-shadow: var(--shadow-card);
     padding: 20px;
 }
 
@@ -25,7 +26,7 @@
 }
 
 .curva-s__title i {
-    color: var(--brand-primary);
+    color: var(--module-obras);
     font-size: 1.1em;
 }
 
@@ -61,8 +62,8 @@
     gap: 8px;
     padding: 48px 24px;
     background: var(--surface-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
     text-align: center;
     color: var(--text-muted);
 }

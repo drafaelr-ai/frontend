@@ -131,6 +131,7 @@ const ModalNovaMovimentacaoCaixa = ({ obraId, onClose, onSave }) => {
                         className="m-btn-primary"
                         onClick={handleSubmit}
                         disabled={isSubmitting || isCompressing}
+                        style={{ background: 'var(--module-obras)' }}
                     >
                         <i className="ti ti-device-floppy" aria-hidden="true"></i>
                         {isCompressing ? 'Comprimindo...' : isSubmitting ? 'Salvando...' : 'Salvar'}

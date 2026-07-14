@@ -60,7 +60,7 @@ function EditObraModal({ isOpen, onClose, obraId, obraName, obraCliente, onSaved
                     <button className="m-btn-cancel" onClick={onClose} disabled={salvando}>
                         Cancelar
                     </button>
-                    <button className="m-btn-primary" onClick={handleSalvar} disabled={salvando}>
+                    <button className="m-btn-primary" onClick={handleSalvar} disabled={salvando} style={{ background: 'var(--module-obras)' }}>
                         {salvando ? 'Salvando...' : 'Salvar'}
                     </button>
                 </>

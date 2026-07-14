@@ -62,7 +62,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             setParcelaEditando(null);
             setObservacaoEditando(null);
 
-            showToast('✅ Parcela atualizada com sucesso!');
+            showToast('Parcela atualizada com sucesso!');
 
             if (onSave) onSave();
         } catch (err) {
@@ -87,7 +87,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
 
             const resultado = await response.json();
-            showToast(`✅ ${resultado.mensagem}`);
+            showToast(resultado.mensagem);
             await carregarParcelas();
 
             if (onSave) onSave();
@@ -110,7 +110,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                 throw new Error(erro.erro || 'Erro ao desfazer pagamento');
             }
 
-            showToast('↩️ Pagamento desfeito com sucesso!');
+            showToast('Pagamento desfeito com sucesso!');
             await carregarParcelas();
 
             if (onSave) onSave();
@@ -157,7 +157,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                 }
             }
 
-            showToast(`🔄 ${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
+            showToast(`${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
 
             if (onSave) onSave();
         } catch (err) {
@@ -177,7 +177,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
 
             if (!response.ok) throw new Error('Erro ao salvar dados gerais');
 
-            showToast('✅ Dados atualizados com sucesso!');
+            showToast('Dados atualizados com sucesso!');
             setEditandoDadosGerais(false);
 
             if (onSave) onSave();
@@ -252,8 +252,8 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             {/* Header */}
             <div style={{
                 padding: '20px 24px',
-                background: 'var(--status-info-bg)',
-                borderBottom: '3px solid var(--status-info)',
+                background: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
+                borderBottom: '3px solid var(--module-obras)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start'
@@ -270,7 +270,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                     fontWeight: '700',
                                     padding: '8px 12px',
                                     borderRadius: '8px',
-                                    border: '2px solid var(--status-info)',
+                                    border: '2px solid var(--module-obras)',
                                     background: 'var(--surface-card)'
                                 }}
                                 placeholder="Descrição"
@@ -336,11 +336,11 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                 </select>
                             </div>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                    ✓ Salvar
+                                <button onClick={handleSalvarDadosGerais} className="cf-btn cf-btn-primary" style={{ padding: '6px 12px', fontSize: '13px', background: 'var(--module-obras)' }}>
+                                    <i className="ti ti-check" aria-hidden="true"></i> Salvar
                                 </button>
                                 <button onClick={() => setEditandoDadosGerais(false)} className="cf-btn cf-btn-outline" style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                    ✕ Cancelar
+                                    <i className="ti ti-x" aria-hidden="true"></i> Cancelar
                                 </button>
                             </div>
                         </div>
@@ -355,7 +355,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                 alignItems: 'center',
                                 gap: '10px'
                             }}>
-                                📦 {pagamentoParcelado.descricao}
+                                <i className="ti ti-package" aria-hidden="true" style={{ color: 'var(--module-obras)' }}></i> {pagamentoParcelado.descricao}
                                 <button
                                     onClick={() => setEditandoDadosGerais(true)}
                                     style={{
@@ -363,11 +363,11 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                         border: 'none',
                                         cursor: 'pointer',
                                         fontSize: '14px',
-                                        color: 'var(--status-info)'
+                                        color: 'var(--module-obras)'
                                     }}
                                     title="Editar dados gerais"
                                 >
-                                    ✏️
+                                    <i className="ti ti-pencil" aria-hidden="true"></i>
                                 </button>
                             </h2>
                             <p style={{ margin: '4px 0 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
@@ -381,13 +381,13 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                     <span style={{
                                         marginLeft: '8px',
                                         padding: '2px 8px',
-                                        backgroundColor: 'var(--status-info-bg)',
-                                        color: 'var(--status-info)',
+                                        backgroundColor: 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))',
+                                        color: 'var(--module-obras)',
                                         borderRadius: '4px',
                                         fontSize: '12px',
                                         fontWeight: '500'
                                     }}>
-                                        📦 {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
+                                        <i className="ti ti-package" aria-hidden="true"></i> {itensOrcamento.find(item => item.id === pagamentoParcelado.orcamento_item_id)?.nome_completo || pagamentoParcelado.orcamento_item_nome || 'Item vinculado'}
                                     </span>
                                 )}
                             </p>
@@ -427,13 +427,13 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             <div style={{ padding: '16px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-default)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Progresso do pagamento</span>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--status-info)' }}>{progresso}%</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--module-obras)' }}>{progresso}%</span>
                 </div>
                 <div style={{ height: '8px', background: 'var(--border-default)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{
                         width: `${progresso}%`,
                         height: '100%',
-                        background: 'linear-gradient(90deg, var(--status-info) 0%, var(--brand-primary) 100%)',
+                        background: 'linear-gradient(90deg, var(--module-obras) 0%, var(--module-obras-dark) 100%)',
                         borderRadius: '4px',
                         transition: 'width 0.4s ease'
                     }} />
@@ -484,10 +484,10 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                     fontSize: parcela.numero_parcela === 0 ? '10px' : '14px',
                                     background: status === 'paga' ? 'var(--status-success)' :
                                                parcela.numero_parcela === 0 ? 'var(--status-success)' : 'var(--surface-card)',
-                                    color: status === 'paga' || parcela.numero_parcela === 0 ? 'white' : 'var(--text-muted)',
+                                    color: status === 'paga' || parcela.numero_parcela === 0 ? 'var(--text-on-dark)' : 'var(--text-muted)',
                                     border: status !== 'paga' && parcela.numero_parcela !== 0 ? '2px solid var(--border-default)' : 'none'
                                 }}>
-                                    {status === 'paga' ? '✓' : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
+                                    {status === 'paga' ? <i className="ti ti-check" aria-hidden="true"></i> : parcela.numero_parcela === 0 ? 'ENT' : (parcelas.some(p => p.numero_parcela === 0) ? parcela.numero_parcela + 1 : parcela.numero_parcela)}
                                 </div>
 
                                 {/* Dados */}
@@ -533,7 +533,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                 {/* Badge de Status */}
                                 <span
                                     className={`parcela-status-badge ${status}`}
-                                    style={parcela.numero_parcela === 0 && status !== 'paga' ? { background: 'var(--status-success)', color: 'white' } : {}}
+                                    style={parcela.numero_parcela === 0 && status !== 'paga' ? { background: 'var(--status-success)', color: 'var(--text-on-dark)' } : {}}
                                 >
                                     {status === 'paga' ? 'Paga' :
                                      status === 'vencida' ? 'Vencida' :
@@ -549,14 +549,15 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                                 handleEditarParcela(parcela, novoValor, novaData);
                                             }}
                                             className="parcela-action-btn primary"
+                                            style={{ background: 'var(--module-obras)', borderColor: 'var(--module-obras)' }}
                                         >
-                                            ✓ Salvar
+                                            <i className="ti ti-check" aria-hidden="true"></i> Salvar
                                         </button>
                                         <button
                                             onClick={() => setParcelaEditando(null)}
                                             className="parcela-action-btn"
                                         >
-                                            ✕
+                                            <i className="ti ti-x" aria-hidden="true"></i>
                                         </button>
                                     </>
                                 ) : status === 'paga' ? (
@@ -566,7 +567,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                         title="Desfazer pagamento"
                                         style={{ color: 'var(--status-danger)' }}
                                     >
-                                        ↩️ Desfazer
+                                        <i className="ti ti-arrow-back-up" aria-hidden="true"></i> Desfazer
                                     </button>
                                 ) : (
                                     <>
@@ -575,14 +576,14 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                                             className="parcela-action-btn"
                                             title="Editar valor e data"
                                         >
-                                            ✏️
+                                            <i className="ti ti-pencil" aria-hidden="true"></i>
                                         </button>
                                         <button
                                             onClick={() => handleMarcarPaga(parcela)}
                                             className="parcela-action-btn success"
                                             title="Marcar como paga"
                                         >
-                                            💰 Pagar
+                                            <i className="ti ti-cash" aria-hidden="true"></i> Pagar
                                         </button>
                                     </>
                                 )}

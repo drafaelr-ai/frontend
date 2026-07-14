@@ -150,13 +150,13 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
 
   // Estilos inline seguindo tokens do projeto
   const overlayStyle = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1300,
+    position: 'fixed', inset: 0, background: 'rgba(11, 18, 32, 0.55)', zIndex: 1300,
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
   };
   const containerStyle = {
-    background: 'var(--surface-card)', borderRadius: 16, width: '100%', maxWidth: 640,
+    background: 'var(--surface-card)', borderRadius: 20, width: '100%', maxWidth: 640,
     maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-    boxShadow: '0 20px 60px rgba(15,23,42,.15)',
+    boxShadow: 'var(--shadow-modal)',
   };
 
   return (
@@ -165,9 +165,11 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
         {/* Header */}
         <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <i className="ti ti-share-2" /> Gerar superlink de pagamento
+            <i className="ti ti-share-2" style={{ color: 'var(--module-admin)' }} /> Gerar superlink de pagamento
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, display: 'inline-flex', alignItems: 'center' }} aria-label="Fechar">
+            <i className="ti ti-x" />
+          </button>
         </div>
 
         {/* Body */}
@@ -201,8 +203,8 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
                     return { label: `${d}d para vencer`, bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
                   })() : null;
                   return (
-                    <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: `1px solid ${sel ? 'var(--brand-primary)' : 'var(--border-subtle)'}`, borderRadius: 8, background: sel ? 'var(--surface-subtle)' : 'var(--surface-card)', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={sel} onChange={() => toggle(item.id)} style={{ width: 18, height: 18, accentColor: 'var(--brand-primary)', cursor: 'pointer' }} />
+                    <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', border: `1px solid ${sel ? 'var(--module-admin)' : 'var(--border-subtle)'}`, borderRadius: 8, background: sel ? 'var(--surface-subtle)' : 'var(--surface-card)', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={sel} onChange={() => toggle(item.id)} style={{ width: 18, height: 18, accentColor: 'var(--module-admin)', cursor: 'pointer' }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           {item.descricao}
@@ -258,11 +260,11 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
                 <code style={{ flex: 1, fontFamily: 'monospace', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
                   {linkGerado.url}
                 </code>
-                <button onClick={copyLink} style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 500, background: copied ? 'var(--status-success)' : 'var(--surface-card)', color: copied ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                <button onClick={copyLink} style={{ fontFamily: 'inherit', fontSize: 13, fontWeight: 500, background: copied ? 'var(--status-success)' : 'var(--surface-card)', color: copied ? 'var(--text-on-dark)' : 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
                   <i className={`ti ${copied ? 'ti-check' : 'ti-copy'}`} />
                   {copied ? 'Copiado!' : 'Copiar'}
                 </button>
-                <button onClick={openWhatsApp} style={{ fontFamily: 'inherit', fontSize: 13, background: 'var(--status-success)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <button onClick={openWhatsApp} style={{ fontFamily: 'inherit', fontSize: 13, background: 'var(--status-success)', color: 'var(--text-on-dark)', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <i className="ti ti-brand-whatsapp" />
                 </button>
               </div>
@@ -288,7 +290,7 @@ export default function GerarSuperlinkAdminModal({ lancamentos = [], boletos = [
               <button
                 onClick={handleGerar}
                 disabled={loading}
-                style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', cursor: loading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}
+                style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 600, background: 'var(--module-admin)', color: 'var(--text-on-dark)', border: 'none', borderRadius: 8, padding: '9px 18px', cursor: loading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}
               >
                 <i className="ti ti-link" />
                 {loading ? 'Gerando…' : 'Gerar superlink'}

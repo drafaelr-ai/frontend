@@ -198,7 +198,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                     disabled={isDownloading}
                     style={{
                         padding: 'var(--space-4)',
-                        border: `2px solid var(--brand-primary)`,
+                        border: `2px solid var(--module-obras)`,
                         borderRadius: 'var(--radius-md)',
                         background: 'var(--surface-card)',
                         cursor: 'pointer',
@@ -208,7 +208,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                     }}
                     onMouseEnter={(e) => {
                         if (!isDownloading) {
-                            e.currentTarget.style.background = 'var(--surface-muted)';
+                            e.currentTarget.style.background = 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))';
                             e.currentTarget.style.transform = 'translateY(-2px)';
                         }
                     }}
@@ -218,9 +218,9 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                        <i className="ti ti-paperclip" aria-hidden="true" style={{ fontSize: 'var(--text-2xl)', color: 'var(--brand-primary)' }}></i>
+                        <i className="ti ti-paperclip" aria-hidden="true" style={{ fontSize: 'var(--text-2xl)', color: 'var(--module-obras)' }}></i>
                         <div>
-                            <strong style={{ fontSize: 'var(--text-base)', color: 'var(--brand-primary)' }}>
+                            <strong style={{ fontSize: 'var(--text-base)', color: 'var(--module-obras)' }}>
                                 {isDownloading && downloadType === 'notas' ? 'Preparando...' : 'Baixar Notas Fiscais'}
                             </strong>
                             <p style={{ margin: 'var(--space-1) 0 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
@@ -322,7 +322,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
                     onClick={handleCompartilharWhatsApp}
                     disabled={isSharingWhatsApp}
                     className="m-btn-primary"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', background: 'var(--module-obras)' }}
                 >
                     <i className="ti ti-brand-whatsapp" aria-hidden="true"></i>
                     {isSharingWhatsApp ? 'Gerando...' : 'Compartilhar via WhatsApp'}

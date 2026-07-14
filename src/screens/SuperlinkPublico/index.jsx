@@ -127,7 +127,7 @@ export default function SuperlinkPublico({ token }) {
       <div className={styles.header}>
         <div className={styles.headerInner}>
           <div className={styles.brand}>
-            <i className="ti ti-building-skyscraper" />
+            <img src="/obraly-mark.png" alt="Obraly" className={styles.brandMark} />
             Obraly <span className={styles.dot}>·</span> Cobrança
           </div>
           <h1 className={styles.title}>{headerTitulo}</h1>

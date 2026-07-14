@@ -57,10 +57,10 @@ const normalizarNomeMaterial = (nome) => {
 
 // Cores para os gráficos
 const CORES = {
-    maoDeObra: '#4f46e5',
-    material: '#10b981', 
-    equipamento: '#f59e0b',
-    outros: '#6b7280'
+    maoDeObra: 'var(--module-obras)',
+    material: 'var(--status-success)',
+    equipamento: 'var(--status-warning)',
+    outros: 'var(--status-neutral)'
 };
 
 const CORES_MATERIAIS = [
@@ -516,7 +516,7 @@ const MaterialDetalhesModal = ({ material, lancamentos, onClose }) => {
             <div className="modal-content modal-material" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h3><i className="ti ti-package" aria-hidden="true" /> Detalhes: {material}</h3>
-                    <button onClick={onClose} className="modal-close">✕</button>
+                    <button onClick={onClose} className="modal-close"><i className="ti ti-x" aria-hidden="true" /></button>
                 </div>
                 
                 <div className="modal-body">

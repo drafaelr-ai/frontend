@@ -264,7 +264,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                 marginBottom: '20px',
                 padding: '15px',
                 backgroundColor: 'var(--surface-subtle)',
-                borderRadius: '8px'
+                borderRadius: 'var(--radius-lg)'
             }}>
                 <div>
                     <span style={{ fontSize: '1.1em', color: 'var(--text-secondary)' }}>
@@ -273,7 +273,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                     <span style={{
                         fontSize: '1.5em',
                         fontWeight: 'bold',
-                        color: 'var(--brand-primary)',
+                        color: 'var(--module-obras)',
                         marginLeft: '10px'
                     }}>
                         {formatCurrency(totalPendente)}
@@ -291,15 +291,19 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                 opacity: aprovandoMultiplos ? 0.7 : 1
                             }}
                         >
-                            {aprovandoMultiplos ? '⏳ Aprovando...' : `✓ Aprovar Selecionados (${selecionados.length})`}
+                            {aprovandoMultiplos ? (
+                                <><i className="ti ti-loader-2" aria-hidden="true" /> Aprovando...</>
+                            ) : (
+                                <><i className="ti ti-check" aria-hidden="true" /> {`Aprovar Selecionados (${selecionados.length})`}</>
+                            )}
                         </button>
                     )}
                     <button
                         onClick={() => setAddModalVisible(true)}
                         className="acao-btn add-btn"
-                        style={{ backgroundColor: 'var(--status-info)' }}
+                        style={{ backgroundColor: 'var(--module-obras)' }}
                     >
-                        + Nova Solicitação
+                        <i className="ti ti-plus" aria-hidden="true" /> Nova Solicitação
                     </button>
                 </div>
             </div>
@@ -314,7 +318,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                     checked={selecionados.length === orcamentosPendentes.length && orcamentosPendentes.length > 0}
                                     onChange={toggleSelecionarTodos}
                                     title="Selecionar todos"
-                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: 'var(--module-obras)' }}
                                 />
                             </th>
                             <th>Descrição</th>
@@ -335,14 +339,14 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                         type="checkbox"
                                         checked={selecionados.includes(orc.id)}
                                         onChange={() => toggleSelecionado(orc.id)}
-                                        style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                                        style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: 'var(--module-obras)' }}
                                     />
                                 </td>
                                 <td
                                     onClick={() => setEditingOrcamento(orc)}
                                     style={{
                                         cursor: 'pointer',
-                                        color: 'var(--brand-primary)',
+                                        color: 'var(--module-obras)',
                                         fontWeight: '500',
                                         textDecoration: 'underline'
                                     }}
@@ -362,9 +366,9 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
                                                 className="acao-icon-btn"
                                                 title={`${orc.anexos_count} anexo(s)`}
                                                 aria-label={`Ver ${orc.anexos_count} anexo(s)`}
-                                                style={{ fontSize: '1.3em', color: 'var(--status-info)' }}
+                                                style={{ fontSize: '1.3em', color: 'var(--module-obras)' }}
                                             >
-                                                📎
+                                                <i className="ti ti-paperclip" aria-hidden="true"></i>
                                             </button>
                                         )}
                                         <button

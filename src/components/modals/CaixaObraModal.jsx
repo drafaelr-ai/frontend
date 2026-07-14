@@ -289,11 +289,11 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                 </div>
 
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                    <button onClick={handleNovaMovimentacao} className="m-btn-primary">
+                    <button onClick={handleNovaMovimentacao} className="m-btn-primary" style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-plus" aria-hidden="true"></i>
                         Nova Movimentação
                     </button>
-                    <button onClick={handleGerarRelatorio} className="m-btn-primary">
+                    <button onClick={handleGerarRelatorio} className="m-btn-primary" style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-file-type-pdf" aria-hidden="true"></i>
                         Gerar Relatório PDF
                     </button>
@@ -307,8 +307,8 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                     style={{
                         padding: 'var(--space-2) var(--space-3)',
                         borderRadius: 'var(--radius-full)',
-                        border: filtroTipo === '' ? `2px solid var(--status-success)` : `0.5px solid var(--border-default)`,
-                        backgroundColor: filtroTipo === '' ? 'var(--status-success-bg)' : 'var(--surface-card)',
+                        border: filtroTipo === '' ? `2px solid var(--module-obras)` : `0.5px solid var(--border-default)`,
+                        backgroundColor: filtroTipo === '' ? 'color-mix(in srgb, var(--module-obras) 12%, var(--surface-card))' : 'var(--surface-card)',
                         cursor: 'pointer',
                         fontSize: 'var(--text-sm)',
                         color: 'var(--text-primary)'
@@ -408,7 +408,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                             style={{
                                                 cursor: 'pointer',
                                                 padding: 'var(--space-1) var(--space-2)',
-                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? 'var(--status-success)' : 'var(--brand-primary)',
+                                                backgroundColor: mov.comprovante_url?.startsWith('data:image') ? 'var(--status-success)' : 'var(--module-obras)',
                                                 color: 'white',
                                                 borderRadius: 'var(--radius-sm)',
                                                 fontSize: 'var(--text-xs)',
@@ -430,8 +430,9 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
                                             />
                                         </label>
                                         {mov.comprovante_url && !mov.comprovante_url.startsWith('data:image') && (
-                                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                                                ⚠️ Precisa reanexar
+                                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                                                <i className="ti ti-alert-triangle" aria-hidden="true"></i>
+                                                Precisa reanexar
                                             </span>
                                         )}
                                     </div>
