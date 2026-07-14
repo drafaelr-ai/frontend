@@ -9,6 +9,8 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { notify, confirmDialog } from './utils/notify';
 import { logger } from './utils/logger';
 import { fetchWithAuthAdmin } from './auth/fetchWithAuthAdmin';
+import { fetchWithAuth } from './auth/fetchWithAuth';
+import { API_URL } from './config';
 import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
 import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
 
@@ -352,7 +354,11 @@ const Dashboard = ({ onIrImoveis }) => {
 
     if (loading) return <div style={styles.loading}>Carregando...</div>;
 
-    const alugados = imoveis.filter(i => ['alugado', 'alugado_terceiro'].includes(i.status)).length;
+    // Contas gerais (tipo='geral', ex.: IMPOSTOS) não são imóveis físicos:
+    // ficam fora das contagens/ocupação/grid e ganham seção própria.
+    const imoveisFisicos = imoveis.filter(i => i.tipo !== 'geral');
+    const contasGerais = imoveis.filter(i => i.tipo === 'geral');
+    const alugados = imoveisFisicos.filter(i => ['alugado', 'alugado_terceiro'].includes(i.status)).length;
     const vencidos = dados?.alertas?.vencidos || [];
     const aVencer = dados?.alertas?.a_vencer || [];
     const vencidosPorImovel = {};
@@ -401,7 +407,7 @@ const Dashboard = ({ onIrImoveis }) => {
                 <div>
                     <h1 style={{ ...styles.pageTitle, marginBottom: 2 }}>Patrimônio</h1>
                     <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                        {imoveis.length} imóve{imoveis.length === 1 ? 'l' : 'is'} · {alugados} alugado{alugados !== 1 ? 's' : ''}
+                        {imoveisFisicos.length} imóve{imoveisFisicos.length === 1 ? 'l' : 'is'} · {alugados} alugado{alugados !== 1 ? 's' : ''}
                         {vencidos.length > 0 ? ` · ${vencidos.length} vencido${vencidos.length !== 1 ? 's' : ''}` : ''}
                     </div>
                 </div>
@@ -451,8 +457,8 @@ const Dashboard = ({ onIrImoveis }) => {
                     (dadosAtivos?.resumo?.saldo_mes || 0) >= 0 ? '#16a34a' : 'var(--status-danger)',
                     () => setModalLancamentos({ titulo: `Todos — ${labelPeriodo}`, tipo: '' }))}
                 {kpiCard('⌂', '#e0e7ff', 'Ocupação',
-                    `${alugados} de ${imoveis.length}`, undefined, onIrImoveis,
-                    imoveis.length ? `${Math.round((alugados / imoveis.length) * 100)}% alugados` : undefined)}
+                    `${alugados} de ${imoveisFisicos.length}`, undefined, onIrImoveis,
+                    imoveisFisicos.length ? `${Math.round((alugados / imoveisFisicos.length) * 100)}% alugados` : undefined)}
             </div>
 
             {/* Banner de vencidos */}
@@ -485,8 +491,35 @@ const Dashboard = ({ onIrImoveis }) => {
                             </button>
                         )}
                     </div>
+                    {contasGerais.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                            {contasGerais.map(cg => (
+                                <div
+                                    key={cg.id}
+                                    onClick={() => setImovelModal(cg)}
+                                    title="Ver lançamentos"
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+                                        background: 'var(--surface-card)', border: '1px dashed var(--border-strong)',
+                                        borderRadius: '12px', padding: '10px 14px', flex: '1 1 260px'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '16px' }}>📋</span>
+                                    <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                            {cg.nome} <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>· conta geral da empresa</span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--status-danger)' }} className="num">
+                                            Despesas: {formatCurrency(cg.total_despesas || 0)}
+                                        </div>
+                                    </div>
+                                    <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: '#16a34a' }}>Ver →</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <div className="adm-imoveis-grid">
-                        {imoveis.slice(0, 6).map(im => {
+                        {imoveisFisicos.slice(0, 6).map(im => {
                             const chip = statusChip(im.status);
                             const nVenc = vencidosPorImovel[im.nome] || 0;
                             return (
@@ -536,7 +569,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                 </div>
                             );
                         })}
-                        {imoveis.length === 0 && <p style={styles.emptyText}>Nenhum imóvel cadastrado.</p>}
+                        {imoveisFisicos.length === 0 && <p style={styles.emptyText}>Nenhum imóvel cadastrado.</p>}
                     </div>
                 </div>
 
@@ -1103,6 +1136,10 @@ const Imoveis = () => {
     const [showModal, setShowModal] = useState(false);
     const [editando, setEditando] = useState(null);
     const [imovelLancamentos, setImovelLancamentos] = useState(null); // Para o modal de lançamentos
+    // Importar de obra (lista vem do módulo Obras, com a sessão principal)
+    const [obrasMain, setObrasMain] = useState([]);
+    const [obraImportar, setObraImportar] = useState('');
+    const [custoObra, setCustoObra] = useState(0);
     const [form, setForm] = useState({
         nome: '',
         tipo: 'apartamento',
@@ -1118,7 +1155,35 @@ const Imoveis = () => {
 
     useEffect(() => {
         fetchImoveis();
+        // Obras do módulo principal (token main) — para "puxar" uma obra como imóvel
+        fetchWithAuth(`${API_URL}/obras`)
+            .then(r => (r.ok ? r.json() : []))
+            .then(d => setObrasMain(Array.isArray(d) ? d : []))
+            .catch(e => logger.warn('obras do main indisponíveis p/ importação:', e));
     }, []);
+
+    const selecionarObraImportar = async (obraId) => {
+        setObraImportar(obraId);
+        setCustoObra(0);
+        if (!obraId) return;
+        const obra = obrasMain.find(o => String(o.id) === String(obraId));
+        if (obra) {
+            setForm(f => ({
+                ...f,
+                nome: f.nome || obra.nome,
+                observacoes: f.observacoes || `Importado da obra "${obra.nome}"`,
+            }));
+        }
+        try {
+            const res = await fetchWithAuth(`${API_URL}/obras/${obraId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setCustoObra(data?.sumarios?.valores_pagos || 0);
+            }
+        } catch (e) {
+            logger.warn('não foi possível buscar custo da obra:', e);
+        }
+    };
 
     const fetchImoveis = async () => {
         try {
@@ -1135,20 +1200,40 @@ const Imoveis = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const url = editando 
-                ? `${API_URL_ADMIN}/imoveis/${editando.id}`
-                : `${API_URL_ADMIN}/imoveis`;
-            
-            const response = await fetchWithAuthAdmin(url, {
-                method: editando ? 'PUT' : 'POST',
-                body: JSON.stringify({
+            let url, body;
+            if (!editando && obraImportar) {
+                // Puxa a obra do módulo principal: cria com vínculo obra_id_origem
+                // e custo de construção = total pago na obra.
+                url = `${API_URL_ADMIN}/importar-obra`;
+                body = {
+                    obra_id: parseInt(obraImportar, 10),
+                    nome: form.nome,
+                    tipo: form.tipo,
+                    endereco: form.endereco,
+                    cidade: form.cidade,
+                    estado: form.estado,
+                    cep: form.cep,
+                    valor_mercado: parseFloat(form.valor_mercado) || 0,
+                    custo_total: custoObra || 0,
+                };
+            } else {
+                url = editando
+                    ? `${API_URL_ADMIN}/imoveis/${editando.id}`
+                    : `${API_URL_ADMIN}/imoveis`;
+                body = {
                     ...form,
                     valor_aluguel: parseFloat(form.valor_aluguel) || 0,
                     valor_mercado: parseFloat(form.valor_mercado) || 0
-                })
+                };
+            }
+
+            const response = await fetchWithAuthAdmin(url, {
+                method: editando ? 'PUT' : 'POST',
+                body: JSON.stringify(body)
             });
 
             if (response.ok) {
+                if (!editando && obraImportar) notify.success('Obra importada como imóvel.');
                 fetchImoveis();
                 closeModal();
             } else {
@@ -1210,6 +1295,8 @@ const Imoveis = () => {
     const closeModal = () => {
         setShowModal(false);
         setEditando(null);
+        setObraImportar('');
+        setCustoObra(0);
     };
 
     const tiposImovel = [
@@ -1218,6 +1305,7 @@ const Imoveis = () => {
         { value: 'sala_comercial', label: '🏪 Sala Comercial' },
         { value: 'terreno', label: '🌳 Terreno' },
         { value: 'escritorio', label: '💼 Escritório' },
+        { value: 'geral', label: '📋 Conta geral (empresa) — não é imóvel' },
         { value: 'galpao', label: '🏭 Galpão' },
     ];
 
@@ -1360,6 +1448,34 @@ const Imoveis = () => {
                             <button onClick={closeModal} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={styles.modalBody}>
+                            {!editando && (
+                                <div style={{
+                                    background: 'var(--status-info-bg)', borderRadius: '10px',
+                                    padding: '10px 14px', marginBottom: '14px'
+                                }}>
+                                    <label style={{ ...styles.label, color: 'var(--status-info-text)' }}>
+                                        🏗️ Importar de uma obra (opcional)
+                                    </label>
+                                    <select
+                                        value={obraImportar}
+                                        onChange={e => selecionarObraImportar(e.target.value)}
+                                        style={styles.select}
+                                    >
+                                        <option value="">— Não importar (imóvel novo) —</option>
+                                        {obrasMain.map(o => (
+                                            <option key={o.id} value={o.id}>
+                                                {o.nome}{o.concluida ? ' (concluída)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {obraImportar && (
+                                        <div style={{ fontSize: '12px', color: 'var(--status-info-text)', marginTop: '6px' }}>
+                                            Custo de construção puxado da obra: <b>{formatCurrency(custoObra)}</b> (total pago).
+                                            O imóvel fica vinculado à obra de origem.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div style={styles.formGroup}>
                                 <label style={styles.label}>Nome do Imóvel *</label>
                                 <input
