@@ -203,7 +203,6 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                         >
                             <option value="comum">Operador (comum)</option>
                             <option value="administrador">Administrador</option>
-                            <option value="master">Master</option>
                         </select>
                         <button type="submit" className="m-btn-primary" style={{ flexGrow: 0 }}>
                             <i className="ti ti-plus" aria-hidden="true"></i>
@@ -230,24 +229,25 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                 <tr key={user.id}>
                                     <td>{user.username}</td>
                                     <td>
-                                        <select
-                                            value={user.role}
-                                            onChange={(e) => handleChangeRole(user.id, e.target.value)}
-                                            disabled={changingRole === user.id}
-                                            style={{
-                                                padding: 'var(--space-1) var(--space-2)',
-                                                borderRadius: 'var(--radius-sm)',
-                                                border: '0.5px solid var(--border-default)',
-                                                backgroundColor: changingRole === user.id ? 'var(--surface-muted)' : 'var(--surface-card)',
-                                                cursor: changingRole === user.id ? 'wait' : 'pointer',
-                                                fontSize: 'var(--text-sm)',
-                                                width: '100%'
-                                            }}
-                                        >
-                                            <option value="comum">Operador</option>
-                                            <option value="administrador">Admin</option>
-                                            <option value="master">Master</option>
-                                        </select>
+                                        {user.role === 'master' ? getRoleBadge('master') : (
+                                            <select
+                                                value={user.role}
+                                                onChange={(e) => handleChangeRole(user.id, e.target.value)}
+                                                disabled={changingRole === user.id}
+                                                style={{
+                                                    padding: 'var(--space-1) var(--space-2)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    border: '0.5px solid var(--border-default)',
+                                                    backgroundColor: changingRole === user.id ? 'var(--surface-muted)' : 'var(--surface-card)',
+                                                    cursor: changingRole === user.id ? 'wait' : 'pointer',
+                                                    fontSize: 'var(--text-sm)',
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                <option value="comum">Operador</option>
+                                                <option value="administrador">Admin</option>
+                                            </select>
+                                        )}
                                     </td>
                                     <td style={{ textAlign: 'center', display: 'flex', gap: 'var(--space-1)', justifyContent: 'center' }}>
                                         <button
@@ -255,7 +255,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
                                             style={{ backgroundColor: 'var(--status-info)', color: 'white' }}
                                             onClick={() => setUserToEdit(user)}
                                         >
-                                            Obras
+                                            Permissões
                                         </button>
                                         <button
                                             className="acao-btn"

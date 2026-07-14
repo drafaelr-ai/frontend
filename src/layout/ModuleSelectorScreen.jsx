@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ModuleSelectorScreen = ({ onSelectModule }) => {
+const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess }) => {
     const [hoveredModule, setHoveredModule] = useState(null);
 
     const modules = [
@@ -42,6 +42,25 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
         }
     ];
 
+    // Sem lista de permitidos (uso legado) → mostra tudo.
+    const visibleModules = allowedModules
+        ? modules.filter(m => allowedModules.includes(m.id))
+        : modules;
+
+    const headerBtn = {
+        background: 'rgba(255,255,255,0.1)',
+        border: '1px solid rgba(255,255,255,0.25)',
+        color: '#fff',
+        borderRadius: '10px',
+        padding: '8px 16px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px'
+    };
+
     return (
         <main style={{
             minHeight: '100vh',
@@ -51,8 +70,38 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            position: 'relative'
         }}>
+            {/* Ações do usuário logado */}
+            {(user || onManageAccess) && (
+                <div style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap'
+                }}>
+                    {user && (
+                        <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
+                            <i className="ti ti-user" style={{ marginRight: 4 }} /> {user.username}
+                        </span>
+                    )}
+                    {onManageAccess && (
+                        <button style={headerBtn} onClick={onManageAccess}>
+                            <i className="ti ti-users-plus" /> Gerenciar acessos
+                        </button>
+                    )}
+                    {onLogout && (
+                        <button style={headerBtn} onClick={onLogout}>
+                            <i className="ti ti-logout" /> Sair
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Logo */}
             <div style={{
                 marginBottom: '40px',
@@ -73,7 +122,9 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                     color: 'rgba(255,255,255,0.7)',
                     marginTop: '8px'
                 }}>
-                    Selecione o módulo para continuar
+                    {visibleModules.length > 0
+                        ? 'Selecione o módulo para continuar'
+                        : 'Seu usuário não tem acesso a nenhum módulo — fale com o administrador.'}
                 </p>
             </div>
 
@@ -85,7 +136,7 @@ const ModuleSelectorScreen = ({ onSelectModule }) => {
                 justifyContent: 'center',
                 maxWidth: '800px'
             }}>
-                {modules.map(module => (
+                {visibleModules.map(module => (
                     <div
                         key={module.id}
                         onClick={() => onSelectModule(module.id)}

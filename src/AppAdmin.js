@@ -36,6 +36,18 @@ const formatCurrency = (value) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+// Escapa valores dinâmicos antes de interpolar em HTML gerado via string (ex: relatórios PDF),
+// prevenindo XSS quando o valor vem de campos livres (nome de imóvel, categoria, etc).
+const escapeHtml = (value) => {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr + 'T00:00:00');
@@ -48,90 +60,34 @@ const getTodayString = () => {
 };
 
 // ===================================================================================
-// COMPONENTE: TELA DE LOGIN
+// COMPONENTE: ERRO DE SSO (login próprio foi substituído pelo login único central)
 // ===================================================================================
 
-const LoginScreenAdmin = ({ onBack }) => {
-    const { login } = useAuthAdmin();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+const SsoErrorScreen = ({ message, onRetry, onBack }) => (
+    <div style={styles.loginContainer}>
+        <button onClick={onBack} style={styles.backButton}>
+            ← Voltar
+        </button>
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${API_URL_ADMIN}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.erro || 'Erro ao fazer login');
-            }
-
-            login(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div style={styles.loginContainer}>
-            {/* Botão Voltar */}
-            <button onClick={onBack} style={styles.backButton}>
-                ← Voltar
-            </button>
-
-            <div style={styles.loginCard}>
-                {/* Header */}
-                <div style={styles.loginHeader}>
-                    <div style={styles.loginIcon}>🏢</div>
-                    <h1 style={styles.loginTitle}>Administração</h1>
-                    <p style={styles.loginSubtitle}>Gestão Patrimonial</p>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} style={styles.loginForm}>
-                    <input
-                        type="text"
-                        placeholder="Usuário"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        style={styles.input}
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Senha"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={styles.input}
-                        required
-                    />
-                    {error && <p style={styles.error}>{error}</p>}
-                    <button type="submit" style={styles.submitButton} disabled={loading}>
-                        {loading ? 'Entrando...' : 'Entrar'}
-                    </button>
-                </form>
+        <div style={styles.loginCard}>
+            <div style={styles.loginHeader}>
+                <div style={styles.loginIcon}>🏢</div>
+                <h1 style={styles.loginTitle}>Administração</h1>
+                <p style={styles.loginSubtitle}>Gestão Patrimonial</p>
             </div>
+            <p style={styles.error}>{message || 'Não foi possível entrar na Administração.'}</p>
+            <button onClick={onRetry} style={styles.submitButton}>
+                Tentar novamente
+            </button>
         </div>
-    );
-};
+    </div>
+);
 
 // ===================================================================================
 // COMPONENTE: SIDEBAR
 // ===================================================================================
 
-const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, isOpen, onClose }) => {
+const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, isOpen, onClose }) => {
     const menuItems = [
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'imoveis', icon: '🏠', label: 'Imóveis' },
@@ -190,6 +146,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, isOpen, onClose })
                         <div style={styles.userRole}>{user?.role || 'operador'}</div>
                     </div>
                 </div>
+                {onBackToModules && (
+                    <button onClick={onBackToModules} style={{ ...styles.logoutButton, marginBottom: 8 }}>
+                        ← Voltar aos módulos
+                    </button>
+                )}
                 <button onClick={onLogout} style={styles.logoutButton}>
                     Sair
                 </button>
@@ -1059,9 +1020,13 @@ const Imoveis = () => {
             if (response.ok) {
                 fetchImoveis();
                 closeModal();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                notify.error(data.erro || 'Erro ao salvar imóvel.');
             }
         } catch (err) {
             logger.error('Erro ao salvar imóvel:', err);
+            notify.error('Erro ao salvar imóvel.');
         }
     };
 
@@ -1505,9 +1470,13 @@ const Lancamentos = () => {
                     observacoes: '',
                     pix_chave: ''
                 });
+            } else {
+                const data = await response.json().catch(() => ({}));
+                notify.error(data.erro || 'Erro ao salvar lançamento.');
             }
         } catch (err) {
             logger.error('Erro ao salvar lançamento:', err);
+            notify.error('Erro ao salvar lançamento.');
         }
     };
 
@@ -1568,9 +1537,13 @@ const Lancamentos = () => {
                 setShowModalPagar(false);
                 setLancamentoPagar(null);
                 fetchDados();
+            } else {
+                const data = await response.json().catch(() => ({}));
+                notify.error(data.erro || 'Erro ao marcar como pago.');
             }
         } catch (err) {
             logger.error('Erro ao marcar como pago:', err);
+            notify.error('Erro ao marcar como pago.');
         }
     };
 
@@ -2206,6 +2179,7 @@ const GestaoBoletos = () => {
             body: JSON.stringify({ data_pagamento: new Date().toISOString().split('T')[0] })
         });
         if (r.ok) { fetchBoletos(); notify.success('Boleto marcado como pago!'); }
+        else { const data = await r.json().catch(() => ({})); notify.error(data.erro || 'Erro ao marcar boleto como pago.'); }
     };
 
     const deletarBoleto = async (boletoId) => {
@@ -2214,6 +2188,7 @@ const GestaoBoletos = () => {
             method: 'DELETE'
         });
         if (r.ok) fetchBoletos();
+        else { const data = await r.json().catch(() => ({})); notify.error(data.erro || 'Erro ao excluir boleto.'); }
     };
 
     const verPreview = async (boletoId) => {
@@ -2232,12 +2207,12 @@ const GestaoBoletos = () => {
 
     const renderCard = (boleto, urgencia = 'normal') => {
         const cores = {
-            vencido: { bg: '#ffebee', border: '#ef5350', badge: '#d32f2f' },
-            urgente: { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
-            hoje:    { bg: '#fff3e0', border: '#ff9800', badge: '#f57c00' },
+            vencido: { bg: 'var(--status-danger-bg)', border: 'var(--status-danger)', badge: 'var(--status-danger-text)' },
+            urgente: { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
+            hoje:    { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
             atencao: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
             normal:  { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
-            pago:    { bg: '#e8f5e9', border: '#4caf50', badge: '#388e3c' },
+            pago:    { bg: 'var(--status-success-bg)', border: 'var(--status-success)', badge: 'var(--status-success-text)' },
         };
         const cor = cores[urgencia] || cores.normal;
         const formatVal = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -2260,8 +2235,8 @@ const GestaoBoletos = () => {
 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
                     <div><span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
-                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span><div style={{ fontWeight: 'bold', color: '#1976d2', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
-                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span><div style={{ fontWeight: 'bold', color: '#388e3c' }}>{formatDate(boleto.data_pagamento)}</div></div>}
+                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span><div style={{ fontWeight: 'bold', color: 'var(--status-info)', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
+                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span><div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>{formatDate(boleto.data_pagamento)}</div></div>}
                 </div>
 
                 {boleto.codigo_barras && (
@@ -2272,10 +2247,10 @@ const GestaoBoletos = () => {
                 )}
 
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-copy" aria-hidden="true" /> Copiar Código</button>}
-                    {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-eye" aria-hidden="true" /> Ver PDF</button>}
-                    {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-circle-check" aria-hidden="true" /> Marcar Pago</button>}
-                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: '#f44336', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }} title="Excluir boleto" aria-label="Excluir boleto"><i className="ti ti-trash" aria-hidden="true" /></button>
+                    {boleto.codigo_barras && <button onClick={() => copiarCodigo(boleto.codigo_barras)} style={{ padding: '7px 14px', background: 'var(--status-success)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-copy" aria-hidden="true" /> Copiar Código</button>}
+                    {boleto.tem_pdf && <button onClick={() => verPreview(boleto.id)} style={{ padding: '7px 14px', background: 'var(--status-info)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-eye" aria-hidden="true" /> Ver PDF</button>}
+                    {boleto.status !== 'Pago' && <button onClick={() => marcarPago(boleto.id)} style={{ padding: '7px 14px', background: 'var(--status-warning)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }}><i className="ti ti-circle-check" aria-hidden="true" /> Marcar Pago</button>}
+                    <button onClick={() => deletarBoleto(boleto.id)} style={{ padding: '7px 14px', background: 'var(--status-danger)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85em' }} title="Excluir boleto" aria-label="Excluir boleto"><i className="ti ti-trash" aria-hidden="true" /></button>
                 </div>
             </div>
         );
@@ -2410,6 +2385,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
     const [salvando, setSalvando] = useState(false);
     const [multiplos, setMultiplos] = useState(null);
     const [salvandoTodos, setSalvandoTodos] = useState(false);
+    const [descBaseMultiplos, setDescBaseMultiplos] = useState('Boleto');
 
     const handleFile = async (e) => {
         const file = e.target.files[0];
@@ -2450,8 +2426,8 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
 
     const cadastrarTodos = async () => {
         if (salvandoTodos || !multiplos) return;
-        const descBase = prompt('Descrição base para os boletos:', 'Boleto');
-        if (!descBase) return;
+        const descBase = (descBaseMultiplos || '').trim();
+        if (!descBase) { notify.warning('Informe a descrição base para os boletos.'); return; }
         setSalvandoTodos(true);
         let sucessos = 0, erros = 0;
         for (let i = 0; i < multiplos.length; i++) {
@@ -2494,15 +2470,20 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                     <div style={styles.formGroup}>
                         <label style={styles.label}><i className="ti ti-paperclip" aria-hidden="true" /> Anexar PDF do Boleto (extração automática)</label>
                         <input type="file" accept="application/pdf" onChange={handleFile} style={{ width: '100%', padding: '8px 0' }} />
-                        {extraindo && <p style={{ color: '#1976d2', fontSize: '0.9em' }}><i className="ti ti-loader" aria-hidden="true" /> Extraindo dados do PDF...</p>}
+                        {extraindo && <p style={{ color: 'var(--status-info)', fontSize: '0.9em' }}><i className="ti ti-loader" aria-hidden="true" /> Extraindo dados do PDF...</p>}
                     </div>
 
                     {/* Múltiplos boletos */}
                     {multiplos && (
                         <div style={{ padding: '14px', background: '#e3f2fd', borderRadius: '10px', marginBottom: '16px' }}>
                             <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
+                            <div style={{ marginBottom: '10px' }}>
+                                <label style={{ ...styles.label, fontSize: '0.85em' }}>Descrição base para os boletos</label>
+                                <input type="text" value={descBaseMultiplos} onChange={e => setDescBaseMultiplos(e.target.value)}
+                                    placeholder="Ex: Boleto" style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #90caf9' }} />
+                            </div>
                             <button type="button" onClick={cadastrarTodos} disabled={salvandoTodos}
-                                style={{ padding: '10px 20px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                style={{ padding: '10px 20px', background: 'var(--status-info)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
                                 {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar todos (${multiplos.length})`}
                             </button>
                             <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: '#757575', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
@@ -2718,8 +2699,8 @@ const Relatorios = () => {
                         <tbody>
                             ${rentabilidade.map(i => `
                                 <tr>
-                                    <td><strong>${i.nome}</strong></td>
-                                    <td><span class="badge">${i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : i.status}</span></td>
+                                    <td><strong>${escapeHtml(i.nome)}</strong></td>
+                                    <td><span class="badge">${i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : escapeHtml(i.status)}</span></td>
                                     <td class="r red">${fmtBR(i.despesas)}</td>
                                     <td class="r green">${i.receitas > 0 ? fmtBR(i.receitas) : '—'}</td>
                                     <td class="r ${i.saldo >= 0 ? 'green' : 'red'}">${fmtBR(i.saldo)}</td>
@@ -2746,7 +2727,7 @@ const Relatorios = () => {
                     <tbody>
                         ${dreReceitas.map(c => `
                             <tr>
-                                <td>${c.icone} ${c.nome}</td>
+                                <td>${escapeHtml(c.icone)} ${escapeHtml(c.nome)}</td>
                                 <td class="r green"><strong>${fmtBR(c.total)}</strong></td>
                                 <td class="r muted">${totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                             </tr>
@@ -2759,7 +2740,7 @@ const Relatorios = () => {
                     <tbody>
                         ${dreDespesas.map(c => `
                             <tr>
-                                <td>${c.icone} ${c.nome}</td>
+                                <td>${escapeHtml(c.icone)} ${escapeHtml(c.nome)}</td>
                                 <td class="r red"><strong>${fmtBR(c.total)}</strong></td>
                                 <td class="r muted">${totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
                             </tr>
@@ -2789,7 +2770,7 @@ const Relatorios = () => {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>${titulo} — ${periodoLabel}</title>
+<title>${escapeHtml(titulo)} — ${escapeHtml(periodoLabel)}</title>
 <style>
     :root {
         --surface-dark-soft:#1e293b; --text-secondary:#334155; --text-muted:#475569;
@@ -2852,8 +2833,8 @@ const Relatorios = () => {
 <body>
     <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
     <div class="header">
-        <h1>📈 ${titulo}</h1>
-        <div class="sub"><strong>${imovelNome}</strong> · Período: <strong>${periodoLabel}</strong></div>
+        <h1>📈 ${escapeHtml(titulo)}</h1>
+        <div class="sub"><strong>${escapeHtml(imovelNome)}</strong> · Período: <strong>${escapeHtml(periodoLabel)}</strong></div>
         <div class="meta">Gerado em ${dataGeracao} · Obraly Patrimonial</div>
     </div>
     ${conteudo}
@@ -3435,7 +3416,7 @@ const Usuarios = () => {
 // COMPONENTE: DASHBOARD PRINCIPAL (Layout)
 // ===================================================================================
 
-const DashboardAdmin = () => {
+const DashboardAdmin = ({ onBackToModules }) => {
     const { user, logout } = useAuthAdmin();
     const [activeMenu, setActiveMenu] = useState('dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3484,6 +3465,7 @@ const DashboardAdmin = () => {
                 setActiveMenu={handleMenuSelect}
                 user={user}
                 onLogout={logout}
+                onBackToModules={onBackToModules}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />
@@ -3502,25 +3484,7 @@ const AppAdmin = ({ onBack }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const loadAuth = async () => {
-            try {
-                const savedToken = await loadToken('token_admin');
-                const savedUser = await loadToken('user_admin');
-
-                if (savedToken && savedUser) {
-                    setToken(savedToken);
-                    setUser(JSON.parse(savedUser));
-                }
-            } catch (error) {
-                logger.error("Falha ao carregar dados de autenticação admin:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadAuth();
-    }, []);
+    const [ssoError, setSsoError] = useState(null);
 
     const login = async (data) => {
         setToken(data.access_token);
@@ -3536,13 +3500,64 @@ const AppAdmin = ({ onBack }) => {
         await deleteToken('user_admin');
     };
 
+    // Login único central: troca o token principal por um token_admin no /sso.
+    // Quando o token_admin expira, o fetchWithAuthAdmin limpa o storage e
+    // recarrega — este boot refaz o SSO de forma transparente.
+    const doSso = async () => {
+        setLoading(true);
+        setSsoError(null);
+        try {
+            const mainToken = await loadToken('token');
+            if (!mainToken) {
+                throw new Error('Sessão principal não encontrada. Volte e faça login novamente.');
+            }
+            const response = await fetch(`${API_URL_ADMIN}/sso`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${mainToken}` }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.erro || 'Não foi possível entrar na Administração.');
+            }
+            await login(data);
+        } catch (err) {
+            logger.error("SSO admin falhou:", err);
+            setSsoError(err.message || 'Não foi possível entrar na Administração.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const loadAuth = async () => {
+            try {
+                const savedToken = await loadToken('token_admin');
+                const savedUser = await loadToken('user_admin');
+
+                if (savedToken && savedUser) {
+                    setToken(savedToken);
+                    setUser(JSON.parse(savedUser));
+                    setLoading(false);
+                    return;
+                }
+            } catch (error) {
+                logger.error("Falha ao carregar dados de autenticação admin:", error);
+            }
+            await doSso();
+        };
+        loadAuth();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     if (loading) {
         return <div style={styles.loadingScreen}>Carregando...</div>;
     }
 
     return (
         <AuthAdminContext.Provider value={{ user, token, login, logout }}>
-            {user ? <DashboardAdmin /> : <LoginScreenAdmin onBack={onBack} />}
+            {user
+                ? <DashboardAdmin onBackToModules={onBack} />
+                : <SsoErrorScreen message={ssoError} onRetry={doSso} onBack={onBack} />}
         </AuthAdminContext.Provider>
     );
 };
@@ -4433,12 +4448,6 @@ const styles = {
         fontSize: '14px',
         fontWeight: '600',
         color: '#4f46e5',
-    },
-    badge: {
-        padding: '4px 10px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        fontWeight: '600',
     },
     roleSelector: {
         display: 'flex',

@@ -3,22 +3,46 @@ import './App.css';
 import { ToastContainer } from './utils/notify';
 import { logger } from './utils/logger';
 import { AuthContext } from './auth/AuthContext';
+import { fetchWithAuth } from './auth/fetchWithAuth';
 import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
+import { API_URL } from './config';
 import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
 import SuperlinkPublico from './screens/SuperlinkPublico';
+import AdminPanelModal from './components/modals/AdminPanelModal';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
 const FrotaModule = lazy(() => import('./screens/Frota'));
+
+const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota'];
+
+// Módulos que o usuário pode ver: master → todos; lista null/ausente → todos.
+function getAllowedModules(user) {
+    if (!user) return [];
+    if (user.role === 'master') return TODOS_MODULOS;
+    if (user.modulos_permitidos == null) return TODOS_MODULOS;
+    return TODOS_MODULOS.filter(m => user.modulos_permitidos.includes(m));
+}
 
 function App() {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedModule, setSelectedModule] = useState(null); // null = seletor, 'obras' ou 'admin'
+    const [accessPanelOpen, setAccessPanelOpen] = useState(false);
+    const [obrasParaPainel, setObrasParaPainel] = useState([]);
+
+    // Lista de obras para o painel de acessos (aberto pelo master no seletor).
+    useEffect(() => {
+        if (!accessPanelOpen) return;
+        fetchWithAuth(`${API_URL}/obras`)
+            .then(res => res.json())
+            .then(data => setObrasParaPainel(Array.isArray(data) ? data : []))
+            .catch(e => logger.error('Erro ao carregar obras p/ painel de acessos:', e));
+    }, [accessPanelOpen]);
 
     useEffect(() => {
         const loadAuth = async () => {
@@ -29,8 +53,27 @@ function App() {
 
                 if (savedToken && savedUser) {
                     setToken(savedToken);
-                    setUser(JSON.parse(savedUser));
-                    setSelectedModule(savedModule || 'obras');
+                    let freshUser = JSON.parse(savedUser);
+                    // Refresca o user (role/módulos podem ter mudado). Falha de
+                    // rede → segue com o salvo; 401/422 → o fetchWithAuth limpa
+                    // o storage e recarrega sozinho.
+                    try {
+                        const res = await fetchWithAuth(`${API_URL}/me`);
+                        if (res.ok) {
+                            freshUser = await res.json();
+                            await storeToken('user', JSON.stringify(freshUser));
+                        }
+                    } catch (e) {
+                        logger.warn('GET /me falhou, usando user salvo:', e);
+                    }
+                    setUser(freshUser);
+                    // Só restaura o módulo salvo se ainda for permitido.
+                    const allowed = getAllowedModules(freshUser);
+                    if (savedModule && allowed.includes(savedModule)) {
+                        setSelectedModule(savedModule);
+                    } else if (savedModule) {
+                        await deleteToken('selectedModule');
+                    }
                 }
             } catch (error) {
                 logger.error("Falha ao carregar dados de autenticação:", error);
@@ -81,8 +124,39 @@ function App() {
         return <div className="loading-screen">Carregando...</div>;
     }
 
-    if (!selectedModule && !user) {
-        return <ModuleSelectorScreen onSelectModule={handleSelectModule} />;
+    // Login principal vem ANTES do seletor — só entra quem está autenticado.
+    if (!user) {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                    <LoginScreen />
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
+    // Seletor de módulos filtrado pelo acesso do usuário (corrige também o bug
+    // do "voltar aos módulos", que antes caía direto no módulo Obras).
+    if (!selectedModule) {
+        return (
+            <>
+                <ToastContainer />
+                <ModuleSelectorScreen
+                    user={user}
+                    allowedModules={getAllowedModules(user)}
+                    onSelectModule={handleSelectModule}
+                    onLogout={logout}
+                    onManageAccess={user.role === 'master' ? () => setAccessPanelOpen(true) : undefined}
+                />
+                {accessPanelOpen && (
+                    <AdminPanelModal
+                        allObras={obrasParaPainel}
+                        onClose={() => setAccessPanelOpen(false)}
+                    />
+                )}
+            </>
+        );
     }
 
     if (selectedModule === 'admin') {
