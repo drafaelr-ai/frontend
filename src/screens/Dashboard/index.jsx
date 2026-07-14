@@ -92,17 +92,29 @@ function ActivityIcon({ tipo }) {
 }
 
 // Mapeia o tipo da pendência (vindo de /home/alertas) pra aba certa dentro
-// da obra, em vez de sempre cair na home genérica.
+// da obra. 'lancamento' fica de fora: não existe na Cronograma Financeiro
+// (só tem pagamento futuro/parcelado) — mora na lista "a pagar" da home da
+// obra, então usa ?foco= pra pré-filtrar em vez de mudar de página.
 const PAGINA_POR_TIPO = {
-    lancamento: 'financeiro',
     parcela: 'financeiro',
     pagamento_futuro: 'financeiro',
     boleto: 'boletos',
 };
 
-function navigateToObra(obraId, tipo) {
+function navigateToObra(obraId, tipo, descricao) {
     const pagina = PAGINA_POR_TIPO[tipo];
-    window.location.href = pagina ? `?obra=${obraId}&page=${pagina}` : `?obra=${obraId}`;
+    if (pagina) {
+        window.location.href = `?obra=${obraId}&page=${pagina}`;
+        return;
+    }
+    if (tipo === 'lancamento' && descricao) {
+        // descrição chega como "Nome — Fornecedor"; a lista "a pagar" filtra
+        // só pelo nome (fornecedor é comparado à parte lá), então usa só a 1ª parte.
+        const foco = descricao.split(' — ')[0];
+        window.location.href = `?obra=${obraId}&foco=${encodeURIComponent(foco)}`;
+        return;
+    }
+    window.location.href = `?obra=${obraId}`;
 }
 
 // --- loading skeleton ---
@@ -350,7 +362,7 @@ export default function Dashboard() {
                                 <div
                                     key={i}
                                     className={`db-alert-list-item${p.origem_id ? '' : ' db-alert-list-item--disabled'}`}
-                                    onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo)}
+                                    onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao)}
                                 >
                                     <div className="db-alert-list-main">
                                         <span className="db-alert-list-desc">{p.descricao}</span>

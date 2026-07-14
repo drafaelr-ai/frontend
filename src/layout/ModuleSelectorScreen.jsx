@@ -72,6 +72,7 @@ function saudacao() {
 
 const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess, onChangePassword }) => {
     const [alertas, setAlertas] = useState(null);
+    const [pendenciasExpandidas, setPendenciasExpandidas] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -91,14 +92,23 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
     };
 
     // Mesmo mapeamento de tipo → aba usado na Obras Home, pra abrir direto
-    // na ocorrência (lançamento/boleto/parcela) em vez da home genérica.
-    const PAGINA_POR_TIPO = { lancamento: 'financeiro', parcela: 'financeiro', pagamento_futuro: 'financeiro', boleto: 'boletos' };
+    // na ocorrência em vez da home genérica. 'lancamento' fica de fora: não
+    // existe na Cronograma Financeiro, mora na lista "a pagar" da home da
+    // obra — usa ?foco= pra pré-filtrar em vez de mudar de página.
+    const PAGINA_POR_TIPO = { parcela: 'financeiro', pagamento_futuro: 'financeiro', boleto: 'boletos' };
 
     const abrirPendencia = async (p) => {
         await onSelectModule(p.modulo === 'admin' ? 'admin' : 'obras');
         if (p.modulo === 'obras' && p.origem_id) {
             const pagina = PAGINA_POR_TIPO[p.tipo];
-            window.location.href = pagina ? `?obra=${p.origem_id}&page=${pagina}` : `?obra=${p.origem_id}`;
+            if (pagina) {
+                window.location.href = `?obra=${p.origem_id}&page=${pagina}`;
+            } else if (p.tipo === 'lancamento' && p.descricao) {
+                const foco = p.descricao.split(' — ')[0];
+                window.location.href = `?obra=${p.origem_id}&foco=${encodeURIComponent(foco)}`;
+            } else {
+                window.location.href = `?obra=${p.origem_id}`;
+            }
         }
     };
 
@@ -308,7 +318,8 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             ].filter(Boolean).join(' · ')}
                         </span>
                     </div>
-                    {pendencias.slice(0, 8).map((p, i) => (
+                    <div style={pendenciasExpandidas ? { maxHeight: 420, overflowY: 'auto', paddingRight: 2 } : undefined}>
+                    {(pendenciasExpandidas ? pendencias : pendencias.slice(0, 8)).map((p, i) => (
                         <div
                             key={i}
                             onClick={() => abrirPendencia(p)}
@@ -343,6 +354,22 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>Ver →</span>
                         </div>
                     ))}
+                    </div>
+                    {pendencias.length > 8 && (
+                        <button
+                            onClick={() => setPendenciasExpandidas(v => !v)}
+                            style={{
+                                display: 'block', width: '100%', textAlign: 'center',
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                color: 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: 600,
+                                padding: '8px 0 2px', fontFamily: 'inherit'
+                            }}
+                        >
+                            {pendenciasExpandidas
+                                ? <>Ver menos <i className="ti ti-chevron-up" /></>
+                                : <>Ver todas ({pendencias.length}) <i className="ti ti-chevron-down" /></>}
+                        </button>
+                    )}
                     {alertas?.aviso_admin && (
                         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11px', margin: '6px 2px 0' }}>
                             {alertas.aviso_admin}

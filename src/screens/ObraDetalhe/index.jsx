@@ -62,7 +62,13 @@ function ObraDetalhe() {
     const [payingItem, setPayingItem] = useState(null);
     
     const [isServicosCollapsed, setIsServicosCollapsed] = useState(false);
-    const [filtroPendencias, setFiltroPendencias] = useState('');
+    // Vem de um clique numa pendência (Dashboard/seletor de módulos) via
+    // ?foco=<descrição> — pré-filtra a lista de "a pagar" na descrição certa
+    // em vez de abrir a home genérica sem destacar nada.
+    const [filtroPendencias, setFiltroPendencias] = useState(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('foco') || '';
+    });
     
     // <--- NOVO: Estados para Notas Fiscais -->
     const [notasFiscais, setNotasFiscais] = useState([]);
