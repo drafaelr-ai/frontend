@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/pagar/:token", "destination": "/api/pagar-meta?token=:token" }
+  ]
+}
