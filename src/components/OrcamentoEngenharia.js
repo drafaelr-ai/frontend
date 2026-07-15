@@ -815,7 +815,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
     // Calcular total
     const calcularTotal = () => {
         const qtd = parseFloat(form.quantidade) || 0;
-        if (form.tipo_composicao === 'composto') {
+        if (form.tipo_composicao === 'composto' || form.tipo_composicao === 'fornecimento') {
             return qtd * (parseFloat(form.preco_unitario) || 0);
         } else {
             const mo = qtd * (parseFloat(form.preco_mao_obra) || 0);
@@ -940,7 +940,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                                 >
                                                     <div style={{ fontWeight: '500' }}>{s.descricao}</div>
                                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                                        {s.unidade} • {s.tipo_composicao === 'composto' 
+                                                        {s.unidade} • {(s.tipo_composicao === 'composto' || s.tipo_composicao === 'fornecimento')
                                                             ? formatCurrency(s.preco_unitario)
                                                             : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
                                                         }
@@ -962,7 +962,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                                 >
                                                     <div style={{ fontWeight: '500' }}>{s.descricao}</div>
                                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                                        {s.unidade} • {s.tipo_composicao === 'composto' 
+                                                        {s.unidade} • {(s.tipo_composicao === 'composto' || s.tipo_composicao === 'fornecimento')
                                                             ? formatCurrency(s.preco_unitario)
                                                             : `MO: ${formatCurrency(s.preco_mao_obra)} | Mat: ${formatCurrency(s.preco_material)}`
                                                         }
@@ -989,12 +989,20 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 Separado (MO + Material)
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                <input 
-                                    type="radio" 
+                                <input
+                                    type="radio"
                                     checked={form.tipo_composicao === 'composto'}
                                     onChange={() => setForm({...form, tipo_composicao: 'composto'})}
                                 />
                                 Composto (Preço fechado)
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                <input
+                                    type="radio"
+                                    checked={form.tipo_composicao === 'fornecimento'}
+                                    onChange={() => setForm({...form, tipo_composicao: 'fornecimento'})}
+                                />
+                                Fornecimento/Locação
                             </label>
                         </div>
                     </div>
@@ -1156,7 +1164,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     />
                                 </div>
                             </div>
-                            {/* Composto: Não mostra rateio - valor vai direto para "Serviço" */}
+                            {/* Composto/Fornecimento: Não mostra rateio - valor vai direto para o bucket correspondente */}
                             <div style={{
                                 padding: '8px 12px',
                                 backgroundColor: 'var(--status-warning-bg)',
@@ -1165,7 +1173,11 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 color: 'var(--status-warning-text)',
                                 marginBottom: '8px'
                             }}>
-                                💡 Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)
+                                {form.tipo_composicao === 'fornecimento' ? (
+                                    <>💡 Fornecimento/locação (ex: aluguel de andaime) é contabilizado como <strong>MATERIAL</strong> no orçamento — sem mão de obra própria da equipe</>
+                                ) : (
+                                    <>💡 Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)</>
+                                )}
                             </div>
                         </>
                     )}
@@ -3038,6 +3050,18 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                         </div>
                     </div>
                 )}
+                {/* NOVO: Card de Fornecimento/Locação (sem mão de obra própria) */}
+                {(resumoComBdi.total_fornecimento || 0) > 0 && (
+                    <div style={styles.summaryCard}>
+                        <div style={styles.summaryLabel}>Fornecimento</div>
+                        <div style={{ ...styles.summaryValue, color: 'var(--status-info)', fontSize: '20px' }}>
+                            {formatCurrency(resumoComBdi.total_fornecimento || 0)}
+                        </div>
+                        <div style={styles.summarySubtext}>
+                            Pago: {formatCurrency(resumoComBdi.total_pago_fornecimento || 0)}
+                        </div>
+                    </div>
+                )}
                 <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>BDI ({bdi}%)</div>
                     <div style={{ ...styles.summaryValue, color: 'var(--status-warning)', fontSize: '20px' }}>
@@ -3212,13 +3236,18 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                             Composto
                                                         </span>
                                                     )}
+                                                    {item.tipo_composicao === 'fornecimento' && (
+                                                        <span style={{ ...styles.servicoBadge, backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' }}>
+                                                            Fornecimento
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdUnidade }}>{item.unidade}</td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
                                                     {formatNumber(item.quantidade, item.unidade === 'vb' || item.unidade === 'un' ? 0 : 2)}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    {item.tipo_composicao === 'composto' ? (
+                                                    {item.tipo_composicao === 'composto' || item.tipo_composicao === 'fornecimento' ? (
                                                         <div style={{ color: 'var(--text-muted)' }}>-</div>
                                                     ) : (
                                                         <CelulaComProgresso
@@ -3230,7 +3259,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                     )}
                                                 </td>
                                                 <td style={{ ...styles.td, ...styles.tdNumero }}>
-                                                    {item.tipo_composicao === 'composto' ? (
+                                                    {item.tipo_composicao === 'composto' || item.tipo_composicao === 'fornecimento' ? (
                                                         <div style={{ color: 'var(--text-muted)' }}>-</div>
                                                     ) : (
                                                         <CelulaComProgresso
@@ -3246,6 +3275,11 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         <div style={{ color: 'var(--status-purple-text)', fontWeight: '600' }}>
                                                             {formatCurrency(item.total)}
                                                             <div style={{ fontSize: '9px', color: 'var(--status-purple-text)' }}>serviço</div>
+                                                        </div>
+                                                    ) : item.tipo_composicao === 'fornecimento' ? (
+                                                        <div style={{ color: 'var(--status-info)', fontWeight: '600' }}>
+                                                            {formatCurrency(item.total)}
+                                                            <div style={{ fontSize: '9px', color: 'var(--status-info)' }}>fornecimento</div>
                                                         </div>
                                                     ) : (
                                                         formatCurrency(item.total)

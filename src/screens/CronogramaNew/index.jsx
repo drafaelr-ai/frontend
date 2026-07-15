@@ -7,6 +7,7 @@ import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
+import { getCronogramaStatusKey } from '../../utils/cronogramaStatus';
 import './CronogramaNew.css';
 
 const VIEW_MODES = [
@@ -77,12 +78,8 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
 
     const stats = {
         total: servicos.length,
-        atrasados: servicos.filter(s => {
-            const pct = s.percentual_conclusao || 0;
-            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-            const fim = s.data_fim_prevista ? new Date(s.data_fim_prevista + 'T00:00:00') : null;
-            return pct < 100 && fim && hoje > fim;
-        }).length,
+        atrasados: servicos.filter(s => getCronogramaStatusKey(s) === 'atrasado').length,
+        emAtencao: servicos.filter(s => getCronogramaStatusKey(s) === 'atencao').length,
         concluidos: servicos.filter(s => (s.percentual_conclusao || 0) >= 100).length,
         progressoGeral: servicos.length > 0
             ? Math.round(servicos.reduce((acc, s) => acc + (s.percentual_conclusao || 0), 0) / servicos.length)
@@ -121,6 +118,11 @@ const CronogramaNew = ({ obraId, obraNome, onSwitchToClassic }) => {
                         {stats.atrasados > 0 && (
                             <span className="cn-kpi cn-kpi--danger">
                                 <strong>{stats.atrasados}</strong> atrasados
+                            </span>
+                        )}
+                        {stats.emAtencao > 0 && (
+                            <span className="cn-kpi cn-kpi--warning">
+                                <strong>{stats.emAtencao}</strong> em atenção
                             </span>
                         )}
                         <span className="cn-kpi cn-kpi--info">

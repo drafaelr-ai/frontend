@@ -21,6 +21,7 @@
 
 .etapa-card--concluido    { border-left-color: var(--status-success); }
 .etapa-card--atrasado     { border-left-color: var(--status-danger); }
+.etapa-card--atencao      { border-left-color: var(--status-warning); }
 .etapa-card--em_andamento { border-left-color: var(--status-info); }
 .etapa-card--a_iniciar    { border-left-color: var(--status-neutral); }
 
@@ -78,6 +79,7 @@
 
 .etapa-card__badge--success { background: var(--status-success-bg); color: var(--status-success); }
 .etapa-card__badge--danger  { background: var(--status-danger-bg);  color: var(--status-danger); }
+.etapa-card__badge--warning { background: var(--status-warning-bg); color: var(--status-warning); }
 .etapa-card__badge--info    { background: var(--status-info-bg);    color: var(--status-info); }
 .etapa-card__badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral); }
 

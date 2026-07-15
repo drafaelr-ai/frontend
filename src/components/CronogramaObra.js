@@ -4,6 +4,7 @@ import { API_URL } from '../config';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
+import { getCronogramaStatusKey } from '../utils/cronogramaStatus';
 import GanttCronograma from './GanttCronograma';
 
 // Helper para formatar datas
@@ -391,6 +392,60 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     };
 
+    // Remove do cronograma os itens vinculados a etapas do orçamento que já foram apagadas lá.
+    // Não toca em itens criados manualmente no cronograma.
+    const handleSincronizarCronogramaOrcamento = async () => {
+        try {
+            const check = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma/sincronizar-orcamento`);
+            if (!check.ok) throw new Error('Erro ao verificar itens órfãos');
+            const { orfaos, total } = await check.json();
+
+            if (total === 0) {
+                notify.success('Nenhum item órfão — cronograma já está sincronizado com o orçamento.');
+                return;
+            }
+
+            const nomes = orfaos.map(o => `• ${o.nome}`).join('\n');
+            const confirmado = await confirmDialog(
+                `${total} item(ns) do cronograma vieram de etapas do orçamento que já foram apagadas:\n\n${nomes}\n\nRemover do cronograma?`,
+                { danger: true, confirmText: 'Remover' }
+            );
+            if (!confirmado) return;
+
+            const res = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma/sincronizar-orcamento`, { method: 'POST' });
+            if (!res.ok) throw new Error('Erro ao sincronizar');
+            const result = await res.json();
+            notify.success(result.message);
+            await refreshAfterMutation();
+            await fetchEtapasOrcamento();
+        } catch (err) {
+            notify.error(err.message);
+        }
+    };
+
+    // Apaga TODOS os itens do cronograma da obra (ação explícita, irreversível).
+    const handleLimparCronograma = async () => {
+        const confirmado = await confirmDialog(
+            `Isso vai apagar TODOS os ${cronograma.length} serviço(s) do cronograma desta obra, incluindo os criados manualmente. Essa ação não pode ser desfeita.`,
+            { danger: true, confirmText: 'Apagar tudo' }
+        );
+        if (!confirmado) return;
+
+        try {
+            const res = await fetchWithAuth(`${API_URL}/obras/${obraId}/cronograma/limpar`, { method: 'DELETE' });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.erro || 'Erro ao limpar cronograma');
+            }
+            const result = await res.json();
+            notify.success(result.message);
+            await refreshAfterMutation();
+            await fetchEtapasOrcamento();
+        } catch (err) {
+            notify.error(err.message);
+        }
+    };
+
     // ==================== CRUD ETAPA PAI ====================
     
     const handleAddEtapaPai = async () => {
@@ -578,19 +633,21 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         }
     }, [novoServico.data_inicio, novoServico.duracao_dias]);
 
-    const getStatus = (servico) => {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const dataFim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
-        const percentual = servico.percentual_conclusao || 0;
-
-        if (percentual >= 100) return { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check', key: 'concluido' };
-        if (dataFim && hoje > dataFim) return { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-alert-triangle', key: 'atrasado' };
-        if (servico.data_inicio_real || percentual > 0) return { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: 'ti-refresh', key: 'em_andamento' };
-        return { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock', key: 'a_iniciar' };
+    const STATUS_META = {
+        concluido: { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' },
+        atrasado: { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-alert-triangle' },
+        atencao: { label: 'Atenção', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: 'ti-alert-circle' },
+        em_andamento: { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: 'ti-refresh' },
+        a_iniciar: { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' }
     };
 
-    // NOVO: Calcular status EVM simplificado
+    const getStatus = (servico) => {
+        const key = getCronogramaStatusKey(servico);
+        return { ...STATUS_META[key], key };
+    };
+
+    // Status financeiro (pago x executado) — NÃO reflete prazo/atraso do cronograma físico.
+    // Rótulos deliberadamente distintos dos status de prazo (Atrasado/Atenção) para não confundir.
     const getEVMStatus = (servicoNome) => {
         const evm = evmData[servicoNome];
         if (!evm || !evm.valor_total) return null;
@@ -600,18 +657,18 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const diferenca = percentualPago - percentualExecutado;
 
         if (percentualExecutado === 0 && percentualPago === 0) {
-            return { status: 'neutro', label: 'Não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' };
+            return { status: 'neutro', label: 'Pagamento não iniciado', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' };
         }
         if (percentualExecutado >= 100 && percentualPago <= 105) {
-            return { status: 'concluido', label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' };
+            return { status: 'concluido', label: 'Pagamento concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' };
         }
         if (diferenca <= -10) {
-            return { status: 'otimo', label: 'Saudável', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-trending-up', msg: 'Executou mais do que pagou' };
+            return { status: 'otimo', label: 'Pagamento em dia', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-trending-up', msg: 'Executou mais do que pagou' };
         }
         if (diferenca <= 5) {
-            return { status: 'normal', label: 'No Prazo', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: 'ti-minus', msg: 'Pagamento alinhado' };
+            return { status: 'normal', label: 'Pagamento alinhado', color: 'var(--status-warning)', bg: 'var(--status-warning-bg)', icon: 'ti-minus', msg: 'Pagamento alinhado' };
         }
-        return { status: 'atencao', label: 'Atenção', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-trending-down', msg: 'Pagando mais do que executou' };
+        return { status: 'atencao', label: 'Pagamento adiantado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-trending-down', msg: 'Pagando mais do que executou' };
     };
 
     const handleGerarPDF = async () => {
@@ -639,6 +696,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         return {
             'a_iniciar': cronograma.filter(s => getStatus(s).key === 'a_iniciar'),
             'em_andamento': cronograma.filter(s => getStatus(s).key === 'em_andamento'),
+            'atencao': cronograma.filter(s => getStatus(s).key === 'atencao'),
             'concluido': cronograma.filter(s => getStatus(s).key === 'concluido'),
             'atrasado': cronograma.filter(s => getStatus(s).key === 'atrasado')
         };
@@ -653,23 +711,19 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
         const total = cronograma.length;
         const concluidos = servicosPorStatus.concluido.length;
         const atrasados = servicosPorStatus.atrasado.length;
-        const progressoGeral = total > 0 
+        const emAtencao = servicosPorStatus.atencao.length;
+        const progressoGeral = total > 0
             ? Math.round(cronograma.reduce((acc, s) => acc + (s.percentual_conclusao || 0), 0) / total)
             : 0;
-        const comAtencao = cronograma.filter(s => {
+        const pagamentoAdiantado = cronograma.filter(s => {
             const evmStatus = getEVMStatus(s.servico_nome);
             return evmStatus?.status === 'atencao';
         }).length;
 
-        return { total, concluidos, atrasados, progressoGeral, comAtencao };
+        return { total, concluidos, atrasados, emAtencao, progressoGeral, pagamentoAdiantado };
     }, [cronograma, servicosPorStatus]);
 
-    const statusConfig = {
-        'a_iniciar': { label: 'A Iniciar', color: 'var(--status-neutral)', bg: 'var(--status-neutral-bg)', icon: 'ti-clock' },
-        'em_andamento': { label: 'Em Andamento', color: 'var(--status-info)', bg: 'var(--status-info-bg)', icon: 'ti-refresh' },
-        'concluido': { label: 'Concluído', color: 'var(--status-success)', bg: 'var(--status-success-bg)', icon: 'ti-circle-check' },
-        'atrasado': { label: 'Atrasado', color: 'var(--status-danger)', bg: 'var(--status-danger-bg)', icon: 'ti-alert-triangle' }
-    };
+    const statusConfig = STATUS_META;
 
     const getTimelineRange = useMemo(() => {
         if (cronograma.length === 0) return { start: new Date(), end: new Date() };
@@ -1369,8 +1423,16 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <div className="stat-label">Concluídos</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-value" style={{ color: stats.comAtencao > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}>{stats.comAtencao}</div>
-                    <div className="stat-label">Atenção (EVM)</div>
+                    <div className="stat-value" style={{ color: stats.atrasados > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}>{stats.atrasados}</div>
+                    <div className="stat-label">Atrasados</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ color: stats.emAtencao > 0 ? 'var(--status-warning)' : 'var(--status-success)' }}>{stats.emAtencao}</div>
+                    <div className="stat-label">Em Atenção</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value" style={{ color: stats.pagamentoAdiantado > 0 ? 'var(--status-danger)' : 'var(--status-success)' }}>{stats.pagamentoAdiantado}</div>
+                    <div className="stat-label">Pagamento Adiantado</div>
                 </div>
             </div>
 
@@ -1587,17 +1649,27 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             </>
                         )}
                         
-                        <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => { setShowImportOrcamentoModal(false); setEtapasOrcamentoSelecionadas([]); }}>
-                                Cancelar
-                            </button>
-                            <button 
-                                className="btn-save" 
-                                onClick={handleImportarOrcamento} 
-                                disabled={etapasOrcamentoSelecionadas.length === 0 || importandoOrcamento}
-                            >
-                                {importandoOrcamento ? 'Importando...' : `Importar (${etapasOrcamentoSelecionadas.length})`}
-                            </button>
+                        <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn-secondary" onClick={handleSincronizarCronogramaOrcamento} title="Remove do cronograma os itens cuja etapa de origem foi apagada no orçamento">
+                                    <i className="ti ti-refresh" aria-hidden="true" /> Sincronizar
+                                </button>
+                                <button className="btn-secondary" style={{ color: 'var(--status-danger)' }} onClick={handleLimparCronograma} title="Apaga todos os itens do cronograma desta obra">
+                                    <i className="ti ti-trash" aria-hidden="true" /> Limpar
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button className="btn-cancel" onClick={() => { setShowImportOrcamentoModal(false); setEtapasOrcamentoSelecionadas([]); }}>
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn-save"
+                                    onClick={handleImportarOrcamento}
+                                    disabled={etapasOrcamentoSelecionadas.length === 0 || importandoOrcamento}
+                                >
+                                    {importandoOrcamento ? 'Importando...' : `Importar (${etapasOrcamentoSelecionadas.length})`}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

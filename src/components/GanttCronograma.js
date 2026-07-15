@@ -84,10 +84,17 @@ const GanttCronograma = ({ servicos }) => {
         ? { left: `calc(${(LABEL_W * (1 - todayPct / 100)).toFixed(1)}px + ${todayPct.toFixed(3)}%)` }
         : null;
 
-    const statusColor = (pct, dataFim) => {
+    const statusColor = (pct, dataInicio, dataFim) => {
         if (pct >= 100) return 'var(--status-success)';
-        if (dataFim && new Date(dataFim + 'T00:00:00') < new Date(today + 'T00:00:00'))
-            return 'var(--status-danger)';
+        const hoje = new Date(today + 'T00:00:00');
+        const fim = dataFim ? new Date(dataFim + 'T00:00:00') : null;
+        if (fim && hoje >= fim) return 'var(--status-danger)';
+        if (dataInicio && fim && hoje >= new Date(dataInicio + 'T00:00:00')) {
+            const inicio = new Date(dataInicio + 'T00:00:00');
+            const total = fim - inicio;
+            const planejado = total > 0 ? ((hoje - inicio) / total) * 100 : 100;
+            if (planejado - pct >= 15) return 'var(--status-warning)';
+        }
         if (pct > 0) return 'var(--status-info)';
         return 'var(--status-neutral)';
     };
@@ -144,7 +151,7 @@ const GanttCronograma = ({ servicos }) => {
                 {servicos.map((s) => {
                     const open = isOpen(s.id);
                     const hasEtapas = s.tipo_medicao === 'etapas' && (s.etapas || []).length > 0;
-                    const color = statusColor(s.percentual_conclusao || 0, s.data_fim_prevista);
+                    const color = statusColor(s.percentual_conclusao || 0, s.data_inicio, s.data_fim_prevista);
 
                     return (
                         <React.Fragment key={s.id}>

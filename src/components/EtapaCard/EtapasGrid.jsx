@@ -1,27 +1,18 @@
 import React, { useMemo } from 'react';
 import EtapaCard from './EtapaCard';
 import './EtapaCard.css';
+import { getCronogramaStatusKey } from '../../utils/cronogramaStatus';
 
 const STATUS_LABELS = {
     todos: 'Todos',
     a_iniciar: 'A Iniciar',
     em_andamento: 'Em Andamento',
+    atencao: 'Atenção',
     atrasado: 'Atrasado',
     concluido: 'Concluído',
 };
 
-function getStatusKey(servico) {
-    const pct = servico.percentual_conclusao || 0;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataFim = servico.data_fim_prevista
-        ? new Date(servico.data_fim_prevista + 'T00:00:00')
-        : null;
-    if (pct >= 100) return 'concluido';
-    if (dataFim && hoje > dataFim) return 'atrasado';
-    if (servico.data_inicio_real || pct > 0) return 'em_andamento';
-    return 'a_iniciar';
-}
+const getStatusKey = getCronogramaStatusKey;
 
 const EtapasGrid = ({ servicos = [], evmData = {}, filtroStatus = 'todos', onEdit }) => {
     const filtrados = useMemo(() => {
@@ -30,7 +21,7 @@ const EtapasGrid = ({ servicos = [], evmData = {}, filtroStatus = 'todos', onEdi
     }, [servicos, filtroStatus]);
 
     const contagens = useMemo(() => {
-        const counts = { todos: servicos.length, a_iniciar: 0, em_andamento: 0, atrasado: 0, concluido: 0 };
+        const counts = { todos: servicos.length, a_iniciar: 0, em_andamento: 0, atencao: 0, atrasado: 0, concluido: 0 };
         servicos.forEach(s => { counts[getStatusKey(s)]++; });
         return counts;
     }, [servicos]);

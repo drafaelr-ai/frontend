@@ -62,6 +62,7 @@
 
 .cn-kpi--success strong { color: var(--status-success); }
 .cn-kpi--danger  strong { color: var(--status-danger); }
+.cn-kpi--warning strong { color: var(--status-warning); }
 .cn-kpi--info    strong { color: var(--status-info); }
 
 /* ── View toggle ── */

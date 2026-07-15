@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import './WeeklyView.css';
+import { getCronogramaStatusKey } from '../../utils/cronogramaStatus';
 
 const formatCurrency = (v) =>
     typeof v === 'number' && !isNaN(v)
@@ -24,14 +25,7 @@ const endOfWeek = (start) => {
     return d;
 };
 
-function getStatusKey(servico, hoje) {
-    const pct = servico.percentual_conclusao || 0;
-    const fim = servico.data_fim_prevista ? new Date(servico.data_fim_prevista + 'T00:00:00') : null;
-    if (pct >= 100) return 'concluido';
-    if (fim && hoje > fim) return 'atrasado';
-    if (servico.data_inicio_real || pct > 0) return 'em_andamento';
-    return 'a_iniciar';
-}
+const getStatusKey = (servico) => getCronogramaStatusKey(servico);
 
 function isActiveDuringWeek(servico, weekStart, weekEnd) {
     if (!servico.data_inicio && !servico.data_fim_prevista) return true;
@@ -46,12 +40,13 @@ function isActiveDuringWeek(servico, weekStart, weekEnd) {
 const STATUS_CONFIG = {
     concluido:    { label: 'Concluído',    cls: 'success',  icon: 'ti-circle-check' },
     atrasado:     { label: 'Atrasado',     cls: 'danger',   icon: 'ti-alert-triangle' },
+    atencao:      { label: 'Atenção',      cls: 'warning',  icon: 'ti-alert-circle' },
     em_andamento: { label: 'Em Andamento', cls: 'info',     icon: 'ti-loader' },
     a_iniciar:    { label: 'A Iniciar',    cls: 'neutral',  icon: 'ti-clock' },
 };
 
-const WeeklyCard = ({ servico, evmData, hoje, onEdit }) => {
-    const status = getStatusKey(servico, hoje);
+const WeeklyCard = ({ servico, evmData, onEdit }) => {
+    const status = getStatusKey(servico);
     const cfg = STATUS_CONFIG[status];
     const pct = servico.percentual_conclusao || 0;
     const evm = evmData?.[servico.servico_nome] || {};
@@ -205,7 +200,6 @@ const WeeklyView = ({ servicos = [], evmData = {}, onEdit }) => {
                             key={s.id}
                             servico={s}
                             evmData={evmData}
-                            hoje={hoje}
                             onEdit={onEdit}
                         />
                     ))}

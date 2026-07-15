@@ -123,6 +123,7 @@
 
 .wv-card--concluido    { border-left-color: var(--status-success); }
 .wv-card--atrasado     { border-left-color: var(--status-danger); }
+.wv-card--atencao      { border-left-color: var(--status-warning); }
 .wv-card--em_andamento { border-left-color: var(--status-info); }
 .wv-card--a_iniciar    { border-left-color: var(--status-neutral); }
 
@@ -171,6 +172,7 @@
 
 .wv-card__badge--success { background: var(--status-success-bg); color: var(--status-success); }
 .wv-card__badge--danger  { background: var(--status-danger-bg);  color: var(--status-danger); }
+.wv-card__badge--warning { background: var(--status-warning-bg); color: var(--status-warning); }
 .wv-card__badge--info    { background: var(--status-info-bg);    color: var(--status-info); }
 .wv-card__badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral); }
 

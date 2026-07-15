@@ -1,5 +1,6 @@
 import React from 'react';
 import './EtapaCard.css';
+import { getCronogramaStatusKey, calcularPlanejadoHoje } from '../../utils/cronogramaStatus';
 
 const formatCurrency = (v) => {
     if (typeof v !== 'number' || isNaN(v)) return 'R$ 0';
@@ -8,36 +9,12 @@ const formatCurrency = (v) => {
 
 const formatPct = (v) => `${(v || 0).toFixed(0)}%`;
 
-function calcularStatusCard(servico) {
-    const pct = servico.percentual_conclusao || 0;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dataFim = servico.data_fim_prevista
-        ? new Date(servico.data_fim_prevista + 'T00:00:00')
-        : null;
-
-    if (pct >= 100) return 'concluido';
-    if (dataFim && hoje > dataFim) return 'atrasado';
-    if (servico.data_inicio_real || pct > 0) return 'em_andamento';
-    return 'a_iniciar';
-}
-
-function calcularPlanejadoHoje(servico) {
-    if (!servico.data_inicio || !servico.data_fim_prevista) return null;
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const start = new Date(servico.data_inicio + 'T00:00:00');
-    const end = new Date(servico.data_fim_prevista + 'T00:00:00');
-    if (hoje < start) return 0;
-    if (hoje >= end) return 100;
-    const total = end - start;
-    const passed = hoje - start;
-    return Math.round((passed / total) * 100);
-}
+const calcularStatusCard = getCronogramaStatusKey;
 
 const STATUS_CONFIG = {
     concluido:    { label: 'Concluído',   cls: 'success',  icon: 'ti-circle-check' },
     atrasado:     { label: 'Atrasado',    cls: 'danger',   icon: 'ti-alert-triangle' },
+    atencao:      { label: 'Atenção',     cls: 'warning',  icon: 'ti-alert-circle' },
     em_andamento: { label: 'Em Andamento',cls: 'info',     icon: 'ti-loader' },
     a_iniciar:    { label: 'A Iniciar',   cls: 'neutral',  icon: 'ti-clock' },
 };
@@ -127,7 +104,7 @@ const EtapaCard = ({ servico, evmData, onEdit }) => {
                 <ProgressBar
                     value={fisicoPct}
                     target={planejadoHoje}
-                    colorVar={status === 'atrasado' ? 'var(--status-danger)' : 'var(--status-info)'}
+                    colorVar={status === 'atrasado' ? 'var(--status-danger)' : status === 'atencao' ? 'var(--status-warning)' : 'var(--status-info)'}
                 />
             </div>
 
