@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
+import { notify } from '../utils/notify';
 import './ModuleSelectorScreen.css';
 
 const MODULES = [
@@ -73,6 +74,35 @@ function saudacao() {
 const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, onManageAccess, onChangePassword }) => {
     const [alertas, setAlertas] = useState(null);
     const [pendenciasExpandidas, setPendenciasExpandidas] = useState(false);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const [exportando, setExportando] = useState(false);
+
+    const exportarPendenciasPdf = async (escopo) => {
+        setExportMenuOpen(false);
+        setExportando(true);
+        try {
+            const res = await fetchWithAuth(`${API_URL}/home/pendencias/export-pdf?escopo=${escopo}`);
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                notify.error(body.mensagem || body.erro || 'Nenhuma pendência encontrada para esse filtro.');
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pendencias_${escopo}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            logger.error('export pendências pdf', e);
+            notify.error('Erro ao exportar PDF.');
+        } finally {
+            setExportando(false);
+        }
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -317,6 +347,54 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                 alertas?.resumo?.admin?.qtd ? `${alertas.resumo.admin.qtd} em Administração` : null,
                             ].filter(Boolean).join(' · ')}
                         </span>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                onClick={() => setExportMenuOpen(v => !v)}
+                                disabled={exportando}
+                                style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.25)',
+                                    color: '#fff', borderRadius: '10px', padding: '6px 12px',
+                                    fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
+                                }}
+                            >
+                                <i className="ti ti-file-type-pdf" aria-hidden="true" />
+                                {exportando ? 'Gerando…' : 'Exportar pendências'}
+                                {!exportando && <i className={`ti ti-chevron-${exportMenuOpen ? 'up' : 'down'}`} aria-hidden="true" />}
+                            </button>
+                            {exportMenuOpen && (
+                                <>
+                                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setExportMenuOpen(false)} />
+                                    <div style={{
+                                        position: 'absolute', top: 'calc(100% + 6px)', right: 0, minWidth: '230px',
+                                        background: '#1b2340', border: '1px solid rgba(255,255,255,0.15)',
+                                        borderRadius: '12px', boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
+                                        padding: '6px', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '2px'
+                                    }}>
+                                        <button
+                                            onClick={() => exportarPendenciasPdf('vencidas')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                                                background: 'none', border: 'none', textAlign: 'left', padding: '8px 10px',
+                                                borderRadius: '8px', fontSize: '13px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit'
+                                            }}
+                                        >
+                                            <i className="ti ti-alert-triangle" aria-hidden="true" /> Só vencidas
+                                        </button>
+                                        <button
+                                            onClick={() => exportarPendenciasPdf('todas')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                                                background: 'none', border: 'none', textAlign: 'left', padding: '8px 10px',
+                                                borderRadius: '8px', fontSize: '13px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit'
+                                            }}
+                                        >
+                                            <i className="ti ti-calendar-due" aria-hidden="true" /> Vencidas + a vencer no mês
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <div style={pendenciasExpandidas ? { maxHeight: 420, overflowY: 'auto', paddingRight: 2 } : undefined}>
                     {(pendenciasExpandidas ? pendencias : pendencias.slice(0, 8)).map((p, i) => (
