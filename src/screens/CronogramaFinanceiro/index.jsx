@@ -920,7 +920,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                         handleMarcarPagamentoFuturoPago(pag.id);
                                                     }
                                                 }}
-                                                className="cf-badge cf-badge-warning"
+                                                className={`cf-badge ${pag.vencido ? 'cf-badge-danger' : 'cf-badge-warning'}`}
                                                 style={{
                                                     cursor: futuroProcessing ? 'wait' : 'pointer',
                                                     opacity: futuroProcessing ? 0.6 : 1,
@@ -929,7 +929,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                                 }}
                                                 title={futuroProcessing ? 'Processando...' : 'Clique para marcar como pago'}
                                             >
-                                                {futuroProcessing ? <><i className="ti ti-loader" aria-hidden="true" /> Processando...</> : 'Pendente'}
+                                                {futuroProcessing
+                                                    ? <><i className="ti ti-loader" aria-hidden="true" /> Processando...</>
+                                                    : pag.vencido
+                                                        ? <><i className="ti ti-alert-triangle" aria-hidden="true" /> Vencido há {Math.abs(pag.dias_para_vencer)}d</>
+                                                        : 'Pendente'}
                                             </span>
                                         );
                                     })()}

@@ -1760,6 +1760,11 @@ body {
     color: var(--status-warning-text);
 }
 
+.cf-badge-danger {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
+}
+
 /* Dica/Tip Box */
 .cf-tip-box {
     background: var(--status-warning-bg);
