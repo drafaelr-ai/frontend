@@ -611,20 +611,23 @@ const CelulaComProgresso = ({ valorTotal, valorPago, cor, corTexto }) => {
 // COMPONENTE: MODAL NOVA ETAPA
 // =====================================================
 
-const NovaEtapaModal = ({ onClose, onSave }) => {
-    const [nome, setNome] = useState('');
-    const [codigo, setCodigo] = useState('');
+const NovaEtapaModal = ({ onClose, onSave, etapaParaEditar = null }) => {
+    const isEdicao = !!etapaParaEditar;
+    const [nome, setNome] = useState(etapaParaEditar?.nome || '');
+    const [codigo, setCodigo] = useState(etapaParaEditar?.codigo || '');
     const [salvando, setSalvando] = useState(false);
     const [adicionarOutra, setAdicionarOutra] = useState(false);
 
     const handleSalvar = async () => {
         if (!nome.trim()) return;
         setSalvando(true);
-        const sucesso = await onSave({ nome: nome.trim(), codigo: codigo.trim() });
+        const sucesso = isEdicao
+            ? await onSave({ nome: nome.trim(), codigo: codigo.trim() }, true, etapaParaEditar.id)
+            : await onSave({ nome: nome.trim(), codigo: codigo.trim() });
         setSalvando(false);
         if (!sucesso) return;
 
-        if (adicionarOutra) {
+        if (!isEdicao && adicionarOutra) {
             // Limpa os campos para adicionar outra
             setNome('');
             setCodigo('');
@@ -637,7 +640,7 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
         <div style={styles.modalOverlay} onClick={onClose}>
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>➕ Nova Etapa</h2>
+                    <h2 style={styles.modalTitle}>{isEdicao ? '✏️ Editar Etapa' : '➕ Nova Etapa'}</h2>
                     <button style={styles.closeBtn} onClick={onClose}>×</button>
                 </div>
                 <div style={styles.modalBody}>
@@ -666,27 +669,29 @@ const NovaEtapaModal = ({ onClose, onSave }) => {
                     </div>
                 </div>
                 <div style={styles.modalFooter}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto', cursor: 'pointer' }}>
-                        <input 
-                            type="checkbox" 
-                            checked={adicionarOutra}
-                            onChange={e => setAdicionarOutra(e.target.checked)}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Adicionar outra</span>
-                    </label>
-                    <button 
-                        style={{ ...styles.button, ...styles.buttonSecondary }} 
+                    {!isEdicao && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={adicionarOutra}
+                                onChange={e => setAdicionarOutra(e.target.checked)}
+                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Adicionar outra</span>
+                        </label>
+                    )}
+                    <button
+                        style={{ ...styles.button, ...styles.buttonSecondary }}
                         onClick={onClose}
                     >
                         Cancelar
                     </button>
-                    <button 
+                    <button
                         style={{ ...styles.button, ...styles.buttonSuccess }}
                         onClick={handleSalvar}
                         disabled={!nome.trim() || salvando}
                     >
-                        {salvando ? 'Salvando...' : '💾 Salvar Etapa'}
+                        {salvando ? 'Salvando...' : (isEdicao ? '💾 Salvar Alterações' : '💾 Salvar Etapa')}
                     </button>
                 </div>
             </div>
@@ -2520,6 +2525,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const [etapaParaNovoItem, setEtapaParaNovoItem] = useState(null);
     const [showUploadPlanta, setShowUploadPlanta] = useState(false);
     const [itemParaEditar, setItemParaEditar] = useState(null);  // NOVO: para edição
+    const [etapaParaEditar, setEtapaParaEditar] = useState(null);  // NOVO: para edição de etapa
     const [detalhePagamentos, setDetalhePagamentos] = useState(null); // item p/ ver composição do pago
 
     // Carregar dados
@@ -2558,11 +2564,15 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         }));
     };
 
-    // Criar etapa
-    const criarEtapa = async (dados) => {
+    // Criar/Editar etapa
+    const salvarEtapa = async (dados, isEdicao = false, etapaId = null) => {
         try {
-            const res = await fetchWithAuth(`${apiUrl}/obras/${obraId}/orcamento-eng/etapas`, {
-                method: 'POST',
+            const url = isEdicao
+                ? `${apiUrl}/obras/${obraId}/orcamento-eng/etapas/${etapaId}`
+                : `${apiUrl}/obras/${obraId}/orcamento-eng/etapas`;
+
+            const res = await fetchWithAuth(url, {
+                method: isEdicao ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
             });
@@ -2572,11 +2582,11 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                 return true;
             }
             const err = await res.json().catch(() => ({}));
-            notify.error(err.erro || 'Erro ao criar etapa');
+            notify.error(err.erro || (isEdicao ? 'Erro ao editar etapa' : 'Erro ao criar etapa'));
             return false;
         } catch (e) {
             logger.error(e);
-            notify.error('Erro ao criar etapa');
+            notify.error(isEdicao ? 'Erro ao editar etapa' : 'Erro ao criar etapa');
             return false;
         }
     };
@@ -2623,7 +2633,19 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         setItemParaEditar(item);
         setShowNovoItem(true);
     };
-    
+
+    // Handler para abrir edição de etapa
+    const abrirEdicaoEtapa = (etapa) => {
+        setEtapaParaEditar(etapa);
+        setShowNovaEtapa(true);
+    };
+
+    // Handler para fechar modal de etapa
+    const fecharModalEtapa = () => {
+        setShowNovaEtapa(false);
+        setEtapaParaEditar(null);
+    };
+
     // Handler para fechar modal
     const fecharModalItem = () => {
         setShowNovoItem(false);
@@ -3147,6 +3169,16 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         ➕
                                                     </button>
                                                     <button
+                                                        style={{ ...styles.actionBtn, color: 'var(--text-on-dark)' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            abrirEdicaoEtapa(etapa);
+                                                        }}
+                                                        title="Editar etapa"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                    <button
                                                         style={{ ...styles.actionBtn, color: 'var(--status-danger)' }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -3334,9 +3366,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
 
             {/* Modais */}
             {showNovaEtapa && (
-                <NovaEtapaModal 
-                    onClose={() => setShowNovaEtapa(false)}
-                    onSave={criarEtapa}
+                <NovaEtapaModal
+                    onClose={fecharModalEtapa}
+                    onSave={salvarEtapa}
+                    etapaParaEditar={etapaParaEditar}
                 />
             )}
             
