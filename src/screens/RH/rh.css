@@ -1,9 +1,14 @@
 /* Módulo Pessoal / RH — estilos escopados (fiéis ao preview_rh_light.html).
    Tudo sob .rh-shell; usa apenas var(--*) do design system (tokens.css). */
 
-.rh-shell {
+/* No :root (e não só no shell): os modais são portalados pro <body>, fora do
+   .rh-shell — variável escopada no shell não chega neles (ex.: .rh-dropzone). */
+:root {
     --rh-purple: var(--status-purple-text);   /* barra "INSS/DARF" */
     --rh-accent-soft: rgba(254, 105, 1, 0.12);  /* var(--module-rh) em baixa opacidade — tints/hover */
+}
+
+.rh-shell {
     min-height: 100vh;
     background: var(--surface-page);
     color: var(--text-primary);

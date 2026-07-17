@@ -41,11 +41,20 @@ const MODULES = [
         color: '#632ED6',
         colorDark: '#4818A8',
         gradient: 'linear-gradient(135deg, #632ED6 0%, #4818A8 100%)'
+    },
+    {
+        id: 'solicitacoes',
+        icon: 'shopping-cart',
+        title: 'Solicitações',
+        description: 'Pedidos de compra, cotações e aprovações.',
+        color: '#0EA5A4',
+        colorDark: '#0B7A79',
+        gradient: 'linear-gradient(135deg, #0EA5A4 0%, #0B7A79 100%)'
     }
 ];
 
-const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA' };
-const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6' };
+const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS' };
+const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4' };
 
 function dataBR(iso) {
     if (!iso) return '';

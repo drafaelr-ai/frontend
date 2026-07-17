@@ -16,6 +16,10 @@ const getNotifMeta = (tipo) => {
         case 'boleto_hoje':         return { icon: 'ti-alert-triangle', bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' };
         case 'boleto_3dias':        return { icon: 'ti-receipt',        bg: 'var(--status-warning-bg)',  color: 'var(--status-warning-text)' };
         case 'boleto_7dias':        return { icon: 'ti-receipt',        bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
+        case 'solicitacao_criada':  return { icon: 'ti-shopping-cart',  bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
+        case 'solicitacao_aguardando_aprovacao': return { icon: 'ti-clock', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+        case 'solicitacao_aprovada': return { icon: 'ti-check',         bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
+        case 'solicitacao_rejeitada': return { icon: 'ti-x',            bg: 'var(--status-danger-bg)',   color: 'var(--status-danger-text)'  };
         default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
     }
 };

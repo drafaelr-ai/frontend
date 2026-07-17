@@ -1,10 +1,16 @@
 /* Módulo Frota — estilos escopados (molde: rh.css).
    Tudo sob .frota-shell; usa apenas var(--*) do design system (tokens.css). */
 
-.frota-shell {
+/* No :root (e não só no shell): os modais são portalados pro <body>, fora do
+   .frota-shell — variável escopada no shell não chega neles (botão primário
+   dos modais ficava sem cor de fundo). */
+:root {
     --frota-accent: var(--module-frota);        /* roxo — identidade do módulo (rebrand 2026) */
     --frota-accent-dark: var(--module-frota-dark);
     --frota-accent-soft: color-mix(in srgb, var(--module-frota) 14%, white);
+}
+
+.frota-shell {
     min-height: 100vh;
     background: var(--surface-page);
     color: var(--text-primary);

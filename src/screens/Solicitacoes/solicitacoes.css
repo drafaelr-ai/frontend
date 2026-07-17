@@ -1,0 +1,204 @@
+/* Módulo Solicitações — estilos escopados (molde: frota.css).
+   Tudo sob .solc-shell; usa apenas var(--*) do design system (tokens.css). */
+
+/* No :root (e não só no shell): os modais são portalados pro <body>, fora do
+   .solc-shell — variável escopada no shell não chega neles. */
+:root {
+    --solc-accent: var(--module-solicitacoes);       /* teal — identidade do módulo */
+    --solc-accent-dark: var(--module-solicitacoes-dark);
+    --solc-accent-soft: color-mix(in srgb, var(--module-solicitacoes) 14%, white);
+}
+
+.solc-shell {
+    min-height: 100vh;
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.45;
+}
+.solc-shell *,
+.solc-shell *::before,
+.solc-shell *::after { box-sizing: border-box; }
+
+.solc-shell .solc-valor { font-size: var(--text-md); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.solc-shell .solc-muted { color: var(--text-muted); }
+.solc-shell .solc-right { text-align: right; }
+
+/* ===== navbar ===== */
+.solc-navbar {
+    background: var(--surface-dark); color: var(--text-on-dark);
+    display: flex; align-items: center; gap: var(--space-4);
+    padding: 0 var(--space-6); height: 52px;
+}
+.solc-logo { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; font-size: var(--text-md); }
+.solc-logo-dot { width: 18px; height: 18px; object-fit: contain; }
+.solc-crumbs { color: var(--text-on-dark-muted); font-size: var(--text-sm); display: flex; align-items: center; gap: var(--space-2); }
+.solc-crumbs b { color: var(--text-on-dark); font-weight: 500; }
+.solc-spacer { flex: 1; }
+.solc-user { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-on-dark-muted); }
+.solc-user-av {
+    width: 26px; height: 26px; border-radius: var(--radius-full); background: var(--brand-primary-soft);
+    display: grid; place-items: center; color: var(--text-on-dark); font-weight: 500;
+}
+.solc-back {
+    background: none; border: 1px solid var(--border-on-dark); color: var(--text-on-dark-muted);
+    font-family: inherit; font-size: var(--text-sm); border-radius: var(--radius-md);
+    padding: var(--space-1) var(--space-3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.solc-back:hover { color: var(--text-on-dark); border-color: var(--border-strong); }
+
+/* ===== shell / pagehead ===== */
+.solc-container { max-width: 1180px; margin: 0 auto; padding: var(--space-6); }
+.solc-pagehead { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: var(--space-5); gap: var(--space-4); }
+.solc-pagehead h1 { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: var(--space-3); margin: 0; }
+.solc-pagehead h1 i { color: var(--solc-accent); }
+.solc-sub { color: var(--text-muted); font-size: var(--text-base); margin-top: 2px; }
+
+/* ===== tabs ===== */
+.solc-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border-subtle); margin-bottom: var(--space-5); flex-wrap: wrap; }
+.solc-tab {
+    appearance: none; border: none; background: none; cursor: pointer; font-family: inherit;
+    font-size: var(--text-md); color: var(--text-muted); padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid transparent; display: flex; align-items: center; gap: var(--space-2); margin-bottom: -1px;
+}
+.solc-tab:hover { color: var(--text-secondary); }
+.solc-tab.active { color: var(--text-primary); font-weight: 500; border-bottom-color: var(--solc-accent); }
+.solc-tab-cnt {
+    background: var(--surface-muted); color: var(--text-muted); font-size: var(--text-xs);
+    font-weight: 500; padding: 1px 7px; border-radius: var(--radius-full);
+}
+
+/* ===== cards ===== */
+.solc-card {
+    background: var(--surface-card); border: 1px solid var(--border-subtle);
+    border-radius: 20px; padding: var(--space-5) var(--space-6);
+    box-shadow: var(--shadow-card); margin-bottom: var(--space-5);
+}
+.solc-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: var(--space-4); margin-bottom: var(--space-4); border-bottom: 1px solid var(--border-subtle); gap: var(--space-3);
+}
+.solc-card-title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: 600; }
+.solc-card-title i { color: var(--text-muted); }
+.solc-card-actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+
+/* ===== buttons ===== */
+.solc-btn {
+    appearance: none; font-family: inherit; font-size: var(--text-base); font-weight: 500;
+    border-radius: var(--radius-md); padding: var(--space-2) var(--space-4); cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--space-2); border: 1px solid transparent; transition: .12s;
+}
+.solc-btn-primary { background: var(--solc-accent); color: #fff; }
+.solc-btn-primary:hover { background: var(--solc-accent-dark); }
+.solc-btn-secondary { background: var(--surface-muted); color: var(--text-primary); border-color: var(--border-default); }
+.solc-btn-secondary:hover { background: var(--surface-subtle); }
+.solc-btn-danger { background: var(--status-danger-bg); color: var(--status-danger-text); }
+.solc-btn-text { background: none; color: var(--text-muted); padding: var(--space-2); }
+.solc-btn-text:hover { color: var(--text-primary); }
+.solc-btn-sm { font-size: var(--text-sm); padding: var(--space-1) var(--space-3); }
+.solc-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ===== badges ===== */
+.solc-badge {
+    font-size: var(--text-xs); font-weight: 500; padding: 2px 9px; border-radius: var(--radius-full);
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.solc-b-success { background: var(--status-success-bg); color: var(--status-success-text); }
+.solc-b-warning { background: var(--status-warning-bg); color: var(--status-warning-text); }
+.solc-b-danger  { background: var(--status-danger-bg);  color: var(--status-danger-text); }
+.solc-b-info    { background: var(--status-info-bg);    color: var(--status-info-text); }
+.solc-b-neutral { background: var(--status-neutral-bg); color: var(--status-neutral-text); }
+
+/* ===== table ===== */
+.solc-table { width: 100%; border-collapse: collapse; font-size: var(--text-base); }
+.solc-table thead th {
+    text-align: left; font-size: var(--text-xs); font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--text-muted); padding: var(--space-2) var(--space-3);
+    background: var(--surface-muted); border-bottom: 1px solid var(--border-subtle);
+}
+.solc-table thead th:first-child { border-top-left-radius: var(--radius-md); }
+.solc-table thead th:last-child { border-top-right-radius: var(--radius-md); text-align: right; }
+.solc-table tbody td { padding: var(--space-3); border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+.solc-table tbody td:last-child { text-align: right; }
+.solc-table tbody tr:hover { background: var(--surface-subtle); }
+.solc-table tbody tr.clickable { cursor: pointer; }
+.solc-cell-main { font-weight: 500; color: var(--text-primary); }
+.solc-cell-sub { font-size: var(--text-sm); color: var(--text-muted); }
+.solc-empty { text-align: center; color: var(--text-muted); padding: var(--space-8) var(--space-4); }
+
+/* ===== kpis ===== */
+.solc-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-5); }
+.solc-kpi {
+    background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 18px;
+    padding: var(--space-4) var(--space-5); box-shadow: var(--shadow-card);
+}
+.solc-kpi-lbl { font-size: var(--text-sm); color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.solc-kpi-val { font-size: var(--text-2xl); font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.solc-kpi.accent { border-left: 3px solid var(--solc-accent); }
+.solc-kpi.alert { border-left: 3px solid var(--status-danger); }
+
+/* ===== inputs / forms ===== */
+.solc-inp {
+    font-family: inherit; font-size: var(--text-base); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); padding: 6px 8px; width: 100%; color: var(--text-primary); background: var(--surface-card);
+}
+.solc-inp:focus { outline: none; border-color: var(--solc-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-solicitacoes) 18%, transparent); }
+.solc-inp.money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.solc-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-4); }
+.solc-field label { font-size: var(--text-sm); font-weight: 500; color: var(--text-secondary); }
+.solc-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.solc-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); }
+
+/* ===== itens dinâmicos (nova solicitação) ===== */
+.solc-item-row { display: grid; grid-template-columns: 1fr 110px 90px 34px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+.solc-item-del {
+    appearance: none; border: none; background: none; color: var(--text-muted); cursor: pointer;
+    font-size: 16px; padding: 4px; border-radius: var(--radius-sm);
+}
+.solc-item-del:hover { color: var(--status-danger-text); background: var(--status-danger-bg); }
+
+/* ===== cotações (detalhe) ===== */
+.solc-cot {
+    display: flex; align-items: flex-start; gap: var(--space-3);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-4); margin-bottom: var(--space-3);
+}
+.solc-cot.escolhivel { cursor: pointer; }
+.solc-cot.selecionada { border-color: var(--solc-accent); background: var(--solc-accent-soft); }
+.solc-cot.vencedora { border-color: var(--status-success-text); background: var(--status-success-bg); }
+.solc-cot-body { flex: 1; min-width: 0; }
+.solc-cot-forn { font-weight: 600; display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.solc-cot-meta { font-size: var(--text-sm); color: var(--text-muted); margin-top: 2px; display: flex; gap: var(--space-4); flex-wrap: wrap; }
+.solc-cot-valor { font-size: var(--text-lg); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ===== detalhe ===== */
+.solc-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.solc-detail-meta { display: flex; gap: var(--space-5); flex-wrap: wrap; margin-top: var(--space-2); font-size: var(--text-sm); color: var(--text-muted); }
+.solc-detail-meta b { color: var(--text-primary); font-weight: 500; }
+.solc-motivo {
+    background: var(--status-danger-bg); color: var(--status-danger-text);
+    border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm); margin-top: var(--space-3);
+}
+
+/* ===== config ===== */
+.solc-userlist { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding: var(--space-2) 0; }
+.solc-usercheck {
+    display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-base);
+    padding: 4px var(--space-2); border-radius: var(--radius-sm); cursor: pointer;
+}
+.solc-usercheck:hover { background: var(--surface-subtle); }
+.solc-usercheck input { accent-color: var(--solc-accent); }
+.solc-usercheck .role { font-size: var(--text-xs); color: var(--text-muted); }
+
+/* ===== hint / loading ===== */
+.solc-hint { font-size: var(--text-sm); color: var(--text-muted); margin-top: var(--space-3); display: flex; align-items: center; gap: 6px; }
+.solc-loading { text-align: center; color: var(--text-muted); padding: var(--space-8); }
+
+@media (max-width: 720px) {
+    .solc-kpis { grid-template-columns: repeat(2, 1fr); }
+    .solc-row2, .solc-row3 { grid-template-columns: 1fr; }
+    .solc-container { padding: var(--space-4); }
+    .solc-item-row { grid-template-columns: 1fr 80px 70px 30px; }
+}

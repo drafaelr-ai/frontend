@@ -17,8 +17,10 @@ import TrocarSenhaModal from './components/modals/TrocarSenhaModal';
 const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
 const FrotaModule = lazy(() => import('./screens/Frota'));
+const SolicitacoesModule = lazy(() => import('./screens/Solicitacoes'));
+const SolicitacaoPublica = lazy(() => import('./screens/SolicitacaoPublica'));
 
-const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota'];
+const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota', 'solicitacoes'];
 
 // Módulos que o usuário pode ver: master → todos; lista null/ausente → todos.
 function getAllowedModules(user) {
@@ -121,11 +123,19 @@ function App() {
         await deleteToken('selectedModule');
     };
 
-    // Rota pública — fora do fluxo de autenticação
+    // Rotas públicas — fora do fluxo de autenticação
     const _path = window.location.pathname;
     if (_path.startsWith('/pagar/')) {
         const _token = _path.replace('/pagar/', '').split('/')[0];
         return <SuperlinkPublico token={_token} />;
+    }
+    if (_path.startsWith('/solicitacao/')) {
+        const _token = _path.replace('/solicitacao/', '').split('/')[0];
+        return (
+            <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+                <SolicitacaoPublica token={_token} />
+            </Suspense>
+        );
     }
 
     if (isLoading) {
@@ -200,6 +210,19 @@ function App() {
                 <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><FrotaModule /></Suspense>
+                        : <LoginScreen onBack={handleBackToSelector} />}
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
+    if (selectedModule === 'solicitacoes') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                    {user
+                        ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><SolicitacoesModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
                 </AuthContext.Provider>
             </>

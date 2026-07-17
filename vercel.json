@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/pagar/:token", "destination": "/api/pagar-meta?token=:token" }
+    { "source": "/pagar/:token", "destination": "/api/pagar-meta?token=:token" },
+    { "source": "/solicitacao/:token", "destination": "/api/solicitacao-meta?token=:token" }
   ]
 }
