@@ -112,6 +112,15 @@ function App() {
         setUser(data.user);
         await storeToken('token', data.access_token);
         await storeToken('user', JSON.stringify(data.user));
+        // Zera o contexto de navegação de qualquer sessão anterior neste
+        // aparelho: sem isso, um selectedModule salvo + ?obra= preso na URL
+        // (sobras de outro usuário cuja sessão expirou) faziam o próximo
+        // login cair direto dentro de uma obra em vez do seletor de módulos.
+        setSelectedModule(null);
+        await deleteToken('selectedModule');
+        if (window.location.search) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
     };
 
     const logout = async () => {

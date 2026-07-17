@@ -21,6 +21,10 @@ export const fetchWithAuth = async (url, options = {}) => {
     if (response.status === 401 || response.status === 422) {
         await removeToken('token');
         await removeToken('user');
+        // Também o módulo salvo: sessão expirada deve voltar limpa pro
+        // seletor — senão o próximo login (inclusive de OUTRO usuário no
+        // mesmo aparelho) herda o módulo e cai direto dentro dele.
+        await removeToken('selectedModule');
 
         notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
 
