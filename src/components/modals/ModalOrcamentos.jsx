@@ -3,6 +3,7 @@ import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
+import { notify } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
 
 const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
@@ -38,9 +39,17 @@ const ModalOrcamentos = ({ onClose, obraId, obraNome }) => {
             });
     };
 
-    // BUG: window.open sem fetchWithAuth — mesmo padrão de VisualizarNotaFiscalModal. Catalogado em NOTAS_REFACTOR.md
     const handleDownloadAnexo = (anexoId, filename) => {
-        window.open(`${API_URL}/anexos/${anexoId}`, '_blank');
+        fetchWithAuth(`${API_URL}/anexos/${anexoId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao buscar anexo');
+                return res.blob();
+            })
+            .then(blob => {
+                const fileURL = URL.createObjectURL(blob);
+                window.open(fileURL, '_blank');
+            })
+            .catch(err => notify.error(`Erro ao abrir anexo: ${err.message}`));
     };
 
     const orcamentosFiltrados = orcamentos.filter(orc => {

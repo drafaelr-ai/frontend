@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../Modal/Modal';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
@@ -8,7 +8,32 @@ import { useAuth } from '../../auth/AuthContext';
 
 const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [fileUrl, setFileUrl] = useState(null);
     const { user } = useAuth();
+
+    useEffect(() => {
+        let objectUrl = null;
+        let cancelado = false;
+
+        fetchWithAuth(`${API_URL}/notas-fiscais/${nota.id}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao carregar nota fiscal');
+                return res.blob();
+            })
+            .then(blob => {
+                objectUrl = URL.createObjectURL(blob);
+                if (!cancelado) setFileUrl(objectUrl);
+            })
+            .catch(err => {
+                logger.error('Erro ao carregar arquivo da nota fiscal:', err);
+                notify.error('Erro ao carregar o arquivo da nota fiscal');
+            });
+
+        return () => {
+            cancelado = true;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [nota.id]);
 
     const handleDelete = async () => {
         if (!await confirmDialog('Tem certeza que deseja excluir esta nota fiscal?', { danger: true, confirmText: 'Excluir' })) {
@@ -36,7 +61,11 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
     };
 
     const handleDownload = () => {
-        window.open(`${API_URL}/notas-fiscais/${nota.id}`, '_blank');
+        if (!fileUrl) return;
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.download = nota.filename || 'nota-fiscal';
+        a.click();
     };
 
     const isPDF = nota.mimetype === 'application/pdf';
@@ -65,7 +94,7 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
                         </button>
                     )}
                     <button type="button" className="m-btn-cancel" onClick={onClose}>Fechar</button>
-                    <button type="button" className="m-btn-primary" onClick={handleDownload} style={{ background: 'var(--module-obras)' }}>
+                    <button type="button" className="m-btn-primary" onClick={handleDownload} disabled={!fileUrl} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-download" aria-hidden="true"></i>
                         Baixar
                     </button>
@@ -84,16 +113,21 @@ const VisualizarNotaFiscalModal = ({ onClose, nota, onDelete }) => {
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
             }}>
-                {isPDF && (
+                {(isPDF || isImage) && !fileUrl && (
+                    <div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <p>Carregando arquivo...</p>
+                    </div>
+                )}
+                {isPDF && fileUrl && (
                     <iframe
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
+                        src={fileUrl}
                         style={{ width: '100%', height: '500px', border: 'none' }}
                         title="Nota Fiscal PDF"
                     />
                 )}
-                {isImage && (
+                {isImage && fileUrl && (
                     <img
-                        src={`${API_URL}/notas-fiscais/${nota.id}`}
+                        src={fileUrl}
                         alt="Nota Fiscal"
                         style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
