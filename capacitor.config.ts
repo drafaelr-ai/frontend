@@ -14,7 +14,10 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: false,
-    webContentsDebuggingEnabled: true,
+    // Só habilita o inspetor remoto (chrome://inspect) em build de desenvolvimento —
+    // uma release/APK de produção com isso em true permite ler DOM/JS (incl. token
+    // em memória) de qualquer pessoa com acesso físico ao aparelho.
+    webContentsDebuggingEnabled: process.env.NODE_ENV === 'development',
     backgroundColor: '#001560'
   },
   plugins: {
