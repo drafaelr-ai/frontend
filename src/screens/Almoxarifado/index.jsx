@@ -287,6 +287,9 @@ export default function AlmoxarifadoModule() {
                         <h1><i className="ti ti-box-seam" /> Almoxarifado</h1>
                         <p>Controle de fardamentos, EPIs, ferramentas, equipamentos proprios e locados.</p>
                     </div>
+                    <button className="almox-btn almox-btn-primary" onClick={() => { setMoveForm(emptyMove()); setTab('mov'); }}>
+                        <i className="ti ti-arrow-down-to-arc" /> Nova entrada
+                    </button>
                 </div>
 
                 <nav className="almox-tabs" aria-label="Navegacao do almoxarifado">
