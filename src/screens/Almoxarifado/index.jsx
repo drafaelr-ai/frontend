@@ -122,7 +122,7 @@ function movementHint(item, type) {
 }
 
 export default function AlmoxarifadoModule() {
-    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
+    const { user, onBackToSelector } = useContext(AuthContext);
     const [tab, setTab] = useState('visao');
     const [dashboard, setDashboard] = useState(null);
     const [itens, setItens] = useState([]);
@@ -272,7 +272,7 @@ export default function AlmoxarifadoModule() {
     return (
         <div className="almox-shell">
             <header className="almox-navbar">
-                <button type="button" className="almox-logo" onClick={onGoToDashboard} title="Ir para o dashboard principal">
+                <button type="button" className="almox-logo" onClick={onBackToSelector} title="Ir para o dashboard principal">
                     <img src="/obraly-mark.png" alt="" className="almox-logo-dot" /> Obraly
                 </button>
                 <div className="almox-crumbs"><i className="ti ti-chevron-right" /> <b>Almoxarifado</b></div>
