@@ -637,6 +637,7 @@
     font-family: inherit;
     padding: 0;
 }
+.db-alert-banner-cta:disabled { cursor: wait; opacity: .65; }
 
 /* Lista expandida de pendências vencidas */
 .db-alert-list {

@@ -499,6 +499,13 @@ export default function Dashboard() {
                         <span style={{ flex: 1 }} />
                         <button
                             className="db-alert-banner-cta"
+                            disabled={exportando}
+                            onClick={() => exportarPendenciasPdf('vencidas')}
+                        >
+                            <i className="ti ti-file-type-pdf" aria-hidden="true" /> PDF completo
+                        </button>
+                        <button
+                            className="db-alert-banner-cta"
                             onClick={() => setVencidasListOpen(v => !v)}
                         >
                             {vencidasListOpen ? 'Ocultar' : 'Ver pendências'} <i className={`ti ti-chevron-${vencidasListOpen ? 'up' : 'down'}`} aria-hidden="true" />
