@@ -26,7 +26,7 @@ const TABS = [
 ];
 
 export default function RHModule() {
-    const { user, onBackToSelector } = useContext(AuthContext);
+    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
     const [tab, setTab] = useState('dash');
     const [obras, setObras] = useState([]);
     const [categorias, setCategorias] = useState([]);
@@ -60,9 +60,9 @@ export default function RHModule() {
     return (
         <div className="rh-shell">
             <div className="rh-navbar">
-                <div className="rh-logo">
+                <button type="button" className="rh-logo" onClick={onGoToDashboard} title="Ir para o dashboard principal">
                     <img src="/obraly-mark.png" alt="" className="rh-logo-dot" /> Obraly
-                </div>
+                </button>
                 <div className="rh-crumbs">
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Pessoal / RH</b>
                 </div>

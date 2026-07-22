@@ -315,6 +315,7 @@ export default function Dashboard() {
     }
 
     const hk = homeData?.kpis;
+    const operacional = homeData?.operacional;
     const previsao = hk?.previsao_pagar;
     const pctOrc = kpis.totalOrcamento > 0 ? (kpis.totalPago / kpis.totalOrcamento) * 100 : 0;
 
@@ -382,6 +383,41 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {operacional?.disponivel && (
+                <section className="db-operational-summary" aria-label="Resumo operacional">
+                    <div className="db-section-header">
+                        <h2 className="db-section-title">Resumo operacional</h2>
+                        <span className="db-section-subtitle">Obras, equipamentos e almoxarifado</span>
+                    </div>
+                    <div className="db-kpi-grid db-kpi-grid--4">
+                        <StatCard
+                            label="Valor das obras"
+                            value={formatCurrency(kpis.totalOrcamento)}
+                            icon={<i className="ti ti-building" aria-hidden="true" />}
+                            trend={{ direction: 'none', value: `${kpis.countObrasAtivas} obra(s) ativa(s)` }}
+                        />
+                        <StatCard
+                            label="Equipamentos em estoque"
+                            value={formatCurrency(operacional.valor_equipamentos)}
+                            icon={<i className="ti ti-forklift" aria-hidden="true" />}
+                            trend={{ direction: 'none', value: `${operacional.equipamentos_estoque || 0} unidade(s) disponivel(is)` }}
+                        />
+                        <StatCard
+                            label="Locacoes mensais"
+                            value={formatCurrency(operacional.valor_locacao_mensal)}
+                            icon={<i className="ti ti-building-warehouse" aria-hidden="true" />}
+                            trend={{ direction: 'none', value: `${operacional.locacoes_ativas || 0} equipamento(s) locado(s)` }}
+                        />
+                        <StatCard
+                            label="Estoque disponivel"
+                            value={formatCurrency(operacional.valor_estoque)}
+                            icon={<i className="ti ti-packages" aria-hidden="true" />}
+                            trend={{ direction: 'none', value: `${operacional.quantidade_estoque || 0} un. em ${operacional.itens_com_estoque || 0} item(ns)` }}
+                        />
+                    </div>
+                </section>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: detalhamentoOpen ? 0 : 20, flexWrap: 'wrap', gap: 8 }}>
                 <button className="db-section-link" onClick={() => setDetalhamentoOpen(v => !v)}>

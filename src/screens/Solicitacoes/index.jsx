@@ -14,7 +14,7 @@ import SolicitacoesList from './SolicitacoesList';
 import ConfigSolicitacoes from './ConfigSolicitacoes';
 
 export default function SolicitacoesModule() {
-    const { user, onBackToSelector } = useContext(AuthContext);
+    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
     const [tab, setTab] = useState('lista');
     const [obras, setObras] = useState([]);
     const isMaster = user?.role === 'master';
@@ -42,9 +42,9 @@ export default function SolicitacoesModule() {
     return (
         <div className="solc-shell">
             <div className="solc-navbar">
-                <div className="solc-logo">
+                <button type="button" className="solc-logo" onClick={onGoToDashboard} title="Ir para o dashboard principal">
                     <img src="/obraly-mark.png" alt="" className="solc-logo-dot" /> Obraly
-                </div>
+                </button>
                 <div className="solc-crumbs">
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Solicitações</b>
                 </div>

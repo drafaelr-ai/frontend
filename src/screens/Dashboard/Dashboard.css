@@ -134,6 +134,16 @@
     margin: 0;
 }
 
+.db-operational-summary {
+    margin-bottom: 20px;
+    padding-top: 4px;
+}
+
+.db-section-subtitle {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+}
+
 .db-section-link {
     font-size: var(--text-xs);
     color: var(--module-obras);

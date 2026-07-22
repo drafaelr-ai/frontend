@@ -108,6 +108,21 @@ function App() {
         await deleteToken('selectedModule');
     };
 
+    const handleGoToDashboard = async () => {
+        // O logotipo dos módulos retorna à home de Obras, sem deixar uma
+        // obra específica presa na URL. Para perfis sem Obras, volta ao
+        // seletor em vez de abrir uma tela sem permissão.
+        if (!getAllowedModules(user).includes('obras')) {
+            await handleBackToSelector();
+            return;
+        }
+        if (window.location.search) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+        setSelectedModule('obras');
+        await storeToken('selectedModule', 'obras');
+    };
+
     const login = async (data) => {
         setToken(data.access_token);
         setUser(data.user);
@@ -131,6 +146,12 @@ function App() {
         await deleteToken('token');
         await deleteToken('user');
         await deleteToken('selectedModule');
+    };
+
+    const authContextValue = {
+        user, token, login, logout,
+        onBackToSelector: handleBackToSelector,
+        onGoToDashboard: handleGoToDashboard,
     };
 
     // Rotas públicas — fora do fluxo de autenticação
@@ -157,7 +178,7 @@ function App() {
         return (
             <>
                 <ToastContainer />
-                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                <AuthContext.Provider value={authContextValue}>
                     <LoginScreen />
                 </AuthContext.Provider>
             </>
@@ -195,7 +216,7 @@ function App() {
         return (
             <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
                 <ToastContainer />
-                <AppAdmin onBack={handleBackToSelector} />
+                <AppAdmin onBack={handleBackToSelector} onGoToDashboard={handleGoToDashboard} />
             </Suspense>
         );
     }
@@ -204,7 +225,7 @@ function App() {
         return (
             <>
                 <ToastContainer />
-                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                <AuthContext.Provider value={authContextValue}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><RHModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
@@ -217,7 +238,7 @@ function App() {
         return (
             <>
                 <ToastContainer />
-                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                <AuthContext.Provider value={authContextValue}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><FrotaModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
@@ -230,7 +251,7 @@ function App() {
         return (
             <>
                 <ToastContainer />
-                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                <AuthContext.Provider value={authContextValue}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><SolicitacoesModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
@@ -243,7 +264,7 @@ function App() {
         return (
             <>
                 <ToastContainer />
-                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                <AuthContext.Provider value={authContextValue}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><AlmoxarifadoModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
@@ -255,7 +276,7 @@ function App() {
     return (
         <>
             <ToastContainer />
-            <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+            <AuthContext.Provider value={authContextValue}>
                 {user
                     ? (new URLSearchParams(window.location.search).get('obra')
                         ? <ObraDetalhe />

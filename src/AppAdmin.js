@@ -89,7 +89,7 @@ const SsoErrorScreen = ({ message, onRetry, onBack }) => (
 // COMPONENTE: SIDEBAR
 // ===================================================================================
 
-const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, isOpen, onClose }) => {
+const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, onGoToDashboard, isOpen, onClose }) => {
     // Guia "Usuários" removida: acesso agora é gerido pelo login central
     // (painel "Gerenciar acessos" do app principal) — ver PUT /admin/users/<id>/modulos.
     const menuItems = [
@@ -104,9 +104,15 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, i
         <div className={`admin-sidebar${isOpen ? ' open' : ''}`} style={styles.sidebar}>
             {/* Logo */}
             <div style={styles.sidebarHeader}>
-                <span style={styles.sidebarLogo}>
+                <button
+                    type="button"
+                    onClick={onGoToDashboard}
+                    title="Ir para o dashboard principal"
+                    aria-label="Ir para o dashboard principal"
+                    style={{ ...styles.sidebarLogo, border: 0, padding: 0, cursor: 'pointer' }}
+                >
                     <img src="/obraly-mark.png" alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />
-                </span>
+                </button>
                 <div style={{ flex: 1 }}>
                     <div style={styles.sidebarTitle}>Obraly</div>
                     <div style={styles.sidebarSubtitle}>Administração</div>
@@ -3369,7 +3375,7 @@ const Relatorios = () => {
 // COMPONENTE: DASHBOARD PRINCIPAL (Layout)
 // ===================================================================================
 
-const DashboardAdmin = ({ onBackToModules }) => {
+const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
     const { user, logout } = useAuthAdmin();
     const [activeMenu, setActiveMenu] = useState('dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3427,6 +3433,7 @@ const DashboardAdmin = ({ onBackToModules }) => {
                 user={user}
                 onLogout={logout}
                 onBackToModules={onBackToModules}
+                onGoToDashboard={onGoToDashboard}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />
@@ -3441,7 +3448,7 @@ const DashboardAdmin = ({ onBackToModules }) => {
 // COMPONENTE PRINCIPAL: APP ADMIN
 // ===================================================================================
 
-const AppAdmin = ({ onBack }) => {
+const AppAdmin = ({ onBack, onGoToDashboard }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -3517,7 +3524,7 @@ const AppAdmin = ({ onBack }) => {
     return (
         <AuthAdminContext.Provider value={{ user, token, login, logout }}>
             {user
-                ? <DashboardAdmin onBackToModules={onBack} />
+                ? <DashboardAdmin onBackToModules={onBack} onGoToDashboard={onGoToDashboard} />
                 : <SsoErrorScreen message={ssoError} onRetry={doSso} onBack={onBack} />}
         </AuthAdminContext.Provider>
     );

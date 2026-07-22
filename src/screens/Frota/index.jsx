@@ -24,7 +24,7 @@ const TABS = [
 ];
 
 export default function FrotaModule() {
-    const { user, onBackToSelector } = useContext(AuthContext);
+    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
     const [tab, setTab] = useState('dash');
     const [obras, setObras] = useState([]);
     const [imoveis, setImoveis] = useState([]);
@@ -65,9 +65,9 @@ export default function FrotaModule() {
     return (
         <div className="frota-shell">
             <div className="frota-navbar">
-                <div className="frota-logo">
+                <button type="button" className="frota-logo" onClick={onGoToDashboard} title="Ir para o dashboard principal">
                     <img src="/obraly-mark.png" alt="" className="frota-logo-dot" /> Obraly
-                </div>
+                </button>
                 <div className="frota-crumbs">
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Frota</b>
                 </div>
