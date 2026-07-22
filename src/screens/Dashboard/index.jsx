@@ -407,7 +407,7 @@ export default function Dashboard() {
                             label="Locacoes mensais"
                             value={formatCurrency(operacional.valor_locacao_mensal)}
                             icon={<i className="ti ti-building-warehouse" aria-hidden="true" />}
-                            trend={{ direction: 'none', value: `${operacional.locacoes_ativas || 0} equipamento(s) locado(s)` }}
+                            trend={{ direction: 'none', value: `${operacional.locacoes_ativas || 0} locado(s) · ${formatCurrency(operacional.locacoes_financeiro_pendente)} a pagar` }}
                         />
                         <StatCard
                             label="Estoque disponivel"

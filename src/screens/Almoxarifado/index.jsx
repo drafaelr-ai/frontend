@@ -44,6 +44,7 @@ function emptyMove() {
     return {
         item_id: '', tipo: 'entrada', quantidade: '', data_movimentacao: today(),
         funcionario_id: '', obra_id: '', fornecedor: '', observacao: '',
+        dias_locacao: '', data_vencimento: '', orcamento_item_id: '',
     };
 }
 
@@ -108,6 +109,8 @@ function movementHint(item, type) {
     if (item.categoria === 'equipamento' && item.modalidade === 'locacao') {
         return type === 'locacao_entrada'
             ? 'Informe o fornecedor para registrar o equipamento locado no almoxarifado.'
+            : type === 'alocacao_obra'
+                ? 'A alocacao cria automaticamente os vencimentos no financeiro da obra e vincula a baixa ao item do orcamento selecionado.'
             : 'A alocacao tira o equipamento do estoque; a devolucao da obra o disponibiliza novamente.';
     }
     return 'Equipamentos podem ser alocados em uma obra e devolvidos depois ao almoxarifado.';
@@ -120,6 +123,7 @@ export default function AlmoxarifadoModule() {
     const [itens, setItens] = useState([]);
     const [movimentacoes, setMovimentacoes] = useState([]);
     const [referencias, setReferencias] = useState({ obras: [], funcionarios: [] });
+    const [itensOrcamento, setItensOrcamento] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [itemForm, setItemForm] = useState(EMPTY_ITEM);
@@ -158,6 +162,36 @@ export default function AlmoxarifadoModule() {
     const moveNeedsEmployee = selectedMoveItem?.categoria === 'fardamento' && moveForm.tipo === 'saida';
     const moveNeedsObra = ['alocacao_obra', 'devolucao_obra'].includes(moveForm.tipo);
     const moveNeedsSupplier = moveForm.tipo === 'locacao_entrada';
+    const moveNeedsRentalFinancial = selectedMoveItem?.categoria === 'equipamento'
+        && selectedMoveItem?.modalidade === 'locacao'
+        && moveForm.tipo === 'alocacao_obra';
+    const rentalFinancialPreview = useMemo(() => {
+        const dias = Number(moveForm.dias_locacao);
+        const quantidade = Number(moveForm.quantidade);
+        const valorMensal = Number(selectedMoveItem?.valor_locacao_mensal);
+        if (!(dias > 0) || !(quantidade > 0) || !(valorMensal > 0)) return null;
+        return (valorMensal * quantidade * dias) / 30;
+    }, [moveForm.dias_locacao, moveForm.quantidade, selectedMoveItem?.valor_locacao_mensal]);
+
+    useEffect(() => {
+        if (!moveNeedsRentalFinancial || !moveForm.obra_id) {
+            setItensOrcamento([]);
+            return undefined;
+        }
+        let active = true;
+        almoxarifadoApi.itensOrcamento(moveForm.obra_id)
+            .then((items) => {
+                if (active) setItensOrcamento(Array.isArray(items) ? items : []);
+            })
+            .catch((error) => {
+                logger.error('Carregar itens do orcamento para locacao', error);
+                if (active) {
+                    setItensOrcamento([]);
+                    notify.error(error.message || 'Nao foi possivel carregar os itens do orcamento da obra.');
+                }
+            });
+        return () => { active = false; };
+    }, [moveNeedsRentalFinancial, moveForm.obra_id]);
 
     const resetItemForm = () => {
         setItemForm(EMPTY_ITEM);
@@ -269,6 +303,7 @@ export default function AlmoxarifadoModule() {
                             <article className="almox-kpi"><span>Valor em estoque</span><strong>{formatCurrency(stockSummary.valor_estoque)}</strong><i className="ti ti-currency-real" /></article>
                             <article className="almox-kpi"><span>Equipamentos disponiveis</span><strong>{formatNumber(stockSummary.equipamentos_estoque)}</strong><i className="ti ti-forklift" /></article>
                             <article className="almox-kpi"><span>Locacoes mensais</span><strong>{formatCurrency(stockSummary.valor_locacao_mensal)}</strong><small>{formatNumber(stockSummary.locacoes_ativas)} equipamento(s) locado(s)</small><i className="ti ti-building-warehouse" /></article>
+                            <article className="almox-kpi"><span>Locacoes a pagar</span><strong>{formatCurrency(stockSummary.locacoes_financeiro_pendente)}</strong><small>Pago: {formatCurrency(stockSummary.locacoes_financeiro_pago)}</small><i className="ti ti-calendar-due" /></article>
                             <article className="almox-kpi alert"><span>Estoque baixo</span><strong>{dashboard?.itens_abaixo_minimo || 0}</strong><i className="ti ti-alert-triangle" /></article>
                         </div>
                         <div className="almox-grid">
@@ -313,17 +348,23 @@ export default function AlmoxarifadoModule() {
                             <p className="almox-hint">{movementHint(selectedMoveItem, moveForm.tipo)}</p>
                             <div className="almox-form-grid">
                                 <label className="almox-field full"><span>Item *</span><select value={moveForm.item_id} onChange={e => { const item = itens.find(candidate => String(candidate.id) === e.target.value); setMoveForm({ ...emptyMove(), item_id: e.target.value, tipo: defaultMovementType(item) }); }} required><option value="">Selecione</option>{itens.map(item => <option key={item.id} value={item.id}>{item.nome} - {formatNumber(item.estoque_atual)} {item.unidade}</option>)}</select></label>
-                                <label className="almox-field"><span>Tipo *</span><select value={moveForm.tipo} onChange={e => setMoveForm({ ...moveForm, tipo: e.target.value, funcionario_id: e.target.value === 'saida' ? moveForm.funcionario_id : '', obra_id: ['alocacao_obra', 'devolucao_obra'].includes(e.target.value) ? moveForm.obra_id : '', fornecedor: e.target.value === 'locacao_entrada' ? moveForm.fornecedor : '' })} disabled={!selectedMoveItem}>{availableMovementTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                                <label className="almox-field"><span>Tipo *</span><select value={moveForm.tipo} onChange={e => setMoveForm({ ...moveForm, tipo: e.target.value, funcionario_id: e.target.value === 'saida' ? moveForm.funcionario_id : '', obra_id: ['alocacao_obra', 'devolucao_obra'].includes(e.target.value) ? moveForm.obra_id : '', fornecedor: e.target.value === 'locacao_entrada' ? moveForm.fornecedor : '', dias_locacao: '', data_vencimento: '', orcamento_item_id: '' })} disabled={!selectedMoveItem}>{availableMovementTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                                 <label className="almox-field"><span>Quantidade *</span><input type="number" step="0.01" min={moveForm.tipo === 'ajuste' ? undefined : '0.01'} value={moveForm.quantidade} onChange={e => setMoveForm({ ...moveForm, quantidade: e.target.value })} required /></label>
                                 <label className="almox-field"><span>Data *</span><input type="date" value={moveForm.data_movimentacao} onChange={e => setMoveForm({ ...moveForm, data_movimentacao: e.target.value })} required /></label>
                                 {(moveNeedsEmployee || (selectedMoveItem && !moveNeedsObra && !moveNeedsSupplier)) && <label className="almox-field"><span>Colaborador{moveNeedsEmployee ? ' *' : ''}</span><select value={moveForm.funcionario_id} onChange={e => setMoveForm({ ...moveForm, funcionario_id: e.target.value })} required={moveNeedsEmployee}><option value="">{moveNeedsEmployee ? 'Selecione quem recebeu' : 'Nao vincular'}</option>{referencias.funcionarios.map(func => <option key={func.id} value={func.id}>{func.nome}</option>)}</select></label>}
-                                {moveNeedsObra && <label className="almox-field"><span>Obra *</span><select value={moveForm.obra_id} onChange={e => setMoveForm({ ...moveForm, obra_id: e.target.value })} required><option value="">Selecione a obra</option>{referencias.obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome}</option>)}</select></label>}
+                                {moveNeedsObra && <label className="almox-field"><span>Obra *</span><select value={moveForm.obra_id} onChange={e => setMoveForm({ ...moveForm, obra_id: e.target.value, orcamento_item_id: '' })} required><option value="">Selecione a obra</option>{referencias.obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome}</option>)}</select></label>}
                                 {moveNeedsSupplier && <label className="almox-field"><span>Fornecedor *</span><input value={moveForm.fornecedor} onChange={e => setMoveForm({ ...moveForm, fornecedor: e.target.value })} placeholder="Nome do fornecedor" required /></label>}
+                                {moveNeedsRentalFinancial && <>
+                                    <label className="almox-field"><span>Dias de locacao *</span><input type="number" min="1" step="1" value={moveForm.dias_locacao} onChange={e => setMoveForm({ ...moveForm, dias_locacao: e.target.value })} required /></label>
+                                    <label className="almox-field"><span>Primeiro vencimento *</span><input type="date" min={moveForm.data_movimentacao} value={moveForm.data_vencimento} onChange={e => setMoveForm({ ...moveForm, data_vencimento: e.target.value })} required /></label>
+                                    <label className="almox-field full"><span>Item do orcamento para conciliacao *</span><select value={moveForm.orcamento_item_id} onChange={e => setMoveForm({ ...moveForm, orcamento_item_id: e.target.value })} required disabled={!moveForm.obra_id}><option value="">{moveForm.obra_id ? 'Selecione o item do orcamento' : 'Selecione primeiro a obra'}</option>{itensOrcamento.map(item => <option key={item.id} value={item.id}>{item.nome_completo}</option>)}</select></label>
+                                    <p className="almox-rental-preview full">{rentalFinancialPreview === null ? 'Informe quantidade e dias para calcular o total da locacao.' : <>Previsao financeira: <b>{formatCurrency(rentalFinancialPreview)}</b> pelo periodo, em parcelas de ate 30 dias.</>}</p>
+                                </>}
                                 <label className="almox-field full"><span>Observacao</span><textarea rows="3" value={moveForm.observacao} onChange={e => setMoveForm({ ...moveForm, observacao: e.target.value })} placeholder="Ex.: entrega de 2 camisas tamanho M" /></label>
                             </div>
                             <div className="almox-form-actions"><button className="almox-btn almox-btn-primary" disabled={saving}><i className="ti ti-check" /> {saving ? 'Registrando...' : 'Registrar movimentacao'}</button></div>
                         </form>
-                        <section className="almox-card almox-list-card"><div className="almox-card-head"><h2><i className="ti ti-history" /> Historico</h2><span className="almox-muted">Ultimas 300</span></div><div className="almox-table-wrap"><table className="almox-table"><thead><tr><th>Data</th><th>Item</th><th>Movimentacao</th><th>Destino</th></tr></thead><tbody>{movimentacoes.length ? movimentacoes.map(mov => <tr key={mov.id}><td>{formatDate(mov.data_movimentacao)}</td><td><b>{mov.item_nome}</b><small>{mov.observacao || 'Sem observacao'}</small></td><td><span className={`almox-movement ${mov.variacao < 0 ? 'out' : 'in'}`}>{MOVEMENT_LABELS[mov.tipo] || mov.tipo} - {mov.variacao > 0 ? '+' : ''}{formatNumber(mov.variacao)} {mov.unidade}</span></td><td>{mov.funcionario_nome || mov.obra_nome || mov.fornecedor || '-'}<small>{[mov.funcionario_nome && mov.obra_nome ? mov.obra_nome : '', mov.fornecedor].filter(Boolean).join(' - ')}</small></td></tr>) : <tr><td colSpan="4" className="almox-empty">Ainda nao ha movimentacoes.</td></tr>}</tbody></table></div></section>
+                        <section className="almox-card almox-list-card"><div className="almox-card-head"><h2><i className="ti ti-history" /> Historico</h2><span className="almox-muted">Ultimas 300</span></div><div className="almox-table-wrap"><table className="almox-table"><thead><tr><th>Data</th><th>Item</th><th>Movimentacao</th><th>Destino</th></tr></thead><tbody>{movimentacoes.length ? movimentacoes.map(mov => <tr key={mov.id}><td>{formatDate(mov.data_movimentacao)}</td><td><b>{mov.item_nome}</b><small>{mov.observacao || 'Sem observacao'}</small></td><td><span className={`almox-movement ${mov.variacao < 0 ? 'out' : 'in'}`}>{MOVEMENT_LABELS[mov.tipo] || mov.tipo} - {mov.variacao > 0 ? '+' : ''}{formatNumber(mov.variacao)} {mov.unidade}</span></td><td>{mov.funcionario_nome || mov.obra_nome || mov.fornecedor || '-'}<small>{[mov.funcionario_nome && mov.obra_nome ? mov.obra_nome : '', mov.fornecedor].filter(Boolean).join(' - ')}</small>{Number(mov.valor_financeiro) > 0 && <small>Financeiro: {formatCurrency(mov.valor_financeiro)} · 1º venc. {formatDate(mov.data_vencimento)}</small>}</td></tr>) : <tr><td colSpan="4" className="almox-empty">Ainda nao ha movimentacoes.</td></tr>}</tbody></table></div></section>
                     </section>}
                 </>}
             </main>

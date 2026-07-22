@@ -25,7 +25,7 @@
 .almox-tab-count, .almox-tab-alert { font-size: var(--text-xs); min-width: 18px; text-align: center; padding: 1px 6px; border-radius: var(--radius-full); }
 .almox-tab-count { background: var(--surface-muted); color: var(--text-muted); }
 .almox-tab-alert { background: var(--status-danger-bg); color: var(--status-danger-text); }
-.almox-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-4); margin-bottom: var(--space-5); }
+.almox-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-5); }
 .almox-kpi { position: relative; overflow: hidden; min-height: 102px; padding: var(--space-5); border: 1px solid var(--border-subtle); border-left: 3px solid var(--module-almoxarifado); border-radius: var(--radius-lg); background: var(--surface-card); box-shadow: var(--shadow-card); }
 .almox-kpi.alert { border-left-color: var(--status-danger); }
 .almox-kpi span { display: block; color: var(--text-muted); font-size: var(--text-sm); }
@@ -60,6 +60,7 @@
 .almox-empty i { color: var(--status-success); }
 .almox-form-card { position: sticky; top: var(--space-4); }
 .almox-hint { margin: calc(var(--space-4) * -1) 0 var(--space-4); color: var(--text-muted); font-size: var(--text-sm); }
+.almox-rental-preview { margin: 0; padding: var(--space-3); border-radius: var(--radius-md); color: var(--text-secondary); background: var(--surface-subtle); font-size: var(--text-sm); }
 .almox-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); }
 .almox-field { display: flex; flex-direction: column; gap: var(--space-1); color: var(--text-secondary); font-size: var(--text-sm); font-weight: var(--weight-medium); }
 .almox-field.full { grid-column: 1 / -1; }

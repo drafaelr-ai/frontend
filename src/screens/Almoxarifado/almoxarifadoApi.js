@@ -16,6 +16,7 @@ async function json(res) {
 export const almoxarifadoApi = {
     dashboard: () => fetchWithAuth(`${base}/dashboard`).then(json),
     referencias: () => fetchWithAuth(`${base}/referencias`).then(json),
+    itensOrcamento: (obraId) => fetchWithAuth(`${API_URL}/obras/${obraId}/orcamento-eng/itens-lista`).then(json),
     itens: (params = '') => fetchWithAuth(`${base}/itens${params}`).then(json),
     criarItem: (body) => fetchWithAuth(`${base}/itens`, {
         method: 'POST', body: JSON.stringify(body),
