@@ -14,10 +14,15 @@ const TABS = [
     { id: 'mov', icon: 'ti-arrows-exchange', label: 'Movimentacoes' },
 ];
 
-const CATEGORIAS = [
-    ['fardamento', 'Fardamento'], ['epi', 'EPI'], ['equipamento', 'Equipamento'],
-    ['ferramenta', 'Ferramenta'], ['material', 'Material'], ['outro', 'Outro'],
-];
+const CATEGORIA_CONFIG = {
+    fardamento: { label: 'Fardamento', singular: 'fardamento', prefix: 'FD', temTamanho: true },
+    epi: { label: 'EPI', singular: 'EPI', prefix: 'EP', temTamanho: true },
+    equipamento: { label: 'Equipamento', singular: 'equipamento', prefix: 'EQ', temTamanho: false },
+    ferramenta: { label: 'Ferramenta', singular: 'ferramenta', prefix: 'FR', temTamanho: false },
+    material: { label: 'Material', singular: 'material', prefix: 'MT', temTamanho: false },
+    outro: { label: 'Outro', singular: 'item', prefix: 'OT', temTamanho: false },
+};
+const CATEGORIAS = Object.entries(CATEGORIA_CONFIG).map(([value, config]) => [value, config.label]);
 
 const MOVEMENT_LABELS = {
     entrada: 'Entrada no estoque',
@@ -262,6 +267,7 @@ export default function AlmoxarifadoModule() {
     const nomeUser = user?.username || 'Usuario';
     const lowItems = dashboard?.abaixo_minimo || [];
     const stockSummary = dashboard?.resumo || {};
+    const categoriaAtual = CATEGORIA_CONFIG[itemForm.categoria] || CATEGORIA_CONFIG.outro;
 
     return (
         <div className="almox-shell">
@@ -281,9 +287,6 @@ export default function AlmoxarifadoModule() {
                         <h1><i className="ti ti-box-seam" /> Almoxarifado</h1>
                         <p>Controle de fardamentos, EPIs, ferramentas, equipamentos proprios e locados.</p>
                     </div>
-                    <button className="almox-btn almox-btn-primary" onClick={() => { resetItemForm(); setTab('itens'); }}>
-                        <i className="ti ti-package-import" /> Novo item
-                    </button>
                 </div>
 
                 <nav className="almox-tabs" aria-label="Navegacao do almoxarifado">
@@ -320,20 +323,20 @@ export default function AlmoxarifadoModule() {
 
                     {tab === 'itens' && <section className="almox-two-cols">
                         <form className="almox-card almox-form-card" onSubmit={submitItem}>
-                            <div className="almox-card-head"><h2><i className="ti ti-package-import" /> {itemEditId ? 'Editar item' : 'Cadastrar item'}</h2>{itemEditId && <button type="button" className="almox-link" onClick={resetItemForm}>Cancelar edicao</button>}</div>
+                            <div className="almox-card-head"><h2><i className="ti ti-package-import" /> {itemEditId ? `Editar ${categoriaAtual.singular}` : `Cadastrar ${categoriaAtual.singular}`}</h2>{itemEditId && <button type="button" className="almox-link" onClick={resetItemForm}>Cancelar edicao</button>}</div>
                             <div className="almox-form-grid">
                                 <label className="almox-field"><span>Nome *</span><input value={itemForm.nome} onChange={e => setItemForm({ ...itemForm, nome: e.target.value })} required /></label>
-                                <label className="almox-field"><span>Codigo</span><input value={itemForm.codigo} onChange={e => setItemForm({ ...itemForm, codigo: e.target.value })} placeholder="Ex.: UNI-001" /></label>
-                                <label className="almox-field"><span>Categoria *</span><select value={itemForm.categoria} onChange={e => setItemForm({ ...itemForm, categoria: e.target.value, modalidade: e.target.value === 'equipamento' ? itemForm.modalidade : 'proprio', valor_locacao_mensal: e.target.value === 'equipamento' ? itemForm.valor_locacao_mensal : '' })}>{CATEGORIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                                <label className="almox-field"><span>Codigo automatico</span><div className="almox-auto-code">{itemEditId ? itemForm.codigo : `${categoriaAtual.prefix}-00000 (gerado ao salvar)`}</div></label>
+                                <label className="almox-field"><span>Categoria *</span><select value={itemForm.categoria} onChange={e => setItemForm({ ...itemForm, categoria: e.target.value, tamanho: CATEGORIA_CONFIG[e.target.value]?.temTamanho ? itemForm.tamanho : '', modalidade: e.target.value === 'equipamento' ? itemForm.modalidade : 'proprio', valor_locacao_mensal: e.target.value === 'equipamento' ? itemForm.valor_locacao_mensal : '' })}>{CATEGORIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
                                 <label className="almox-field"><span>Unidade *</span><input value={itemForm.unidade} onChange={e => setItemForm({ ...itemForm, unidade: e.target.value })} placeholder="un, par, kg..." required /></label>
-                                <label className="almox-field"><span>Tamanho / grade</span><input value={itemForm.tamanho} onChange={e => setItemForm({ ...itemForm, tamanho: e.target.value })} placeholder="Ex.: M, 42, GG" /></label>
+                                {categoriaAtual.temTamanho && <label className="almox-field"><span>Tamanho / grade (se aplicavel)</span><input value={itemForm.tamanho} onChange={e => setItemForm({ ...itemForm, tamanho: e.target.value })} placeholder="Ex.: M, 42, GG" /></label>}
                                 <label className="almox-field"><span>Estoque minimo</span><input type="number" min="0" step="0.01" value={itemForm.estoque_minimo} onChange={e => setItemForm({ ...itemForm, estoque_minimo: e.target.value })} /></label>
                                 <label className="almox-field"><span>Valor unitario (R$)</span><input type="number" min="0" step="0.01" value={itemForm.valor_unitario} onChange={e => setItemForm({ ...itemForm, valor_unitario: e.target.value })} placeholder="0,00" /></label>
                                 {itemForm.categoria === 'equipamento' && <label className="almox-field"><span>Modalidade *</span><select value={itemForm.modalidade} onChange={e => setItemForm({ ...itemForm, modalidade: e.target.value, valor_locacao_mensal: e.target.value === 'locacao' ? itemForm.valor_locacao_mensal : '' })}><option value="proprio">Proprio</option><option value="locacao">Locacao</option></select></label>}
                                 {itemForm.categoria === 'equipamento' && itemForm.modalidade === 'locacao' && <label className="almox-field"><span>Locacao mensal por unidade (R$) *</span><input type="number" min="0.01" step="0.01" value={itemForm.valor_locacao_mensal} onChange={e => setItemForm({ ...itemForm, valor_locacao_mensal: e.target.value })} placeholder="0,00" required /></label>}
                                 <label className="almox-field full"><span>Descricao</span><textarea rows="3" value={itemForm.descricao} onChange={e => setItemForm({ ...itemForm, descricao: e.target.value })} /></label>
                             </div>
-                            <div className="almox-form-actions"><button className="almox-btn almox-btn-primary" disabled={saving}><i className="ti ti-device-floppy" /> {saving ? 'Salvando...' : itemEditId ? 'Salvar alteracoes' : 'Cadastrar item'}</button></div>
+                            <div className="almox-form-actions"><button className="almox-btn almox-btn-primary" disabled={saving}><i className="ti ti-device-floppy" /> {saving ? 'Salvando...' : itemEditId ? 'Salvar alteracoes' : `Cadastrar ${categoriaAtual.singular}`}</button></div>
                         </form>
 
                         <section className="almox-card almox-list-card">
