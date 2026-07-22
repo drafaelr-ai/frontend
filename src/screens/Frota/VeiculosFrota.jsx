@@ -136,7 +136,7 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
                         <i className="ti ti-steering-wheel" /> Aplicar
                     </button>
                     <button className="frota-btn frota-btn-primary frota-btn-sm" onClick={() => setModalMover(true)}>
-                        <i className="ti ti-route" /> Mover
+                        <i className={`ti ${veiculo.local_tipo === 'obra' ? 'ti-arrow-back-up' : 'ti-building'}`} /> {veiculo.local_tipo === 'obra' ? 'Retornar da obra' : 'Ceder à obra'}
                     </button>
                 </div>
             </div>
@@ -181,12 +181,13 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
 
                     {sub === 'movs' && (
                         <table className="frota-table">
-                            <thead><tr><th>Data</th><th>Destino</th><th>Observação</th></tr></thead>
+                            <thead><tr><th>Data</th><th>Movimento</th><th>Destino</th><th>Observação</th></tr></thead>
                             <tbody>
-                                {lista.length === 0 && <tr><td colSpan={3} className="frota-empty">Nenhuma movimentação.</td></tr>}
+                                {lista.length === 0 && <tr><td colSpan={4} className="frota-empty">Nenhuma movimentação.</td></tr>}
                                 {lista.map(m => (
                                     <tr key={m.id}>
                                         <td className="frota-muted">{dataBR(m.data_movimentacao)}</td>
+                                        <td><span className={`frota-badge ${m.destino_tipo === 'obra' ? 'frota-b-info' : m.destino_tipo === 'sem_local' ? 'frota-b-success' : 'frota-b-neutral'}`}>{m.destino_tipo === 'obra' ? 'Cessão à obra' : m.destino_tipo === 'sem_local' ? 'Retorno ao pátio' : 'Transferência'}</span></td>
                                         <td>
                                             {m.destino_tipo === 'obra' && <span className="frota-tag-local"><i className="ti ti-building" style={{ fontSize: 12 }} /> {m.destino_nome || 'Obra'}</span>}
                                             {m.destino_tipo === 'imovel' && <span className="frota-tag-local"><i className="ti ti-home" style={{ fontSize: 12 }} /> {m.destino_nome || 'Imóvel'}</span>}

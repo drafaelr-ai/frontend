@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import '../../styles/tokens.css';
 import '../../styles/components.css';
 import './almoxarifado.css';
@@ -40,6 +40,25 @@ const EMPTY_ITEM = {
     codigo: '', nome: '', categoria: 'fardamento', unidade: 'un', tamanho: '', estoque_minimo: '', descricao: '',
     modalidade: 'proprio', valor_unitario: '', valor_locacao_mensal: '',
 };
+
+let entradaLinhaSequencia = 0;
+
+function emptyEntryLine() {
+    entradaLinhaSequencia += 1;
+    return {
+        ...EMPTY_ITEM,
+        _key: `entrada-${Date.now()}-${entradaLinhaSequencia}`,
+        quantidade: '',
+        codigo_fornecedor: '',
+    };
+}
+
+function emptyEntryForm() {
+    return {
+        data_movimentacao: today(), fornecedor: '', observacao: '', nota_numero: '', nota_serie: '',
+        itens: [emptyEntryLine()],
+    };
+}
 
 function today() {
     return new Date().toISOString().slice(0, 10);
@@ -133,8 +152,11 @@ export default function AlmoxarifadoModule() {
     const [saving, setSaving] = useState(false);
     const [itemForm, setItemForm] = useState(EMPTY_ITEM);
     const [itemEditId, setItemEditId] = useState(null);
+    const [entradaForm, setEntradaForm] = useState(emptyEntryForm);
+    const [importingNF, setImportingNF] = useState(false);
     const [moveForm, setMoveForm] = useState(emptyMove);
     const [busca, setBusca] = useState('');
+    const nfInputRef = useRef(null);
 
     const load = async () => {
         setLoading(true);
@@ -205,20 +227,101 @@ export default function AlmoxarifadoModule() {
 
     const submitItem = async (event) => {
         event.preventDefault();
+        if (!itemEditId) return;
         setSaving(true);
         try {
-            if (itemEditId) {
-                await almoxarifadoApi.editarItem(itemEditId, itemForm);
-                notify.success('Item atualizado.');
-            } else {
-                await almoxarifadoApi.criarItem(itemForm);
-                notify.success('Item cadastrado.');
-            }
+            await almoxarifadoApi.editarItem(itemEditId, itemForm);
+            notify.success('Item atualizado.');
             resetItemForm();
             await load();
         } catch (error) {
             logger.error('Salvar item do almoxarifado', error);
             notify.error(error.message || 'Nao foi possivel salvar o item.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const resetEntryForm = () => setEntradaForm(emptyEntryForm());
+
+    const openNewEntry = () => {
+        resetItemForm();
+        resetEntryForm();
+        setTab('itens');
+    };
+
+    const updateEntryLine = (key, changes) => {
+        setEntradaForm(current => ({
+            ...current,
+            itens: current.itens.map(line => line._key === key ? { ...line, ...changes } : line),
+        }));
+    };
+
+    const addEntryLine = () => {
+        setEntradaForm(current => ({ ...current, itens: [...current.itens, emptyEntryLine()] }));
+    };
+
+    const removeEntryLine = (key) => {
+        setEntradaForm(current => {
+            if (current.itens.length === 1) return current;
+            return { ...current, itens: current.itens.filter(line => line._key !== key) };
+        });
+    };
+
+    const importNotaFiscal = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        setImportingNF(true);
+        try {
+            const formData = new FormData();
+            formData.append('arquivo', file);
+            const nota = await almoxarifadoApi.importarNotaFiscal(formData);
+            setEntradaForm(current => ({
+                ...current,
+                data_movimentacao: nota.data_emissao || current.data_movimentacao,
+                fornecedor: nota.fornecedor || current.fornecedor,
+                nota_numero: nota.numero || '',
+                nota_serie: nota.serie || '',
+                itens: (nota.itens || []).map(item => ({
+                    ...emptyEntryLine(),
+                    ...item,
+                    categoria: 'material',
+                    estoque_minimo: '',
+                    modalidade: 'proprio',
+                    valor_locacao_mensal: '',
+                    tamanho: '',
+                    descricao: item.ncm ? `NCM ${item.ncm}` : '',
+                })),
+            }));
+            notify.success(`${nota.itens?.length || 0} item(ns) importado(s) da NF. Revise antes de salvar.`);
+        } catch (error) {
+            logger.error('Importar NF para almoxarifado', error);
+            notify.error(error.message || 'Não foi possível importar o XML da nota fiscal.');
+        } finally {
+            setImportingNF(false);
+        }
+    };
+
+    const submitEntries = async (event) => {
+        event.preventDefault();
+        setSaving(true);
+        try {
+            const payload = {
+                data_movimentacao: entradaForm.data_movimentacao,
+                fornecedor: entradaForm.fornecedor,
+                observacao: entradaForm.observacao,
+                nota_numero: entradaForm.nota_numero,
+                nota_serie: entradaForm.nota_serie,
+                itens: entradaForm.itens.map(({ _key, ...item }) => item),
+            };
+            const resultado = await almoxarifadoApi.criarEntradas(payload);
+            notify.success(`${resultado.movimentacoes?.length || entradaForm.itens.length} entrada(s) registrada(s) no estoque.`);
+            resetEntryForm();
+            await load();
+        } catch (error) {
+            logger.error('Registrar entradas do almoxarifado', error);
+            notify.error(error.message || 'Não foi possível registrar as entradas.');
         } finally {
             setSaving(false);
         }
@@ -287,7 +390,7 @@ export default function AlmoxarifadoModule() {
                         <h1><i className="ti ti-box-seam" /> Almoxarifado</h1>
                         <p>Controle de fardamentos, EPIs, ferramentas, equipamentos proprios e locados.</p>
                     </div>
-                    <button className="almox-btn almox-btn-primary" onClick={() => { setMoveForm(emptyMove()); setTab('mov'); }}>
+                    <button className="almox-btn almox-btn-primary" onClick={openNewEntry}>
                         <i className="ti ti-arrow-down-to-arc" /> Nova entrada
                     </button>
                 </div>
@@ -325,22 +428,65 @@ export default function AlmoxarifadoModule() {
                     </section>}
 
                     {tab === 'itens' && <section className="almox-two-cols">
-                        <form className="almox-card almox-form-card" onSubmit={submitItem}>
-                            <div className="almox-card-head"><h2><i className="ti ti-package-import" /> {itemEditId ? `Editar ${categoriaAtual.singular}` : `Cadastrar ${categoriaAtual.singular}`}</h2>{itemEditId && <button type="button" className="almox-link" onClick={resetItemForm}>Cancelar edicao</button>}</div>
-                            <div className="almox-form-grid">
-                                <label className="almox-field"><span>Nome *</span><input value={itemForm.nome} onChange={e => setItemForm({ ...itemForm, nome: e.target.value })} required /></label>
-                                <label className="almox-field"><span>Codigo automatico</span><div className="almox-auto-code">{itemEditId ? itemForm.codigo : `${categoriaAtual.prefix}-00000 (gerado ao salvar)`}</div></label>
-                                <label className="almox-field"><span>Categoria *</span><select value={itemForm.categoria} onChange={e => setItemForm({ ...itemForm, categoria: e.target.value, tamanho: CATEGORIA_CONFIG[e.target.value]?.temTamanho ? itemForm.tamanho : '', modalidade: e.target.value === 'equipamento' ? itemForm.modalidade : 'proprio', valor_locacao_mensal: e.target.value === 'equipamento' ? itemForm.valor_locacao_mensal : '' })}>{CATEGORIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                                <label className="almox-field"><span>Unidade *</span><input value={itemForm.unidade} onChange={e => setItemForm({ ...itemForm, unidade: e.target.value })} placeholder="un, par, kg..." required /></label>
-                                {categoriaAtual.temTamanho && <label className="almox-field"><span>Tamanho / grade (se aplicavel)</span><input value={itemForm.tamanho} onChange={e => setItemForm({ ...itemForm, tamanho: e.target.value })} placeholder="Ex.: M, 42, GG" /></label>}
-                                <label className="almox-field"><span>Estoque minimo</span><input type="number" min="0" step="0.01" value={itemForm.estoque_minimo} onChange={e => setItemForm({ ...itemForm, estoque_minimo: e.target.value })} /></label>
-                                <label className="almox-field"><span>Valor unitario (R$)</span><input type="number" min="0" step="0.01" value={itemForm.valor_unitario} onChange={e => setItemForm({ ...itemForm, valor_unitario: e.target.value })} placeholder="0,00" /></label>
-                                {itemForm.categoria === 'equipamento' && <label className="almox-field"><span>Modalidade *</span><select value={itemForm.modalidade} onChange={e => setItemForm({ ...itemForm, modalidade: e.target.value, valor_locacao_mensal: e.target.value === 'locacao' ? itemForm.valor_locacao_mensal : '' })}><option value="proprio">Proprio</option><option value="locacao">Locacao</option></select></label>}
-                                {itemForm.categoria === 'equipamento' && itemForm.modalidade === 'locacao' && <label className="almox-field"><span>Locacao mensal por unidade (R$) *</span><input type="number" min="0.01" step="0.01" value={itemForm.valor_locacao_mensal} onChange={e => setItemForm({ ...itemForm, valor_locacao_mensal: e.target.value })} placeholder="0,00" required /></label>}
-                                <label className="almox-field full"><span>Descricao</span><textarea rows="3" value={itemForm.descricao} onChange={e => setItemForm({ ...itemForm, descricao: e.target.value })} /></label>
-                            </div>
-                            <div className="almox-form-actions"><button className="almox-btn almox-btn-primary" disabled={saving}><i className="ti ti-device-floppy" /> {saving ? 'Salvando...' : itemEditId ? 'Salvar alteracoes' : `Cadastrar ${categoriaAtual.singular}`}</button></div>
-                        </form>
+                        {itemEditId ? (
+                            <form className="almox-card almox-form-card" onSubmit={submitItem}>
+                                <div className="almox-card-head"><h2><i className="ti ti-pencil" /> Editar {categoriaAtual.singular}</h2><button type="button" className="almox-link" onClick={resetItemForm}>Cancelar edicao</button></div>
+                                <div className="almox-form-grid">
+                                    <label className="almox-field"><span>Nome *</span><input value={itemForm.nome} onChange={e => setItemForm({ ...itemForm, nome: e.target.value })} required /></label>
+                                    <label className="almox-field"><span>Codigo automatico</span><div className="almox-auto-code">{itemForm.codigo}</div></label>
+                                    <label className="almox-field"><span>Categoria *</span><select value={itemForm.categoria} onChange={e => setItemForm({ ...itemForm, categoria: e.target.value, tamanho: CATEGORIA_CONFIG[e.target.value]?.temTamanho ? itemForm.tamanho : '', modalidade: e.target.value === 'equipamento' ? itemForm.modalidade : 'proprio', valor_locacao_mensal: e.target.value === 'equipamento' ? itemForm.valor_locacao_mensal : '' })}>{CATEGORIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                                    <label className="almox-field"><span>Unidade *</span><input value={itemForm.unidade} onChange={e => setItemForm({ ...itemForm, unidade: e.target.value })} placeholder="un, par, kg..." required /></label>
+                                    {categoriaAtual.temTamanho && <label className="almox-field"><span>Tamanho / grade (se aplicavel)</span><input value={itemForm.tamanho} onChange={e => setItemForm({ ...itemForm, tamanho: e.target.value })} placeholder="Ex.: M, 42, GG" /></label>}
+                                    <label className="almox-field"><span>Estoque minimo</span><input type="number" min="0" step="0.01" value={itemForm.estoque_minimo} onChange={e => setItemForm({ ...itemForm, estoque_minimo: e.target.value })} /></label>
+                                    <label className="almox-field"><span>Valor unitario (R$)</span><input type="number" min="0" step="0.01" value={itemForm.valor_unitario} onChange={e => setItemForm({ ...itemForm, valor_unitario: e.target.value })} placeholder="0,00" /></label>
+                                    {itemForm.categoria === 'equipamento' && <label className="almox-field"><span>Modalidade *</span><select value={itemForm.modalidade} onChange={e => setItemForm({ ...itemForm, modalidade: e.target.value, valor_locacao_mensal: e.target.value === 'locacao' ? itemForm.valor_locacao_mensal : '' })}><option value="proprio">Proprio</option><option value="locacao">Locacao</option></select></label>}
+                                    {itemForm.categoria === 'equipamento' && itemForm.modalidade === 'locacao' && <label className="almox-field"><span>Locacao mensal por unidade (R$) *</span><input type="number" min="0.01" step="0.01" value={itemForm.valor_locacao_mensal} onChange={e => setItemForm({ ...itemForm, valor_locacao_mensal: e.target.value })} placeholder="0,00" required /></label>}
+                                    <label className="almox-field full"><span>Descricao</span><textarea rows="3" value={itemForm.descricao} onChange={e => setItemForm({ ...itemForm, descricao: e.target.value })} /></label>
+                                </div>
+                                <div className="almox-form-actions"><button className="almox-btn almox-btn-primary" disabled={saving}><i className="ti ti-device-floppy" /> {saving ? 'Salvando...' : 'Salvar alteracoes'}</button></div>
+                            </form>
+                        ) : (
+                            <form className="almox-card almox-form-card" onSubmit={submitEntries}>
+                                <input ref={nfInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={importNotaFiscal} hidden />
+                                <div className="almox-card-head almox-entry-head">
+                                    <div><h2><i className="ti ti-package-import" /> Nova entrada de itens</h2><p className="almox-hint">Cadastre todos os itens e quantidades da entrada antes de salvar. Os códigos internos são gerados automaticamente.</p></div>
+                                    <button type="button" className="almox-btn almox-btn-secondary" onClick={() => nfInputRef.current?.click()} disabled={importingNF || saving}><i className="ti ti-file-invoice" /> {importingNF ? 'Lendo XML...' : 'Importar XML da NF'}</button>
+                                </div>
+                                <div className="almox-form-grid almox-entry-meta">
+                                    <label className="almox-field"><span>Data da entrada *</span><input type="date" value={entradaForm.data_movimentacao} onChange={e => setEntradaForm({ ...entradaForm, data_movimentacao: e.target.value })} required /></label>
+                                    <label className="almox-field"><span>Fornecedor</span><input value={entradaForm.fornecedor} onChange={e => setEntradaForm({ ...entradaForm, fornecedor: e.target.value })} placeholder="Fornecedor da compra" /></label>
+                                    <label className="almox-field"><span>Número da NF</span><input value={entradaForm.nota_numero} onChange={e => setEntradaForm({ ...entradaForm, nota_numero: e.target.value })} placeholder="Ex.: 12345" /></label>
+                                    <label className="almox-field"><span>Série</span><input value={entradaForm.nota_serie} onChange={e => setEntradaForm({ ...entradaForm, nota_serie: e.target.value })} placeholder="Ex.: 1" /></label>
+                                </div>
+                                <div className="almox-entry-lines">
+                                    {entradaForm.itens.map((line, index) => {
+                                        const categoriaLinha = CATEGORIA_CONFIG[line.categoria] || CATEGORIA_CONFIG.outro;
+                                        return <fieldset key={line._key} className="almox-entry-line">
+                                            <legend>Item {index + 1}</legend>
+                                            <div className="almox-entry-line-actions">
+                                                <span className="almox-auto-code">Código {categoriaLinha.prefix}-00000 (ao salvar)</span>
+                                                {entradaForm.itens.length > 1 && <button type="button" className="almox-link danger" onClick={() => removeEntryLine(line._key)}><i className="ti ti-trash" /> Remover</button>}
+                                            </div>
+                                            <div className="almox-form-grid">
+                                                <label className="almox-field"><span>Nome *</span><input value={line.nome} onChange={e => updateEntryLine(line._key, { nome: e.target.value })} required /></label>
+                                                <label className="almox-field"><span>Quantidade *</span><input type="number" min="0.01" step="0.01" value={line.quantidade} onChange={e => updateEntryLine(line._key, { quantidade: e.target.value })} required /></label>
+                                                <label className="almox-field"><span>Categoria *</span><select value={line.categoria} onChange={e => updateEntryLine(line._key, { categoria: e.target.value, tamanho: CATEGORIA_CONFIG[e.target.value]?.temTamanho ? line.tamanho : '', modalidade: e.target.value === 'equipamento' ? line.modalidade : 'proprio', valor_locacao_mensal: e.target.value === 'equipamento' ? line.valor_locacao_mensal : '' })}>{CATEGORIAS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                                                <label className="almox-field"><span>Unidade *</span><input value={line.unidade} onChange={e => updateEntryLine(line._key, { unidade: e.target.value })} placeholder="un, par, kg..." required /></label>
+                                                {categoriaLinha.temTamanho && <label className="almox-field"><span>Tamanho / grade</span><input value={line.tamanho} onChange={e => updateEntryLine(line._key, { tamanho: e.target.value })} placeholder="Ex.: M, 42, GG" /></label>}
+                                                <label className="almox-field"><span>Estoque minimo</span><input type="number" min="0" step="0.01" value={line.estoque_minimo} onChange={e => updateEntryLine(line._key, { estoque_minimo: e.target.value })} /></label>
+                                                <label className="almox-field"><span>Valor unitario (R$)</span><input type="number" min="0" step="0.01" value={line.valor_unitario} onChange={e => updateEntryLine(line._key, { valor_unitario: e.target.value })} placeholder="0,00" /></label>
+                                                <label className="almox-field"><span>Código do fornecedor</span><input value={line.codigo_fornecedor} onChange={e => updateEntryLine(line._key, { codigo_fornecedor: e.target.value })} placeholder="Opcional" /></label>
+                                                {line.categoria === 'equipamento' && <label className="almox-field"><span>Modalidade *</span><select value={line.modalidade} onChange={e => updateEntryLine(line._key, { modalidade: e.target.value, valor_locacao_mensal: e.target.value === 'locacao' ? line.valor_locacao_mensal : '' })}><option value="proprio">Proprio</option><option value="locacao">Locacao</option></select></label>}
+                                                {line.categoria === 'equipamento' && line.modalidade === 'locacao' && <label className="almox-field"><span>Locacao mensal por unidade (R$) *</span><input type="number" min="0.01" step="0.01" value={line.valor_locacao_mensal} onChange={e => updateEntryLine(line._key, { valor_locacao_mensal: e.target.value })} required /></label>}
+                                                <label className="almox-field full"><span>Descricao</span><textarea rows="2" value={line.descricao} onChange={e => updateEntryLine(line._key, { descricao: e.target.value })} /></label>
+                                            </div>
+                                        </fieldset>;
+                                    })}
+                                </div>
+                                <label className="almox-field full"><span>Observacao geral</span><textarea rows="2" value={entradaForm.observacao} onChange={e => setEntradaForm({ ...entradaForm, observacao: e.target.value })} placeholder="Ex.: recebimento conferido no almoxarifado" /></label>
+                                <div className="almox-form-actions"><button type="button" className="almox-btn almox-btn-secondary" onClick={addEntryLine} disabled={saving || importingNF}><i className="ti ti-plus" /> Adicionar outro item</button><button className="almox-btn almox-btn-primary" disabled={saving || importingNF}><i className="ti ti-device-floppy" /> {saving ? 'Salvando entradas...' : `Salvar ${entradaForm.itens.length} entrada(s)`}</button></div>
+                            </form>
+                        )}
 
                         <section className="almox-card almox-list-card">
                             <div className="almox-card-head"><h2><i className="ti ti-packages" /> Itens em estoque</h2><label className="almox-search"><i className="ti ti-search" /><input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar item" /></label></div>

@@ -21,6 +21,12 @@ export const almoxarifadoApi = {
     criarItem: (body) => fetchWithAuth(`${base}/itens`, {
         method: 'POST', body: JSON.stringify(body),
     }).then(json),
+    importarNotaFiscal: (formData) => fetchWithAuth(`${base}/entradas/importar-nf`, {
+        method: 'POST', body: formData,
+    }).then(json),
+    criarEntradas: (body) => fetchWithAuth(`${base}/entradas`, {
+        method: 'POST', body: JSON.stringify(body),
+    }).then(json),
     editarItem: (id, body) => fetchWithAuth(`${base}/itens/${id}`, {
         method: 'PUT', body: JSON.stringify(body),
     }).then(json),
