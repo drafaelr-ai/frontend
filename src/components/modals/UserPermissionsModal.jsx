@@ -11,6 +11,7 @@ const MODULOS = [
     { id: 'rh', label: 'Pessoal / RH', icon: 'ti-users-group', color: 'var(--module-rh)' },
     { id: 'frota', label: 'Frota', icon: 'ti-truck', color: 'var(--module-frota)' },
     { id: 'solicitacoes', label: 'Solicitações (compras)', icon: 'ti-shopping-cart', color: 'var(--module-solicitacoes)' },
+    { id: 'almoxarifado', label: 'Almoxarifado', icon: 'ti-box-seam', color: 'var(--module-almoxarifado)' },
 ];
 
 const UserPermissionsModal = ({ userToEdit, allObras, onClose, onSave }) => {

@@ -50,11 +50,20 @@ const MODULES = [
         color: '#0EA5A4',
         colorDark: '#0B7A79',
         gradient: 'linear-gradient(135deg, #0EA5A4 0%, #0B7A79 100%)'
+    },
+    {
+        id: 'almoxarifado',
+        icon: 'box-seam',
+        title: 'Almoxarifado',
+        description: 'Fardamentos, EPIs, ferramentas e equipamentos disponíveis.',
+        color: 'var(--module-almoxarifado)',
+        colorDark: 'var(--module-almoxarifado-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-almoxarifado) 0%, var(--module-almoxarifado-dark) 100%)'
     }
 ];
 
-const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS' };
-const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4' };
+const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS', almoxarifado: 'ALMOX.' };
+const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4', almoxarifado: 'var(--module-almoxarifado)' };
 
 function dataBR(iso) {
     if (!iso) return '';

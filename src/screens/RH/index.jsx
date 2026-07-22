@@ -14,6 +14,7 @@ import FuncionariosRH from './FuncionariosRH';
 import ConvencoesRH from './ConvencoesRH';
 import PagamentosRH from './PagamentosRH';
 import EncargosRH from './EncargosRH';
+import PontoRH from './PontoRH';
 
 const TABS = [
     { id: 'dash', icon: 'ti-layout-dashboard', label: 'Visão geral' },
@@ -21,6 +22,7 @@ const TABS = [
     { id: 'cct', icon: 'ti-file-certificate', label: 'Convenções' },
     { id: 'pag', icon: 'ti-cash', label: 'Pagamentos' },
     { id: 'enc', icon: 'ti-receipt-tax', label: 'Encargos · DARF' },
+    { id: 'ponto', icon: 'ti-clock-check', label: 'Ponto eletrônico' },
 ];
 
 export default function RHModule() {
@@ -28,6 +30,7 @@ export default function RHModule() {
     const [tab, setTab] = useState('dash');
     const [obras, setObras] = useState([]);
     const [categorias, setCategorias] = useState([]);
+    const [funcionarios, setFuncionarios] = useState([]);
     const [counts, setCounts] = useState({ func: null, cct: null });
 
     const loadRefs = async () => {
@@ -42,6 +45,7 @@ export default function RHModule() {
         }
         if (oRes.status === 'fulfilled') setObras(Array.isArray(oRes.value) ? oRes.value : []);
         if (cRes.status === 'fulfilled') setCategorias(Array.isArray(cRes.value) ? cRes.value : []);
+        if (fRes.status === 'fulfilled') setFuncionarios(Array.isArray(fRes.value) ? fRes.value : []);
         setCounts({
             func: fRes.status === 'fulfilled' && Array.isArray(fRes.value) ? fRes.value.length : null,
             cct: cvRes.status === 'fulfilled' && Array.isArray(cvRes.value) ? cvRes.value.length : null,
@@ -51,7 +55,7 @@ export default function RHModule() {
     useEffect(() => { loadRefs(); }, []);
 
     const nomeUser = user?.username || 'Usuário';
-    const shared = { obras, categorias, reloadRefs: loadRefs, setCounts };
+    const shared = { obras, categorias, funcionarios, reloadRefs: loadRefs, setCounts };
 
     return (
         <div className="rh-shell">
@@ -104,6 +108,7 @@ export default function RHModule() {
                 {tab === 'cct' && <ConvencoesRH {...shared} />}
                 {tab === 'pag' && <PagamentosRH {...shared} />}
                 {tab === 'enc' && <EncargosRH {...shared} />}
+                {tab === 'ponto' && <PontoRH {...shared} />}
             </div>
         </div>
     );

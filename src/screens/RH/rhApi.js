@@ -76,4 +76,17 @@ export const rhApi = {
     // arquivo (signed url) + dashboard
     arquivoUrl: (tipo, id) => fetchWithAuth(`${base}/arquivo/${tipo}/${id}`).then(j),
     dashboard: (competencia) => fetchWithAuth(`${base}/dashboard?competencia=${competencia}`).then(j),
+
+    // ponto eletrônico
+    marcacoesPonto: (funcionarioId, params = '') =>
+        fetchWithAuth(`${base}/ponto/marcacoes?funcionario_id=${funcionarioId}${params ? `&${params.slice(1)}` : ''}`).then(j),
+    criarMarcacaoPonto: (body) =>
+        fetchWithAuth(`${base}/ponto/marcacoes`, { method: 'POST', body: JSON.stringify(body) }).then(j),
+    removerMarcacaoPonto: (id) =>
+        fetchWithAuth(`${base}/ponto/marcacoes/${id}`, { method: 'DELETE' }).then(j),
+    jornadaPonto: (funcionarioId) => fetchWithAuth(`${base}/ponto/funcionarios/${funcionarioId}/jornada`).then(j),
+    salvarJornadaPonto: (funcionarioId, body) =>
+        fetchWithAuth(`${base}/ponto/funcionarios/${funcionarioId}/jornada`, { method: 'PUT', body: JSON.stringify(body) }).then(j),
+    folhaPonto: (competencia, funcionarioId) =>
+        fetchWithAuth(`${base}/ponto/folha?competencia=${competencia}&funcionario_id=${funcionarioId}`).then(j),
 };

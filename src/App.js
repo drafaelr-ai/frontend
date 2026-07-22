@@ -18,9 +18,10 @@ const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
 const FrotaModule = lazy(() => import('./screens/Frota'));
 const SolicitacoesModule = lazy(() => import('./screens/Solicitacoes'));
+const AlmoxarifadoModule = lazy(() => import('./screens/Almoxarifado'));
 const SolicitacaoPublica = lazy(() => import('./screens/SolicitacaoPublica'));
 
-const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota', 'solicitacoes'];
+const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
 
 // Módulos que o usuário pode ver: master → todos; lista null/ausente → todos.
 function getAllowedModules(user) {
@@ -232,6 +233,19 @@ function App() {
                 <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
                     {user
                         ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><SolicitacoesModule /></Suspense>
+                        : <LoginScreen onBack={handleBackToSelector} />}
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
+    if (selectedModule === 'almoxarifado') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={{ user, token, login, logout, onBackToSelector: handleBackToSelector }}>
+                    {user
+                        ? <Suspense fallback={<div className="loading-screen">Carregando...</div>}><AlmoxarifadoModule /></Suspense>
                         : <LoginScreen onBack={handleBackToSelector} />}
                 </AuthContext.Provider>
             </>
