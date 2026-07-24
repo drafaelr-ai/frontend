@@ -1,10 +1,15 @@
 {
   "name": "Obraly",
   "short_name": "Obraly",
+  "description": "Gestão de obras e patrimônio.",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#001560",
   "theme_color": "#0061FC",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "favicon.ico",

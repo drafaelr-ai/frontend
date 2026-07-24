@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
+import PwaInstallButton from '../components/PwaInstallButton';
 import './LoginScreen.css';
 
 const LoginScreen = ({ onBack }) => {
@@ -141,6 +142,8 @@ const LoginScreen = ({ onBack }) => {
                             )}
                         </button>
                     </form>
+
+                    <PwaInstallButton />
 
                     <p className="ls-footer-hint">Problemas para entrar? Contate o admin.</p>
                 </div>
