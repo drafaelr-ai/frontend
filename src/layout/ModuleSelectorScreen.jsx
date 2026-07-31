@@ -179,7 +179,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
     const restModules = visibleModules.slice(1);
 
     return (
-        <main style={{
+        <main className="ms-screen" style={{
             minHeight: '100vh',
             background: 'linear-gradient(160deg, var(--module-navy) 0%, var(--module-navy-soft) 100%)',
             display: 'flex',

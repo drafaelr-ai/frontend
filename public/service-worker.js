@@ -3,8 +3,14 @@
  *
  * Não armazenamos HTML nem chamadas da API: isso evita exibir dados de outra
  * sessão e mantém todas as operações autenticadas sob as regras do backend.
+ * Este service worker roda também dentro do app Android (Capacitor aponta o
+ * WebView para obraly.uk) — qualquer mudança aqui atinge o app publicado.
+ *
+ * CACHE_VERSION: incrementar a cada release que altere estratégia de cache
+ * ou os arquivos pré-cacheados. O activate apaga caches de versões antigas.
  */
-const STATIC_CACHE = 'obraly-static-v1';
+const CACHE_VERSION = 'v2';
+const STATIC_CACHE = `obraly-static-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 
 self.addEventListener('install', (event) => {
@@ -23,6 +29,15 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// A atualização NUNCA é automática: o novo worker fica em "waiting" até o
+// usuário aceitar no aviso "Nova versão disponível" (UpdateToast). Forçar
+// reload no meio de um lançamento financeiro perderia o formulário digitado.
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 function isStaticAsset(url) {
     return url.pathname.startsWith('/static/')
         || url.pathname === '/manifest.webmanifest'
@@ -34,6 +49,9 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET') return;
 
+    // Cross-origin (APIs no Fly.io, fontes/ícones de CDN) passa direto pela
+    // rede: valor financeiro jamais pode vir de cache, e resposta opaca de
+    // CDN não é verificável antes de guardar.
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) return;
 

@@ -4,14 +4,21 @@ import './styles/tokens.css';
 import './styles/components.css';
 import './index.css';
 import App from './App';
+// mobile.css por último: os overrides de iOS precisam vencer o CSS dos módulos
+import './styles/mobile.css';
 import reportWebVitals from './reportWebVitals';
 import { logger } from './utils/logger';
 import { registerServiceWorker } from './pwa/serviceWorkerRegistration';
+import { setupPlatform } from './pwa/platform';
+import PwaExtras from './pwa/PwaExtras';
+
+setupPlatform();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
+    <PwaExtras />
   </React.StrictMode>
 );
 

@@ -2,19 +2,34 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
+import { SESSION_EXPIRED_FLAG } from './fetchWithAuth';
 import PwaInstallButton from '../components/PwaInstallButton';
 import './LoginScreen.css';
+
+// Sessão derrubada (401/422 ou storage descartado pelo iOS) chega aqui após
+// o reload: aviso neutro, sem stack trace nem loop.
+function consumeSessionExpiredFlag() {
+    try {
+        if (sessionStorage.getItem(SESSION_EXPIRED_FLAG)) {
+            sessionStorage.removeItem(SESSION_EXPIRED_FLAG);
+            return true;
+        }
+    } catch {}
+    return false;
+}
 
 const LoginScreen = ({ onBack }) => {
     const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
+    const [sessionExpired, setSessionExpired] = useState(consumeSessionExpiredFlag);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = (e) => {
         e.preventDefault();
         setError(null);
+        setSessionExpired(false);
         setIsLoading(true);
 
         fetch(`${API_URL}/login`, {
@@ -121,6 +136,13 @@ const LoginScreen = ({ onBack }) => {
                         <div className="ls-forgot-row">
                             <span className="ls-forgot">Esqueci minha senha</span>
                         </div>
+
+                        {sessionExpired && !error && (
+                            <div className="ls-session-note" role="status">
+                                <i className="ti ti-clock" aria-hidden="true"></i>
+                                Sua sessão expirou, entre novamente.
+                            </div>
+                        )}
 
                         {error && (
                             <div className="ls-error" role="alert">

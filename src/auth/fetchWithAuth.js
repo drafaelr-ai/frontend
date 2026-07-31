@@ -1,5 +1,10 @@
 import { notify } from '../utils/notify';
 import { getToken, removeToken } from './tokenStorage';
+import { noticeNetworkFailure, NETWORK_ERROR_MESSAGE } from './networkNotice';
+
+// Marca lida pelo LoginScreen após o reload: mostra "sessão expirada" de
+// forma neutra em vez de deixar a pessoa cair no login sem explicação.
+export const SESSION_EXPIRED_FLAG = 'obraly_sessao_expirada';
 
 export const fetchWithAuth = async (url, options = {}) => {
     const token = await getToken('token');
@@ -16,7 +21,15 @@ export const fetchWithAuth = async (url, options = {}) => {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(url, { ...options, headers });
+    let response;
+    try {
+        response = await fetch(url, { ...options, headers });
+    } catch (err) {
+        // Timeout deliberado (fetchWithAuthTimeout) segue seu próprio fluxo.
+        if (err && err.name === 'AbortError') throw err;
+        noticeNetworkFailure();
+        throw new Error(NETWORK_ERROR_MESSAGE);
+    }
 
     if (response.status === 401 || response.status === 422) {
         await removeToken('token');
@@ -25,6 +38,8 @@ export const fetchWithAuth = async (url, options = {}) => {
         // seletor — senão o próximo login (inclusive de OUTRO usuário no
         // mesmo aparelho) herda o módulo e cai direto dentro dele.
         await removeToken('selectedModule');
+
+        try { sessionStorage.setItem(SESSION_EXPIRED_FLAG, '1'); } catch {}
 
         notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
 

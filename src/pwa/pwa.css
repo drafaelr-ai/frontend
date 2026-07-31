@@ -1,0 +1,197 @@
+/* Componentes PWA (offline, atualização, instalação) — só var(--*) */
+
+/* ── Banner de conectividade ────────────────────────────── */
+
+.pwa-offline-banner {
+    position: fixed;
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: calc(100vw - 32px);
+    padding: 8px 14px;
+    border-radius: var(--radius-full, 999px);
+    background: var(--surface-dark);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    box-shadow: var(--shadow-modal, 0 8px 24px rgba(0, 0, 0, 0.25));
+}
+
+.pwa-offline-banner i { color: var(--status-warning); }
+
+.pwa-offline-banner--ok { background: var(--status-success-text); }
+.pwa-offline-banner--ok i { color: var(--text-on-dark); }
+
+/* ── Estado offline de tela cheia ───────────────────────── */
+
+.pwa-offline-state {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-6);
+    text-align: center;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+}
+
+.pwa-offline-state > i {
+    font-size: 40px;
+    color: var(--text-muted);
+}
+
+.pwa-offline-state h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-medium);
+}
+
+.pwa-offline-state p {
+    margin: 0;
+    max-width: 320px;
+    font-size: var(--text-base);
+    color: var(--text-muted);
+    line-height: var(--leading-normal, 1.5);
+}
+
+.pwa-offline-state button {
+    margin-top: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 36px;
+    padding: 0 16px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--brand-primary);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+}
+
+/* ── Aviso de nova versão ───────────────────────────────── */
+
+.pwa-update-toast {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: calc(100vw - 32px);
+    padding: 10px 14px;
+    border-radius: var(--radius-lg, 10px);
+    background: var(--surface-dark);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    box-shadow: var(--shadow-modal, 0 8px 24px rgba(0, 0, 0, 0.25));
+}
+
+.pwa-update-toast > i { color: var(--brand-accent); font-size: 18px; }
+
+.pwa-update-btn {
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--module-obras);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+}
+
+.pwa-update-close {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: var(--text-on-dark-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+}
+
+/* ── Folha de instalação (iOS) ──────────────────────────── */
+
+.pwa-install-sheet {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 100000;
+    padding: var(--space-5, 20px);
+    border-radius: var(--radius-xl);
+    background: var(--surface-card);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    box-shadow: var(--shadow-modal, 0 12px 40px rgba(0, 0, 0, 0.3));
+}
+
+.pwa-install-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.pwa-install-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-md);
+}
+
+.pwa-install-title img {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg, 10px);
+}
+
+.pwa-install-step {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    line-height: var(--leading-normal, 1.5);
+}
+
+.pwa-install-step i {
+    font-size: 20px;
+    color: var(--module-obras);
+    flex-shrink: 0;
+}
+
+.pwa-install-ok {
+    width: 100%;
+    height: 38px;
+    margin-top: var(--space-2);
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--module-navy);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+}

@@ -220,7 +220,8 @@ function ConfirmModal({ state, onConfirm }) {
 
 const toastStackStyle = {
   position: 'fixed',
-  top: 20,
+  // Safe area do iOS (env = 0 nas demais plataformas)
+  top: 'calc(20px + env(safe-area-inset-top, 0px))',
   right: 20,
   zIndex: 99999,
   display: 'flex',

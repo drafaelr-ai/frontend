@@ -1,0 +1,125 @@
+/*
+ * Obraly — adaptações iOS (PWA standalone e Safari)
+ *
+ * Tudo escopado em body.platform-ios (classe posta por src/pwa/platform.js).
+ * env(safe-area-inset-*) vale 0 fora do iOS com viewport-fit=cover, então
+ * nenhuma regra daqui altera desktop nem o WebView do app Android.
+ *
+ * REGRA: nenhum token global muda aqui — só overrides sob .platform-ios.
+ */
+
+/* ── Comportamento de app (não de site) ─────────────────── */
+
+body.platform-ios {
+    /* sem bounce do body; listas internas continuam com scroll próprio */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Long-press não abre menu de seleção em elementos de interface. */
+.platform-ios button,
+.platform-ios a,
+.platform-ios img,
+.platform-ios i.ti,
+.platform-ios .wnb-item,
+.platform-ios .wnb-logo,
+.platform-ios .toolbar-btn,
+.platform-ios .menu-dropdown-item,
+.platform-ios .ms-row-card,
+.platform-ios .ms-hero-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Valores monetários, notas e códigos continuam copiáveis. */
+.platform-ios td,
+.platform-ios .m-view-dd,
+.platform-ios input,
+.platform-ios textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Safari dá zoom automático em campo com fonte < 16px. Só aqui — o token
+   global (--text-base: 13px) não muda, senão quebraria o desktop. */
+.platform-ios input,
+.platform-ios select,
+.platform-ios textarea {
+    font-size: 16px !important;
+}
+
+/* ── Safe area: status bar / notch (topo) ───────────────── */
+
+/* Navbar sticky do módulo Obras (detalhe da obra) */
+.platform-ios .wnb-bar {
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (max-width: 768px) {
+    /* dropdown do menu é fixed top:56px nesse breakpoint */
+    .platform-ios .menu-dropdown {
+        top: calc(56px + env(safe-area-inset-top, 0px));
+    }
+}
+
+/* Header sticky da home de Obras */
+.platform-ios .db-header {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+/* Navbars escuras dos módulos (52px, rolam com a página) */
+.platform-ios .rh-navbar,
+.platform-ios .frota-navbar,
+.platform-ios .solc-navbar,
+.platform-ios .almox-navbar {
+    height: calc(52px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Seletor de módulos (fundo navy ocupa a tela toda) */
+.platform-ios .ms-screen {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* ── Safe area: barra de gestos (rodapé) ────────────────── */
+
+/* Modais viram bottom sheet no mobile (Modal.css ≤640px) — o footer com os
+   botões não pode ficar sob a barra de gestos. */
+@media (max-width: 640px) {
+    .platform-ios .m-container {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
+/* ── 100vh → 100dvh (Safari corta o rodapé com 100vh) ───── */
+
+@supports (min-height: 100dvh) {
+    .platform-ios .rh-shell,
+    .platform-ios .frota-shell,
+    .platform-ios .solc-shell,
+    .platform-ios .almox-shell,
+    .platform-ios .ls-wrapper {
+        min-height: 100dvh;
+    }
+
+    .platform-ios .ms-screen {
+        min-height: 100dvh !important;
+    }
+
+    .platform-ios .m-container {
+        max-height: 90dvh;
+    }
+
+    .platform-ios .m-body--scroll {
+        max-height: 70dvh;
+    }
+
+    @media (max-width: 640px) {
+        .platform-ios .m-container {
+            max-height: 92dvh;
+        }
+    }
+}
