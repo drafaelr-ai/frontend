@@ -37,8 +37,12 @@
         flex-direction: column;
     }
 
+    /* Em coluna, o flex-basis de 380px do layout desktop viraria ALTURA
+       mínima — o card hero ficava gigante no celular. Aqui a altura é a
+       do conteúdo. */
     .ms-hero-card,
     .ms-rows-col {
         min-width: 0;
+        flex: 0 0 auto;
     }
 }
