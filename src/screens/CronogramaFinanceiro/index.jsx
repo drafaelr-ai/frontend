@@ -11,6 +11,7 @@ import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { formatCurrency, getTodayString } from '../../utils/format';
+import { montarParcelasParaSuperlink } from '../../utils/superlink';
 
 const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, simplified = false }) => {
     const [pagamentosFuturos, setPagamentosFuturos] = useState([]);
@@ -88,6 +89,11 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [boletosObra, obraNome]);
 
+    const parcelasParaSuperlink = useMemo(
+        () => montarParcelasParaSuperlink(pagamentosParcelados, obraNome),
+        [pagamentosParcelados, obraNome]
+    );
+
     const pagamentosParaSuperlink = useMemo(() => {
         // Sem seleção → todos os pagamentos futuros pendentes + boletos pré-selecionados
         if (itensSelecionados.length === 0) {
@@ -101,7 +107,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                     pag.codigo_barras,
                 )
             );
-            return [...pagItems, ...boletosSuperlink];
+            return [...pagItems, ...parcelasParaSuperlink, ...boletosSuperlink];
         }
 
         const selectedItems = itensSelecionados.map(({ tipo, id }) => {
@@ -124,20 +130,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                 );
             }
             if (tipo === 'parcela') {
-                for (const pp of pagamentosParcelados) {
-                    const parcela = pp.parcelas?.find(p => p.id === id);
-                    if (parcela) {
-                        return _slItem(
-                            `parcela-${id}`,
-                            `${pp.descricao || pp.fornecedor || 'Parcelado'} · parcela`,
-                            parcela.valor_parcela,
-                            'parcelado',
-                            pp.pix,
-                            null,
-                        );
-                    }
-                }
-                return null;
+                return parcelasParaSuperlink.find(parcela => parcela.id === `parcela-${id}`) || null;
             }
             return null;
         }).filter(Boolean);
@@ -145,7 +138,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
         // Boletos sempre incluídos (seleção na tela não afeta boletos)
         return [...selectedItems, ...boletosSuperlink];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [itensSelecionados, pagamentosFuturosPrevisto, pagamentosFuturos, pagamentosServicoPendentes, pagamentosParcelados, boletosSuperlink, obraNome]);
+    }, [itensSelecionados, pagamentosFuturosPrevisto, pagamentosFuturos, pagamentosServicoPendentes, parcelasParaSuperlink, boletosSuperlink, obraNome]);
 
     const showCronogramaToast = (msg, color = 'var(--status-success)') => {
         const toast = document.createElement('div');
