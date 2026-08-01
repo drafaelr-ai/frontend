@@ -25,6 +25,7 @@ import WindowsNavBar, { WindowsNavStyles } from '../../layout/WindowsNavBar';
 import HistoricoPagamentosCard from '../HistoricoPagamentosCard';
 import CronogramaFinanceiro from '../CronogramaFinanceiro';
 import GestaoBoletos from '../../components/GestaoBoletos';
+import Planejamento from '../Planejamento';
 function ObraDetalhe() {
     const { user, logout } = useAuth();
     const [obras, setObras] = useState([]);
@@ -1135,6 +1136,15 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             onSwitchToClassic={() => setCurrentPage('cronograma-obra')}
+                        />
+                    )}
+
+                    {/* === PÁGINA: PLANEJAMENTO SEMANAL E MENSAL === */}
+                    {currentPage === 'planejamento' && (
+                        <Planejamento
+                            obraId={obraSelecionada.id}
+                            obraNome={obraSelecionada.nome}
+                            user={user}
                         />
                     )}
 

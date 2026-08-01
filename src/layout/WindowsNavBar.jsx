@@ -427,6 +427,7 @@ const WindowsNavBar = ({
             id: 'cronograma',
             label: 'Cronograma',
             items: [
+                { id: 'planejamento', label: 'Planejamento Semanal', icon: 'ti-calendar-stats', shortcut: 'F10' },
                 { id: 'cronograma-obra', label: 'Cronograma de Obras', icon: 'ti-clipboard-list', shortcut: 'F5' },
                 { id: 'cronograma-new',  label: 'Nova Visualização',  icon: 'ti-sparkles' },
             ]
@@ -466,6 +467,7 @@ const WindowsNavBar = ({
         { id: 'home',          icon: 'ti-home',           label: 'Início' },
         { id: 'orcamento-eng', icon: 'ti-ruler-2',        label: 'Orçamento' },
         { id: 'financeiro',    icon: 'ti-calendar',       label: 'Financeiro' },
+        { id: 'planejamento',   icon: 'ti-calendar-stats', label: 'Planejamento' },
         { id: 'cronograma-obra',icon: 'ti-clipboard-list',label: 'Cronograma' },
         { id: 'boletos',       icon: 'ti-file-text',      label: 'Boletos' },
         { id: 'relatorios',    icon: 'ti-chart-bar',      label: 'Relatórios' },

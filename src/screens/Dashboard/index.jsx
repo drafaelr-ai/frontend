@@ -335,6 +335,13 @@ export default function Dashboard() {
                     </p>
                 </div>
                 <div className="db-period-toggle">
+                    <button
+                        className="db-period-btn"
+                        onClick={() => { window.location.href = `${window.location.pathname}?page=planejamento`; }}
+                    >
+                        <i className="ti ti-calendar-stats" aria-hidden="true" style={{ marginRight: 4 }} />
+                        Planejamento
+                    </button>
                     <span className="db-period-btn active" style={{ cursor: 'default' }}>
                         <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 4 }} />
                         {mesAtualLabel()}
