@@ -134,13 +134,33 @@ describe('Planejamento', () => {
         expect(screen.getByRole('heading', { name: 'Concretagem da laje' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: /Apontar produção/ }));
-        fireEvent.change(screen.getByLabelText('Quantidade *'), { target: { value: '5' } });
+        fireEvent.change(screen.getByLabelText('Quantidade realizada *'), { target: { value: '5' } });
         fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
-        await waitFor(() => expect(planejamentoApi.addProgress).toHaveBeenCalledWith(10, expect.objectContaining({ quantidade: '5' })));
+        await waitFor(() => expect(planejamentoApi.addProgress).toHaveBeenCalledWith(10, {
+            quantidade: '5',
+            observacao: '',
+        }));
 
         fireEvent.click(screen.getByRole('button', { name: 'Resolver' }));
         await waitFor(() => expect(planejamentoApi.resolveRestriction).toHaveBeenCalledWith(77));
         expect(screen.queryByText('Excluir atividade')).not.toBeInTheDocument();
+    });
+
+    it('aponta avanço percentual sem enviar data pelo navegador', async () => {
+        render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'comum' }} />);
+        const cardTitle = await screen.findByText('Concretagem da laje');
+        fireEvent.click(cardTitle.closest('button'));
+
+        fireEvent.click(screen.getByRole('button', { name: /Apontar produção/ }));
+        fireEvent.click(screen.getByRole('button', { name: 'Percentual' }));
+        fireEvent.change(screen.getByLabelText('Novo avanço total (%) *'), { target: { value: '60' } });
+        expect(screen.getByText('A data será registrada automaticamente como hoje.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+        await waitFor(() => expect(planejamentoApi.addProgress).toHaveBeenCalledWith(10, {
+            percentual: '60',
+            observacao: '',
+        }));
     });
 
     it('abre diretamente a atividade indicada pelo painel global', async () => {

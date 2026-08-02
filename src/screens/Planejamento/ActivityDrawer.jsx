@@ -11,7 +11,11 @@ const STATUS_LABELS = {
 
 function ActivityDrawer({ activity, canDelete, onClose, onEdit, onDelete, onAddProgress, onAddRestriction, onResolveRestriction }) {
     const [mode, setMode] = useState(null);
+    const [progressType, setProgressType] = useState(
+        Number(activity.quantidade_planejada || 0) > 0 ? 'quantidade' : 'percentual'
+    );
     const [quantity, setQuantity] = useState('');
+    const [percentage, setPercentage] = useState('');
     const [progressNote, setProgressNote] = useState('');
     const [restriction, setRestriction] = useState({ tipo: 'material', descricao: '', responsavel: '', data_limite: '' });
     const [working, setWorking] = useState(false);
@@ -21,12 +25,14 @@ function ActivityDrawer({ activity, canDelete, onClose, onEdit, onDelete, onAddP
         setWorking(true);
         try {
             const result = await onAddProgress({
-                quantidade: quantity,
+                ...(progressType === 'percentual'
+                    ? { percentual: percentage }
+                    : { quantidade: quantity }),
                 observacao: progressNote,
-                data_apontamento: new Date().toISOString().slice(0, 10),
             });
             if (result) {
                 setQuantity('');
+                setPercentage('');
                 setProgressNote('');
                 setMode(null);
             }
@@ -81,8 +87,17 @@ function ActivityDrawer({ activity, canDelete, onClose, onEdit, onDelete, onAddP
             {mode === 'progress' ? (
                 <form className="plan-inline-form" onSubmit={submitProgress}>
                     <h3>Produção realizada hoje</h3>
-                    <label className="plan-field"><span>Quantidade *</span><input required autoFocus type="number" min="0.001" step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
+                    <div className="plan-progress-mode" role="group" aria-label="Forma do apontamento">
+                        <button type="button" className={progressType === 'quantidade' ? 'active' : ''} aria-pressed={progressType === 'quantidade'} onClick={() => setProgressType('quantidade')}>Quantidade</button>
+                        <button type="button" className={progressType === 'percentual' ? 'active' : ''} aria-pressed={progressType === 'percentual'} onClick={() => setProgressType('percentual')}>Percentual</button>
+                    </div>
+                    {progressType === 'percentual' ? (
+                        <label className="plan-field"><span>Novo avanço total (%) *</span><input required autoFocus type="number" min={Math.min(100, Number(activity.percentual_conclusao || 0) + 0.1)} max="100" step="0.1" value={percentage} onChange={e => setPercentage(e.target.value)} /></label>
+                    ) : (
+                        <label className="plan-field"><span>Quantidade realizada *</span><input required autoFocus type="number" min="0.001" step="0.001" value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
+                    )}
                     <label className="plan-field"><span>Observação</span><textarea rows="2" value={progressNote} onChange={e => setProgressNote(e.target.value)} /></label>
+                    <p className="plan-progress-date">A data será registrada automaticamente como hoje.</p>
                     <button className="plan-button plan-button--primary" disabled={working}>{working ? 'Registrando…' : 'Registrar'}</button>
                 </form>
             ) : null}
@@ -111,7 +126,7 @@ function ActivityDrawer({ activity, canDelete, onClose, onEdit, onDelete, onAddP
             <section className="plan-drawer__section">
                 <h3>Últimos apontamentos</h3>
                 {activity.apontamentos?.length ? activity.apontamentos.slice(0, 5).map(item => (
-                    <article className="plan-note" key={item.id}><strong>+{item.quantidade} {activity.unidade}</strong><span>{item.data_apontamento} {item.observacao ? `· ${item.observacao}` : ''}</span></article>
+                    <article className="plan-note" key={item.id}><strong>{item.tipo_apontamento === 'percentual' ? `Avanço total: ${item.percentual}%` : `+${item.quantidade} ${activity.unidade}`}</strong><span>{item.data_apontamento} {item.observacao ? `· ${item.observacao}` : ''}</span></article>
                 )) : <p className="plan-muted">Ainda não há produção apontada.</p>}
             </section>
 
