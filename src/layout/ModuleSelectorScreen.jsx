@@ -191,7 +191,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
             {/* Topbar */}
             <div style={{
                 width: '100%',
-                maxWidth: '1080px',
+                maxWidth: '1400px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
@@ -347,7 +347,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
             {/* Painel Atenção hoje */}
             {pendencias.length > 0 && (
                 <div style={{
-                    width: '100%', maxWidth: '1080px', marginTop: '20px',
+                    width: '100%', maxWidth: '1400px', marginTop: '20px', boxSizing: 'border-box',
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '20px', padding: '18px 22px 14px'

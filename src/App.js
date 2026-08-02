@@ -10,6 +10,7 @@ import LoginScreen from './auth/LoginScreen';
 import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
+import GlobalPlanejamento from './screens/Planejamento/GlobalPlanejamento';
 import SuperlinkPublico from './screens/SuperlinkPublico';
 import AdminPanelModal from './components/modals/AdminPanelModal';
 import TrocarSenhaModal from './components/modals/TrocarSenhaModal';
@@ -280,7 +281,9 @@ function App() {
                 {user
                     ? (new URLSearchParams(window.location.search).get('obra')
                         ? <ObraDetalhe />
-                        : <Dashboard />)
+                        : (new URLSearchParams(window.location.search).get('page') === 'planejamento'
+                            ? <GlobalPlanejamento />
+                            : <Dashboard />))
                     : <LoginScreen onBack={handleBackToSelector} />}
             </AuthContext.Provider>
         </>
