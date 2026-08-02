@@ -41,6 +41,46 @@ describe('GlobalFinanceiro', () => {
         expect(screen.getByRole('button', { name: /Caixa/i })).toBeInTheDocument();
     });
 
+    it('mantém obras arquivadas no financeiro mesmo quando o detalhe não carrega', async () => {
+        fetchWithAuth.mockImplementation(async url => {
+            if (url.endsWith('/obras?mostrar_concluidas=true&incluir_arquivadas=true')) {
+                return {
+                    ok: true,
+                    json: async () => [
+                        { id: 2, nome: 'Alphaville', cliente: 'PB' },
+                        {
+                            id: 9,
+                            nome: 'Obra Histórica',
+                            cliente: 'Cliente antigo',
+                            arquivada: true,
+                            orcamento_total: 5000,
+                            total_pago: 4200,
+                            liberado_pagamento: 300,
+                            despesas_extras: 100,
+                        },
+                    ],
+                };
+            }
+            if (url.endsWith('/obras/2')) {
+                return { ok: true, json: async () => ({ sumarios: {} }) };
+            }
+            if (url.endsWith('/obras/9')) {
+                return { ok: false, json: async () => ({ erro: 'Obra arquivada' }) };
+            }
+            throw new Error(`URL não simulada: ${url}`);
+        });
+
+        render(<GlobalFinanceiro />);
+
+        expect(await screen.findByText('Obra Histórica')).toBeInTheDocument();
+        expect(screen.getByText('Arquivada')).toBeInTheDocument();
+        expect(screen.getAllByText('R$ 4.200,00')).toHaveLength(2);
+
+        fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }));
+        expect(screen.queryByRole('option', { name: /Obra Histórica/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('option', { name: /Alphaville/i })).toBeInTheDocument();
+    });
+
     it('cria lançamento vinculado ao orçamento na obra selecionada', async () => {
         fetchWithAuth.mockImplementation(async (url, options = {}) => {
             if (url.endsWith('/obras?mostrar_concluidas=true&incluir_arquivadas=true')) {

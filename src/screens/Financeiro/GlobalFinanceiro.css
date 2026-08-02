@@ -21,10 +21,14 @@
 .fin-global-panel__title > strong { display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 999px; background: #e8f7ef; color: #08764a; }
 .fin-global-list { display: grid; gap: 10px; padding: 14px; }
 .fin-work-card { border: 1px solid var(--border-subtle); border-radius: 13px; overflow: hidden; background: var(--surface-card); }
+.fin-work-card--archived { border-color: #d7dce4; background: var(--surface-subtle); }
 .fin-work-main { width: 100%; display: grid; grid-template-columns: 42px minmax(180px, 1fr) minmax(150px, auto) 190px 20px; align-items: center; gap: 14px; padding: 14px 16px; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .fin-work-main:hover { background: var(--surface-subtle); }
 .fin-work-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: #e8f7ef; color: #08764a; font-size: 20px; }
 .fin-work-name, .fin-work-value, .fin-work-progress { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fin-work-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fin-work-title strong { min-width: 0; }
+.fin-work-title em { flex: 0 0 auto; padding: 3px 7px; border-radius: 999px; background: #e5e7eb; color: #4b5563; font-size: 10px; font-style: normal; font-weight: 800; text-transform: uppercase; }
 .fin-work-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fin-work-name small, .fin-work-value small, .fin-work-progress small { color: var(--text-muted); }
 .fin-work-value { text-align: right; }

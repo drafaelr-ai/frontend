@@ -12,6 +12,16 @@ function openWork(obraId, page = 'home') {
     window.location.href = `${window.location.pathname}?obra=${obraId}&page=${page}`;
 }
 
+function getFinancialSummary(row) {
+    const detail = row.detail?.sumarios;
+    return {
+        orcamento_total: detail?.orcamento_total ?? row.orcamento_total ?? 0,
+        valores_pagos: detail?.valores_pagos ?? row.total_pago ?? 0,
+        liberado_pagamento: detail?.liberado_pagamento ?? row.liberado_pagamento ?? 0,
+        despesas_extras: detail?.despesas_extras ?? row.despesas_extras ?? 0,
+    };
+}
+
 export default function GlobalFinanceiro() {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -31,10 +41,12 @@ export default function GlobalFinanceiro() {
             const details = await Promise.allSettled(obras.map(async obra => {
                 const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}`);
                 if (!response.ok) throw new Error(`Falha ao carregar ${obra.nome}`);
-                const detail = await response.json();
-                return { ...obra, detail };
+                return response.json();
             }));
-            setRows(details.filter(item => item.status === 'fulfilled').map(item => item.value));
+            setRows(obras.map((obra, index) => ({
+                ...obra,
+                detail: details[index].status === 'fulfilled' ? details[index].value : null,
+            })));
         } catch (error) {
             notify.error(error.message || 'Erro ao carregar o painel financeiro.');
         } finally {
@@ -123,8 +135,10 @@ export default function GlobalFinanceiro() {
             .some(value => value?.toLocaleLowerCase('pt-BR').includes(term)));
     }, [rows, search]);
 
+    const activeRows = useMemo(() => rows.filter(row => !row.arquivada), [rows]);
+
     const totals = useMemo(() => rows.reduce((acc, row) => {
-        const summary = row.detail?.sumarios || {};
+        const summary = getFinancialSummary(row);
         acc.budget += summary.orcamento_total || 0;
         acc.paid += summary.valores_pagos || 0;
         acc.pending += summary.liberado_pagamento || 0;
@@ -152,7 +166,7 @@ export default function GlobalFinanceiro() {
                                 placeholder="Buscar obra..."
                             />
                         </label>
-                        <button className="fin-global-new" type="button" onClick={openNewPayment} disabled={loading || !rows.length}>
+                        <button className="fin-global-new" type="button" onClick={openNewPayment} disabled={loading || !activeRows.length}>
                             <i className="ti ti-plus" aria-hidden="true" />
                             Novo lançamento
                         </button>
@@ -176,15 +190,21 @@ export default function GlobalFinanceiro() {
                     ) : filteredRows.length ? (
                         <div className="fin-global-list">
                             {filteredRows.map(row => {
-                                const summary = row.detail?.sumarios || {};
+                                const summary = getFinancialSummary(row);
                                 const percent = summary.orcamento_total > 0
                                     ? summary.valores_pagos / summary.orcamento_total * 100
                                     : 0;
                                 return (
-                                    <article className="fin-work-card" key={row.id}>
+                                    <article className={`fin-work-card${row.arquivada ? ' fin-work-card--archived' : ''}`} key={row.id}>
                                         <button className="fin-work-main" onClick={() => openWork(row.id, 'home')}>
                                             <span className="fin-work-icon"><i className="ti ti-building" /></span>
-                                            <span className="fin-work-name"><strong>{row.nome}</strong><small>{row.cliente || 'Sem cliente informado'}</small></span>
+                                            <span className="fin-work-name">
+                                                <span className="fin-work-title">
+                                                    <strong>{row.nome}</strong>
+                                                    {row.arquivada && <em>Arquivada</em>}
+                                                </span>
+                                                <small>{row.cliente || 'Sem cliente informado'}</small>
+                                            </span>
                                             <span className="fin-work-value"><small>Pago</small><strong>{formatCurrency(summary.valores_pagos || 0)}</strong></span>
                                             <span className="fin-work-progress"><strong>{percent.toFixed(0)}%</strong><i><b style={{ width: `${Math.min(percent, 100)}%` }} /></i><small>de {formatCurrency(summary.orcamento_total || 0)}</small></span>
                                             <i className="ti ti-chevron-right" />
@@ -207,7 +227,7 @@ export default function GlobalFinanceiro() {
             {showNewPayment && (
                 <InserirPagamentoModal
                     obraId={selectedObraId}
-                    obras={rows.map(({ id, nome, cliente }) => ({ id, nome, cliente }))}
+                    obras={activeRows.map(({ id, nome, cliente }) => ({ id, nome, cliente }))}
                     onObraChange={setSelectedObraId}
                     onClose={closeNewPayment}
                     onSave={savePayment}
