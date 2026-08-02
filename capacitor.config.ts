@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Obraly Pro',
   webDir: 'build',
   server: {
+    url: 'https://obraly.uk',
     androidScheme: 'https',
     allowNavigation: [
       'obraly-api.fly.dev',
