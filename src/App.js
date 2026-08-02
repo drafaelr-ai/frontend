@@ -124,23 +124,16 @@ function App() {
     };
 
     const handleBackToSelector = async () => {
+        if (window.location.search) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
         setSelectedModule(null);
         await deleteToken('selectedModule');
     };
 
     const handleGoToDashboard = async () => {
-        // O logotipo dos módulos retorna à home de Obras, sem deixar uma
-        // obra específica presa na URL. Para perfis sem Obras, volta ao
-        // seletor em vez de abrir uma tela sem permissão.
-        if (!getAllowedModules(user).includes('obras')) {
-            await handleBackToSelector();
-            return;
-        }
-        if (window.location.search) {
-            window.history.replaceState(null, '', window.location.pathname);
-        }
-        setSelectedModule('obras');
-        await storeToken('selectedModule', 'obras');
+        // O logotipo Obraly é o atalho global para a primeira tela após o login.
+        await handleBackToSelector();
     };
 
     const login = async (data) => {

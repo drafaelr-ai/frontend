@@ -42,7 +42,7 @@ function normalizePageForModule(page, moduleMode) {
 }
 
 function ObraDetalhe({ moduleMode = 'obras' }) {
-    const { user, logout } = useAuth();
+    const { user, logout, onBackToSelector } = useAuth();
     const defaultPage = getDefaultPage(moduleMode);
     const goToModuleHome = () => { window.location.href = window.location.pathname; };
     const [obras, setObras] = useState([]);
@@ -988,6 +988,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                     obras={obras}
                     onLogout={logout}
                     onModuleHome={goToModuleHome}
+                    onBackToSelector={onBackToSelector}
                 />
                 
                 {/* Conteúdo Principal */}

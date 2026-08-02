@@ -62,6 +62,17 @@ const WindowsNavStyles = () => (
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .wnb-logo:focus-visible {
+            outline: 2px solid var(--text-on-dark);
+            outline-offset: 4px;
+            border-radius: var(--radius-sm);
         }
 
         .wnb-logo-box {
@@ -395,6 +406,7 @@ const WindowsNavBar = ({
     obras,
     onLogout,
     onModuleHome,
+    onBackToSelector,
 }) => {
     const [activeMenu, setActiveMenu] = useState(null);
     const menuRef = React.useRef(null);
@@ -601,15 +613,16 @@ const WindowsNavBar = ({
             {/* === NAVBAR === */}
             <nav className="wnb-bar" ref={menuRef}>
                 <div className="wnb-left">
-                    <div
+                    <button
+                        type="button"
                         className="wnb-logo"
-                        style={{ cursor: 'pointer' }}
-                        onClick={onModuleHome}
-                        title="Voltar à home do módulo"
+                        onClick={onBackToSelector}
+                        title="Ir para o dashboard principal"
+                        aria-label="Ir para o dashboard principal"
                     >
                         <img src="/obraly-mark.png" alt="" className="wnb-logo-box" />
                         <span className="wnb-logo-text">Obraly</span>
-                    </div>
+                    </button>
 
                     <div className="wnb-nav">
                         {menuStructure.map(menu => (

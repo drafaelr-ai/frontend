@@ -11,6 +11,7 @@ const baseProps = {
     setObraSelecionada: jest.fn(),
     obras: [{ id: 2, nome: 'Alphaville' }],
     onLogout: jest.fn(),
+    onBackToSelector: jest.fn(),
 };
 
 describe('WindowsNavBar por modulo', () => {
@@ -37,6 +38,24 @@ describe('WindowsNavBar por modulo', () => {
         expect(onModuleHome).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: 'Planejamento da obra' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Orçamento' })).not.toBeInTheDocument();
+    });
+
+    it('logo Obraly volta para o dashboard principal, não para a home do módulo', () => {
+        const onBackToSelector = jest.fn();
+        const onModuleHome = jest.fn();
+        render(
+            <WindowsNavBar
+                {...baseProps}
+                moduleMode="financeiro"
+                onBackToSelector={onBackToSelector}
+                onModuleHome={onModuleHome}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Ir para o dashboard principal' }));
+
+        expect(onBackToSelector).toHaveBeenCalledTimes(1);
+        expect(onModuleHome).not.toHaveBeenCalled();
     });
 
     it('Financeiro mantém seus atalhos e não expõe o orçamento de engenharia', () => {

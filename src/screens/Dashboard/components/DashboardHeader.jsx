@@ -48,10 +48,16 @@ export default function DashboardHeader() {
 
     return (
         <header className="dh-root">
-            <div className="dh-left">
+            <button
+                type="button"
+                className="dh-left dh-brand-button"
+                onClick={onBackToSelector}
+                title="Ir para o dashboard principal"
+                aria-label="Ir para o dashboard principal"
+            >
                 <img src="/obraly-mark.png" alt="" className="dh-logo-mark" />
                 <span className="dh-logo">Obraly</span>
-            </div>
+            </button>
             <div className="dh-right">
                 <button
                     onClick={onBackToSelector}
