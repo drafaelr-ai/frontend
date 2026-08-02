@@ -13,6 +13,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { notify, confirmDialog } from '../utils/notify';
 import { logger } from '../utils/logger';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
+import {
+    calculateBudgetItemTotals,
+    getBudgetQuantityError,
+    isVerbaUnit,
+    normalizeBudgetForm
+} from '../utils/orcamentoItem';
 
 // =====================================================
 // ESTILOS
@@ -711,7 +717,9 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         codigo: itemParaEditar?.codigo || '',
         descricao: itemParaEditar?.descricao || '',
         unidade: itemParaEditar?.unidade || 'm²',
-        quantidade: itemParaEditar?.quantidade?.toString() || '',
+        quantidade: isVerbaUnit(itemParaEditar?.unidade) && !(Number(itemParaEditar?.quantidade) > 0)
+            ? '1'
+            : itemParaEditar?.quantidade?.toString() || '',
         tipo_composicao: itemParaEditar?.tipo_composicao || 'separado',
         preco_mao_obra: itemParaEditar?.preco_mao_obra?.toString() || '',
         preco_material: itemParaEditar?.preco_material?.toString() || '',
@@ -802,6 +810,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
             ...prev,
             descricao: servico.descricao,
             unidade: servico.unidade,
+            quantidade: isVerbaUnit(servico.unidade) && !(Number(prev.quantidade) > 0) ? '1' : prev.quantidade,
             tipo_composicao: servico.tipo_composicao,
             preco_mao_obra: servico.preco_mao_obra || '',
             preco_material: servico.preco_material || '',
@@ -814,14 +823,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
 
     // Calcular total
     const calcularTotal = () => {
-        const qtd = parseFloat(form.quantidade) || 0;
-        if (form.tipo_composicao === 'composto' || form.tipo_composicao === 'fornecimento') {
-            return qtd * (parseFloat(form.preco_unitario) || 0);
-        } else {
-            const mo = qtd * (parseFloat(form.preco_mao_obra) || 0);
-            const mat = qtd * (parseFloat(form.preco_material) || 0);
-            return mo + mat;
-        }
+        return calculateBudgetItemTotals(form).total;
     };
 
     const handleSalvar = async (continuarAdicionando = false) => {
@@ -837,8 +839,17 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
             notify.warning('Selecione uma unidade');
             return;
         }
+        const erroQuantidade = getBudgetQuantityError(form);
+        if (erroQuantidade) {
+            notify.warning(erroQuantidade);
+            return;
+        }
+        const formNormalizado = normalizeBudgetForm(form);
+        if (formNormalizado.quantidade !== form.quantidade) {
+            setForm(formNormalizado);
+        }
         setSalvando(true);
-        const sucesso = await onSave(form, isEdicao, itemParaEditar?.id);
+        const sucesso = await onSave(formNormalizado, isEdicao, itemParaEditar?.id);
         setSalvando(false);
         
         if (sucesso && continuarAdicionando) {
@@ -889,7 +900,16 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                             <select 
                                 style={styles.formInput}
                                 value={form.unidade}
-                                onChange={e => setForm({...form, unidade: e.target.value})}
+                                onChange={e => {
+                                    const unidade = e.target.value;
+                                    setForm({
+                                        ...form,
+                                        unidade,
+                                        quantidade: isVerbaUnit(unidade) && !(Number(form.quantidade) > 0)
+                                            ? '1'
+                                            : form.quantidade
+                                    });
+                                }}
                             >
                                 <option value="m²">m² - Metro quadrado</option>
                                 <option value="m³">m³ - Metro cúbico</option>
@@ -1019,6 +1039,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     onChange={e => setForm({...form, quantidade: e.target.value})}
                                     placeholder="0,00"
                                     step="0.01"
+                                    min="0"
                                 />
                             </div>
                             
@@ -1150,6 +1171,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                         onChange={e => setForm({...form, quantidade: e.target.value})}
                                         placeholder="0,00"
                                         step="0.01"
+                                        min="0"
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
@@ -1198,8 +1220,8 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                         </div>
                         {form.tipo_composicao === 'separado' && (
                             <div style={{ fontSize: '11px', color: 'var(--status-success-text)', marginTop: '4px' }}>
-                                MO: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_mao_obra) || 0))} | 
-                                Mat: {formatCurrency((parseFloat(form.quantidade) || 0) * (parseFloat(form.preco_material) || 0))}
+                                MO: {formatCurrency(calculateBudgetItemTotals(form).maoObra)} |
+                                Mat: {formatCurrency(calculateBudgetItemTotals(form).material)}
                             </div>
                         )}
                     </div>
@@ -2606,6 +2628,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     // Criar/Editar item
     const salvarItem = async (form, isEdicao = false, itemId = null) => {
         try {
+            const formNormalizado = normalizeBudgetForm(form);
             const url = isEdicao 
                 ? `${apiUrl}/obras/${obraId}/orcamento-eng/itens/${itemId}`
                 : `${apiUrl}/obras/${obraId}/orcamento-eng/itens`;
@@ -2618,7 +2641,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                     codigo: form.codigo,
                     descricao: form.descricao,
                     unidade: form.unidade,
-                    quantidade: parseFloat(form.quantidade) || 0,
+                    quantidade: formNormalizado.quantidade,
                     tipo_composicao: form.tipo_composicao,
                     preco_mao_obra: parseFloat(form.preco_mao_obra) || null,
                     preco_material: parseFloat(form.preco_material) || null,
