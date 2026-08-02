@@ -3069,12 +3069,21 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                     </div>
                 </div>
                 <div style={styles.summaryCard}>
-                    <div style={styles.summaryLabel}>Executado</div>
+                    <div style={styles.summaryLabel}>Vinculado ao orçamento</div>
                     <div style={{ ...styles.summaryValue, color: 'var(--status-success)', fontSize: '20px' }}>
                         {formatCurrency(resumoComBdi.total_pago)}
                     </div>
                     <div style={styles.summarySubtext}>
                         {formatNumber(resumoComBdi.percentual_executado || 0, 1)}% do orçamento
+                    </div>
+                </div>
+                <div style={styles.summaryCard}>
+                    <div style={styles.summaryLabel}>Total pago na obra</div>
+                    <div style={{ ...styles.summaryValue, color: 'var(--brand-primary)', fontSize: '20px' }}>
+                        {formatCurrency(resumoComBdi.total_pago_obra ?? resumoComBdi.total_pago)}
+                    </div>
+                    <div style={styles.summarySubtext}>
+                        {formatCurrency(resumoComBdi.total_pago_sem_vinculo || 0)} sem vínculo com item
                     </div>
                 </div>
                 <div style={{ ...styles.summaryCard, backgroundColor: 'var(--text-primary)', border: 'none' }}>
@@ -3091,13 +3100,13 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             {/* Barra de Progresso */}
             <div style={styles.progressContainer}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><i className="ti ti-chart-bar" aria-hidden="true" /> Progresso Geral</span>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><i className="ti ti-chart-bar" aria-hidden="true" /> Execução vinculada ao orçamento</span>
                     <span style={{ fontWeight: '700', color: 'var(--status-success)' }}>
                         {formatNumber(resumoComBdi.percentual_executado || 0, 1)}%
                     </span>
                 </div>
                 <div style={styles.progressBar}>
-                    <div style={{ ...styles.progressFill, width: `${resumoComBdi.percentual_executado || 0}%` }} />
+                    <div style={{ ...styles.progressFill, width: `${Math.min(Math.max(resumoComBdi.percentual_executado || 0, 0), 100)}%` }} />
                 </div>
             </div>
 

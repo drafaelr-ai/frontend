@@ -12,10 +12,22 @@ const WindowsNavStyles = () => (
     <style>{`
         /* === LAYOUT WRAPPER === */
         .app-layout-windows {
+            --module-context: var(--module-obras);
+            --module-context-dark: var(--module-obras-dark);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             background: var(--surface-page);
+        }
+
+        .app-layout-windows--financeiro {
+            --module-context: #16a36a;
+            --module-context-dark: #08764a;
+        }
+
+        .app-layout-windows--planejamento {
+            --module-context: #7c3aed;
+            --module-context-dark: #5421b5;
         }
 
         .main-content-windows {
@@ -129,7 +141,7 @@ const WindowsNavStyles = () => (
         .wnb-avatar {
             width: 28px;
             height: 28px;
-            background: var(--module-obras);
+            background: var(--module-context);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -217,8 +229,8 @@ const WindowsNavStyles = () => (
         }
 
         .menu-dropdown-item.active {
-            background: color-mix(in srgb, var(--module-obras) 12%, var(--surface-card));
-            color: var(--module-obras);
+            background: color-mix(in srgb, var(--module-context) 12%, var(--surface-card));
+            color: var(--module-context);
         }
 
         .menu-item-left {
@@ -290,8 +302,8 @@ const WindowsNavStyles = () => (
         }
 
         .toolbar-btn.active {
-            background: color-mix(in srgb, var(--module-obras) 12%, var(--surface-card));
-            border-color: color-mix(in srgb, var(--module-obras) 35%, var(--border-default));
+            background: color-mix(in srgb, var(--module-context) 12%, var(--surface-card));
+            border-color: color-mix(in srgb, var(--module-context) 35%, var(--border-default));
         }
 
         .toolbar-icon {
@@ -306,7 +318,7 @@ const WindowsNavStyles = () => (
 
         .toolbar-btn.active .toolbar-label,
         .toolbar-btn.active .toolbar-icon {
-            color: var(--module-obras);
+            color: var(--module-context);
         }
 
         .toolbar-actions {
@@ -329,12 +341,12 @@ const WindowsNavStyles = () => (
         }
 
         .toolbar-action-btn.primary {
-            background: var(--module-obras);
+            background: var(--module-context);
             color: var(--text-on-dark);
         }
 
         .toolbar-action-btn.primary:hover {
-            background: var(--module-obras-dark);
+            background: var(--module-context-dark);
         }
 
         /* === RESPONSIVE === */
@@ -375,12 +387,14 @@ const WindowsNavStyles = () => (
 
 const WindowsNavBar = ({
     user,
+    moduleMode = 'obras',
     currentPage,
     setCurrentPage,
     obraSelecionada,
     setObraSelecionada,
     obras,
-    onLogout
+    onLogout,
+    onModuleHome,
 }) => {
     const [activeMenu, setActiveMenu] = useState(null);
     const menuRef = React.useRef(null);
@@ -399,7 +413,7 @@ const WindowsNavBar = ({
         };
     }, []);
 
-    const menuStructure = [
+    const fullMenuStructure = [
         {
             id: 'obra',
             label: 'Obra',
@@ -463,21 +477,75 @@ const WindowsNavBar = ({
         },
     ];
 
-    const toolbarItems = [
-        { id: 'home',          icon: 'ti-home',           label: 'Início' },
-        { id: 'orcamento-eng', icon: 'ti-ruler-2',        label: 'Orçamento' },
-        { id: 'financeiro',    icon: 'ti-calendar',       label: 'Financeiro' },
-        { id: 'planejamento',   icon: 'ti-calendar-stats', label: 'Planejamento' },
-        { id: 'cronograma-obra',icon: 'ti-clipboard-list',label: 'Cronograma' },
-        { id: 'boletos',       icon: 'ti-file-text',      label: 'Boletos' },
-        { id: 'relatorios',    icon: 'ti-chart-bar',      label: 'Relatórios' },
-        { id: 'diario',        icon: 'ti-notebook',       label: 'Diário' },
-        { id: 'agenda',        icon: 'ti-calendar-event', label: 'Agenda' },
-        { id: 'caixa',         icon: 'ti-cash',           label: 'Caixa' },
-    ];
+    const menuStructure = moduleMode === 'planejamento'
+        ? [{
+            id: 'planejamento-menu', label: 'Planejamento', items: [
+                { id: 'module-home', label: 'Home do Planejamento', icon: 'ti-home' },
+                { id: 'planejamento', label: 'Planejamento da Obra', icon: 'ti-calendar-stats' },
+                { type: 'separator' },
+                { id: 'sair', label: 'Sair', icon: 'ti-logout', action: 'logout' },
+            ],
+        }]
+        : moduleMode === 'financeiro'
+            ? [
+                {
+                    id: 'financeiro-menu', label: 'Financeiro', items: [
+                        { id: 'module-home', label: 'Home do Financeiro', icon: 'ti-home' },
+                        { id: 'home', label: 'Visão Geral da Obra', icon: 'ti-layout-dashboard' },
+                        { id: 'financeiro', label: 'Cronograma Financeiro', icon: 'ti-calendar-dollar' },
+                        { id: 'boletos', label: 'Gestão de Boletos', icon: 'ti-file-invoice' },
+                        { id: 'caixa', label: 'Caixa da Obra', icon: 'ti-cash' },
+                        { id: 'relatorios', label: 'Relatórios', icon: 'ti-chart-bar' },
+                        { type: 'separator' },
+                        { id: 'pagamento', label: 'Novo Pagamento...', icon: 'ti-credit-card' },
+                    ],
+                },
+                {
+                    id: 'financeiro-ajuda', label: 'Ajuda', items: [
+                        { id: 'sair', label: 'Sair', icon: 'ti-logout', action: 'logout' },
+                    ],
+                },
+            ]
+            : fullMenuStructure
+                .filter(menu => menu.id !== 'financeiro')
+                .map(menu => ({
+                    ...menu,
+                    items: menu.items.filter(item => !['planejamento', 'relatorios'].includes(item.id)),
+                }));
+
+    const toolbarByModule = {
+        obras: [
+            { id: 'home', icon: 'ti-home', label: 'Início' },
+            { id: 'orcamento-eng', icon: 'ti-ruler-2', label: 'Orçamento' },
+            { id: 'cronograma-obra', icon: 'ti-clipboard-list', label: 'Cronograma' },
+            { id: 'diario', icon: 'ti-notebook', label: 'Diário' },
+            { id: 'agenda', icon: 'ti-calendar-event', label: 'Agenda' },
+        ],
+        financeiro: [
+            { id: 'module-home', icon: 'ti-home', label: 'Home' },
+            { id: 'home', icon: 'ti-layout-dashboard', label: 'Visão geral' },
+            { id: 'financeiro', icon: 'ti-calendar-dollar', label: 'Cronograma' },
+            { id: 'boletos', icon: 'ti-file-invoice', label: 'Boletos' },
+            { id: 'relatorios', icon: 'ti-chart-bar', label: 'Relatórios' },
+            { id: 'caixa', icon: 'ti-cash', label: 'Caixa' },
+        ],
+        planejamento: [
+            { id: 'module-home', icon: 'ti-home', label: 'Home' },
+            { id: 'planejamento', icon: 'ti-calendar-stats', label: 'Planejamento da obra' },
+        ],
+    };
+    const toolbarItems = toolbarByModule[moduleMode] || toolbarByModule.obras;
 
     const handleMenuClick = (menuId) => {
         setActiveMenu(activeMenu === menuId ? null : menuId);
+    };
+
+    const navigatePage = (page) => {
+        if (obraSelecionada?.id && typeof window.navigateTo === 'function') {
+            window.navigateTo(page, obraSelecionada.id);
+        } else {
+            setCurrentPage(page);
+        }
     };
 
     const handleItemClick = (item) => {
@@ -486,8 +554,18 @@ const WindowsNavBar = ({
             onLogout();
             return;
         }
-        if (item.id === 'obras') setObraSelecionada(null);
-        setCurrentPage(item.id);
+        if (item.id === 'module-home') {
+            setActiveMenu(null);
+            onModuleHome?.();
+            return;
+        }
+        if (item.id === 'obras') {
+            setObraSelecionada(null);
+            setActiveMenu(null);
+            onModuleHome?.();
+            return;
+        }
+        navigatePage(item.id);
         setActiveMenu(null);
     };
 
@@ -498,18 +576,15 @@ const WindowsNavBar = ({
     const handleObraChange = (e) => {
         const obraId = parseInt(e.target.value);
         if (obraId === 0) {
-            window.location.href = window.location.pathname;
+            onModuleHome?.();
         } else {
-            if (typeof window.navigateTo === 'function') {
-                window.navigateTo('home', obraId);
-            }
             if (typeof window.handleSelectObra === 'function') {
                 window.handleSelectObra(obraId);
             } else {
                 const obra = obras.find(o => o.id === obraId);
                 if (obra) {
                     setObraSelecionada(obra);
-                    setCurrentPage('home');
+                    setCurrentPage(moduleMode === 'planejamento' ? 'planejamento' : 'home');
                 }
             }
         }
@@ -529,8 +604,8 @@ const WindowsNavBar = ({
                     <div
                         className="wnb-logo"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => { window.location.href = window.location.pathname; }}
-                        title="Voltar ao Dashboard"
+                        onClick={onModuleHome}
+                        title="Voltar à home do módulo"
                     >
                         <img src="/obraly-mark.png" alt="" className="wnb-logo-box" />
                         <span className="wnb-logo-text">Obraly</span>
@@ -612,10 +687,10 @@ const WindowsNavBar = ({
                     <div className="toolbar-items">
                         {toolbarItems.map((item, idx) => (
                             <React.Fragment key={item.id}>
-                                {idx === 4 && <div className="toolbar-separator" />}
+                                {idx === 1 && moduleMode !== 'obras' && <div className="toolbar-separator" />}
                                 <button
                                     className={`toolbar-btn${currentPage === item.id ? ' active' : ''}`}
-                                    onClick={() => setCurrentPage(item.id)}
+                                    onClick={() => item.id === 'module-home' ? onModuleHome?.() : navigatePage(item.id)}
                                     title={item.label}
                                 >
                                     <span className="toolbar-icon"><i className={`ti ${item.icon}`} aria-hidden="true" /></span>
@@ -625,11 +700,11 @@ const WindowsNavBar = ({
                         ))}
                     </div>
 
-                    {(user.role === 'administrador' || user.role === 'master') && (
+                    {moduleMode === 'financeiro' && (user.role === 'administrador' || user.role === 'master') && (
                         <div className="toolbar-actions">
                             <button
                                 className="toolbar-action-btn primary"
-                                onClick={() => setCurrentPage('pagamento')}
+                                onClick={() => navigatePage('pagamento')}
                             >
                                 <i className="ti ti-credit-card" aria-hidden="true" /> Novo Pagamento
                             </button>

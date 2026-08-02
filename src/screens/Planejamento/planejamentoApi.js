@@ -24,6 +24,7 @@ export const planejamentoApi = {
         const query = new URLSearchParams(params);
         return request(`/obras/${obraId}/planejamento/atividades?${query}`);
     },
+    getActivity: activityId => request(`/planejamento/atividades/${activityId}`),
     getBudget: (obraId) => request(`/obras/${obraId}/planejamento/orcamento-disponivel`),
     getSchedules: (obraId) => request(`/obras/${obraId}/cronograma`),
     getClosings: (obraId) => request(`/obras/${obraId}/planejamento/fechamentos`),

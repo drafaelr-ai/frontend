@@ -103,13 +103,15 @@ const PAGINA_POR_TIPO = {
     boleto: 'boletos',
 };
 
-function navigateToObra(obraId, tipo, descricao) {
+async function navigateToObra(obraId, tipo, descricao, selectModule) {
     const pagina = PAGINA_POR_TIPO[tipo];
     if (pagina) {
+        await selectModule?.('financeiro');
         window.location.href = `?obra=${obraId}&page=${pagina}`;
         return;
     }
     if (tipo === 'lancamento' && descricao) {
+        await selectModule?.('financeiro');
         // descrição chega como "Nome — Fornecedor"; a lista "a pagar" filtra
         // só pelo nome (fornecedor é comparado à parte lá), então usa só a 1ª parte.
         const foco = descricao.split(' — ')[0];
@@ -150,7 +152,7 @@ function LoadingSkeleton() {
 
 // --- main component ---
 export default function Dashboard() {
-    const { user } = useAuth();
+    const { user, selectModule } = useAuth();
     const [obras, setObras] = useState([]);
     const [obraDetails, setObraDetails] = useState({});  // { [id]: { detail } }
     const [homeData, setHomeData] = useState(null);      // /home/obras (MO, material, previsão)
@@ -335,13 +337,6 @@ export default function Dashboard() {
                     </p>
                 </div>
                 <div className="db-period-toggle">
-                    <button
-                        className="db-period-btn"
-                        onClick={() => { window.location.href = `${window.location.pathname}?page=planejamento`; }}
-                    >
-                        <i className="ti ti-calendar-stats" aria-hidden="true" style={{ marginRight: 4 }} />
-                        Planejamento
-                    </button>
                     <span className="db-period-btn active" style={{ cursor: 'default' }}>
                         <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 4 }} />
                         {mesAtualLabel()}
@@ -475,7 +470,7 @@ export default function Dashboard() {
                         <div
                             key={i}
                             className="db-previsao-list-item"
-                            onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao)}
+                            onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao, selectModule)}
                         >
                             <div className="db-previsao-list-main">
                                 <span className="db-previsao-list-desc">{p.descricao}</span>
@@ -524,7 +519,7 @@ export default function Dashboard() {
                                 <div
                                     key={i}
                                     className={`db-alert-list-item${p.origem_id ? '' : ' db-alert-list-item--disabled'}`}
-                                    onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao)}
+                                    onClick={() => p.origem_id && navigateToObra(p.origem_id, p.tipo, p.descricao, selectModule)}
                                 >
                                     <div className="db-alert-list-main">
                                         <span className="db-alert-list-desc">{p.descricao}</span>

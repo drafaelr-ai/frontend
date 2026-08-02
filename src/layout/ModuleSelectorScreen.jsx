@@ -16,6 +16,24 @@ const MODULES = [
         gradient: 'linear-gradient(135deg, #0061FC 0%, #0138A5 100%)'
     },
     {
+        id: 'financeiro',
+        icon: 'cash-banknote',
+        title: 'Financeiro',
+        description: 'Pagamentos, boletos, caixa e compromissos de todas as obras.',
+        color: '#16A36A',
+        colorDark: '#08764A',
+        gradient: 'linear-gradient(135deg, #16A36A 0%, #08764A 100%)'
+    },
+    {
+        id: 'planejamento',
+        icon: 'calendar-stats',
+        title: 'Planejamento',
+        description: 'Semanas, meses, atividades e impedimentos das obras.',
+        color: '#7C3AED',
+        colorDark: '#5421B5',
+        gradient: 'linear-gradient(135deg, #7C3AED 0%, #5421B5 100%)'
+    },
+    {
         id: 'admin',
         icon: 'home-2',
         title: 'Administração',
@@ -62,8 +80,8 @@ const MODULES = [
     }
 ];
 
-const MOD_LABEL = { obras: 'OBRAS', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS', almoxarifado: 'ALMOX.' };
-const MOD_COLOR = { obras: '#0061FC', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4', almoxarifado: 'var(--module-almoxarifado)' };
+const MOD_LABEL = { obras: 'OBRAS', financeiro: 'FIN.', planejamento: 'PLAN.', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS', almoxarifado: 'ALMOX.' };
+const MOD_COLOR = { obras: '#0061FC', financeiro: '#16A36A', planejamento: '#7C3AED', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4', almoxarifado: 'var(--module-almoxarifado)' };
 
 function dataBR(iso) {
     if (!iso) return '';
@@ -146,9 +164,12 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
     const PAGINA_POR_TIPO = { parcela: 'financeiro', pagamento_futuro: 'financeiro', boleto: 'boletos' };
 
     const abrirPendencia = async (p) => {
-        await onSelectModule(p.modulo === 'admin' ? 'admin' : 'obras');
+        const pagina = PAGINA_POR_TIPO[p.tipo];
+        const moduloDestino = p.modulo === 'admin'
+            ? 'admin'
+            : (pagina || p.tipo === 'lancamento' ? 'financeiro' : 'obras');
+        await onSelectModule(moduloDestino);
         if (p.modulo === 'obras' && p.origem_id) {
-            const pagina = PAGINA_POR_TIPO[p.tipo];
             if (pagina) {
                 window.location.href = `?obra=${p.origem_id}&page=${pagina}`;
             } else if (p.tipo === 'lancamento' && p.descricao) {

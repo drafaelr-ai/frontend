@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 
 const MODULOS = [
-    { id: 'obras', label: 'Obras', icon: 'ti-building', color: 'var(--module-obras)' },
+    { id: 'obras', label: 'Obras, Financeiro e Planejamento', icon: 'ti-building', color: 'var(--module-obras)' },
     { id: 'admin', label: 'Administração (patrimônio)', icon: 'ti-building-bank', color: 'var(--module-admin)' },
     { id: 'rh', label: 'Pessoal / RH', icon: 'ti-users-group', color: 'var(--module-rh)' },
     { id: 'frota', label: 'Frota', icon: 'ti-truck', color: 'var(--module-frota)' },
