@@ -17,7 +17,13 @@ describe('GlobalFinanceiro', () => {
         fetchWithAuth
             .mockResolvedValueOnce({
                 ok: true,
-                json: async () => [{ id: 2, nome: 'Alphaville', cliente: 'PB' }],
+                json: async () => [{
+                    id: 2,
+                    nome: 'Alphaville',
+                    cliente: 'PB',
+                    valor_vencido: 48427.11,
+                    valor_a_vencer_mes: 86940,
+                }],
             })
             .mockResolvedValueOnce({
                 ok: true,
@@ -35,7 +41,9 @@ describe('GlobalFinanceiro', () => {
 
         expect(await screen.findByRole('heading', { name: 'Painel financeiro' })).toBeInTheDocument();
         expect(await screen.findByText('Alphaville')).toBeInTheDocument();
-        expect(screen.getAllByText('R$ 3.474.129,05')).toHaveLength(2);
+        expect(screen.getByText('R$ 3.474.129,05')).toBeInTheDocument();
+        expect(screen.getByText('R$ 48.427,11')).toBeInTheDocument();
+        expect(screen.getByText('R$ 86.940,00')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Cronograma/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Boletos/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Caixa/i })).toBeInTheDocument();
@@ -74,7 +82,7 @@ describe('GlobalFinanceiro', () => {
 
         expect(await screen.findByText('Obra Histórica')).toBeInTheDocument();
         expect(screen.getByText('Arquivada')).toBeInTheDocument();
-        expect(screen.getAllByText('R$ 4.200,00')).toHaveLength(2);
+        expect(screen.getByText('R$ 4.200,00')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }));
         expect(screen.queryByRole('option', { name: /Obra Histórica/i })).not.toBeInTheDocument();

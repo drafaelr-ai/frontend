@@ -22,6 +22,13 @@ function getFinancialSummary(row) {
     };
 }
 
+function getDueSummary(row) {
+    return {
+        overdue: row.valor_vencido ?? row.total_vencido ?? 0,
+        dueThisMonth: row.valor_a_vencer_mes ?? row.total_a_vencer_mes ?? 0,
+    };
+}
+
 export default function GlobalFinanceiro() {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -182,7 +189,7 @@ export default function GlobalFinanceiro() {
 
                 <section className="fin-global-panel">
                     <div className="fin-global-panel__title">
-                        <div><span className="fin-global-eyebrow">Acesso rápido</span><h2>Financeiro por obra</h2></div>
+                        <div><span className="fin-global-eyebrow">Acesso rápido por obra</span><h2>Financeiro por obra</h2><p>Valores vencidos e a vencer no mês sem abrir a obra.</p></div>
                         <strong>{filteredRows.length}</strong>
                     </div>
                     {loading ? (
@@ -191,6 +198,7 @@ export default function GlobalFinanceiro() {
                         <div className="fin-global-list">
                             {filteredRows.map(row => {
                                 const summary = getFinancialSummary(row);
+                                const due = getDueSummary(row);
                                 const percent = summary.orcamento_total > 0
                                     ? summary.valores_pagos / summary.orcamento_total * 100
                                     : 0;
@@ -201,14 +209,16 @@ export default function GlobalFinanceiro() {
                                             <span className="fin-work-name">
                                                 <span className="fin-work-title">
                                                     <strong>{row.nome}</strong>
-                                                    {row.arquivada && <em>Arquivada</em>}
+                                                    {row.arquivada ? <em>Arquivada</em> : null}
                                                 </span>
-                                                <small>{row.cliente || 'Sem cliente informado'}</small>
+                                                <small>{row.arquivada ? 'Histórico preservado' : `${row.cliente || 'Obra ativa'} · ${percent.toFixed(0)}% pago`}</small>
                                             </span>
-                                            <span className="fin-work-value"><small>Pago</small><strong>{formatCurrency(summary.valores_pagos || 0)}</strong></span>
-                                            <span className="fin-work-progress"><strong>{percent.toFixed(0)}%</strong><i><b style={{ width: `${Math.min(percent, 100)}%` }} /></i><small>de {formatCurrency(summary.orcamento_total || 0)}</small></span>
                                             <i className="ti ti-chevron-right" />
                                         </button>
+                                        <div className="fin-work-due" aria-label={`Vencimentos de ${row.nome}`}>
+                                            <div className="fin-work-due__overdue"><small>Vencido</small><strong>{formatCurrency(due.overdue)}</strong></div>
+                                            <div className="fin-work-due__month"><small>A vencer no mês</small><strong>{formatCurrency(due.dueThisMonth)}</strong></div>
+                                        </div>
                                         <div className="fin-work-links" aria-label={`Atalhos financeiros de ${row.nome}`}>
                                             <button onClick={() => openWork(row.id, 'financeiro')}><i className="ti ti-calendar-dollar" /> Cronograma</button>
                                             <button onClick={() => openWork(row.id, 'boletos')}><i className="ti ti-file-invoice" /> Boletos</button>
