@@ -84,7 +84,7 @@ function EmptyState({ queue = false, onCreate, onImport }) {
     );
 }
 
-function Planejamento({ obraId, obraNome, user }) {
+function Planejamento({ obraId, obraNome, user, onHome }) {
     const [view, setView] = useState('visao-geral');
     const [cursorDate, setCursorDate] = useState(() => new Date());
     const [activities, setActivities] = useState([]);
@@ -270,6 +270,7 @@ function Planejamento({ obraId, obraNome, user }) {
         <div className="planning-page">
             <header className="plan-header">
                 <div>
+                    {onHome ? <button className="plan-back-link" onClick={onHome}><i className="ti ti-home" /> Home do planejamento</button> : null}
                     <span className="plan-eyebrow">Planejamento da obra</span>
                     <h1>{obraNome}</h1>
                     <p>Veja o que está acontecendo, organize a semana e remova impedimentos.</p>

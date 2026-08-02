@@ -26,8 +26,25 @@ import HistoricoPagamentosCard from '../HistoricoPagamentosCard';
 import CronogramaFinanceiro from '../CronogramaFinanceiro';
 import GestaoBoletos from '../../components/GestaoBoletos';
 import Planejamento from '../Planejamento';
-function ObraDetalhe() {
+
+const PAGES_BY_MODULE = {
+    obras: new Set(['home', 'orcamento-eng', 'cronograma-obra', 'cronograma-new', 'diario', 'agenda', 'orcamentos', 'usuarios']),
+    financeiro: new Set(['home', 'financeiro', 'pagamento', 'boletos', 'relatorios', 'caixa']),
+    planejamento: new Set(['planejamento']),
+};
+
+function getDefaultPage(moduleMode) {
+    return moduleMode === 'planejamento' ? 'planejamento' : 'home';
+}
+
+function normalizePageForModule(page, moduleMode) {
+    return PAGES_BY_MODULE[moduleMode]?.has(page) ? page : getDefaultPage(moduleMode);
+}
+
+function ObraDetalhe({ moduleMode = 'obras' }) {
     const { user, logout } = useAuth();
+    const defaultPage = getDefaultPage(moduleMode);
+    const goToModuleHome = () => { window.location.href = window.location.pathname; };
     const [obras, setObras] = useState([]);
     const [obraSelecionada, setObraSelecionada] = useState(null);
     const [lancamentos, setLancamentos] = useState([]);
@@ -107,8 +124,8 @@ function ObraDetalhe() {
         const urlParams = new URLSearchParams(window.location.search);
         const pageFromUrl = urlParams.get('page');
         const obraFromUrl = urlParams.get('obra');
-        if (obraFromUrl) return pageFromUrl || 'home';
-        if (pageFromUrl) return pageFromUrl;
+        if (obraFromUrl) return normalizePageForModule(pageFromUrl || defaultPage, moduleMode);
+        if (pageFromUrl) return normalizePageForModule(pageFromUrl, moduleMode);
         return 'obras';
     });
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -133,7 +150,7 @@ function ObraDetalhe() {
         const handlePopState = (event) => {
             logger.debug('PopState event:', event.state);
             if (event.state) {
-                setCurrentPage(event.state.page || 'obras');
+                setCurrentPage(normalizePageForModule(event.state.page || defaultPage, moduleMode));
                 if (event.state.obraId) {
                     // fetchObraData será chamado pelo useEffect abaixo
                     const obraId = event.state.obraId;
@@ -159,7 +176,7 @@ function ObraDetalhe() {
                 }
             } else {
                 // Se não tem estado, voltar para lista de obras
-                setCurrentPage('obras');
+                setCurrentPage(defaultPage);
                 setObraSelecionada(null);
             }
         };
@@ -169,7 +186,7 @@ function ObraDetalhe() {
         return () => {
             window.removeEventListener('popstate', handlePopState);
         };
-    }, []);
+    }, [defaultPage, moduleMode]);
 
 const totalOrcamentosPendentes = useMemo(() => {
         // A variável 'orcamentos' já contém
@@ -375,26 +392,26 @@ const totalOrcamentosPendentes = useMemo(() => {
             if (!isNaN(obraId)) {
                 logger.debug("[URL INIT] Carregando obra:", obraId);
                 fetchObraData(obraId);
-                setCurrentPage(pageFromUrl || 'home');
+                setCurrentPage(normalizePageForModule(pageFromUrl || defaultPage, moduleMode));
             } else {
                 setCarregandoObraDaUrl(false);
             }
         } else {
             setCarregandoObraDaUrl(false);
             if (pageFromUrl) {
-                setCurrentPage(pageFromUrl);
+                setCurrentPage(normalizePageForModule(pageFromUrl, moduleMode));
             }
         }
         
         // Atualizar history state
         window.history.replaceState(
-            { page: pageFromUrl || 'obras', obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
+            { page: normalizePageForModule(pageFromUrl || defaultPage, moduleMode), obraId: obraFromUrl ? parseInt(obraFromUrl) : null },
             '',
             window.location.href
         );
         
         setUrlProcessada(true);
-    }, [urlProcessada]);
+    }, [defaultPage, moduleMode, urlProcessada]);
     
     // NOVO: Função para buscar cronograma de obras (etapas para Gantt)
     const fetchCronogramaObras = async (obraId) => {
@@ -726,9 +743,9 @@ const totalOrcamentosPendentes = useMemo(() => {
         fetchObraData(obraId);
         // Usar navigateTo para atualizar histórico do browser
         if (typeof window.navigateTo === 'function') {
-            window.navigateTo('home', obraId);
+            window.navigateTo(defaultPage, obraId);
         } else {
-            setCurrentPage('home');
+            setCurrentPage(defaultPage);
         }
     };
     
@@ -959,16 +976,18 @@ const totalOrcamentosPendentes = useMemo(() => {
     return (
         <>
             <WindowsNavStyles />
-            <div className="app-layout-windows">
+            <div className={`app-layout-windows app-layout-windows--${moduleMode}`}>
                 {/* Navegação Windows */}
                 <WindowsNavBar 
                     user={user}
+                    moduleMode={moduleMode}
                     currentPage={currentPage}
                     setCurrentPage={setCurrentPage}
                     obraSelecionada={obraSelecionada}
                     setObraSelecionada={setObraSelecionada}
                     obras={obras}
                     onLogout={logout}
+                    onModuleHome={goToModuleHome}
                 />
                 
                 {/* Conteúdo Principal */}
@@ -983,9 +1002,10 @@ const totalOrcamentosPendentes = useMemo(() => {
                             <button
                                 className="m-btn-secondary"
                                 style={{ marginBottom: '12px' }}
-                                onClick={() => { window.location.href = window.location.pathname; }}
+                                onClick={goToModuleHome}
                             >
-                                <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar às Obras
+                                <i className={`ti ${moduleMode === 'financeiro' ? 'ti-home' : 'ti-arrow-left'}`} aria-hidden="true" />
+                                {moduleMode === 'financeiro' ? ' Home do Financeiro' : ' Voltar às Obras'}
                             </button>
 
                             {/* Header com Título + Cards de Resumo */}
@@ -1013,7 +1033,8 @@ const totalOrcamentosPendentes = useMemo(() => {
                                         gap: '10px',
                                         color: 'var(--text-primary)'
                                     }}>
-                                        <i className="ti ti-home" aria-hidden="true" style={{ color: 'var(--module-obras)' }} /> Início - {obraSelecionada.nome}
+                                        <i className="ti ti-home" aria-hidden="true" style={{ color: 'var(--module-obras)' }} />
+                                        {moduleMode === 'financeiro' ? 'Visão geral financeira' : 'Início'} - {obraSelecionada.nome}
                                     </h1>
                                     <p style={{
                                         margin: '4px 0 0 0',
@@ -1089,34 +1110,37 @@ const totalOrcamentosPendentes = useMemo(() => {
                             </div>
                             
                             {/* Dashboard com Gráficos */}
-                            <DashboardObra 
-                                obraId={obraSelecionada.id}
-                                obraNome={obraSelecionada.nome}
-                                servicos={servicos}
-                                lancamentos={lancamentos}
-                                cronograma={cronogramaObras}
-                            />
+                            {moduleMode === 'obras' && (
+                                <DashboardObra
+                                    obraId={obraSelecionada.id}
+                                    obraNome={obraSelecionada.nome}
+                                    servicos={servicos}
+                                    lancamentos={lancamentos}
+                                    cronograma={cronogramaObras}
+                                />
+                            )}
                             
                             {/* Cronograma Financeiro Simplificado */}
-                            <CronogramaFinanceiro 
-                                obraId={obraSelecionada.id}
-                                obraNome={obraSelecionada.nome}
-                                onClose={() => {
-                                    setObraSelecionada(null);
-                                    setCurrentPage('obras');
-                                }}
-                                embedded={true}
-                                simplified={true}
-                            />
+                            {moduleMode === 'financeiro' && (
+                                <CronogramaFinanceiro
+                                    obraId={obraSelecionada.id}
+                                    obraNome={obraSelecionada.nome}
+                                    onClose={goToModuleHome}
+                                    embedded={true}
+                                    simplified={true}
+                                />
+                            )}
                             
                             {/* Histórico de Pagamentos */}
-                            <HistoricoPagamentosCard 
-                                itemsPagos={itemsPagos}
-                                itemsAPagar={itemsAPagar}
-                                user={user}
-                                fetchObraData={fetchObraData}
-                                obraId={obraSelecionada.id}
-                            />
+                            {moduleMode === 'financeiro' && (
+                                <HistoricoPagamentosCard
+                                    itemsPagos={itemsPagos}
+                                    itemsAPagar={itemsAPagar}
+                                    user={user}
+                                    fetchObraData={fetchObraData}
+                                    obraId={obraSelecionada.id}
+                                />
+                            )}
                         </div>
                     )}
 
@@ -1145,6 +1169,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             user={user}
+                            onHome={goToModuleHome}
                         />
                     )}
 
@@ -1163,10 +1188,7 @@ const totalOrcamentosPendentes = useMemo(() => {
                         <CronogramaFinanceiro 
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
-                            onClose={() => {
-                                setObraSelecionada(null);
-                                setCurrentPage('obras');
-                            }}
+                            onClose={goToModuleHome}
                             embedded={true}
                             simplified={false}
                         />

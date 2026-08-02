@@ -45,7 +45,7 @@ function GlobalPlanejamento() {
             <main className="planning-page planning-page--global">
                 <header className="plan-header">
                     <div>
-                        <button className="plan-back-link" onClick={() => { window.location.href = window.location.pathname; }}><i className="ti ti-arrow-left" /> Dashboard</button>
+                        <button className="plan-back-link" onClick={() => { window.location.href = window.location.pathname; }}><i className="ti ti-home" /> Home do planejamento</button>
                         <span className="plan-eyebrow">Todas as obras</span>
                         <h1>Painel de planejamento</h1>
                         <p>Uma leitura simples do que está em andamento e do que precisa de atenção.</p>

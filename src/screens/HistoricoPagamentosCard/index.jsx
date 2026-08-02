@@ -47,7 +47,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
     }, [itemsPagos]);
 
     const pagamentosExibidos = mostrarTodos ? pagamentosFiltrados : pagamentosFiltrados.slice(0, ITENS_INICIAIS);
-    const totalPago = pagamentosFiltrados.reduce((sum, item) => sum + (item.valor_pago || item.valor_total || 0), 0);
+    const totalPago = pagamentosFiltrados.reduce((sum, item) => sum + Number(item.valor_pago ?? item.valor_total ?? 0), 0);
     const totalPendente = itemsAPagar.reduce((sum, item) => sum + ((item.valor_total || 0) - (item.valor_pago || 0)), 0);
 
     const isAdmin = user && (user.role === 'administrador' || user.role === 'master');
@@ -106,6 +106,11 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 numericId = strId.replace('serv-pag-', '');
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
                 body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo_pagamento: tipoMaoDeObra ? 'mao_de_obra' : 'material' };
+            } else if (strId.startsWith('futuro-pago-') || editandoItem.tipo_registro === 'pagamento_futuro_pago') {
+                numericId = editandoItem.pagamento_futuro_id || strId.replace('futuro-pago-', '');
+                endpoint = `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${numericId}`;
+                method = 'PUT';
+                body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo: tipoEdit };
             } else if (editandoItem.tipo_registro === 'lancamento') {
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
                 body = { orcamento_item_id: editandoItem.orcamento_item_id || null, tipo: tipoEdit };
@@ -164,7 +169,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         const rows = itemsPagos.map(item => {
             const data = item.data_vencimento || item.data || '';
             const dataFormatada = data ? new Date(data + 'T00:00:00').toLocaleDateString('pt-BR') : '';
-            const valor = (item.valor_pago || item.valor_total || 0).toFixed(2).replace('.', ',');
+            const valor = Number(item.valor_pago ?? item.valor_total ?? 0).toFixed(2).replace('.', ',');
 
             return [
                 dataFormatada,
@@ -232,6 +237,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 const strId = String(id);
                 if (strId.startsWith('lanc-')) return strId.replace('lanc-', '');
                 if (strId.startsWith('serv-pag-')) return strId.replace('serv-pag-', '');
+                if (strId.startsWith('futuro-pago-')) return strId.replace('futuro-pago-', '');
                 if (strId.startsWith('parcela-')) return null;
                 return strId;
             };
@@ -247,6 +253,8 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                 endpoint = `${API_URL}/lancamentos/${numericId}`;
             } else if (item.tipo_registro === 'pagamento_servico') {
                 endpoint = `${API_URL}/pagamentos-servico/${numericId}`;
+            } else if (item.tipo_registro === 'pagamento_futuro_pago') {
+                endpoint = `${API_URL}/sid/cronograma-financeiro/${obraId}/pagamentos-futuros/${item.pagamento_futuro_id || numericId}`;
             } else if (item.tipo_registro === 'parcela_individual') {
                 notify.error('Parcelas de pagamentos parcelados não podem ser excluídas individualmente.\n\nUse "Reverter Pagamento" para voltar a parcela ao status Pendente.');
                 return;
@@ -289,6 +297,8 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
         } else if (strId.startsWith('serv-pag-')) {
             numericId = strId.replace('serv-pag-', '');
             itemType = 'pagamento_servico';
+        } else if (strId.startsWith('futuro-pago-') || item.tipo_registro === 'pagamento_futuro_pago') {
+            return { numericId: null, itemType: null };
         } else if (strId.startsWith('parcela-') || item.tipo_registro === 'parcela_individual') {
             numericId = item.parcela_id || strId.replace('parcela-', '');
             itemType = 'parcela_individual';
@@ -474,7 +484,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                             </span>
                                         </td>
                                         <td className="hpc-cell-valor">
-                                            {formatCurrency(item.valor_pago || item.valor_total || 0)}
+                                            {formatCurrency(item.valor_pago ?? item.valor_total ?? 0)}
                                         </td>
                                         <td>
                                             <span className="hpc-status-pill hpc-status-pago">
@@ -485,14 +495,14 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                                         <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                                             {obraId && (() => {
                                                 const { numericId, itemType } = getNotaFiscalData(item);
-                                                return (
+                                                return itemType ? (
                                                     <NotaFiscalIcon
                                                         item={{ ...item, id: numericId }}
                                                         itemType={itemType}
                                                         obraId={obraId}
                                                         onNotaAdded={() => fetchObraData && obraId && fetchObraData(obraId)}
                                                     />
-                                                );
+                                                ) : <span aria-label="Nota fiscal não disponível">—</span>;
                                             })()}
                                         </td>
                                         {isAdmin && (
@@ -583,7 +593,7 @@ const HistoricoPagamentosCard = ({ itemsPagos, itemsAPagar, user, onDeleteItem, 
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>Valor:</label>
                             <div style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-base)', marginTop: '3px', color: 'var(--status-success)' }}>
-                                {formatCurrency(editandoItem.valor_pago || editandoItem.valor_total || 0)}
+                                {formatCurrency(editandoItem.valor_pago ?? editandoItem.valor_total ?? 0)}
                             </div>
                         </div>
 

@@ -11,6 +11,7 @@ import ModuleSelectorScreen from './layout/ModuleSelectorScreen';
 import ObraDetalhe from './screens/ObraDetalhe';
 import Dashboard from './screens/Dashboard';
 import GlobalPlanejamento from './screens/Planejamento/GlobalPlanejamento';
+import GlobalFinanceiro from './screens/Financeiro/GlobalFinanceiro';
 import SuperlinkPublico from './screens/SuperlinkPublico';
 import AdminPanelModal from './components/modals/AdminPanelModal';
 import TrocarSenhaModal from './components/modals/TrocarSenhaModal';
@@ -22,14 +23,31 @@ const SolicitacoesModule = lazy(() => import('./screens/Solicitacoes'));
 const AlmoxarifadoModule = lazy(() => import('./screens/Almoxarifado'));
 const SolicitacaoPublica = lazy(() => import('./screens/SolicitacaoPublica'));
 
-const TODOS_MODULOS = ['obras', 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
+const MODULOS_BASE = ['obras', 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
+const MODULOS_DERIVADOS_DE_OBRAS = ['financeiro', 'planejamento'];
+const TODOS_MODULOS = ['obras', ...MODULOS_DERIVADOS_DE_OBRAS, 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
+const PAGINAS_FINANCEIRAS = new Set(['financeiro', 'pagamento', 'boletos', 'relatorios', 'caixa']);
 
 // Módulos que o usuário pode ver: master → todos; lista null/ausente → todos.
 function getAllowedModules(user) {
     if (!user) return [];
     if (user.role === 'master') return TODOS_MODULOS;
     if (user.modulos_permitidos == null) return TODOS_MODULOS;
-    return TODOS_MODULOS.filter(m => user.modulos_permitidos.includes(m));
+    const base = MODULOS_BASE.filter(m => user.modulos_permitidos.includes(m));
+    return base.includes('obras')
+        ? [...base, ...MODULOS_DERIVADOS_DE_OBRAS]
+        : base;
+}
+
+function resolveModuleFromUrl(savedModule, allowedModules) {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get('obra')) return savedModule;
+    const page = params.get('page');
+    if (page === 'planejamento' && allowedModules.includes('planejamento')) return 'planejamento';
+    if (PAGINAS_FINANCEIRAS.has(page) && allowedModules.includes('financeiro')) {
+        return 'financeiro';
+    }
+    return savedModule;
 }
 
 function App() {
@@ -75,8 +93,9 @@ function App() {
                     setUser(freshUser);
                     // Só restaura o módulo salvo se ainda for permitido.
                     const allowed = getAllowedModules(freshUser);
-                    if (savedModule && allowed.includes(savedModule)) {
-                        setSelectedModule(savedModule);
+                    const resolvedModule = resolveModuleFromUrl(savedModule, allowed);
+                    if (resolvedModule && allowed.includes(resolvedModule)) {
+                        setSelectedModule(resolvedModule);
                     } else if (savedModule) {
                         await deleteToken('selectedModule');
                     }
@@ -97,7 +116,7 @@ function App() {
         // Entrar em Obras pelo seletor deve sempre abrir a Dashboard nova —
         // um ?obra= preso na URL de uma sessão anterior faria cair na tela
         // antiga (ObraDetalhe/WindowsNavBar) sem essa limpeza.
-        if (moduleId === 'obras' && window.location.search) {
+        if (window.location.search) {
             window.history.replaceState(null, '', window.location.pathname);
         }
         setSelectedModule(moduleId);
@@ -153,6 +172,7 @@ function App() {
         user, token, login, logout,
         onBackToSelector: handleBackToSelector,
         onGoToDashboard: handleGoToDashboard,
+        selectModule: handleSelectModule,
     };
 
     // Rotas públicas — fora do fluxo de autenticação
@@ -274,16 +294,40 @@ function App() {
         );
     }
 
+    if (selectedModule === 'planejamento') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={authContextValue}>
+                    {new URLSearchParams(window.location.search).get('obra')
+                        ? <ObraDetalhe moduleMode="planejamento" />
+                        : <GlobalPlanejamento />}
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
+    if (selectedModule === 'financeiro') {
+        return (
+            <>
+                <ToastContainer />
+                <AuthContext.Provider value={authContextValue}>
+                    {new URLSearchParams(window.location.search).get('obra')
+                        ? <ObraDetalhe moduleMode="financeiro" />
+                        : <GlobalFinanceiro />}
+                </AuthContext.Provider>
+            </>
+        );
+    }
+
     return (
         <>
             <ToastContainer />
             <AuthContext.Provider value={authContextValue}>
                 {user
                     ? (new URLSearchParams(window.location.search).get('obra')
-                        ? <ObraDetalhe />
-                        : (new URLSearchParams(window.location.search).get('page') === 'planejamento'
-                            ? <GlobalPlanejamento />
-                            : <Dashboard />))
+                        ? <ObraDetalhe moduleMode="obras" />
+                        : <Dashboard />)
                     : <LoginScreen onBack={handleBackToSelector} />}
             </AuthContext.Provider>
         </>
