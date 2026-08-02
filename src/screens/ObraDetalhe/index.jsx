@@ -1166,10 +1166,12 @@ const totalOrcamentosPendentes = useMemo(() => {
                     {/* === PÁGINA: PLANEJAMENTO SEMANAL E MENSAL === */}
                     {currentPage === 'planejamento' && (
                         <Planejamento
+                            key={`${obraSelecionada.id}-${new URLSearchParams(window.location.search).get('atividade') || 'geral'}`}
                             obraId={obraSelecionada.id}
                             obraNome={obraSelecionada.nome}
                             user={user}
                             onHome={goToModuleHome}
+                            initialActivityId={new URLSearchParams(window.location.search).get('atividade')}
                         />
                     )}
 

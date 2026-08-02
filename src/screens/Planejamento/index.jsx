@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { confirmDialog, notify } from '../../utils/notify';
 import ActivityDrawer from './ActivityDrawer';
 import ActivityModal from './ActivityModal';
@@ -58,6 +58,18 @@ function normalizeSchedules(payload) {
     return [];
 }
 
+function replaceFocusedActivityId(activityId = null) {
+    const params = new URLSearchParams(window.location.search);
+    if (activityId) params.set('atividade', String(activityId));
+    else params.delete('atividade');
+    const query = params.toString();
+    window.history.replaceState(
+        window.history.state,
+        '',
+        `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`,
+    );
+}
+
 function ActivityCard({ activity, compact = false, onClick }) {
     return (
         <button className={`plan-activity-card plan-activity-card--${activity.status} ${compact ? 'compact' : ''}`} onClick={() => onClick(activity)}>
@@ -84,7 +96,7 @@ function EmptyState({ queue = false, onCreate, onImport }) {
     );
 }
 
-function Planejamento({ obraId, obraNome, user, onHome }) {
+function Planejamento({ obraId, obraNome, user, onHome, initialActivityId = null }) {
     const [view, setView] = useState('visao-geral');
     const [cursorDate, setCursorDate] = useState(() => new Date());
     const [activities, setActivities] = useState([]);
@@ -99,14 +111,21 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
     const [editingActivity, setEditingActivity] = useState(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [selectedActivity, setSelectedActivity] = useState(null);
+    const focusedActivityId = Number(initialActivityId) || null;
+    const focusedActivityKey = focusedActivityId ? `${obraId}:${focusedActivityId}` : null;
+    const handledFocusRef = useRef(null);
 
     const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
-        const [activityResult, budgetResult, scheduleResult, closingResult] = await Promise.allSettled([
+        const shouldLoadFocusedActivity = focusedActivityKey && handledFocusRef.current !== focusedActivityKey;
+        const [activityResult, budgetResult, scheduleResult, closingResult, focusedActivityResult] = await Promise.allSettled([
             planejamentoApi.listActivities(obraId, { limit: 200 }),
             planejamentoApi.getBudget(obraId),
             planejamentoApi.getSchedules(obraId),
             planejamentoApi.getClosings(obraId),
+            shouldLoadFocusedActivity
+                ? planejamentoApi.getActivity(focusedActivityId)
+                : Promise.resolve(null),
         ]);
         if (activityResult.status === 'fulfilled') {
             const nextActivities = activityResult.value.itens || [];
@@ -121,8 +140,20 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
         if (budgetResult.status === 'fulfilled') setBudget(budgetResult.value.etapas || []);
         if (scheduleResult.status === 'fulfilled') setSchedules(normalizeSchedules(scheduleResult.value));
         if (closingResult.status === 'fulfilled') setClosings(closingResult.value || []);
+        if (shouldLoadFocusedActivity) {
+            handledFocusRef.current = focusedActivityKey;
+            if (
+                focusedActivityResult.status === 'fulfilled'
+                && focusedActivityResult.value
+                && Number(focusedActivityResult.value.obra_id) === Number(obraId)
+            ) {
+                setSelectedActivity(focusedActivityResult.value);
+            } else if (focusedActivityResult.status === 'rejected') {
+                notify.error(focusedActivityResult.reason.message);
+            }
+        }
         setLoading(false);
-    }, [obraId]);
+    }, [focusedActivityId, focusedActivityKey, obraId]);
 
     useEffect(() => {
         loadData();
@@ -166,6 +197,18 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
     );
     const canAdmin = user?.role === 'master' || user?.role === 'administrador';
 
+    const openActivity = activity => {
+        handledFocusRef.current = focusedActivityKey;
+        setSelectedActivity(activity);
+        replaceFocusedActivityId(activity.id);
+    };
+
+    const closeSelectedActivity = () => {
+        handledFocusRef.current = focusedActivityKey;
+        setSelectedActivity(null);
+        replaceFocusedActivityId();
+    };
+
     const saveActivity = async data => {
         try {
             if (editingActivity) {
@@ -205,7 +248,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
             () => planejamentoApi.deleteActivity(selectedActivity.id),
             'Atividade excluída.'
         );
-        if (result) setSelectedActivity(null);
+        if (result) closeSelectedActivity();
     };
 
     const importBudget = async data => {
@@ -302,7 +345,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
                 <div className="plan-overview">
                     <section className="plan-panel">
                         <div className="plan-panel__title"><div><span className="plan-eyebrow">Próximos 30 dias</span><h2>Atividades em foco</h2></div><button onClick={() => setView('semana')}>Ver semana <i className="ti ti-arrow-right" /></button></div>
-                        {upcoming.length ? <div className="plan-table-list">{upcoming.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={setSelectedActivity} />)}</div> : <EmptyState onCreate={openNewActivity} onImport={() => setShowImportModal(true)} />}
+                        {upcoming.length ? <div className="plan-table-list">{upcoming.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={openActivity} />)}</div> : <EmptyState onCreate={openNewActivity} onImport={() => setShowImportModal(true)} />}
                     </section>
                     <aside className="plan-panel plan-health">
                         <div className="plan-panel__title"><div><span className="plan-eyebrow">Saúde do plano</span><h2>Distribuição</h2></div></div>
@@ -326,7 +369,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
                         {weekDays.map(day => {
                             const dayIso = toIso(day);
                             const dayActivities = weekActivities.filter(activity => activity.data_inicio === dayIso || (parseLocal(activity.data_inicio) <= day && parseLocal(activity.data_fim) >= day));
-                            return <div className={`plan-day ${dayIso === toIso(new Date()) ? 'today' : ''}`} key={dayIso}><header><span>{day.toLocaleDateString('pt-BR', { weekday: 'short' })}</span><strong>{day.getDate()}</strong><small>{dayActivities.length}</small></header><div>{dayActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={setSelectedActivity} />)}</div></div>;
+                            return <div className={`plan-day ${dayIso === toIso(new Date()) ? 'today' : ''}`} key={dayIso}><header><span>{day.toLocaleDateString('pt-BR', { weekday: 'short' })}</span><strong>{day.getDate()}</strong><small>{dayActivities.length}</small></header><div>{dayActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={openActivity} />)}</div></div>;
                         })}
                     </div>
                 </section>
@@ -339,7 +382,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
                     <div className="plan-month-grid">{monthDays.map(day => {
                         const dayActivities = filteredActivities.filter(activity => overlaps(activity, day, day)).slice(0, 3);
                         const outside = day.getMonth() !== cursorDate.getMonth();
-                        return <div className={`plan-month-day ${outside ? 'outside' : ''} ${toIso(day) === toIso(new Date()) ? 'today' : ''}`} key={toIso(day)}><strong>{day.getDate()}</strong>{dayActivities.map(activity => <button className={`plan-month-item plan-month-item--${activity.status}`} key={activity.id} onClick={() => setSelectedActivity(activity)} title={activity.titulo}>{activity.titulo}</button>)}{filteredActivities.filter(activity => overlaps(activity, day, day)).length > 3 ? <small>+ mais</small> : null}</div>;
+                        return <div className={`plan-month-day ${outside ? 'outside' : ''} ${toIso(day) === toIso(new Date()) ? 'today' : ''}`} key={toIso(day)}><strong>{day.getDate()}</strong>{dayActivities.map(activity => <button className={`plan-month-item plan-month-item--${activity.status}`} key={activity.id} onClick={() => openActivity(activity)} title={activity.titulo}>{activity.titulo}</button>)}{filteredActivities.filter(activity => overlaps(activity, day, day)).length > 3 ? <small>+ mais</small> : null}</div>;
                     })}</div>
                 </section>
             ) : null}
@@ -347,7 +390,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
             {view === 'a-planejar' ? (
                 <section className="plan-panel plan-queue">
                     <div className="plan-panel__title"><div><span className="plan-eyebrow">Fila de preparação</span><h2>Atividades que precisam de dados</h2><p>Complete datas, responsável e equipe para liberar a execução.</p></div></div>
-                    {queueActivities.length ? <div className="plan-table-list">{queueActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={setSelectedActivity} />)}</div> : <EmptyState queue onCreate={openNewActivity} onImport={() => setShowImportModal(true)} />}
+                    {queueActivities.length ? <div className="plan-table-list">{queueActivities.map(activity => <ActivityCard key={activity.id} activity={activity} compact onClick={openActivity} />)}</div> : <EmptyState queue onCreate={openNewActivity} onImport={() => setShowImportModal(true)} />}
                 </section>
             ) : null}
 
@@ -355,7 +398,7 @@ function Planejamento({ obraId, obraNome, user, onHome }) {
                 key={selectedActivity.id}
                 activity={selectedActivity}
                 canDelete={canAdmin}
-                onClose={() => setSelectedActivity(null)}
+                onClose={closeSelectedActivity}
                 onEdit={() => { setEditingActivity(selectedActivity); setShowActivityModal(true); }}
                 onDelete={deleteSelected}
                 onAddProgress={data => runActivityAction(() => planejamentoApi.addProgress(selectedActivity.id, data), 'Produção registrada.')}

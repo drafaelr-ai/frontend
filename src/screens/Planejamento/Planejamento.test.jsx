@@ -7,6 +7,7 @@ import { planejamentoApi } from './planejamentoApi';
 jest.mock('./planejamentoApi', () => ({
     planejamentoApi: {
         listActivities: jest.fn(),
+        getActivity: jest.fn(),
         getBudget: jest.fn(),
         getSchedules: jest.fn(),
         getClosings: jest.fn(),
@@ -74,6 +75,7 @@ function configureApi() {
             confiabilidade: 0,
         },
     });
+    planejamentoApi.getActivity.mockResolvedValue(activity);
     planejamentoApi.getBudget.mockResolvedValue({
         etapas: [{ id: 2, nome: 'Estrutura', itens: [{ id: 32, codigo: '02.02', descricao: 'Armação', quantidade: 10, unidade: 'kg' }] }],
     });
@@ -88,6 +90,7 @@ function configureApi() {
 describe('Planejamento', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        window.history.replaceState(null, '', '/');
         configureApi();
     });
 
@@ -138,5 +141,23 @@ describe('Planejamento', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Resolver' }));
         await waitFor(() => expect(planejamentoApi.resolveRestriction).toHaveBeenCalledWith(77));
         expect(screen.queryByText('Excluir atividade')).not.toBeInTheDocument();
+    });
+
+    it('abre diretamente a atividade indicada pelo painel global', async () => {
+        window.history.replaceState(null, '', '/?obra=1&page=planejamento&atividade=10');
+        render(
+            <Planejamento
+                obraId={1}
+                obraNome="Residencial Aurora"
+                user={{ role: 'administrador' }}
+                initialActivityId="10"
+            />
+        );
+
+        expect(await screen.findByLabelText('Detalhes de Concretagem da laje')).toBeInTheDocument();
+        expect(planejamentoApi.getActivity).toHaveBeenCalledWith(10);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Fechar detalhes' }));
+        expect(new URLSearchParams(window.location.search).has('atividade')).toBe(false);
     });
 });

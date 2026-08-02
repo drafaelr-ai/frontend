@@ -13,11 +13,13 @@ const STATUS_LABELS = {
     concluido: 'Concluído',
 };
 
-function openWork(obraId) {
-    window.location.href = `${window.location.pathname}?obra=${obraId}&page=planejamento`;
+function openWork(obraId, activityId = null) {
+    const params = new URLSearchParams({ obra: String(obraId), page: 'planejamento' });
+    if (activityId) params.set('atividade', String(activityId));
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
 }
 
-function GlobalPlanejamento() {
+function GlobalPlanejamento({ onOpenWork = openWork }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -64,7 +66,7 @@ function GlobalPlanejamento() {
 
                         <section className="plan-global-works">
                             {(data?.obras || []).map(work => (
-                                <button key={work.id} className="plan-work-card" onClick={() => openWork(work.id)}>
+                                <button key={work.id} className="plan-work-card" onClick={() => onOpenWork(work.id)}>
                                     <span className="plan-work-card__icon"><i className="ti ti-building-community" /></span>
                                     <span className="plan-work-card__body"><strong>{work.nome}</strong><small>{work.cliente || 'Sem cliente informado'}</small><i><b style={{ width: `${work.planejamento?.total ? (work.planejamento.por_status.concluido / work.planejamento.total * 100) : 0}%` }} /></i></span>
                                     <span className="plan-work-card__numbers"><strong>{work.planejamento?.total || 0}</strong><small>atividades</small>{work.planejamento?.restricoes_abertas ? <em>{work.planejamento.restricoes_abertas} impedimento(s)</em> : null}</span>
@@ -77,7 +79,7 @@ function GlobalPlanejamento() {
                             <div className="plan-panel__title"><div><span className="plan-eyebrow">Período atual</span><h2>Atividades de todas as obras</h2></div><strong>{activities.length}</strong></div>
                             {activities.length ? <div className="plan-global-table">
                                 <div className="plan-global-table__header"><span>Obra / atividade</span><span>Responsável</span><span>Período</span><span>Status</span><span>Avanço</span></div>
-                                {activities.map(item => <button key={item.id} onClick={() => openWork(item.obra_id)}><span><strong>{item.titulo}</strong><small>{item.obra_nome} · {item.etapa_nome || 'Sem etapa'}</small></span><span>{item.responsavel || 'A definir'}</span><span>{item.data_inicio || '—'} → {item.data_fim || '—'}</span><span><em className={`plan-status plan-status--${item.status}`}>{STATUS_LABELS[item.status]}</em></span><span><b>{item.percentual_conclusao}%</b><i><b style={{ width: `${item.percentual_conclusao}%` }} /></i></span></button>)}
+                                {activities.map(item => <button key={item.id} onClick={() => onOpenWork(item.obra_id, item.id)}><span><strong>{item.titulo}</strong><small>{item.obra_nome} · {item.etapa_nome || 'Sem etapa'}</small></span><span>{item.responsavel || 'A definir'}</span><span>{item.data_inicio || '—'} → {item.data_fim || '—'}</span><span><em className={`plan-status plan-status--${item.status}`}>{STATUS_LABELS[item.status]}</em></span><span><b>{item.percentual_conclusao}%</b><i><b style={{ width: `${item.percentual_conclusao}%` }} /></i></span></button>)}
                             </div> : <div className="plan-empty"><span className="plan-empty__icon"><i className="ti ti-calendar-off" /></span><h3>Nenhuma atividade encontrada</h3><p>Ajuste a busca ou abra uma obra para começar a planejar.</p></div>}
                         </section>
                     </>

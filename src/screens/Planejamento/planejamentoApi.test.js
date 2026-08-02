@@ -30,6 +30,15 @@ describe('planejamentoApi', () => {
         );
     });
 
+    it('carrega uma atividade específica para deep link', async () => {
+        fetchWithAuth.mockResolvedValue(response({ id: 9, titulo: 'Concretagem' }));
+        await planejamentoApi.getActivity(9);
+        expect(fetchWithAuth).toHaveBeenCalledWith(
+            'https://api.test/planejamento/atividades/9',
+            {}
+        );
+    });
+
     it('envia criação e importação do orçamento como JSON', async () => {
         fetchWithAuth.mockResolvedValue(response({ id: 1 }, true, 201));
         await planejamentoApi.createActivity(4, { titulo: 'Concretagem' });
