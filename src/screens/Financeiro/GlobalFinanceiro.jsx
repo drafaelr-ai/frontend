@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchWithAuth } from '../../auth/fetchWithAuth';
 import { API_URL } from '../../config';
 import { formatCurrency } from '../../utils/format';
 import { notify } from '../../utils/notify';
+import InserirPagamentoModal from '../../components/modals/InserirPagamentoModal';
 import DashboardHeader from '../Dashboard/components/DashboardHeader';
 import './GlobalFinanceiro.css';
 
@@ -15,33 +16,105 @@ export default function GlobalFinanceiro() {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [showNewPayment, setShowNewPayment] = useState(false);
+    const [selectedObraId, setSelectedObraId] = useState('');
+    const [itensOrcamento, setItensOrcamento] = useState([]);
+    const [loadingItensOrcamento, setLoadingItensOrcamento] = useState(false);
+
+    const loadRows = useCallback(async () => {
+        setLoading(true);
+        try {
+            const obrasResponse = await fetchWithAuth(`${API_URL}/obras?mostrar_concluidas=true&incluir_arquivadas=true`);
+            if (!obrasResponse.ok) throw new Error('Não foi possível carregar as obras.');
+            const payload = await obrasResponse.json();
+            const obras = Array.isArray(payload) ? payload : (payload.obras || []);
+            const details = await Promise.allSettled(obras.map(async obra => {
+                const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}`);
+                if (!response.ok) throw new Error(`Falha ao carregar ${obra.nome}`);
+                const detail = await response.json();
+                return { ...obra, detail };
+            }));
+            setRows(details.filter(item => item.status === 'fulfilled').map(item => item.value));
+        } catch (error) {
+            notify.error(error.message || 'Erro ao carregar o painel financeiro.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadRows();
+    }, [loadRows]);
 
     useEffect(() => {
         let active = true;
-        async function load() {
-            try {
-                const obrasResponse = await fetchWithAuth(`${API_URL}/obras?mostrar_concluidas=true&incluir_arquivadas=true`);
-                if (!obrasResponse.ok) throw new Error('Não foi possível carregar as obras.');
-                const payload = await obrasResponse.json();
-                const obras = Array.isArray(payload) ? payload : (payload.obras || []);
-                const details = await Promise.allSettled(obras.map(async obra => {
-                    const response = await fetchWithAuth(`${API_URL}/obras/${obra.id}`);
-                    if (!response.ok) throw new Error(`Falha ao carregar ${obra.nome}`);
-                    const detail = await response.json();
-                    return { ...obra, detail };
-                }));
-                if (active) {
-                    setRows(details.filter(item => item.status === 'fulfilled').map(item => item.value));
-                }
-            } catch (error) {
-                notify.error(error.message || 'Erro ao carregar o painel financeiro.');
-            } finally {
-                if (active) setLoading(false);
-            }
+        setItensOrcamento([]);
+
+        if (!showNewPayment || !selectedObraId) {
+            setLoadingItensOrcamento(false);
+            return () => { active = false; };
         }
-        load();
+
+        setLoadingItensOrcamento(true);
+        fetchWithAuth(`${API_URL}/obras/${selectedObraId}/orcamento-eng/itens-lista`)
+            .then(async response => {
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.erro || 'Não foi possível carregar os itens do orçamento.');
+                }
+                return response.json();
+            })
+            .then(payload => {
+                if (active) setItensOrcamento(Array.isArray(payload) ? payload : []);
+            })
+            .catch(error => {
+                if (active) notify.error(error.message || 'Erro ao carregar os itens do orçamento.');
+            })
+            .finally(() => {
+                if (active) setLoadingItensOrcamento(false);
+            });
+
         return () => { active = false; };
-    }, []);
+    }, [selectedObraId, showNewPayment]);
+
+    const openNewPayment = () => {
+        setSelectedObraId('');
+        setItensOrcamento([]);
+        setShowNewPayment(true);
+    };
+
+    const closeNewPayment = () => {
+        setShowNewPayment(false);
+        setSelectedObraId('');
+        setItensOrcamento([]);
+    };
+
+    const savePayment = async (paymentData, saveAndNew = false) => {
+        if (!selectedObraId) {
+            const error = new Error('Selecione a obra do lançamento.');
+            notify.error(error.message);
+            throw error;
+        }
+
+        try {
+            const response = await fetchWithAuth(`${API_URL}/obras/${selectedObraId}/inserir-pagamento`, {
+                method: 'POST',
+                body: JSON.stringify(paymentData),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.erro || 'Erro ao inserir o lançamento.');
+
+            if (!saveAndNew) {
+                notify.success('Lançamento salvo no financeiro da obra.');
+                closeNewPayment();
+            }
+            await loadRows();
+            return payload;
+        } catch (error) {
+            notify.error(error.message || 'Erro ao inserir o lançamento.');
+            throw error;
+        }
+    };
 
     const filteredRows = useMemo(() => {
         const term = search.trim().toLocaleLowerCase('pt-BR');
@@ -69,15 +142,21 @@ export default function GlobalFinanceiro() {
                         <h1>Painel financeiro</h1>
                         <p>Pagamentos, compromissos, boletos e caixa em um único módulo.</p>
                     </div>
-                    <label className="fin-global-search">
-                        <i className="ti ti-search" aria-hidden="true" />
-                        <input
-                            aria-label="Buscar obra no financeiro"
-                            value={search}
-                            onChange={event => setSearch(event.target.value)}
-                            placeholder="Buscar obra..."
-                        />
-                    </label>
+                    <div className="fin-global-actions">
+                        <label className="fin-global-search">
+                            <i className="ti ti-search" aria-hidden="true" />
+                            <input
+                                aria-label="Buscar obra no financeiro"
+                                value={search}
+                                onChange={event => setSearch(event.target.value)}
+                                placeholder="Buscar obra..."
+                            />
+                        </label>
+                        <button className="fin-global-new" type="button" onClick={openNewPayment} disabled={loading || !rows.length}>
+                            <i className="ti ti-plus" aria-hidden="true" />
+                            Novo lançamento
+                        </button>
+                    </div>
                 </header>
 
                 <section className="fin-global-kpis" aria-label="Resumo financeiro">
@@ -124,6 +203,18 @@ export default function GlobalFinanceiro() {
                     )}
                 </section>
             </main>
+
+            {showNewPayment && (
+                <InserirPagamentoModal
+                    obraId={selectedObraId}
+                    obras={rows.map(({ id, nome, cliente }) => ({ id, nome, cliente }))}
+                    onObraChange={setSelectedObraId}
+                    onClose={closeNewPayment}
+                    onSave={savePayment}
+                    itensOrcamento={itensOrcamento}
+                    loadingItensOrcamento={loadingItensOrcamento}
+                />
+            )}
         </div>
     );
 }

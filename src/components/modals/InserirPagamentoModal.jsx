@@ -4,7 +4,15 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { formatCurrency, getTodayString } from '../../utils/format';
 
-const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
+const InserirPagamentoModal = ({
+    onClose,
+    onSave,
+    itensOrcamento,
+    obraId,
+    obras = [],
+    onObraChange,
+    loadingItensOrcamento = false,
+}) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString());
     const [descricao, setDescricao] = useState('');
@@ -66,6 +74,10 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
         }
     }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
 
+    useEffect(() => {
+        if (obras.length > 0) setOrcamentoItemId('');
+    }, [obraId, obras.length]);
+
     const limparCamposParaNovo = () => {
         setDescricao('');
         setValor('');
@@ -93,8 +105,13 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
         notify.success('Código copiado!');
     };
 
-    const handleSubmit = async (e, salvarENovo = false) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (obras.length > 0 && !obraId) {
+            notify.error('Selecione a obra do lançamento.');
+            return;
+        }
+        const salvarENovo = e.nativeEvent?.submitter?.dataset?.saveNew === 'true';
         setIsSubmitting(true);
 
         const dadosPagamento = {
@@ -123,16 +140,10 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                 dadosPagamento.valor_entrada = valorEntrada;
                 dadosPagamento.data_entrada = dataEntrada;
                 dadosPagamento.valor_parcela = valorParcela;
-                logger.debug("DEBUG ENTRADA (frontend):", {
-                    temEntrada,
-                    percentualEntrada,
-                    valorEntrada,
-                    dataEntrada,
-                    valorParcela
-                });
+                logger.debug('Pagamento parcelado com entrada configurada.');
             }
 
-            logger.debug("Dados de parcelamento a enviar:", dadosPagamento);
+            logger.debug('Preparando pagamento parcelado para envio.');
 
             if (meioPagamento === 'Boleto') {
                 dadosPagamento.parcelas_customizadas = boletosConfig;
@@ -158,8 +169,10 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
         <Modal
             isOpen={true}
             onClose={onClose}
-            title="Inserir Pagamento"
-            subtitle="Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um serviço."
+            title={obras.length > 0 ? 'Novo lançamento' : 'Inserir Pagamento'}
+            subtitle={obras.length > 0
+                ? 'Escolha a obra, informe o pagamento e vincule ao orçamento quando necessário.'
+                : 'Insira um novo pagamento. Você pode criar pagamentos à vista ou parcelados, e vincular a um item do orçamento.'}
             width="large"
             scrollBody={true}
             footer={
@@ -167,7 +180,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                     <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isSubmitting}>
                         {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
                     </button>
-                    <button type="button" className="m-btn-cancel" onClick={(e) => handleSubmit(e, true)} disabled={isSubmitting}>
+                    <button type="submit" form="form-inserir-pagamento" data-save-new="true" className="m-btn-cancel" disabled={isSubmitting}>
                         <i className="ti ti-plus" aria-hidden="true"></i>
                         {isSubmitting ? '...' : 'Salvar e Novo'}
                     </button>
@@ -179,9 +192,29 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
             }
         >
             <form id="form-inserir-pagamento" onSubmit={handleSubmit}>
+                {obras.length > 0 && (
+                    <div className="m-field">
+                        <label className="m-label" htmlFor="financeiro-obra">Obra</label>
+                        <select
+                            id="financeiro-obra"
+                            className="m-select"
+                            value={obraId || ''}
+                            onChange={(event) => onObraChange?.(event.target.value ? Number(event.target.value) : '')}
+                            required
+                        >
+                            <option value="">Selecione a obra</option>
+                            {obras.map(obra => (
+                                <option key={obra.id} value={obra.id}>
+                                    {obra.nome}{obra.cliente ? ` — ${obra.cliente}` : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
                 <div className="m-field">
                     <label className="m-label">Descrição</label>
-                    <input className="m-input" type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+                    <input className="m-input" aria-label="Descrição" type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
                 </div>
 
                 <div className="m-field">
@@ -191,7 +224,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                 <div className="m-field">
                     <label className="m-label">Valor Total (R$)</label>
-                    <input className="m-input" type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                    <input className="m-input" aria-label="Valor total" type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
                 </div>
 
                 {/* TIPO DE FORMA DE PAGAMENTO */}
@@ -315,6 +348,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
                                 <label className="m-label">Número de Parcelas {temEntrada ? '(após entrada)' : ''}</label>
                                 <input
                                     className="m-input"
+                                    aria-label="Número de parcelas"
                                     type="number"
                                     min="1"
                                     max="60"
@@ -592,7 +626,7 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                 <div className="m-field">
                     <label className="m-label">Status</label>
-                    <select className="m-select" value={status} onChange={(e) => setStatus(e.target.value)} required>
+                    <select className="m-select" aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} required>
                         <option value="Pago">Pago</option>
                         <option value="A Pagar">A Pagar</option>
                     </select>
@@ -600,8 +634,16 @@ const InserirPagamentoModal = ({ onClose, onSave, itensOrcamento, obraId }) => {
 
                 <div className="m-field">
                     <label className="m-label">Vincular ao Item do Orçamento <span className="m-label-opt">(opcional)</span></label>
-                    <select className="m-select" value={orcamentoItemId} onChange={(e) => setOrcamentoItemId(e.target.value)}>
-                        <option value="">Nenhum</option>
+                    <select
+                        className="m-select"
+                        aria-label="Vincular ao item do orçamento"
+                        value={orcamentoItemId}
+                        onChange={(e) => setOrcamentoItemId(e.target.value)}
+                        disabled={loadingItensOrcamento || (obras.length > 0 && !obraId)}
+                    >
+                        <option value="">
+                            {loadingItensOrcamento ? 'Carregando itens...' : 'Nenhum'}
+                        </option>
                         {(itensOrcamento || []).map(item => (
                             <option key={item.id} value={item.id}>{item.nome_completo}</option>
                         ))}

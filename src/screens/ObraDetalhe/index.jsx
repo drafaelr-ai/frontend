@@ -608,7 +608,7 @@ const totalOrcamentosPendentes = useMemo(() => {
     
     // MUDANÇA 3: NOVO handler para Inserir Pagamento
     const handleInserirPagamento = async (pagamentoData) => {
-        logger.debug("Inserindo novo pagamento:", pagamentoData);
+        logger.debug('Inserindo novo pagamento no financeiro da obra.');
         
         const response = await fetchWithAuth(`${API_URL}/obras/${obraSelecionada.id}/inserir-pagamento`, {
             method: 'POST',
