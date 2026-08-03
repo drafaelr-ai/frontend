@@ -76,10 +76,15 @@ no mesmo caminho, o SW velho fica registrado para sempre (até o iOS expirar).
 ## Atualização de versão — operação normal
 
 - `CACHE_VERSION` em `public/service-worker.js` deve ser incrementada a cada
-  release que mude estratégia de cache ou arquivos pré-cacheados (hoje: `v2`).
+  release que mude estratégia de cache ou arquivos pré-cacheados (hoje: `v3`).
 - O usuário vê "Nova versão disponível — Atualizar" (UpdateToast) e decide
   quando aplicar. Nada de `skipWaiting()` automático: atualização forçada no
   meio de um lançamento financeiro perde o formulário digitado.
+
+**Release 2026-08-03:** cache atualizado para `v3`, manifesto para `?v=6` e
+registro com `updateViaCache: 'none'`. A Vercel revalida o service worker e o
+manifesto em toda consulta (`max-age=0, must-revalidate`), garantindo que o app
+Android detecte a versão nova sem reutilizar o arquivo de atualização antigo.
 
 ## Passo a passo de instalação para mandar aos usuários (WhatsApp)
 

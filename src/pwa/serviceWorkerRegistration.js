@@ -40,7 +40,10 @@ export function registerServiceWorker() {
     window.addEventListener('load', () => {
         const serviceWorkerUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
-        navigator.serviceWorker.register(serviceWorkerUrl, { scope: '/' })
+        navigator.serviceWorker.register(serviceWorkerUrl, {
+            scope: '/',
+            updateViaCache: 'none',
+        })
             .then((registration) => {
                 watchForWaiting(registration);
                 // Verifica atualizações periodicamente sem interromper o trabalho

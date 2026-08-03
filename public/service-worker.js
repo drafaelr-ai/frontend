@@ -9,7 +9,7 @@
  * CACHE_VERSION: incrementar a cada release que altere estratégia de cache
  * ou os arquivos pré-cacheados. O activate apaga caches de versões antigas.
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `obraly-static-${CACHE_VERSION}`;
 const OFFLINE_PAGE = '/offline.html';
 
