@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 const STATUS_LABELS = {
     a_planejar: 'A planejar',
-    pronto: 'Pronto',
+    pronto: 'Programado',
     em_andamento: 'Em andamento',
     impedido: 'Impedido',
     concluido: 'Concluído',

@@ -9,7 +9,7 @@ import './Planejamento.css';
 
 const STATUS_LABELS = {
     a_planejar: 'A planejar',
-    pronto: 'Pronto',
+    pronto: 'Programado',
     em_andamento: 'Em andamento',
     impedido: 'Impedido',
     concluido: 'Concluído',
@@ -23,6 +23,17 @@ const VIEW_OPTIONS = [
 
 function parseLocal(isoDate) {
     return isoDate ? new Date(`${isoDate}T00:00:00`) : null;
+}
+
+function formatActivityPeriod(activity) {
+    const start = parseLocal(activity.data_inicio);
+    const end = parseLocal(activity.data_fim);
+    if (!start && !end) return null;
+
+    const format = value => value.toLocaleDateString('pt-BR');
+    if (start && end) return `Início: ${format(start)} · Fim: ${format(end)}`;
+    if (start) return `Início: ${format(start)}`;
+    return `Fim: ${format(end)}`;
 }
 
 function toIso(localDate) {
@@ -71,6 +82,7 @@ function replaceFocusedActivityId(activityId = null) {
 }
 
 function ActivityCard({ activity, compact = false, onClick }) {
+    const period = formatActivityPeriod(activity);
     return (
         <button className={`plan-activity-card plan-activity-card--${activity.status} ${compact ? 'compact' : ''}`} onClick={() => onClick(activity)}>
             <span className="plan-activity-card__top">
@@ -79,6 +91,7 @@ function ActivityCard({ activity, compact = false, onClick }) {
             </span>
             <strong>{activity.titulo}</strong>
             <span>{activity.responsavel || 'Sem responsável'}</span>
+            {period ? <small className="plan-activity-card__period">{period}</small> : null}
             <span className="plan-mini-progress"><i style={{ width: `${activity.percentual_conclusao}%` }} /></span>
             <small>{activity.percentual_conclusao}% · {activity.quantidade_executada}/{activity.quantidade_planejada} {activity.unidade}</small>
         </button>
@@ -181,7 +194,13 @@ function Planejamento({ obraId, obraNome, user, onHome, initialActivityId = null
         [filteredActivities, weekStart]
     );
     const queueActivities = useMemo(
-        () => filteredActivities.filter(activity => activity.status === 'a_planejar' || !activity.data_inicio || !activity.data_fim),
+        () => filteredActivities.filter(activity => (
+            activity.status === 'a_planejar'
+            || !activity.data_inicio
+            || !activity.data_fim
+            || !activity.responsavel
+            || !activity.equipe
+        )),
         [filteredActivities]
     );
     const upcoming = useMemo(() => {

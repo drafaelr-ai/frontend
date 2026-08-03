@@ -30,8 +30,10 @@ function ActivityModal({ activity, schedules, onClose, onSave }) {
         event.preventDefault();
         setSaving(true);
         try {
+            const payload = { ...form };
+            delete payload.status;
             await onSave({
-                ...form,
+                ...payload,
                 cronograma_id: form.cronograma_id ? Number(form.cronograma_id) : null,
                 quantidade_planejada: form.quantidade_planejada || 0,
                 versao: activity?.versao,

@@ -112,6 +112,42 @@ describe('Planejamento', () => {
         expect(screen.getByText('Revisar projeto executivo')).toBeInTheDocument();
     });
 
+    it('chama pronto de programado e mantém atividade incompleta na fila', async () => {
+        const scheduled = {
+            ...activity,
+            id: 12,
+            status: 'pronto',
+            data_inicio: '2026-08-03',
+            data_fim: '2026-08-07',
+            quantidade_executada: 0,
+            restricoes: [],
+            restricoes_abertas: 0,
+        };
+        const incomplete = {
+            ...scheduled,
+            id: 13,
+            titulo: 'Montar laje',
+            responsavel: null,
+            equipe: null,
+        };
+        planejamentoApi.listActivities.mockResolvedValue({
+            itens: [scheduled, incomplete],
+            resumo: {
+                total: 2,
+                por_status: { a_planejar: 0, pronto: 2, em_andamento: 0, impedido: 0, concluido: 0 },
+                restricoes_abertas: 0,
+                confiabilidade: 0,
+            },
+        });
+
+        render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'administrador' }} />);
+        expect((await screen.findAllByText('Programado')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText('Início: 03/08/2026 · Fim: 07/08/2026')).length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getByRole('tab', { name: /A planejar 1/ }));
+        expect(screen.getByText('Montar laje')).toBeInTheDocument();
+    });
+
     it('cria atividade manual e importa um item do orçamento', async () => {
         render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'master' }} />);
         await screen.findByText('Concretagem da laje');
