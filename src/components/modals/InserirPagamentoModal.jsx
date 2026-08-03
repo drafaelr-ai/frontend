@@ -567,13 +567,14 @@ const InserirPagamentoModal = ({
 
                 {meioPagamento === 'PIX' && (
                     <div className="m-field">
-                        <label className="m-label">Chave PIX <span className="m-label-opt">(opcional)</span></label>
-                        <input
+                        <label className="m-label">Chave PIX ou Pix Copia e Cola <span className="m-label-opt">(opcional)</span></label>
+                        <textarea
                             className="m-input"
-                            type="text"
+                            rows={2}
+                            maxLength={2048}
                             value={pix}
                             onChange={(e) => setPix(e.target.value)}
-                            placeholder="CPF, CNPJ, E-mail, Telefone ou Chave Aleatória"
+                            placeholder="CPF, CNPJ, e-mail, telefone, chave aleatória ou código Pix Copia e Cola"
                         />
                     </div>
                 )}
