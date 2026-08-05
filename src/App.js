@@ -15,6 +15,7 @@ import GlobalFinanceiro from './screens/Financeiro/GlobalFinanceiro';
 import SuperlinkPublico from './screens/SuperlinkPublico';
 import AdminPanelModal from './components/modals/AdminPanelModal';
 import TrocarSenhaModal from './components/modals/TrocarSenhaModal';
+import { initializeNativePush, deactivateNativePush } from './pwa/nativePush';
 
 const AppAdmin = lazy(() => import('./AppAdmin'));
 const RHModule = lazy(() => import('./screens/RH'));
@@ -58,6 +59,22 @@ function App() {
     const [accessPanelOpen, setAccessPanelOpen] = useState(false);
     const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
     const [obrasParaPainel, setObrasParaPainel] = useState([]);
+
+    useEffect(() => {
+        if (!user || !token) return undefined;
+        let disposed = false;
+        let cleanup = () => {};
+        initializeNativePush(token)
+            .then(removeListeners => {
+                if (disposed) removeListeners();
+                else cleanup = removeListeners;
+            })
+            .catch(error => logger.error('Não foi possível ativar o push nativo:', error));
+        return () => {
+            disposed = true;
+            cleanup();
+        };
+    }, [user, token]);
 
     // Lista de obras para o painel de acessos (aberto pelo master no seletor).
     useEffect(() => {
@@ -153,6 +170,7 @@ function App() {
     };
 
     const logout = async () => {
+        await deactivateNativePush(token);
         setToken(null);
         setUser(null);
         setSelectedModule(null);

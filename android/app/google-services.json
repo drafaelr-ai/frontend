@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "997541928205",
+    "project_id": "controle-de-obra-cbb56",
+    "storage_bucket": "controle-de-obra-cbb56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997541928205:android:6f540261aa75f459152444",
+        "android_client_info": {
+          "package_name": "uk.obraly.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFMLpGM2oeROaxYHiyGb1G7mJkrvA2NCk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

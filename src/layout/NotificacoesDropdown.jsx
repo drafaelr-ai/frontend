@@ -108,7 +108,12 @@ const NotificacoesDropdown = ({ user }) => {
     useEffect(() => {
         fetchCount();
         const interval = setInterval(fetchCount, 30000);
-        return () => clearInterval(interval);
+        const handleNativeNotification = () => fetchCount();
+        window.addEventListener('obraly:native-notification', handleNativeNotification);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('obraly:native-notification', handleNativeNotification);
+        };
     }, []);
 
     // Busca lista ao abrir

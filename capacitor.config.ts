@@ -5,9 +5,11 @@ const config: CapacitorConfig = {
   appName: 'Obraly Pro',
   webDir: 'build',
   server: {
-    url: 'https://obraly.uk',
+    url: 'https://www.obraly.uk',
     androidScheme: 'https',
     allowNavigation: [
+      'obraly.uk',
+      'www.obraly.uk',
       'obraly-api.fly.dev',
       'obraly-admin-api.fly.dev',
       'patrimonio-api-elara.fly.dev'
@@ -26,6 +28,9 @@ const config: CapacitorConfig = {
       launchShowDuration: 1500,
       backgroundColor: '#001560',
       spinnerColor: '#FFFFFF'
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
     }
   }
 };
