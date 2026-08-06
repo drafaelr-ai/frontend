@@ -4,12 +4,14 @@ import { notify, confirmDialog } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
 import { brl, dataBR, dataHoraBR, statusBadge } from './solicitacoesFormat';
 import CotacaoSolicitacaoModal from '../../components/modals/CotacaoSolicitacaoModal';
+import SolicitacaoModal from '../../components/modals/SolicitacaoModal';
 
 const ABERTOS = ['Aberta', 'Em cotação', 'Aguardando aprovação'];
 
-export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
+export default function SolicitacaoDetalhe({ solicitacaoId, obras, user, onVoltar }) {
     const [s, setS] = useState(null);            // null = carregando
     const [modalCotacao, setModalCotacao] = useState(false);
+    const [modalEditar, setModalEditar] = useState(false);
     const [cotSelecionada, setCotSelecionada] = useState(null);
     const [rejeitando, setRejeitando] = useState(false);
     const [motivo, setMotivo] = useState('');
@@ -161,6 +163,11 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
                         <button className="solc-btn solc-btn-text" onClick={onVoltar}>
                             <i className="ti ti-arrow-left" /> Voltar à lista
                         </button>
+                        {s.pode_editar && (
+                            <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={() => setModalEditar(true)} disabled={agindo}>
+                                <i className="ti ti-edit" /> Editar
+                            </button>
+                        )}
                         <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={copiarLink}>
                             <i className="ti ti-link" /> Copiar link
                         </button>
@@ -319,6 +326,14 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
                 solicitacao={s}
                 onClose={() => setModalCotacao(false)}
                 onSaved={() => { setModalCotacao(false); carregar(); }}
+            />
+
+            <SolicitacaoModal
+                isOpen={modalEditar}
+                obras={obras}
+                solicitacao={s}
+                onClose={() => setModalEditar(false)}
+                onSaved={(atualizada) => { setModalEditar(false); setS(atualizada || s); carregar(); }}
             />
         </>
     );

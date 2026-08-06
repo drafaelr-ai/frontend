@@ -23,6 +23,8 @@ export const solicitacoesApi = {
     detalhe: (id) => fetchWithAuth(`${base}/${id}`).then(j),
     criar: (body) =>
         fetchWithAuth(`${base}`, { method: 'POST', body: JSON.stringify(body) }).then(j),
+    editar: (id, body) =>
+        fetchWithAuth(`${base}/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then(j),
     cancelar: (id) =>
         fetchWithAuth(`${base}/${id}/cancelar`, { method: 'PATCH' }).then(j),
 

@@ -4,7 +4,7 @@ import { notify } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
 import { dataBR, dataHoraBR, statusBadge, resumoItens, STATUS_SOLICITACAO } from './solicitacoesFormat';
 import SolicitacaoDetalhe from './SolicitacaoDetalhe';
-import NovaSolicitacaoModal from '../../components/modals/NovaSolicitacaoModal';
+import SolicitacaoModal from '../../components/modals/SolicitacaoModal';
 
 export default function SolicitacoesList({ obras, user }) {
     const [lista, setLista] = useState(null);           // null = carregando
@@ -39,6 +39,7 @@ export default function SolicitacoesList({ obras, user }) {
         return (
             <SolicitacaoDetalhe
                 solicitacaoId={detalheId}
+                obras={obras}
                 user={user}
                 onVoltar={() => { setDetalheId(null); carregar(); }}
             />
@@ -143,7 +144,7 @@ export default function SolicitacoesList({ obras, user }) {
                 )}
             </div>
 
-            <NovaSolicitacaoModal
+            <SolicitacaoModal
                 isOpen={modalNova}
                 obras={obras}
                 onClose={() => setModalNova(false)}

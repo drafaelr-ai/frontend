@@ -5,24 +5,56 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { TIPOS_SOLICITACAO } from '../../screens/Solicitacoes/solicitacoesFormat';
 
-const itemVazio = () => ({ descricao: '', quantidade: '', unidade: '', observacao: '' });
+const itemVazio = () => ({ id: null, descricao: '', quantidade: '', unidade: '', observacao: '' });
 const vazio = { obra_id: '', tipo: 'Material', data_necessidade: '', observacao: '' };
 
-export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }) {
+// Itens vindos da API já têm id — mantê-lo faz o backend atualizar a linha
+// existente em vez de recriar o item a cada ajuste.
+const itemDaApi = (i) => ({
+    id: i.id,
+    descricao: i.descricao || '',
+    quantidade: i.quantidade == null ? '' : String(i.quantidade),
+    unidade: i.unidade || '',
+    observacao: i.observacao || '',
+});
+
+/** Criação e edição de solicitação. Passar `solicitacao` liga o modo edição. */
+export default function SolicitacaoModal({ isOpen, obras, solicitacao, onClose, onSaved }) {
     const [form, setForm] = useState(vazio);
     const [itens, setItens] = useState([itemVazio()]);
     const [salvando, setSalvando] = useState(false);
+    const editando = !!solicitacao?.id;
 
     useEffect(() => {
         if (!isOpen) return;
-        setForm(vazio);
-        setItens([itemVazio()]);
-    }, [isOpen]);
+        if (solicitacao?.id) {
+            setForm({
+                obra_id: solicitacao.obra_id || '',
+                tipo: solicitacao.tipo || 'Material',
+                data_necessidade: (solicitacao.data_necessidade || '').slice(0, 10),
+                observacao: solicitacao.observacao || '',
+            });
+            setItens((solicitacao.itens || []).length
+                ? solicitacao.itens.map(itemDaApi)
+                : [itemVazio()]);
+        } else {
+            setForm(vazio);
+            setItens([itemVazio()]);
+        }
+    }, [isOpen, solicitacao]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
     const setItem = (idx, k, v) => setItens(list => list.map((it, i) => (i === idx ? { ...it, [k]: v } : it)));
     const addItem = () => setItens(list => [...list, itemVazio()]);
     const delItem = (idx) => setItens(list => (list.length > 1 ? list.filter((_, i) => i !== idx) : list));
+
+    // Em edição a obra pode não estar na lista de obras ativas do usuário —
+    // manter a opção atual evita zerar o select e "mover" a solicitação sem querer.
+    const obraForaDaLista = editando && form.obra_id
+        && !(obras || []).some(o => String(o.id) === String(form.obra_id));
+    const obrasOpcoes = obraForaDaLista
+        ? [...(obras || []), { id: solicitacao.obra_id, nome: solicitacao.obra_nome || 'Obra atual' }]
+        : (obras || []);
 
     const salvar = async () => {
         if (!form.obra_id) { notify.warning('Selecione a obra.'); return; }
@@ -32,25 +64,31 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
             notify.warning('Todo item precisa de quantidade maior que zero.');
             return;
         }
+        const body = {
+            obra_id: form.obra_id,
+            tipo: form.tipo,
+            data_necessidade: form.data_necessidade || null,
+            observacao: form.observacao.trim() || null,
+            itens: itensValidos.map(i => ({
+                ...(i.id ? { id: i.id } : {}),
+                descricao: i.descricao.trim(),
+                quantidade: i.quantidade,
+                unidade: i.unidade.trim() || null,
+                observacao: i.observacao.trim() || null,
+            })),
+        };
         setSalvando(true);
         try {
-            const resp = await solicitacoesApi.criar({
-                obra_id: form.obra_id,
-                tipo: form.tipo,
-                data_necessidade: form.data_necessidade || null,
-                observacao: form.observacao.trim() || null,
-                itens: itensValidos.map(i => ({
-                    descricao: i.descricao.trim(),
-                    quantidade: i.quantidade,
-                    unidade: i.unidade.trim() || null,
-                    observacao: i.observacao.trim() || null,
-                })),
-            });
-            notify.success('Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
+            const resp = editando
+                ? await solicitacoesApi.editar(solicitacao.id, body)
+                : await solicitacoesApi.criar(body);
+            notify.success(editando
+                ? 'Solicitação atualizada.'
+                : 'Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
             onSaved?.(resp);
         } catch (e) {
-            logger.error('criar solicitação', e);
-            notify.error(e.message || 'Erro ao criar solicitação.');
+            logger.error(editando ? 'editar solicitação' : 'criar solicitação', e);
+            notify.error(e.message || `Erro ao ${editando ? 'salvar' : 'criar'} solicitação.`);
         } finally {
             setSalvando(false);
         }
@@ -60,13 +98,19 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={<><i className="ti ti-shopping-cart-plus" style={{ marginRight: 8 }} />Nova solicitação de compra</>}
-            subtitle="A data e a hora da solicitação são registradas automaticamente."
+            title={editando
+                ? <><i className="ti ti-edit" style={{ marginRight: 8 }} />Editar solicitação #{solicitacao.id}</>
+                : <><i className="ti ti-shopping-cart-plus" style={{ marginRight: 8 }} />Nova solicitação de compra</>}
+            subtitle={editando
+                ? 'Ajustes só valem enquanto a solicitação não foi aprovada, rejeitada ou cancelada.'
+                : 'A data e a hora da solicitação são registradas automaticamente.'}
             width="large"
             footer={<>
                 <button className="solc-btn solc-btn-text" onClick={onClose}>Cancelar</button>
                 <button className="solc-btn solc-btn-primary" onClick={salvar} disabled={salvando}>
-                    <i className="ti ti-check" /> {salvando ? 'Enviando…' : 'Criar solicitação'}
+                    <i className="ti ti-check" /> {salvando
+                        ? 'Salvando…'
+                        : (editando ? 'Salvar alterações' : 'Criar solicitação')}
                 </button>
             </>}
         >
@@ -74,7 +118,7 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 <div className="solc-field"><label>Obra</label>
                     <select className="solc-inp" value={form.obra_id} onChange={e => set('obra_id', e.target.value)}>
                         <option value="">Selecionar obra…</option>
-                        {(obras || []).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                        {obrasOpcoes.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                     </select></div>
                 <div className="solc-field"><label>Tipo</label>
                     <select className="solc-inp" value={form.tipo} onChange={e => set('tipo', e.target.value)}>
@@ -94,7 +138,7 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 <span />
             </div>
             {itens.map((item, idx) => (
-                <div className="solc-item-row" key={idx}>
+                <div className="solc-item-row" key={item.id ?? `novo-${idx}`}>
                     <input className="solc-inp" placeholder="Ex.: Cimento CP-II 50kg"
                         value={item.descricao} onChange={e => setItem(idx, 'descricao', e.target.value)} />
                     <input className="solc-inp" placeholder="0"
