@@ -11,6 +11,7 @@ import { solicitacoesApi } from './solicitacoesApi';
 import { iniciais } from './solicitacoesFormat';
 
 import SolicitacoesList from './SolicitacoesList';
+import HistoricoCompras from './HistoricoCompras';
 import ConfigSolicitacoes from './ConfigSolicitacoes';
 
 export default function SolicitacoesModule() {
@@ -36,6 +37,7 @@ export default function SolicitacoesModule() {
 
     const TABS = [
         { id: 'lista', icon: 'ti-list-details', label: 'Solicitações' },
+        { id: 'historico', icon: 'ti-history', label: 'Histórico de compras' },
         ...(isMaster ? [{ id: 'config', icon: 'ti-settings', label: 'Configurações' }] : []),
     ];
 
@@ -82,6 +84,7 @@ export default function SolicitacoesModule() {
                 </div>
 
                 {tab === 'lista' && <SolicitacoesList {...shared} />}
+                {tab === 'historico' && <HistoricoCompras {...shared} />}
                 {tab === 'config' && isMaster && <ConfigSolicitacoes {...shared} />}
             </div>
         </div>

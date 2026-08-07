@@ -20,6 +20,9 @@ export const solicitacoesApi = {
 
     // solicitações
     listar: (params = '') => fetchWithAuth(`${base}${params}`).then(j),
+    // histórico: compras já atendidas (fora da lista de compras)
+    historico: (params = '') =>
+        fetchWithAuth(`${base}?historico=true${params ? `&${params}` : ''}`).then(j),
     detalhe: (id) => fetchWithAuth(`${base}/${id}`).then(j),
     criar: (body) =>
         fetchWithAuth(`${base}`, { method: 'POST', body: JSON.stringify(body) }).then(j),
@@ -47,6 +50,14 @@ export const solicitacoesApi = {
         fetchWithAuth(`${base}/${id}/rejeitar`, {
             method: 'POST', body: JSON.stringify({ motivo }),
         }).then(j),
+
+    // baixa do comprador — sai da lista de compras e vai para o histórico
+    atender: (id, observacao = '') =>
+        fetchWithAuth(`${base}/${id}/atender`, {
+            method: 'PATCH', body: JSON.stringify({ observacao }),
+        }).then(j),
+    reabrir: (id) =>
+        fetchWithAuth(`${base}/${id}/reabrir`, { method: 'PATCH' }).then(j),
 
     // config (master)
     getConfig: () => fetchWithAuth(`${base}/config`).then(j),

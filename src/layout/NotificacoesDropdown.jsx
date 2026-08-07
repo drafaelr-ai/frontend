@@ -20,6 +20,7 @@ const getNotifMeta = (tipo) => {
         case 'solicitacao_aguardando_aprovacao': return { icon: 'ti-clock', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
         case 'solicitacao_aprovada': return { icon: 'ti-check',         bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
         case 'solicitacao_rejeitada': return { icon: 'ti-x',            bg: 'var(--status-danger-bg)',   color: 'var(--status-danger-text)'  };
+        case 'solicitacao_atendida': return { icon: 'ti-package',      bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
         default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
     }
 };
