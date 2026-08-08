@@ -130,6 +130,15 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
         }
     };
 
+    const abrirAnexoSolicitacao = async () => {
+        try {
+            const { url } = await solicitacoesApi.arquivoSolicitacao(s.id);
+            window.open(url, '_blank', 'noopener');
+        } catch (e) {
+            notify.error(e.message || 'Erro ao abrir o anexo.');
+        }
+    };
+
     return (
         <>
             <div className="solc-card">
@@ -161,6 +170,11 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
                         <button className="solc-btn solc-btn-text" onClick={onVoltar}>
                             <i className="ti ti-arrow-left" /> Voltar à lista
                         </button>
+                        {s.tem_arquivo && (
+                            <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={abrirAnexoSolicitacao}>
+                                <i className="ti ti-paperclip" /> Anexo
+                            </button>
+                        )}
                         <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={copiarLink}>
                             <i className="ti ti-link" /> Copiar link
                         </button>

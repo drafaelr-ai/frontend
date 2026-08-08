@@ -4,6 +4,7 @@ import { solicitacoesApi } from '../../screens/Solicitacoes/solicitacoesApi';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { TIPOS_SOLICITACAO } from '../../screens/Solicitacoes/solicitacoesFormat';
+import InsumoAutocomplete from '../../screens/Solicitacoes/InsumoAutocomplete';
 
 const itemVazio = () => ({ descricao: '', quantidade: '', unidade: '', observacao: '' });
 const vazio = { obra_id: '', tipo: 'Material', data_necessidade: '', observacao: '' };
@@ -11,12 +12,14 @@ const vazio = { obra_id: '', tipo: 'Material', data_necessidade: '', observacao:
 export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }) {
     const [form, setForm] = useState(vazio);
     const [itens, setItens] = useState([itemVazio()]);
+    const [arquivo, setArquivo] = useState(null);
     const [salvando, setSalvando] = useState(false);
 
     useEffect(() => {
         if (!isOpen) return;
         setForm(vazio);
         setItens([itemVazio()]);
+        setArquivo(null);
     }, [isOpen]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -34,7 +37,7 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
         }
         setSalvando(true);
         try {
-            const resp = await solicitacoesApi.criar({
+            const payload = {
                 obra_id: form.obra_id,
                 tipo: form.tipo,
                 data_necessidade: form.data_necessidade || null,
@@ -45,8 +48,22 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                     unidade: i.unidade.trim() || null,
                     observacao: i.observacao.trim() || null,
                 })),
-            });
-            notify.success('Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
+            };
+            let resp;
+            if (arquivo) {
+                const fd = new FormData();
+                fd.append('obra_id', payload.obra_id);
+                fd.append('tipo', payload.tipo);
+                if (payload.data_necessidade) fd.append('data_necessidade', payload.data_necessidade);
+                if (payload.observacao) fd.append('observacao', payload.observacao);
+                fd.append('itens', JSON.stringify(payload.itens));
+                fd.append('arquivo', arquivo);
+                resp = await solicitacoesApi.criar(fd, true);
+            } else {
+                resp = await solicitacoesApi.criar(payload);
+            }
+            if (resp?.aviso) notify.warning(resp.aviso);
+            else notify.success('Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
             onSaved?.(resp);
         } catch (e) {
             logger.error('criar solicitação', e);
@@ -95,8 +112,12 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
             </div>
             {itens.map((item, idx) => (
                 <div className="solc-item-row" key={idx}>
-                    <input className="solc-inp" placeholder="Ex.: Cimento CP-II 50kg"
-                        value={item.descricao} onChange={e => setItem(idx, 'descricao', e.target.value)} />
+                    <InsumoAutocomplete
+                        placeholder="Ex.: Cimento CP-II 50kg"
+                        value={item.descricao}
+                        onChange={v => setItem(idx, 'descricao', v)}
+                        onSelect={ins => setItens(list => list.map((it, i) =>
+                            (i === idx ? { ...it, descricao: ins.descricao, unidade: it.unidade || ins.unidade } : it)))} />
                     <input className="solc-inp" placeholder="0"
                         value={item.quantidade} onChange={e => setItem(idx, 'quantidade', e.target.value)} />
                     <input className="solc-inp" placeholder="un, sc, m³"
@@ -110,6 +131,10 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
             <button type="button" className="solc-btn solc-btn-secondary solc-btn-sm" onClick={addItem} style={{ marginBottom: 'var(--space-4)' }}>
                 <i className="ti ti-plus" /> Adicionar item
             </button>
+
+            <div className="solc-field"><label>Anexo (opcional — PDF/imagem, ex.: lista de materiais, projeto)</label>
+                <input className="solc-inp" type="file" accept=".pdf,image/*"
+                    onChange={e => setArquivo(e.target.files?.[0] || null)} /></div>
 
             <div className="solc-field"><label>Observação (opcional)</label>
                 <input className="solc-inp" placeholder="Ex.: entregar na portaria da obra"

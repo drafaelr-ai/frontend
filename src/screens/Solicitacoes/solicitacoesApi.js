@@ -21,10 +21,14 @@ export const solicitacoesApi = {
     // solicitações
     listar: (params = '') => fetchWithAuth(`${base}${params}`).then(j),
     detalhe: (id) => fetchWithAuth(`${base}/${id}`).then(j),
-    criar: (body) =>
-        fetchWithAuth(`${base}`, { method: 'POST', body: JSON.stringify(body) }).then(j),
+    criar: (body, isForm) =>
+        fetchWithAuth(`${base}`, {
+            method: 'POST', body: isForm ? body : JSON.stringify(body),
+        }).then(j),
     cancelar: (id) =>
         fetchWithAuth(`${base}/${id}/cancelar`, { method: 'PATCH' }).then(j),
+    arquivoSolicitacao: (id) =>
+        fetchWithAuth(`${base}/${id}/arquivo`).then(j),
 
     // cotações
     criarCotacao: (id, body, isForm) =>

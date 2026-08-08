@@ -152,6 +152,24 @@
 .solc-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 .solc-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); }
 
+/* ===== autocomplete de insumos (nova solicitação) ===== */
+.solc-ac { position: relative; }
+.solc-ac-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30;
+    background: var(--surface-card); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); box-shadow: var(--shadow-card);
+    max-height: 260px; overflow-y: auto;
+}
+.solc-ac-item {
+    appearance: none; border: none; background: none; cursor: pointer; font-family: inherit;
+    display: flex; flex-direction: column; gap: 1px; width: 100%; text-align: left;
+    padding: 8px 10px; border-bottom: 1px solid var(--border-subtle);
+}
+.solc-ac-item:last-child { border-bottom: none; }
+.solc-ac-item.ativo { background: var(--solc-accent-soft); }
+.solc-ac-desc { font-size: var(--text-base); color: var(--text-primary); }
+.solc-ac-meta { font-size: var(--text-xs); color: var(--text-muted); }
+
 /* ===== itens dinâmicos (nova solicitação) ===== */
 .solc-item-row { display: grid; grid-template-columns: 1fr 110px 90px 34px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
 .solc-item-del {
