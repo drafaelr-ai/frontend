@@ -86,6 +86,22 @@ export const frotaApi = {
     removerAbastecimento: (id) =>
         fetchWithAuth(`${base}/abastecimentos/${id}`, { method: 'DELETE' }).then(j),
 
+    // solicitações de abastecimento — o link que o motorista abre sem login
+    solicitacoesAbastecimento: (params = '') =>
+        fetchWithAuth(`${base}/abastecimento-solicitacoes${params}`).then(j),
+    criarSolicitacaoAbastecimento: (body) =>
+        fetchWithAuth(`${base}/abastecimento-solicitacoes`, {
+            method: 'POST', body: JSON.stringify(body),
+        }).then(j),
+    cancelarSolicitacaoAbastecimento: (id) =>
+        fetchWithAuth(`${base}/abastecimento-solicitacoes/${id}/cancelar`, {
+            method: 'PATCH',
+        }).then(j),
+
+    // consumo por veículo (km/l, R$/km e histórico)
+    consumoVeiculo: (veiculoId, params = '') =>
+        fetchWithAuth(`${base}/veiculos/${veiculoId}/consumo${params}`).then(j),
+
     // multas
     multas: (params = '') => fetchWithAuth(`${base}/multas${params}`).then(j),
     criarMulta: (body, isForm) =>

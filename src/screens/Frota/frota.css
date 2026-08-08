@@ -22,9 +22,12 @@
 .frota-shell *::before,
 .frota-shell *::after { box-sizing: border-box; }
 
-.frota-shell .frota-valor { font-size: var(--text-md); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary); }
-.frota-shell .frota-muted { color: var(--text-muted); }
-.frota-shell .frota-right { text-align: right; }
+/* Sem o prefixo .frota-shell (como o resto do arquivo): os modais são
+   portalados pro <body>, fora do shell — escopar aqui deixaria as tabelas
+   dentro de modal sem estilo. */
+.frota-valor { font-size: var(--text-md); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.frota-muted { color: var(--text-muted); }
+.frota-right { text-align: right; }
 
 /* ===== navbar ===== */
 .frota-navbar {
@@ -208,6 +211,19 @@
 }
 .frota-detail-meta { display: flex; gap: var(--space-5); flex-wrap: wrap; margin-top: var(--space-2); font-size: var(--text-sm); color: var(--text-muted); }
 .frota-detail-meta b { color: var(--text-primary); font-weight: 500; }
+
+/* ===== link do abastecimento (modal) ===== */
+.frota-link-box {
+    background: var(--surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin: var(--space-4) 0;
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    word-break: break-all;
+}
 
 /* ===== hint / loading ===== */
 .frota-hint { font-size: var(--text-sm); color: var(--text-muted); margin-top: var(--space-3); display: flex; align-items: center; gap: 6px; }
