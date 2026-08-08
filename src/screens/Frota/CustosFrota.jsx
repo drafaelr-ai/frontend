@@ -137,6 +137,7 @@ export default function CustosFrota({ condutores }) {
                     </table>
                 )}
                 <div className="frota-hint"><i className="ti ti-info-circle" /> O local do custo é o local do veículo no momento do lançamento (snapshot) — mover o veículo depois não altera o histórico.</div>
+                <div className="frota-hint"><i className="ti ti-link" /> Para enviar o link de abastecimento ao motorista e ver o consumo por veículo, use a aba <b>Abastecimento</b>.</div>
             </div>
 
             <ManutencaoFrotaModal

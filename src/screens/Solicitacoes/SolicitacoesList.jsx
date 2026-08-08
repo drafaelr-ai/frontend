@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../../utils/logger';
-import { notify } from '../../utils/notify';
+import { notify, confirmDialog } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
-import { dataBR, dataHoraBR, statusBadge, resumoItens, STATUS_SOLICITACAO } from './solicitacoesFormat';
+import { dataBR, dataHoraBR, statusBadge, resumoItens, STATUS_ATIVOS } from './solicitacoesFormat';
 import SolicitacaoDetalhe from './SolicitacaoDetalhe';
 import NovaSolicitacaoModal from '../../components/modals/NovaSolicitacaoModal';
 
@@ -13,6 +13,7 @@ export default function SolicitacoesList({ obras, user }) {
     const [busca, setBusca] = useState('');
     const [detalheId, setDetalheId] = useState(null);
     const [modalNova, setModalNova] = useState(false);
+    const [atendendoId, setAtendendoId] = useState(null);
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
@@ -34,6 +35,25 @@ export default function SolicitacoesList({ obras, user }) {
     }, [fStatus, fObra]);
 
     useEffect(() => { carregar(); }, [carregar]);
+
+    // Baixa direta na lista — o comprador não precisa abrir o detalhe.
+    const atender = async (e, s) => {
+        e.stopPropagation();
+        const ok = await confirmDialog(
+            `Marcar a compra da solicitação #${s.id} como atendida? `
+            + 'Ela sai da lista de compras e vai para o histórico.',
+            { title: 'Compra atendida', confirmText: 'Marcar como atendida' },
+        );
+        if (!ok) return;
+        setAtendendoId(s.id);
+        try {
+            await solicitacoesApi.atender(s.id);
+            notify.success('Compra atendida — movida para o histórico de compras.');
+            await carregar();
+        } catch (err) {
+            notify.error(err.message || 'Erro ao marcar a compra como atendida.');
+        } finally { setAtendendoId(null); }
+    };
 
     if (detalheId) {
         return (
@@ -71,7 +91,7 @@ export default function SolicitacoesList({ obras, user }) {
                     <div className="solc-kpi-val">{lista == null ? '…' : aguardando}</div>
                 </div>
                 <div className="solc-kpi">
-                    <div className="solc-kpi-lbl"><i className="ti ti-check" /> Aprovadas</div>
+                    <div className="solc-kpi-lbl"><i className="ti ti-package" /> Aprovadas — a atender</div>
                     <div className="solc-kpi-val">{lista == null ? '…' : aprovadas}</div>
                 </div>
             </div>
@@ -86,7 +106,7 @@ export default function SolicitacoesList({ obras, user }) {
                         />
                         <select className="solc-inp" style={{ width: 170 }} value={fStatus} onChange={e => setFStatus(e.target.value)}>
                             <option value="">Todos os status</option>
-                            {STATUS_SOLICITACAO.map(s => <option key={s} value={s}>{s}</option>)}
+                            {STATUS_ATIVOS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                         <select className="solc-inp" style={{ width: 170 }} value={fObra} onChange={e => setFObra(e.target.value)}>
                             <option value="">Todas as obras</option>
@@ -117,6 +137,7 @@ export default function SolicitacoesList({ obras, user }) {
                                 <th>Necessidade</th>
                                 <th>Cotações</th>
                                 <th>Status</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -135,6 +156,18 @@ export default function SolicitacoesList({ obras, user }) {
                                         <td className="solc-cell-sub">{dataBR(s.data_necessidade)}</td>
                                         <td>{s.qtd_cotacoes || 0}</td>
                                         <td><span className={`solc-badge ${b.cls}`}><i className={`ti ${b.icon}`} /> {b.label}</span></td>
+                                        <td>
+                                            {s.pode_atender ? (
+                                                <button
+                                                    className="solc-btn solc-btn-primary solc-btn-sm"
+                                                    onClick={(e) => atender(e, s)}
+                                                    disabled={atendendoId === s.id}
+                                                    title="Compra realizada — mover para o histórico"
+                                                >
+                                                    <i className="ti ti-package" /> Atendida
+                                                </button>
+                                            ) : <span className="solc-cell-sub">—</span>}
+                                        </td>
                                     </tr>
                                 );
                             })}

@@ -12,6 +12,7 @@ import { iniciais } from './frotaFormat';
 import DashboardFrota from './DashboardFrota';
 import VeiculosFrota from './VeiculosFrota';
 import CondutoresFrota from './CondutoresFrota';
+import AbastecimentosFrota from './AbastecimentosFrota';
 import CustosFrota from './CustosFrota';
 import MultasFrota from './MultasFrota';
 
@@ -19,6 +20,7 @@ const TABS = [
     { id: 'dash', icon: 'ti-layout-dashboard', label: 'Visão geral' },
     { id: 'veic', icon: 'ti-truck', label: 'Veículos' },
     { id: 'cond', icon: 'ti-steering-wheel', label: 'Condutores' },
+    { id: 'abast', icon: 'ti-gas-station', label: 'Abastecimento' },
     { id: 'custos', icon: 'ti-tool', label: 'Custos' },
     { id: 'multas', icon: 'ti-alert-triangle', label: 'Multas' },
 ];
@@ -108,6 +110,7 @@ export default function FrotaModule() {
                 {tab === 'dash' && <DashboardFrota {...shared} />}
                 {tab === 'veic' && <VeiculosFrota {...shared} />}
                 {tab === 'cond' && <CondutoresFrota {...shared} />}
+                {tab === 'abast' && <AbastecimentosFrota {...shared} />}
                 {tab === 'custos' && <CustosFrota {...shared} />}
                 {tab === 'multas' && <MultasFrota {...shared} />}
             </div>

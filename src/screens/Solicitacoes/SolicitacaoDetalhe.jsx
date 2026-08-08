@@ -7,12 +7,14 @@ import CotacaoSolicitacaoModal from '../../components/modals/CotacaoSolicitacaoM
 
 const ABERTOS = ['Aberta', 'Em cotação', 'Aguardando aprovação'];
 
-export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
+export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, voltarLabel = 'Voltar à lista' }) {
     const [s, setS] = useState(null);            // null = carregando
     const [modalCotacao, setModalCotacao] = useState(false);
     const [cotSelecionada, setCotSelecionada] = useState(null);
     const [rejeitando, setRejeitando] = useState(false);
     const [motivo, setMotivo] = useState('');
+    const [atendendo, setAtendendo] = useState(false);
+    const [obsAtendimento, setObsAtendimento] = useState('');
     const [agindo, setAgindo] = useState(false);
 
     const carregar = useCallback(async () => {
@@ -96,6 +98,35 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
         } finally { setAgindo(false); }
     };
 
+    const atender = async () => {
+        setAgindo(true);
+        try {
+            await solicitacoesApi.atender(s.id, obsAtendimento.trim());
+            notify.success('Compra atendida — movida para o histórico de compras.');
+            setAtendendo(false);
+            setObsAtendimento('');
+            await carregar();
+        } catch (e) {
+            notify.error(e.message || 'Erro ao marcar a compra como atendida.');
+        } finally { setAgindo(false); }
+    };
+
+    const reabrir = async () => {
+        const ok = await confirmDialog(
+            'Reabrir esta compra? Ela volta do histórico para a lista de compras.',
+            { title: 'Reabrir compra', confirmText: 'Reabrir' },
+        );
+        if (!ok) return;
+        setAgindo(true);
+        try {
+            await solicitacoesApi.reabrir(s.id);
+            notify.success('Compra reaberta — de volta à lista de compras.');
+            await carregar();
+        } catch (e) {
+            notify.error(e.message || 'Erro ao reabrir a compra.');
+        } finally { setAgindo(false); }
+    };
+
     const cancelar = async () => {
         const ok = await confirmDialog('Cancelar esta solicitação?', { danger: true, confirmText: 'Cancelar solicitação' });
         if (!ok) return;
@@ -160,16 +191,32 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
                         {s.status === 'Rejeitada' && s.motivo_rejeicao && (
                             <div className="solc-motivo"><i className="ti ti-x" /> Motivo: {s.motivo_rejeicao}</div>
                         )}
-                        {s.status === 'Aprovada' && s.pagamento_futuro_id && (
+                        {['Aprovada', 'Atendida'].includes(s.status) && s.pagamento_futuro_id && (
                             <div className="solc-hint">
                                 <i className="ti ti-cash" /> Lançada no financeiro da obra como conta a pagar (#{s.pagamento_futuro_id}).
+                            </div>
+                        )}
+                        {s.status === 'Atendida' && (
+                            <div className="solc-atendida">
+                                <i className="ti ti-package" /> Compra atendida por <b>{s.atendida_por_nome || '—'}</b> em <b>{dataHoraBR(s.data_atendimento)}</b>
+                                {s.observacao_atendimento && <> — {s.observacao_atendimento}</>}
                             </div>
                         )}
                     </div>
                     <div className="solc-card-actions">
                         <button className="solc-btn solc-btn-text" onClick={onVoltar}>
-                            <i className="ti ti-arrow-left" /> Voltar à lista
+                            <i className="ti ti-arrow-left" /> {voltarLabel}
                         </button>
+                        {s.pode_atender && !atendendo && (
+                            <button className="solc-btn solc-btn-primary solc-btn-sm" onClick={() => setAtendendo(true)} disabled={agindo}>
+                                <i className="ti ti-package" /> Marcar como atendida
+                            </button>
+                        )}
+                        {s.pode_reabrir && (
+                            <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={reabrir} disabled={agindo}>
+                                <i className="ti ti-arrow-back-up" /> Reabrir compra
+                            </button>
+                        )}
                         {s.tem_arquivo && (
                             <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={abrirAnexoSolicitacao}>
                                 <i className="ti ti-paperclip" /> Anexo
@@ -188,6 +235,31 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar }) {
                         )}
                     </div>
                 </div>
+
+                {atendendo && (
+                    <div className="solc-atender-form">
+                        <div className="solc-field">
+                            <label>Observação do atendimento (opcional)</label>
+                            <input
+                                className="solc-inp" value={obsAtendimento} maxLength={300}
+                                onChange={e => setObsAtendimento(e.target.value)}
+                                placeholder="Ex.: NF 4521 — material entregue no canteiro"
+                            />
+                        </div>
+                        <div className="solc-hint">
+                            <i className="ti ti-info-circle" />
+                            A compra sai da lista e vai para o histórico. A conta a pagar no financeiro não é alterada.
+                        </div>
+                        <div className="solc-card-actions" style={{ justifyContent: 'flex-end' }}>
+                            <button className="solc-btn solc-btn-text" onClick={() => { setAtendendo(false); setObsAtendimento(''); }}>
+                                Voltar
+                            </button>
+                            <button className="solc-btn solc-btn-primary" onClick={atender} disabled={agindo}>
+                                <i className="ti ti-package" /> Confirmar atendimento
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <table className="solc-table">
                     <thead>

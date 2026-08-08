@@ -38,8 +38,11 @@ export const TIPOS_SOLICITACAO = [
 ];
 
 export const STATUS_SOLICITACAO = [
-    'Aberta', 'Em cotação', 'Aguardando aprovação', 'Aprovada', 'Rejeitada', 'Cancelada',
+    'Aberta', 'Em cotação', 'Aguardando aprovação', 'Aprovada', 'Rejeitada', 'Cancelada', 'Atendida',
 ];
+
+/** Status da lista de compras — 'Atendida' vive só no histórico. */
+export const STATUS_ATIVOS = STATUS_SOLICITACAO.filter(s => s !== 'Atendida');
 
 export function statusBadge(status) {
     switch (status) {
@@ -47,6 +50,7 @@ export function statusBadge(status) {
         case 'Em cotação':            return { cls: 'solc-b-info',    icon: 'ti-search',     label: 'Em cotação' };
         case 'Aguardando aprovação':  return { cls: 'solc-b-warning', icon: 'ti-clock',      label: 'Aguardando aprovação' };
         case 'Aprovada':              return { cls: 'solc-b-success', icon: 'ti-check',      label: 'Aprovada' };
+        case 'Atendida':              return { cls: 'solc-b-success', icon: 'ti-package',    label: 'Atendida' };
         case 'Rejeitada':             return { cls: 'solc-b-danger',  icon: 'ti-x',          label: 'Rejeitada' };
         case 'Cancelada':             return { cls: 'solc-b-neutral', icon: 'ti-ban',        label: 'Cancelada' };
         default:                      return { cls: 'solc-b-neutral', icon: 'ti-help',       label: status || '—' };
