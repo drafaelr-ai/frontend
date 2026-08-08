@@ -3,10 +3,10 @@ import Modal from '../Modal/Modal';
 import { frotaApi } from '../../screens/Frota/frotaApi';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
-import { brl, placaBR, COMBUSTIVEIS } from '../../screens/Frota/frotaFormat';
+import { brl, placaBR } from '../../screens/Frota/frotaFormat';
 
 const vazio = {
-    veiculo_id: '', condutor_id: '', combustivel: '',
+    veiculo_id: '', condutor_id: '',
     limite_valor: '', validade_horas: '48', observacao: '',
 };
 
@@ -32,10 +32,11 @@ export default function SolicitarAbastecimentoModal({ isOpen, veiculos, veiculoF
         if (!form.veiculo_id) { notify.warning('Selecione o veículo.'); return; }
         setSalvando(true);
         try {
+            // combustivel não vai no payload: o backend usa o do cadastro do
+            // veículo, que é onde a informação já vive.
             const nova = await frotaApi.criarSolicitacaoAbastecimento({
                 veiculo_id: form.veiculo_id,
                 condutor_id: form.condutor_id || null,
-                combustivel: form.combustivel || null,
                 limite_valor: form.limite_valor || null,
                 validade_horas: form.validade_horas || null,
                 observacao: form.observacao.trim() || null,
@@ -120,13 +121,7 @@ export default function SolicitarAbastecimentoModal({ isOpen, veiculos, veiculoF
                         {(condutores || []).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                     </select></div>
             </div>
-            <div className="frota-row3">
-                <div className="frota-field"><label>Combustível</label>
-                    <select className="frota-inp" value={form.combustivel}
-                        onChange={e => set('combustivel', e.target.value)}>
-                        <option value="">Do cadastro do veículo</option>
-                        {COMBUSTIVEIS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select></div>
+            <div className="frota-row2">
                 <div className="frota-field"><label>Limite de valor (opcional)</label>
                     <input className="frota-inp money" placeholder="0,00" value={form.limite_valor}
                         onChange={e => set('limite_valor', e.target.value)} /></div>
