@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
-import { brl, dataHoraBR, resumoItens } from './solicitacoesFormat';
+import { brl, dataHoraBR, resumoItens, textoDiasSolicitado } from './solicitacoesFormat';
 import SolicitacaoDetalhe from './SolicitacaoDetalhe';
 
 /** Compras já atendidas pelo comprador — saíram da lista de compras.
     A baixa é reversível pelo detalhe (botão "Reabrir compra"). */
-export default function HistoricoCompras({ obras, user }) {
+export default function HistoricoCompras({ obras, user, registerContentBack }) {
     const [lista, setLista] = useState(null);           // null = carregando
     const [fObra, setFObra] = useState('');
     const [busca, setBusca] = useState('');
@@ -30,11 +30,19 @@ export default function HistoricoCompras({ obras, user }) {
 
     useEffect(() => { carregar(); }, [carregar]);
 
+    useEffect(() => {
+        registerContentBack?.(detalheId
+            ? () => { setDetalheId(null); carregar(); }
+            : null);
+        return () => registerContentBack?.(null);
+    }, [carregar, detalheId, registerContentBack]);
+
     if (detalheId) {
         return (
             <SolicitacaoDetalhe
                 solicitacaoId={detalheId}
                 user={user}
+                obras={obras}
                 voltarLabel="Voltar ao histórico"
                 onVoltar={() => { setDetalheId(null); carregar(); }}
             />
@@ -109,6 +117,7 @@ export default function HistoricoCompras({ obras, user }) {
                                 <th>Solicitante</th>
                                 <th>Atendida por</th>
                                 <th>Atendida em</th>
+                                <th>Dias solicitado</th>
                                 <th>Valor</th>
                             </tr>
                         </thead>
@@ -130,6 +139,9 @@ export default function HistoricoCompras({ obras, user }) {
                                         )}
                                     </td>
                                     <td className="solc-cell-sub">{dataHoraBR(s.data_atendimento)}</td>
+                                    <td className="solc-cell-main solc-days" title="Dias corridos da solicitação até o atendimento">
+                                        {textoDiasSolicitado(s.data_criacao, s.data_atendimento)}
+                                    </td>
                                     <td className="solc-cell-main">{s.valor_aprovado != null ? brl(s.valor_aprovado) : '—'}</td>
                                 </tr>
                             ))}

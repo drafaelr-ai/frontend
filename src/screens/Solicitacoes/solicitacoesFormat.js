@@ -23,6 +23,32 @@ export function dataHoraBR(iso) {
     } catch { return dataBR(iso); }
 }
 
+/** Dias corridos entre duas datas civis, sem oscilação por fuso horário. */
+export function diasDesdeSolicitacao(inicio, fim = new Date()) {
+    const partes = (valor) => {
+        if (!valor) return null;
+        if (valor instanceof Date) {
+            return [valor.getFullYear(), valor.getMonth() + 1, valor.getDate()];
+        }
+        const match = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+    };
+
+    const de = partes(inicio);
+    const ate = partes(fim);
+    if (!de || !ate) return null;
+
+    const inicioUtc = Date.UTC(de[0], de[1] - 1, de[2]);
+    const fimUtc = Date.UTC(ate[0], ate[1] - 1, ate[2]);
+    return Math.max(0, Math.floor((fimUtc - inicioUtc) / 86400000));
+}
+
+export function textoDiasSolicitado(inicio, fim = new Date()) {
+    const dias = diasDesdeSolicitacao(inicio, fim);
+    if (dias == null) return '—';
+    return `${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+}
+
 /** Iniciais p/ avatar. */
 export function iniciais(nome) {
     if (!nome) return '?';

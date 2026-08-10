@@ -13,6 +13,7 @@ import { fetchWithAuth } from './auth/fetchWithAuth';
 import { API_URL } from './config';
 import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
 import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
+import useModuleTabHistory from './hooks/useModuleTabHistory';
 
 
 // ===================================================================================
@@ -89,7 +90,7 @@ const SsoErrorScreen = ({ message, onRetry, onBack }) => (
 // COMPONENTE: SIDEBAR
 // ===================================================================================
 
-const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, onGoToDashboard, isOpen, onClose }) => {
+const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, onNavigateBack, onGoToDashboard, isOpen, onClose }) => {
     // Guia "Usuários" removida: acesso agora é gerido pelo login central
     // (painel "Gerenciar acessos" do app principal) — ver PUT /admin/users/<id>/modulos.
     const menuItems = [
@@ -153,6 +154,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, onLogout, onBackToModules, o
                         <div style={styles.userRole}>{user?.role || 'operador'}</div>
                     </div>
                 </div>
+                {onNavigateBack && (
+                    <button onClick={onNavigateBack} style={{ ...styles.logoutButton, marginBottom: 8 }}>
+                        <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
+                    </button>
+                )}
                 {onBackToModules && (
                     <button onClick={onBackToModules} style={{ ...styles.logoutButton, marginBottom: 8 }}>
                         <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar aos módulos
@@ -3375,9 +3381,9 @@ const Relatorios = () => {
 // COMPONENTE: DASHBOARD PRINCIPAL (Layout)
 // ===================================================================================
 
-const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
+const DashboardAdmin = ({ onBackToModules, onGoToDashboard, onNavigateBack }) => {
     const { user, logout } = useAuthAdmin();
-    const [activeMenu, setActiveMenu] = useState('dashboard');
+    const { tab: activeMenu, setTab: setActiveMenu, goBack: goBackMenu } = useModuleTabHistory('dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
@@ -3391,6 +3397,10 @@ const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
     const handleMenuSelect = (id) => {
         setActiveMenu(id);
         setSidebarOpen(false);
+    };
+
+    const handleBack = () => {
+        if (!goBackMenu()) (onNavigateBack || onBackToModules)?.();
     };
 
     const renderContent = () => {
@@ -3414,13 +3424,13 @@ const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
             >
                 <i className="ti ti-menu-2" aria-hidden="true" />
             </button>
-            {onBackToModules && (
+            {(onNavigateBack || onBackToModules) && (
                 <button
                     className="admin-back-modules"
-                    onClick={onBackToModules}
-                    aria-label="Voltar aos módulos"
+                    onClick={handleBack}
+                    aria-label="Voltar para a tela anterior"
                 >
-                    <i className="ti ti-arrow-left" aria-hidden="true" /> Módulos
+                    <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
                 </button>
             )}
             <div
@@ -3433,6 +3443,7 @@ const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
                 user={user}
                 onLogout={logout}
                 onBackToModules={onBackToModules}
+                onNavigateBack={handleBack}
                 onGoToDashboard={onGoToDashboard}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
@@ -3448,7 +3459,7 @@ const DashboardAdmin = ({ onBackToModules, onGoToDashboard }) => {
 // COMPONENTE PRINCIPAL: APP ADMIN
 // ===================================================================================
 
-const AppAdmin = ({ onBack, onGoToDashboard }) => {
+const AppAdmin = ({ onBack, onGoToDashboard, onNavigateBack }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -3524,7 +3535,11 @@ const AppAdmin = ({ onBack, onGoToDashboard }) => {
     return (
         <AuthAdminContext.Provider value={{ user, token, login, logout }}>
             {user
-                ? <DashboardAdmin onBackToModules={onBack} onGoToDashboard={onGoToDashboard} />
+                ? <DashboardAdmin
+                    onBackToModules={onBack}
+                    onGoToDashboard={onGoToDashboard}
+                    onNavigateBack={onNavigateBack}
+                />
                 : <SsoErrorScreen message={ssoError} onRetry={doSso} onBack={onBack} />}
         </AuthAdminContext.Provider>
     );

@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../../utils/logger';
-import { notify, confirmDialog } from '../../utils/notify';
+import { notify } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
-import { dataBR, dataHoraBR, statusBadge, resumoItens, STATUS_ATIVOS } from './solicitacoesFormat';
+import { dataBR, dataHoraBR, statusBadge, resumoItens, STATUS_ATIVOS, textoDiasSolicitado } from './solicitacoesFormat';
 import SolicitacaoDetalhe from './SolicitacaoDetalhe';
 import NovaSolicitacaoModal from '../../components/modals/NovaSolicitacaoModal';
 
-export default function SolicitacoesList({ obras, user }) {
+export default function SolicitacoesList({ obras, user, registerContentBack }) {
     const [lista, setLista] = useState(null);           // null = carregando
     const [fStatus, setFStatus] = useState('');
     const [fObra, setFObra] = useState('');
     const [busca, setBusca] = useState('');
     const [detalheId, setDetalheId] = useState(null);
+    const [iniciarAtendimento, setIniciarAtendimento] = useState(false);
     const [modalNova, setModalNova] = useState(false);
-    const [atendendoId, setAtendendoId] = useState(null);
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
@@ -36,23 +36,17 @@ export default function SolicitacoesList({ obras, user }) {
 
     useEffect(() => { carregar(); }, [carregar]);
 
-    // Baixa direta na lista — o comprador não precisa abrir o detalhe.
-    const atender = async (e, s) => {
+    useEffect(() => {
+        registerContentBack?.(detalheId
+            ? () => { setDetalheId(null); carregar(); }
+            : null);
+        return () => registerContentBack?.(null);
+    }, [carregar, detalheId, registerContentBack]);
+
+    const abrirAtendimento = (e, s) => {
         e.stopPropagation();
-        const ok = await confirmDialog(
-            `Marcar a compra da solicitação #${s.id} como atendida? `
-            + 'Ela sai da lista de compras e vai para o histórico.',
-            { title: 'Compra atendida', confirmText: 'Marcar como atendida' },
-        );
-        if (!ok) return;
-        setAtendendoId(s.id);
-        try {
-            await solicitacoesApi.atender(s.id);
-            notify.success('Compra atendida — movida para o histórico de compras.');
-            await carregar();
-        } catch (err) {
-            notify.error(err.message || 'Erro ao marcar a compra como atendida.');
-        } finally { setAtendendoId(null); }
+        setIniciarAtendimento(true);
+        setDetalheId(s.id);
     };
 
     if (detalheId) {
@@ -60,7 +54,9 @@ export default function SolicitacoesList({ obras, user }) {
             <SolicitacaoDetalhe
                 solicitacaoId={detalheId}
                 user={user}
-                onVoltar={() => { setDetalheId(null); carregar(); }}
+                obras={obras}
+                iniciarAtendimento={iniciarAtendimento}
+                onVoltar={() => { setIniciarAtendimento(false); setDetalheId(null); carregar(); }}
             />
         );
     }
@@ -134,6 +130,7 @@ export default function SolicitacoesList({ obras, user }) {
                                 <th>Itens</th>
                                 <th>Solicitante</th>
                                 <th>Solicitada em</th>
+                                <th>Dias solicitado</th>
                                 <th>Necessidade</th>
                                 <th>Cotações</th>
                                 <th>Status</th>
@@ -144,7 +141,7 @@ export default function SolicitacoesList({ obras, user }) {
                             {filtrada.map(s => {
                                 const b = statusBadge(s.status);
                                 return (
-                                    <tr key={s.id} className="clickable" onClick={() => setDetalheId(s.id)}>
+                                    <tr key={s.id} className="clickable" onClick={() => { setIniciarAtendimento(false); setDetalheId(s.id); }}>
                                         <td className="solc-cell-main">#{s.id}</td>
                                         <td>{s.obra_nome || '—'}</td>
                                         <td>
@@ -153,6 +150,9 @@ export default function SolicitacoesList({ obras, user }) {
                                         </td>
                                         <td>{s.solicitante_nome}</td>
                                         <td className="solc-cell-sub">{dataHoraBR(s.data_criacao)}</td>
+                                        <td className="solc-cell-main solc-days" title="Dias corridos desde a solicitação">
+                                            {textoDiasSolicitado(s.data_criacao)}
+                                        </td>
                                         <td className="solc-cell-sub">{dataBR(s.data_necessidade)}</td>
                                         <td>{s.qtd_cotacoes || 0}</td>
                                         <td><span className={`solc-badge ${b.cls}`}><i className={`ti ${b.icon}`} /> {b.label}</span></td>
@@ -160,11 +160,11 @@ export default function SolicitacoesList({ obras, user }) {
                                             {s.pode_atender ? (
                                                 <button
                                                     className="solc-btn solc-btn-primary solc-btn-sm"
-                                                    onClick={(e) => atender(e, s)}
-                                                    disabled={atendendoId === s.id}
-                                                    title="Compra realizada — mover para o histórico"
+                                                    onClick={(e) => abrirAtendimento(e, s)}
+                                                    title="Informar a data e mover para o histórico"
+                                                    aria-label={`Marcar solicitação #${s.id} como atendida`}
                                                 >
-                                                    <i className="ti ti-package" /> Atendida
+                                                    <i className="ti ti-package" /> Marcar como atendida
                                                 </button>
                                             ) : <span className="solc-cell-sub">—</span>}
                                         </td>
@@ -180,7 +180,7 @@ export default function SolicitacoesList({ obras, user }) {
                 isOpen={modalNova}
                 obras={obras}
                 onClose={() => setModalNova(false)}
-                onSaved={(nova) => { setModalNova(false); carregar(); if (nova?.id) setDetalheId(nova.id); }}
+                onSaved={(nova) => { setModalNova(false); setIniciarAtendimento(false); carregar(); if (nova?.id) setDetalheId(nova.id); }}
             />
         </>
     );

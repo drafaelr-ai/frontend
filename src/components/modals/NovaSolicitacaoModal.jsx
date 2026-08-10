@@ -9,18 +9,31 @@ import InsumoAutocomplete from '../../screens/Solicitacoes/InsumoAutocomplete';
 const itemVazio = () => ({ descricao: '', quantidade: '', unidade: '', observacao: '' });
 const vazio = { obra_id: '', tipo: 'Material', data_necessidade: '', observacao: '' };
 
-export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }) {
+export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, solicitacao = null }) {
     const [form, setForm] = useState(vazio);
     const [itens, setItens] = useState([itemVazio()]);
     const [arquivo, setArquivo] = useState(null);
     const [salvando, setSalvando] = useState(false);
+    const editando = Boolean(solicitacao?.id);
 
     useEffect(() => {
         if (!isOpen) return;
-        setForm(vazio);
-        setItens([itemVazio()]);
+        setForm(editando ? {
+            obra_id: String(solicitacao.obra_id || ''),
+            tipo: solicitacao.tipo || 'Material',
+            data_necessidade: (solicitacao.data_necessidade || '').slice(0, 10),
+            observacao: solicitacao.observacao || '',
+        } : vazio);
+        setItens(editando && solicitacao.itens?.length
+            ? solicitacao.itens.map(item => ({
+                descricao: item.descricao || '',
+                quantidade: item.quantidade ?? '',
+                unidade: item.unidade || '',
+                observacao: item.observacao || '',
+            }))
+            : [itemVazio()]);
         setArquivo(null);
-    }, [isOpen]);
+    }, [editando, isOpen, solicitacao]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
     const setItem = (idx, k, v) => setItens(list => list.map((it, i) => (i === idx ? { ...it, [k]: v } : it)));
@@ -58,16 +71,22 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 if (payload.observacao) fd.append('observacao', payload.observacao);
                 fd.append('itens', JSON.stringify(payload.itens));
                 fd.append('arquivo', arquivo);
-                resp = await solicitacoesApi.criar(fd, true);
+                resp = editando
+                    ? await solicitacoesApi.editar(solicitacao.id, fd, true)
+                    : await solicitacoesApi.criar(fd, true);
             } else {
-                resp = await solicitacoesApi.criar(payload);
+                resp = editando
+                    ? await solicitacoesApi.editar(solicitacao.id, payload)
+                    : await solicitacoesApi.criar(payload);
             }
             if (resp?.aviso) notify.warning(resp.aviso);
-            else notify.success('Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
+            else notify.success(editando
+                ? 'Solicitação atualizada.'
+                : 'Solicitação criada — os responsáveis pela pesquisa de preços foram avisados.');
             onSaved?.(resp);
         } catch (e) {
-            logger.error('criar solicitação', e);
-            notify.error(e.message || 'Erro ao criar solicitação.');
+            logger.error(editando ? 'editar solicitação' : 'criar solicitação', e);
+            notify.error(e.message || (editando ? 'Erro ao editar solicitação.' : 'Erro ao criar solicitação.'));
         } finally {
             setSalvando(false);
         }
@@ -77,13 +96,15 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={<><i className="ti ti-shopping-cart-plus" style={{ marginRight: 8 }} />Nova solicitação de compra</>}
-            subtitle="A data e a hora da solicitação são registradas automaticamente."
+            title={<><i className={`ti ${editando ? 'ti-edit' : 'ti-shopping-cart-plus'}`} style={{ marginRight: 8 }} />{editando ? `Editar solicitação #${solicitacao.id}` : 'Nova solicitação de compra'}</>}
+            subtitle={editando
+                ? 'A data e a autoria originais serão preservadas.'
+                : 'A data e a hora da solicitação são registradas automaticamente.'}
             width="large"
             footer={<>
                 <button className="solc-btn solc-btn-text" onClick={onClose}>Cancelar</button>
                 <button className="solc-btn solc-btn-primary" onClick={salvar} disabled={salvando}>
-                    <i className="ti ti-check" /> {salvando ? 'Enviando…' : 'Criar solicitação'}
+                    <i className="ti ti-check" /> {salvando ? 'Salvando…' : (editando ? 'Salvar alterações' : 'Criar solicitação')}
                 </button>
             </>}
         >
@@ -91,6 +112,9 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 <div className="solc-field"><label>Obra</label>
                     <select className="solc-inp" value={form.obra_id} onChange={e => set('obra_id', e.target.value)}>
                         <option value="">Selecionar obra…</option>
+                        {editando && !(obras || []).some(o => String(o.id) === String(solicitacao.obra_id)) && (
+                            <option value={solicitacao.obra_id}>{solicitacao.obra_nome}</option>
+                        )}
                         {(obras || []).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
                     </select></div>
                 <div className="solc-field"><label>Tipo</label>
@@ -105,23 +129,27 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 <label>Itens da solicitação</label>
             </div>
             <div className="solc-item-row" style={{ marginBottom: 4 }}>
-                <span className="solc-cell-sub">Descrição</span>
-                <span className="solc-cell-sub">Quantidade</span>
-                <span className="solc-cell-sub">Unidade</span>
+                <span className="solc-cell-sub solc-item-description">Descrição</span>
+                <span className="solc-cell-sub solc-item-quantity">Quantidade</span>
+                <span className="solc-cell-sub solc-item-unit">Unidade</span>
+                <span className="solc-cell-sub solc-item-observation">Observação</span>
                 <span />
             </div>
             {itens.map((item, idx) => (
                 <div className="solc-item-row" key={idx}>
                     <InsumoAutocomplete
+                        className="solc-item-description"
                         placeholder="Ex.: Cimento CP-II 50kg"
                         value={item.descricao}
                         onChange={v => setItem(idx, 'descricao', v)}
                         onSelect={ins => setItens(list => list.map((it, i) =>
                             (i === idx ? { ...it, descricao: ins.descricao, unidade: it.unidade || ins.unidade } : it)))} />
-                    <input className="solc-inp" placeholder="0"
+                    <input className="solc-inp solc-item-quantity" placeholder="0"
                         value={item.quantidade} onChange={e => setItem(idx, 'quantidade', e.target.value)} />
-                    <input className="solc-inp" placeholder="un, sc, m³"
+                    <input className="solc-inp solc-item-unit" placeholder="un, sc, m³"
                         value={item.unidade} onChange={e => setItem(idx, 'unidade', e.target.value)} />
+                    <input className="solc-inp solc-item-observation" placeholder="Observação do item"
+                        value={item.observacao} onChange={e => setItem(idx, 'observacao', e.target.value)} />
                     <button type="button" className="solc-item-del" title="Remover item"
                         onClick={() => delItem(idx)} disabled={itens.length === 1}>
                         <i className="ti ti-trash" />
@@ -132,7 +160,7 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved }
                 <i className="ti ti-plus" /> Adicionar item
             </button>
 
-            <div className="solc-field"><label>Anexo (opcional — PDF/imagem, ex.: lista de materiais, projeto)</label>
+            <div className="solc-field"><label>{editando ? 'Novo anexo (opcional — substitui o atual)' : 'Anexo (opcional — PDF/imagem, ex.: lista de materiais, projeto)'}</label>
                 <input className="solc-inp" type="file" accept=".pdf,image/*"
                     onChange={e => setArquivo(e.target.files?.[0] || null)} /></div>
 

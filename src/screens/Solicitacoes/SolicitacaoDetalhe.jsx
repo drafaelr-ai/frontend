@@ -2,18 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
 import { solicitacoesApi } from './solicitacoesApi';
-import { brl, dataBR, dataHoraBR, statusBadge } from './solicitacoesFormat';
+import { brl, dataBR, dataHoraBR, statusBadge, textoDiasSolicitado } from './solicitacoesFormat';
+import { getTodayString } from '../../utils/format';
 import CotacaoSolicitacaoModal from '../../components/modals/CotacaoSolicitacaoModal';
+import NovaSolicitacaoModal from '../../components/modals/NovaSolicitacaoModal';
 
 const ABERTOS = ['Aberta', 'Em cotação', 'Aguardando aprovação'];
 
-export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, voltarLabel = 'Voltar à lista' }) {
+export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVoltar, voltarLabel = 'Voltar à lista', iniciarAtendimento = false }) {
     const [s, setS] = useState(null);            // null = carregando
     const [modalCotacao, setModalCotacao] = useState(false);
+    const [modalEdicao, setModalEdicao] = useState(false);
     const [cotSelecionada, setCotSelecionada] = useState(null);
     const [rejeitando, setRejeitando] = useState(false);
     const [motivo, setMotivo] = useState('');
-    const [atendendo, setAtendendo] = useState(false);
+    const [atendendo, setAtendendo] = useState(iniciarAtendimento);
+    const [dataAtendimento, setDataAtendimento] = useState(getTodayString());
     const [obsAtendimento, setObsAtendimento] = useState('');
     const [agindo, setAgindo] = useState(false);
 
@@ -99,9 +103,16 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
     };
 
     const atender = async () => {
+        if (!dataAtendimento) {
+            notify.warning('Informe a data em que a compra foi atendida.');
+            return;
+        }
         setAgindo(true);
         try {
-            await solicitacoesApi.atender(s.id, obsAtendimento.trim());
+            await solicitacoesApi.atender(s.id, {
+                data_atendimento: dataAtendimento,
+                observacao: obsAtendimento.trim(),
+            });
             notify.success('Compra atendida — movida para o histórico de compras.');
             setAtendendo(false);
             setObsAtendimento('');
@@ -199,6 +210,7 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
                         {s.status === 'Atendida' && (
                             <div className="solc-atendida">
                                 <i className="ti ti-package" /> Compra atendida por <b>{s.atendida_por_nome || '—'}</b> em <b>{dataHoraBR(s.data_atendimento)}</b>
+                                {' '}(<b>{textoDiasSolicitado(s.data_criacao, s.data_atendimento)}</b> após a solicitação)
                                 {s.observacao_atendimento && <> — {s.observacao_atendimento}</>}
                             </div>
                         )}
@@ -207,8 +219,13 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
                         <button className="solc-btn solc-btn-text" onClick={onVoltar}>
                             <i className="ti ti-arrow-left" /> {voltarLabel}
                         </button>
+                        {s.pode_editar && (
+                            <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={() => setModalEdicao(true)} disabled={agindo}>
+                                <i className="ti ti-edit" /> Editar
+                            </button>
+                        )}
                         {s.pode_atender && !atendendo && (
-                            <button className="solc-btn solc-btn-primary solc-btn-sm" onClick={() => setAtendendo(true)} disabled={agindo}>
+                            <button className="solc-btn solc-btn-primary solc-btn-sm" onClick={() => { setDataAtendimento(getTodayString()); setAtendendo(true); }} disabled={agindo}>
                                 <i className="ti ti-package" /> Marcar como atendida
                             </button>
                         )}
@@ -239,6 +256,22 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
                 {atendendo && (
                     <div className="solc-atender-form">
                         <div className="solc-field">
+                            <label htmlFor={`solc-data-atendimento-${s.id}`}>Data em que foi atendida *</label>
+                            <input
+                                id={`solc-data-atendimento-${s.id}`}
+                                className="solc-inp"
+                                type="date"
+                                value={dataAtendimento}
+                                max={getTodayString()}
+                                onChange={e => setDataAtendimento(e.target.value)}
+                                required
+                            />
+                            <div className="solc-hint">
+                                <i className="ti ti-clock" />
+                                Tempo da solicitação até essa data: <b>{textoDiasSolicitado(s.data_criacao, dataAtendimento)}</b>
+                            </div>
+                        </div>
+                        <div className="solc-field">
                             <label>Observação do atendimento (opcional)</label>
                             <input
                                 className="solc-inp" value={obsAtendimento} maxLength={300}
@@ -251,7 +284,7 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
                             A compra sai da lista e vai para o histórico. A conta a pagar no financeiro não é alterada.
                         </div>
                         <div className="solc-card-actions" style={{ justifyContent: 'flex-end' }}>
-                            <button className="solc-btn solc-btn-text" onClick={() => { setAtendendo(false); setObsAtendimento(''); }}>
+                            <button className="solc-btn solc-btn-text" onClick={() => { setAtendendo(false); setDataAtendimento(getTodayString()); setObsAtendimento(''); }}>
                                 Voltar
                             </button>
                             <button className="solc-btn solc-btn-primary" onClick={atender} disabled={agindo}>
@@ -405,6 +438,13 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, onVoltar, volt
                 solicitacao={s}
                 onClose={() => setModalCotacao(false)}
                 onSaved={() => { setModalCotacao(false); carregar(); }}
+            />
+            <NovaSolicitacaoModal
+                isOpen={modalEdicao}
+                obras={obras}
+                solicitacao={s}
+                onClose={() => setModalEdicao(false)}
+                onSaved={() => { setModalEdicao(false); carregar(); }}
             />
         </>
     );

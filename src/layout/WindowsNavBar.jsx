@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NotificacoesDropdown from './NotificacoesDropdown';
+import ModuleBackButton from './ModuleBackButton';
 
 const getInitials = (nome) => {
     if (!nome) return '?';
@@ -407,6 +408,7 @@ const WindowsNavBar = ({
     onLogout,
     onModuleHome,
     onBackToSelector,
+    onNavigateBack,
 }) => {
     const [activeMenu, setActiveMenu] = useState(null);
     const menuRef = React.useRef(null);
@@ -674,6 +676,7 @@ const WindowsNavBar = ({
                 </div>
 
                 <div className="wnb-right">
+                    <ModuleBackButton onClick={onNavigateBack} />
                     <select
                         className="wnb-obra-selector"
                         value={obraSelecionada?.id || 0}

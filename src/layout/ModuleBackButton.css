@@ -1,0 +1,59 @@
+.module-back-button {
+    min-height: 32px;
+    padding: 5px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 8px);
+    background: transparent;
+    font: inherit;
+    font-size: var(--text-sm, 13px);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.module-back-button--dark {
+    color: var(--text-on-dark-muted, #cbd5e1);
+    border-color: var(--border-on-dark, rgba(255, 255, 255, 0.22));
+}
+
+.module-back-button--dark:hover {
+    color: var(--text-on-dark, #fff);
+    border-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.module-back-button--light {
+    color: var(--text-secondary, #475569);
+    border-color: var(--border-default, #cbd5e1);
+}
+
+.module-back-button--light:hover {
+    color: var(--text-primary, #0f172a);
+    border-color: var(--border-strong, #94a3b8);
+    background: var(--surface-muted, #f1f5f9);
+}
+
+.module-back-button:focus-visible {
+    outline: 2px solid var(--brand-primary, #2563eb);
+    outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+    .module-back-button {
+        width: 34px;
+        min-width: 34px;
+        padding: 5px;
+    }
+
+    .module-back-button .module-action-label,
+    .module-selector-button .module-action-label {
+        display: none;
+    }
+}

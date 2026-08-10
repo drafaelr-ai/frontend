@@ -127,6 +127,7 @@
 .solc-table tbody tr.clickable { cursor: pointer; }
 .solc-cell-main { font-weight: 500; color: var(--text-primary); }
 .solc-cell-sub { font-size: var(--text-sm); color: var(--text-muted); }
+.solc-days { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .solc-empty { text-align: center; color: var(--text-muted); padding: var(--space-8) var(--space-4); }
 
 /* ===== kpis ===== */
@@ -171,7 +172,7 @@
 .solc-ac-meta { font-size: var(--text-xs); color: var(--text-muted); }
 
 /* ===== itens dinâmicos (nova solicitação) ===== */
-.solc-item-row { display: grid; grid-template-columns: 1fr 110px 90px 34px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
+.solc-item-row { display: grid; grid-template-columns: minmax(200px, 1fr) 110px 90px minmax(150px, .7fr) 34px; gap: var(--space-2); align-items: center; margin-bottom: var(--space-2); }
 .solc-item-del {
     appearance: none; border: none; background: none; color: var(--text-muted); cursor: pointer;
     font-size: 16px; padding: 4px; border-radius: var(--radius-sm);
@@ -228,8 +229,16 @@
 .solc-loading { text-align: center; color: var(--text-muted); padding: var(--space-8); }
 
 @media (max-width: 720px) {
+    .solc-navbar { padding: 0 var(--space-3); gap: var(--space-2); }
+    .solc-crumbs, .solc-user > span:first-child { display: none; }
     .solc-kpis { grid-template-columns: repeat(2, 1fr); }
     .solc-row2, .solc-row3 { grid-template-columns: 1fr; }
     .solc-container { padding: var(--space-4); }
-    .solc-item-row { grid-template-columns: 1fr 80px 70px 30px; }
+    .solc-item-row { grid-template-columns: minmax(0, 1fr) 80px 70px 30px; align-items: start; }
+    .solc-item-row .solc-item-description { grid-column: 1; grid-row: 1; }
+    .solc-item-row .solc-item-quantity { grid-column: 2; grid-row: 1; }
+    .solc-item-row .solc-item-unit { grid-column: 3; grid-row: 1; }
+    .solc-item-row .solc-item-observation { grid-column: 1 / -1; grid-row: 2; }
+    .solc-item-row > :last-child { grid-column: 4; grid-row: 1; }
+    .solc-item-row[style] .solc-item-observation { display: none; }
 }

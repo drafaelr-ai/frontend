@@ -24,4 +24,23 @@ describe('DashboardHeader', () => {
 
         expect(onBackToSelector).toHaveBeenCalledTimes(1);
     });
+
+    it('oferece uma ação separada para voltar à tela anterior', () => {
+        const onNavigateBack = jest.fn();
+
+        render(
+            <AuthContext.Provider value={{
+                user: { nome: 'Diego Rafael', username: 'Diego' },
+                logout: jest.fn(),
+                onBackToSelector: jest.fn(),
+                onNavigateBack,
+            }}>
+                <DashboardHeader />
+            </AuthContext.Provider>
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Voltar para a tela anterior' }));
+
+        expect(onNavigateBack).toHaveBeenCalledTimes(1);
+    });
 });

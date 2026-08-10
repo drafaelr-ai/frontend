@@ -28,6 +28,13 @@ jest.mock('../../utils/notify', () => ({
 }));
 
 const today = new Date().toISOString().slice(0, 10);
+const futureIso = (days) => {
+    const value = new Date();
+    value.setHours(12, 0, 0, 0);
+    value.setDate(value.getDate() + days);
+    return value.toISOString().slice(0, 10);
+};
+const formatIsoDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR');
 const activity = {
     id: 10,
     obra_id: 1,
@@ -113,12 +120,14 @@ describe('Planejamento', () => {
     });
 
     it('chama pronto de programado e mantém atividade incompleta na fila', async () => {
+        const startDate = futureIso(1);
+        const endDate = futureIso(5);
         const scheduled = {
             ...activity,
             id: 12,
             status: 'pronto',
-            data_inicio: '2026-08-03',
-            data_fim: '2026-08-07',
+            data_inicio: startDate,
+            data_fim: endDate,
             quantidade_executada: 0,
             restricoes: [],
             restricoes_abertas: 0,
@@ -142,7 +151,7 @@ describe('Planejamento', () => {
 
         render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'administrador' }} />);
         expect((await screen.findAllByText('Programado')).length).toBeGreaterThan(0);
-        expect((await screen.findAllByText('Início: 03/08/2026 · Fim: 07/08/2026')).length).toBeGreaterThan(0);
+        expect((await screen.findAllByText(`Início: ${formatIsoDate(startDate)} · Fim: ${formatIsoDate(endDate)}`)).length).toBeGreaterThan(0);
 
         fireEvent.click(screen.getByRole('tab', { name: /A planejar 1/ }));
         expect(screen.getByText('Montar laje')).toBeInTheDocument();

@@ -6,7 +6,7 @@ import { buscarInsumos } from './insumosCatalogo';
  * Texto livre continua valendo — selecionar uma sugestão só acelera (e traz a
  * unidade padrão via onSelect).
  */
-export default function InsumoAutocomplete({ value, onChange, onSelect, placeholder }) {
+export default function InsumoAutocomplete({ value, onChange, onSelect, placeholder, className = '' }) {
     const [aberto, setAberto] = useState(false);
     const [ativo, setAtivo] = useState(-1);
     const blurTimer = useRef(null);
@@ -37,7 +37,7 @@ export default function InsumoAutocomplete({ value, onChange, onSelect, placehol
     };
 
     return (
-        <div className="solc-ac">
+        <div className={`solc-ac${className ? ` ${className}` : ''}`}>
             <input
                 className="solc-inp"
                 placeholder={placeholder}

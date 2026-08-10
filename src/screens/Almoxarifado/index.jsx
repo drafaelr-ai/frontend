@@ -4,6 +4,8 @@ import '../../styles/components.css';
 import './almoxarifado.css';
 
 import { AuthContext } from '../../auth/AuthContext';
+import ModuleBackButton from '../../layout/ModuleBackButton';
+import useModuleTabHistory from '../../hooks/useModuleTabHistory';
 import { confirmDialog, notify } from '../../utils/notify';
 import { logger } from '../../utils/logger';
 import { almoxarifadoApi } from './almoxarifadoApi';
@@ -141,8 +143,8 @@ function movementHint(item, type) {
 }
 
 export default function AlmoxarifadoModule() {
-    const { user, onBackToSelector } = useContext(AuthContext);
-    const [tab, setTab] = useState('visao');
+    const { user, onBackToSelector, onNavigateBack } = useContext(AuthContext);
+    const { tab, setTab, goBack: goBackTab } = useModuleTabHistory('visao');
     const [dashboard, setDashboard] = useState(null);
     const [itens, setItens] = useState([]);
     const [movimentacoes, setMovimentacoes] = useState([]);
@@ -371,6 +373,9 @@ export default function AlmoxarifadoModule() {
     const lowItems = dashboard?.abaixo_minimo || [];
     const stockSummary = dashboard?.resumo || {};
     const categoriaAtual = CATEGORIA_CONFIG[itemForm.categoria] || CATEGORIA_CONFIG.outro;
+    const handleBack = () => {
+        if (!goBackTab()) (onNavigateBack || onBackToSelector)();
+    };
 
     return (
         <div className="almox-shell">
@@ -380,7 +385,8 @@ export default function AlmoxarifadoModule() {
                 </button>
                 <div className="almox-crumbs"><i className="ti ti-chevron-right" /> <b>Almoxarifado</b></div>
                 <div className="almox-spacer" />
-                <button className="almox-back" onClick={onBackToSelector}><i className="ti ti-arrow-left" /> Modulos</button>
+                <ModuleBackButton onClick={handleBack} />
+                <button className="almox-back module-selector-button" onClick={onBackToSelector}><i className="ti ti-layout-grid" /> <span className="module-action-label">Módulos</span></button>
                 <div className="almox-user"><span>{nomeUser}</span><span className="almox-user-av">{initials(nomeUser)}</span></div>
             </header>
 

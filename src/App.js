@@ -154,6 +154,23 @@ function App() {
         await handleBackToSelector();
     };
 
+    const handleNavigateBack = async () => {
+        // Page changes inside a work use pushState, so the global button can
+        // respect the exact in-app history. A directly opened/reloaded work has
+        // no safe history marker; in that case, return to its module home.
+        if (window.location.search) {
+            const currentState = window.history.state;
+            if (currentState?.page || currentState?.obraId) {
+                window.history.back();
+            } else {
+                window.location.assign(window.location.pathname);
+            }
+            return;
+        }
+
+        await handleBackToSelector();
+    };
+
     const login = async (data) => {
         setToken(data.access_token);
         setUser(data.user);
@@ -184,6 +201,7 @@ function App() {
         user, token, login, logout,
         onBackToSelector: handleBackToSelector,
         onGoToDashboard: handleGoToDashboard,
+        onNavigateBack: handleNavigateBack,
         selectModule: handleSelectModule,
     };
 
@@ -257,7 +275,11 @@ function App() {
         return (
             <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
                 <ToastContainer />
-                <AppAdmin onBack={handleBackToSelector} onGoToDashboard={handleGoToDashboard} />
+                <AppAdmin
+                    onBack={handleBackToSelector}
+                    onGoToDashboard={handleGoToDashboard}
+                    onNavigateBack={handleNavigateBack}
+                />
             </Suspense>
         );
     }

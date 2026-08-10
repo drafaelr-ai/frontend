@@ -4,6 +4,8 @@ import '../../styles/components.css';
 import './rh.css';
 
 import { AuthContext } from '../../auth/AuthContext';
+import ModuleBackButton from '../../layout/ModuleBackButton';
+import useModuleTabHistory from '../../hooks/useModuleTabHistory';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { rhApi } from './rhApi';
@@ -26,8 +28,8 @@ const TABS = [
 ];
 
 export default function RHModule() {
-    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
-    const [tab, setTab] = useState('dash');
+    const { user, onBackToSelector, onGoToDashboard, onNavigateBack } = useContext(AuthContext);
+    const { tab, setTab, goBack: goBackTab } = useModuleTabHistory('dash');
     const [obras, setObras] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [funcionarios, setFuncionarios] = useState([]);
@@ -56,6 +58,9 @@ export default function RHModule() {
 
     const nomeUser = user?.username || 'Usuário';
     const shared = { obras, categorias, funcionarios, reloadRefs: loadRefs, setCounts };
+    const handleBack = () => {
+        if (!goBackTab()) (onNavigateBack || onBackToSelector)();
+    };
 
     return (
         <div className="rh-shell">
@@ -67,8 +72,9 @@ export default function RHModule() {
                     <i className="ti ti-chevron-right" style={{ fontSize: 13 }} /> <b>Pessoal / RH</b>
                 </div>
                 <div className="rh-spacer" />
-                <button className="rh-back" onClick={onBackToSelector}>
-                    <i className="ti ti-arrow-left" /> Módulos
+                <ModuleBackButton onClick={handleBack} />
+                <button className="rh-back module-selector-button" onClick={onBackToSelector}>
+                    <i className="ti ti-layout-grid" /> <span className="module-action-label">Módulos</span>
                 </button>
                 <div className="rh-user">
                     <span>{nomeUser}</span>

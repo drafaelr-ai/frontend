@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import NotificacoesDropdown from '../../../layout/NotificacoesDropdown';
+import ModuleBackButton from '../../../layout/ModuleBackButton';
 import './DashboardHeader.css';
 
 function getInitials(user) {
@@ -14,7 +15,7 @@ function getInitials(user) {
 }
 
 export default function DashboardHeader() {
-    const { user, logout, onBackToSelector } = useAuth();
+    const { user, logout, onBackToSelector, onNavigateBack } = useAuth();
     const [open, setOpen] = useState(false);
     const wrapRef = useRef(null);
 
@@ -59,8 +60,10 @@ export default function DashboardHeader() {
                 <span className="dh-logo">Obraly</span>
             </button>
             <div className="dh-right">
+                <ModuleBackButton onClick={onNavigateBack} tone="light" />
                 <button
                     onClick={onBackToSelector}
+                    className="dh-modules-button module-selector-button"
                     style={{
                         background: 'none',
                         border: '1px solid var(--border-default)',
@@ -76,7 +79,7 @@ export default function DashboardHeader() {
                         gap: 6,
                     }}
                 >
-                    <i className="ti ti-layout-grid" aria-hidden="true" /> Módulos
+                    <i className="ti ti-layout-grid" aria-hidden="true" /> <span className="module-action-label">Módulos</span>
                 </button>
                 <NotificacoesDropdown user={user} />
                 <div className="dh-avatar-wrap" ref={wrapRef}>

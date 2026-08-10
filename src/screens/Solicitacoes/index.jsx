@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import '../../styles/tokens.css';
 import '../../styles/components.css';
 import './solicitacoes.css';
 
 import { AuthContext } from '../../auth/AuthContext';
+import ModuleBackButton from '../../layout/ModuleBackButton';
+import useModuleTabHistory from '../../hooks/useModuleTabHistory';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import NotificacoesDropdown from '../../layout/NotificacoesDropdown';
@@ -15,9 +17,10 @@ import HistoricoCompras from './HistoricoCompras';
 import ConfigSolicitacoes from './ConfigSolicitacoes';
 
 export default function SolicitacoesModule() {
-    const { user, onBackToSelector, onGoToDashboard } = useContext(AuthContext);
-    const [tab, setTab] = useState('lista');
+    const { user, onBackToSelector, onGoToDashboard, onNavigateBack } = useContext(AuthContext);
+    const { tab, setTab, goBack: goBackTab } = useModuleTabHistory('lista');
     const [obras, setObras] = useState([]);
+    const contentBackRef = useRef(null);
     const isMaster = user?.role === 'master';
 
     const loadRefs = async () => {
@@ -33,7 +36,17 @@ export default function SolicitacoesModule() {
     useEffect(() => { loadRefs(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const nomeUser = user?.username || 'Usuário';
-    const shared = { obras, user, reloadRefs: loadRefs };
+    const registerContentBack = useCallback((handler) => {
+        contentBackRef.current = handler;
+    }, []);
+    const shared = { obras, user, reloadRefs: loadRefs, registerContentBack };
+    const handleBack = () => {
+        if (contentBackRef.current) {
+            contentBackRef.current();
+            return;
+        }
+        if (!goBackTab()) (onNavigateBack || onBackToSelector)();
+    };
 
     const TABS = [
         { id: 'lista', icon: 'ti-list-details', label: 'Solicitações' },
@@ -52,8 +65,9 @@ export default function SolicitacoesModule() {
                 </div>
                 <div className="solc-spacer" />
                 <NotificacoesDropdown user={user} />
-                <button className="solc-back" onClick={onBackToSelector}>
-                    <i className="ti ti-arrow-left" /> Módulos
+                <ModuleBackButton onClick={handleBack} />
+                <button className="solc-back module-selector-button" onClick={onBackToSelector}>
+                    <i className="ti ti-layout-grid" /> <span className="module-action-label">Módulos</span>
                 </button>
                 <div className="solc-user">
                     <span>{nomeUser}</span>

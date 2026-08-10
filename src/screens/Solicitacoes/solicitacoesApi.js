@@ -28,6 +28,10 @@ export const solicitacoesApi = {
         fetchWithAuth(`${base}`, {
             method: 'POST', body: isForm ? body : JSON.stringify(body),
         }).then(j),
+    editar: (id, body, isForm) =>
+        fetchWithAuth(`${base}/${id}`, {
+            method: 'PATCH', body: isForm ? body : JSON.stringify(body),
+        }).then(j),
     cancelar: (id) =>
         fetchWithAuth(`${base}/${id}/cancelar`, { method: 'PATCH' }).then(j),
     arquivoSolicitacao: (id) =>
@@ -56,9 +60,9 @@ export const solicitacoesApi = {
         }).then(j),
 
     // baixa do comprador — sai da lista de compras e vai para o histórico
-    atender: (id, observacao = '') =>
+    atender: (id, { observacao = '', data_atendimento = null } = {}) =>
         fetchWithAuth(`${base}/${id}/atender`, {
-            method: 'PATCH', body: JSON.stringify({ observacao }),
+            method: 'PATCH', body: JSON.stringify({ observacao, data_atendimento }),
         }).then(j),
     reabrir: (id) =>
         fetchWithAuth(`${base}/${id}/reabrir`, { method: 'PATCH' }).then(j),

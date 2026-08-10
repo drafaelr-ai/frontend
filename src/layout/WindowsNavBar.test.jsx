@@ -12,6 +12,7 @@ const baseProps = {
     obras: [{ id: 2, nome: 'Alphaville' }],
     onLogout: jest.fn(),
     onBackToSelector: jest.fn(),
+    onNavigateBack: jest.fn(),
 };
 
 describe('WindowsNavBar por modulo', () => {
@@ -56,6 +57,23 @@ describe('WindowsNavBar por modulo', () => {
 
         expect(onBackToSelector).toHaveBeenCalledTimes(1);
         expect(onModuleHome).not.toHaveBeenCalled();
+    });
+
+    it('volta para a tela anterior sem confundir com o atalho do logo', () => {
+        const onNavigateBack = jest.fn();
+        const onBackToSelector = jest.fn();
+        render(
+            <WindowsNavBar
+                {...baseProps}
+                onNavigateBack={onNavigateBack}
+                onBackToSelector={onBackToSelector}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Voltar para a tela anterior' }));
+
+        expect(onNavigateBack).toHaveBeenCalledTimes(1);
+        expect(onBackToSelector).not.toHaveBeenCalled();
     });
 
     it('Financeiro mantém seus atalhos e não expõe o orçamento de engenharia', () => {

@@ -230,6 +230,8 @@
 .frota-loading { text-align: center; color: var(--text-muted); padding: var(--space-8); }
 
 @media (max-width: 720px) {
+    .frota-navbar { padding: 0 var(--space-3); gap: var(--space-2); }
+    .frota-crumbs, .frota-user > span:first-child { display: none; }
     .frota-kpis { grid-template-columns: repeat(2, 1fr); }
     .frota-row2, .frota-row3, .frota-dash-grid { grid-template-columns: 1fr; }
     .frota-container { padding: var(--space-4); }
