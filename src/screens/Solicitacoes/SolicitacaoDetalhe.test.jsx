@@ -4,7 +4,7 @@ import SolicitacaoDetalhe from './SolicitacaoDetalhe';
 import { solicitacoesApi } from './solicitacoesApi';
 
 jest.mock('./solicitacoesApi', () => ({
-    solicitacoesApi: { detalhe: jest.fn(), atender: jest.fn() },
+    solicitacoesApi: { detalhe: jest.fn(), atender: jest.fn(), exportar: jest.fn() },
 }));
 
 jest.mock('../../components/modals/CotacaoSolicitacaoModal', () => () => null);
@@ -17,7 +17,12 @@ jest.mock('../../utils/notify', () => ({
 }));
 
 describe('SolicitacaoDetalhe', () => {
-    beforeEach(() => jest.clearAllMocks());
+    beforeEach(() => {
+        jest.clearAllMocks();
+        window.URL.createObjectURL = jest.fn(() => 'blob:pedido');
+        window.URL.revokeObjectURL = jest.fn();
+        HTMLAnchorElement.prototype.click = jest.fn();
+    });
 
     it('mostra a edição autorizada e abre o formulário', async () => {
         solicitacoesApi.detalhe.mockResolvedValue({
@@ -87,5 +92,39 @@ describe('SolicitacaoDetalhe', () => {
             data_atendimento: '2026-08-09',
             observacao: '',
         }));
+    });
+
+    it('exporta a solicitação em Excel e PDF para envio ao fornecedor', async () => {
+        solicitacoesApi.detalhe.mockResolvedValue({
+            id: 11,
+            obra_id: 1,
+            obra_nome: 'Alphaville',
+            solicitante_nome: 'Diego',
+            data_criacao: '2026-08-10T10:20:00',
+            tipo: 'Material',
+            status: 'Aberta',
+            itens: [{ id: 1, descricao: 'Caixa sifonada', quantidade: 3, unidade: 'pç' }],
+            cotacoes: [],
+            token_publico: 'token-publico',
+        });
+        solicitacoesApi.exportar.mockImplementation((id, formato) => Promise.resolve({
+            blob: new Blob([formato]),
+            nome: `solicitacao_${id}.${formato}`,
+        }));
+
+        render(
+            <SolicitacaoDetalhe
+                solicitacaoId={11}
+                user={{ id: 3, role: 'master' }}
+                obras={[{ id: 1, nome: 'Alphaville' }]}
+                onVoltar={jest.fn()}
+            />
+        );
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Excel' }));
+        await waitFor(() => expect(solicitacoesApi.exportar).toHaveBeenCalledWith(11, 'xlsx'));
+        fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
+        await waitFor(() => expect(solicitacoesApi.exportar).toHaveBeenCalledWith(11, 'pdf'));
+        expect(window.URL.createObjectURL).toHaveBeenCalledTimes(2);
     });
 });

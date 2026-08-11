@@ -7,6 +7,7 @@ jest.mock('../../screens/Solicitacoes/solicitacoesApi', () => ({
     solicitacoesApi: {
         criar: jest.fn(),
         editar: jest.fn(),
+        lerPedido: jest.fn(),
     },
 }));
 
@@ -65,5 +66,48 @@ describe('NovaSolicitacaoModal em modo de edição', () => {
         })));
         expect(solicitacoesApi.criar).not.toHaveBeenCalled();
         expect(onSaved).toHaveBeenCalledWith({ id: 11, status: 'Aberta' });
+    });
+
+    it('lê Excel/PDF e preenche somente os campos úteis dos itens', async () => {
+        solicitacoesApi.lerPedido.mockResolvedValue({
+            arquivo: 'materiais.xlsx',
+            quantidade_itens: 2,
+            avisos: [],
+            itens: [
+                {
+                    descricao: 'Caixa sifonada',
+                    quantidade: 3,
+                    unidade: 'pç',
+                    observacao: 'Categoria: PVC Acessórios | Especificação: 150 x 150 x 50 mm',
+                },
+                {
+                    descricao: 'Tubo rígido c/ ponta lisa',
+                    quantidade: 10.51,
+                    unidade: 'm',
+                    observacao: 'Categoria: PVC Esgoto | Especificação: 50 mm - 2"',
+                },
+            ],
+        });
+
+        render(
+            <NovaSolicitacaoModal
+                isOpen
+                obras={[{ id: 1, nome: 'Alphaville' }]}
+                onClose={jest.fn()}
+                onSaved={jest.fn()}
+            />
+        );
+
+        const input = document.querySelector('input[accept*=".xlsx"]');
+        const arquivo = new File(['pedido'], 'materiais.xlsx', {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        fireEvent.change(input, { target: { files: [arquivo] } });
+
+        await waitFor(() => expect(solicitacoesApi.lerPedido).toHaveBeenCalledWith(arquivo));
+        expect(await screen.findByDisplayValue('Caixa sifonada')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('10.51')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Categoria: PVC Esgoto | Especificação: 50 mm - 2"')).toBeInTheDocument();
+        expect(screen.getByText(/2 item\(ns\) preenchido\(s\) de materiais\.xlsx/)).toBeInTheDocument();
     });
 });

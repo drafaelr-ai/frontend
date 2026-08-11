@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import { solicitacoesApi } from '../../screens/Solicitacoes/solicitacoesApi';
 import { logger } from '../../utils/logger';
@@ -13,7 +13,10 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
     const [form, setForm] = useState(vazio);
     const [itens, setItens] = useState([itemVazio()]);
     const [arquivo, setArquivo] = useState(null);
+    const [lendoPedido, setLendoPedido] = useState(false);
+    const [resumoLeitura, setResumoLeitura] = useState(null);
     const [salvando, setSalvando] = useState(false);
+    const pedidoInputRef = useRef(null);
     const editando = Boolean(solicitacao?.id);
 
     useEffect(() => {
@@ -33,12 +36,57 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
             }))
             : [itemVazio()]);
         setArquivo(null);
+        setResumoLeitura(null);
     }, [editando, isOpen, solicitacao]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
     const setItem = (idx, k, v) => setItens(list => list.map((it, i) => (i === idx ? { ...it, [k]: v } : it)));
     const addItem = () => setItens(list => [...list, itemVazio()]);
     const delItem = (idx) => setItens(list => (list.length > 1 ? list.filter((_, i) => i !== idx) : list));
+
+    const lerArquivoPedido = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const extensao = file.name.toLowerCase().split('.').pop();
+        if (!['xlsx', 'pdf'].includes(extensao)) {
+            notify.warning('Envie um arquivo Excel (.xlsx) ou PDF.');
+            event.target.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            notify.warning('O arquivo ultrapassa o limite de 10 MB.');
+            event.target.value = '';
+            return;
+        }
+
+        setLendoPedido(true);
+        try {
+            const resposta = await solicitacoesApi.lerPedido(file);
+            const importados = (resposta.itens || []).map(item => ({
+                descricao: item.descricao || '',
+                quantidade: item.quantidade ?? '',
+                unidade: item.unidade || '',
+                observacao: item.observacao || '',
+            }));
+            if (!importados.length) throw new Error('Nenhum item foi identificado no arquivo.');
+
+            const preenchidos = itens.filter(item => item.descricao.trim());
+            const adicionadosAosExistentes = preenchidos.length > 0;
+            setItens(adicionadosAosExistentes ? [...preenchidos, ...importados] : importados);
+            setResumoLeitura({
+                arquivo: resposta.arquivo || file.name,
+                quantidade: importados.length,
+                avisos: resposta.avisos || [],
+            });
+            notify.success(`${importados.length} item(ns) lido(s) e ${adicionadosAosExistentes ? 'adicionado(s)' : 'preenchido(s)'} para revisão.`);
+        } catch (e) {
+            logger.error('ler pedido da solicitação', e);
+            notify.error(e.message || 'Não foi possível ler o pedido.');
+        } finally {
+            setLendoPedido(false);
+            event.target.value = '';
+        }
+    };
 
     const salvar = async () => {
         if (!form.obra_id) { notify.warning('Selecione a obra.'); return; }
@@ -156,9 +204,39 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
                     </button>
                 </div>
             ))}
-            <button type="button" className="solc-btn solc-btn-secondary solc-btn-sm" onClick={addItem} style={{ marginBottom: 'var(--space-4)' }}>
-                <i className="ti ti-plus" /> Adicionar item
-            </button>
+            <div className="solc-item-tools">
+                <button type="button" className="solc-btn solc-btn-secondary solc-btn-sm" onClick={addItem}>
+                    <i className="ti ti-plus" /> Adicionar item
+                </button>
+                <button
+                    type="button"
+                    className="solc-btn solc-btn-secondary solc-btn-sm"
+                    onClick={() => pedidoInputRef.current?.click()}
+                    disabled={lendoPedido}
+                >
+                    <i className={`ti ${lendoPedido ? 'ti-loader-2' : 'ti-file-search'}`} />
+                    {lendoPedido ? 'Lendo pedido…' : 'Ler pedido'}
+                </button>
+                <input
+                    ref={pedidoInputRef}
+                    type="file"
+                    accept=".xlsx,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
+                    onChange={lerArquivoPedido}
+                    hidden
+                />
+                <span className="solc-item-tools-hint">Excel (.xlsx) ou PDF, até 10 MB</span>
+            </div>
+
+            {resumoLeitura && (
+                <div className="solc-import-result" role="status">
+                    <i className="ti ti-circle-check" />
+                    <div>
+                        <b>{resumoLeitura.quantidade} item(ns) preenchido(s) de {resumoLeitura.arquivo}</b>
+                        <span>Revise descrição, quantidade, unidade e observação antes de salvar.</span>
+                        {resumoLeitura.avisos.map((aviso, idx) => <span key={idx}>{aviso}</span>)}
+                    </div>
+                </div>
+            )}
 
             <div className="solc-field"><label>{editando ? 'Novo anexo (opcional — substitui o atual)' : 'Anexo (opcional — PDF/imagem, ex.: lista de materiais, projeto)'}</label>
                 <input className="solc-inp" type="file" accept=".pdf,image/*"

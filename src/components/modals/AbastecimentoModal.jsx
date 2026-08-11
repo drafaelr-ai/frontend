@@ -7,9 +7,25 @@ import { placaBR, COMBUSTIVEIS } from '../../screens/Frota/frotaFormat';
 
 const vazio = { veiculo_id: '', data: '', litros: '', valor: '', km: '', combustivel: '', posto: '', condutor_id: '', observacao: '' };
 
+function numeroBR(valor) {
+    if (valor === null || valor === undefined || valor === '') return null;
+    let texto = String(valor).replace('R$', '').trim();
+    if (texto.includes(',') && texto.includes('.')) texto = texto.replace(/\./g, '').replace(',', '.');
+    else if (texto.includes(',')) texto = texto.replace(',', '.');
+    const numero = Number(texto);
+    return Number.isFinite(numero) ? numero : null;
+}
+
 export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, condutores, onClose, onSaved }) {
     const [form, setForm] = useState(vazio);
     const [salvando, setSalvando] = useState(false);
+    const litros = numeroBR(form.litros);
+    const valor = numeroBR(form.valor);
+    const precoLitro = litros > 0 && valor > 0
+        ? (valor / litros).toLocaleString('pt-BR', {
+            minimumFractionDigits: 3, maximumFractionDigits: 3,
+        })
+        : '';
 
     useEffect(() => {
         if (!isOpen) return;
@@ -64,11 +80,15 @@ export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, cond
                 <div className="frota-field"><label>Data</label>
                     <input className="frota-inp" type="date" value={form.data} onChange={e => set('data', e.target.value)} /></div>
             </div>
-            <div className="frota-row3">
+            <div className="frota-row2">
                 <div className="frota-field"><label>Valor</label>
                     <input className="frota-inp money" placeholder="0,00" value={form.valor} onChange={e => set('valor', e.target.value)} /></div>
                 <div className="frota-field"><label>Litros</label>
                     <input className="frota-inp" type="number" step="0.01" value={form.litros} onChange={e => set('litros', e.target.value)} /></div>
+            </div>
+            <div className="frota-row2">
+                <div className="frota-field"><label>R$/L (automático)</label>
+                    <input className="frota-inp" aria-label="Valor por litro calculado" readOnly value={precoLitro} placeholder="Preencha valor e litros" /></div>
                 <div className="frota-field"><label>KM</label>
                     <input className="frota-inp" type="number" value={form.km} onChange={e => set('km', e.target.value)} /></div>
             </div>

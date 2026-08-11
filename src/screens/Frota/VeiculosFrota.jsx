@@ -31,7 +31,7 @@ const SUBTABS = [
     { id: 'multas', icon: 'ti-alert-triangle', label: 'Multas' },
 ];
 
-function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChanged }) {
+export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChanged }) {
     const [sub, setSub] = useState('docs');
     const [dados, setDados] = useState({ docs: null, movs: null, manut: null, abast: null, multas: null });
     const [modalMover, setModalMover] = useState(false);
@@ -39,6 +39,7 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
     const [modalManut, setModalManut] = useState(false);
     const [modalAbast, setModalAbast] = useState(false);
     const [modalMulta, setModalMulta] = useState(false);
+    const [modalEditar, setModalEditar] = useState(false);
     const [condutorSel, setCondutorSel] = useState(veiculo.condutor_atual_id ?? '');
 
     const carregarSub = useCallback(async (aba) => {
@@ -128,6 +129,9 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button className="frota-btn frota-btn-secondary frota-btn-sm" onClick={() => setModalEditar(true)}>
+                        <i className="ti ti-pencil" /> Editar veículo
+                    </button>
                     <select className="frota-inp" style={{ maxWidth: 190 }} value={condutorSel} onChange={e => setCondutorSel(e.target.value)}>
                         <option value="">— Sem condutor —</option>
                         {condutores.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
@@ -224,13 +228,14 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
 
                     {sub === 'abast' && (
                         <table className="frota-table">
-                            <thead><tr><th>Data</th><th>Litros</th><th>KM</th><th>Condutor</th><th>Valor</th><th></th></tr></thead>
+                            <thead><tr><th>Data</th><th>Litros</th><th>R$/L</th><th>KM</th><th>Condutor</th><th>Valor</th><th></th></tr></thead>
                             <tbody>
-                                {lista.length === 0 && <tr><td colSpan={6} className="frota-empty">Nenhum abastecimento.</td></tr>}
+                                {lista.length === 0 && <tr><td colSpan={7} className="frota-empty">Nenhum abastecimento.</td></tr>}
                                 {lista.map(a => (
                                     <tr key={a.id}>
                                         <td className="frota-muted">{dataBR(a.data)}{a.posto && <div className="frota-cell-sub">{a.posto}</div>}</td>
                                         <td className="frota-muted">{a.litros != null ? `${a.litros} L` : '—'}</td>
+                                        <td className="frota-muted">{a.preco_litro != null ? brl(a.preco_litro) : '—'}</td>
                                         <td className="frota-muted">{a.km ? Number(a.km).toLocaleString('pt-BR') : '—'}</td>
                                         <td className="frota-muted">{a.condutor_nome || '—'}</td>
                                         <td className="frota-valor">{brl(a.valor)}</td>
@@ -263,6 +268,11 @@ function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChang
                 </>
             )}
 
+            <VeiculoModal
+                isOpen={modalEditar} veiculo={veiculo} obras={obras} imoveis={imoveis}
+                onClose={() => setModalEditar(false)}
+                onSaved={() => { setModalEditar(false); onChanged?.(); }}
+            />
             <MovimentacaoVeiculoModal
                 isOpen={modalMover} veiculo={veiculo} obras={obras} imoveis={imoveis}
                 onClose={() => setModalMover(false)}

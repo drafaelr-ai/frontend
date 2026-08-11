@@ -20,6 +20,7 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
     const [dataAtendimento, setDataAtendimento] = useState(getTodayString());
     const [obsAtendimento, setObsAtendimento] = useState('');
     const [agindo, setAgindo] = useState(false);
+    const [exportando, setExportando] = useState(null);
 
     const carregar = useCallback(async () => {
         try {
@@ -181,6 +182,27 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
         }
     };
 
+    const exportarPedido = async (formato) => {
+        setExportando(formato);
+        try {
+            const { blob, nome } = await solicitacoesApi.exportar(s.id, formato);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nome;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            notify.success(`Pedido exportado em ${formato.toUpperCase()}.`);
+        } catch (e) {
+            logger.error(`exportar solicitação em ${formato}`, e);
+            notify.error(e.message || 'Não foi possível exportar a solicitação.');
+        } finally {
+            setExportando(null);
+        }
+    };
+
     return (
         <>
             <div className="solc-card">
@@ -239,6 +261,12 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                                 <i className="ti ti-paperclip" /> Anexo
                             </button>
                         )}
+                        <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={() => exportarPedido('xlsx')} disabled={Boolean(exportando)}>
+                            <i className="ti ti-file-spreadsheet" /> {exportando === 'xlsx' ? 'Gerando…' : 'Excel'}
+                        </button>
+                        <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={() => exportarPedido('pdf')} disabled={Boolean(exportando)}>
+                            <i className="ti ti-file-type-pdf" /> {exportando === 'pdf' ? 'Gerando…' : 'PDF'}
+                        </button>
                         <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={copiarLink}>
                             <i className="ti ti-link" /> Copiar link
                         </button>

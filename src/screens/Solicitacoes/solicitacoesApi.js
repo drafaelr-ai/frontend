@@ -13,6 +13,20 @@ async function j(res) {
     return data;
 }
 
+async function arquivo(res, nomePadrao) {
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(data.erro || data.msg || `Erro ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    const disposition = res.headers.get('content-disposition') || '';
+    const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    const simples = disposition.match(/filename="?([^";]+)"?/i);
+    const nome = decodeURIComponent((utf8?.[1] || simples?.[1] || nomePadrao).trim());
+    return { blob: await res.blob(), nome };
+}
+
 export const solicitacoesApi = {
     // referência
     obras: () => fetchWithAuth(`${API_URL}/obras`).then(j),
@@ -32,6 +46,14 @@ export const solicitacoesApi = {
         fetchWithAuth(`${base}/${id}`, {
             method: 'PATCH', body: isForm ? body : JSON.stringify(body),
         }).then(j),
+    lerPedido: (file) => {
+        const body = new FormData();
+        body.append('arquivo', file);
+        return fetchWithAuth(`${base}/ler-pedido`, { method: 'POST', body }).then(j);
+    },
+    exportar: (id, formato) =>
+        fetchWithAuth(`${base}/${id}/exportar.${formato}`)
+            .then(res => arquivo(res, `solicitacao_${id}.${formato}`)),
     cancelar: (id) =>
         fetchWithAuth(`${base}/${id}/cancelar`, { method: 'PATCH' }).then(j),
     arquivoSolicitacao: (id) =>

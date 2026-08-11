@@ -67,9 +67,10 @@ export default function VeiculoModal({ isOpen, veiculo, obras, imoveis, onClose,
                 chassi: form.chassi.trim() || null,
                 observacao: form.observacao.trim() || null,
             };
+            let salvo;
             if (editando) {
                 body.status = form.status;
-                await frotaApi.editarVeiculo(veiculo.id, body);
+                salvo = await frotaApi.editarVeiculo(veiculo.id, body);
             } else {
                 body.destino_tipo = destino;
                 if (destino === 'obra') body.obra_id = obraId;
@@ -78,10 +79,10 @@ export default function VeiculoModal({ isOpen, veiculo, obras, imoveis, onClose,
                     body.imovel_id = imovelId;
                     body.imovel_nome = im?.nome || null;
                 }
-                await frotaApi.criarVeiculo(body);
+                salvo = await frotaApi.criarVeiculo(body);
             }
             notify.success(editando ? 'Veículo atualizado.' : 'Veículo cadastrado.');
-            onSaved?.();
+            onSaved?.(salvo);
         } catch (e) {
             logger.error('salvar veiculo', e);
             notify.error(e.message || 'Erro ao salvar veículo.');
