@@ -23,6 +23,7 @@ describe('ModuleSelectorScreen', () => {
 
         expect(screen.getByText('Financeiro')).toBeInTheDocument();
         expect(screen.getByText('Planejamento')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Instalar no computador' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByText('Financeiro'));
         expect(onSelectModule).toHaveBeenCalledWith('financeiro');

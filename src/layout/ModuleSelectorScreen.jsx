@@ -3,6 +3,7 @@ import { fetchWithAuth } from '../auth/fetchWithAuth';
 import { API_URL } from '../config';
 import { logger } from '../utils/logger';
 import { notify } from '../utils/notify';
+import PwaInstallButton from '../components/PwaInstallButton';
 import './ModuleSelectorScreen.css';
 
 const MODULES = [
@@ -229,6 +230,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                         <i className="ti ti-user" style={{ marginRight: 4 }} /> {user.username}{user.role === 'master' ? ' · master' : ''}
                     </span>
                 )}
+                <PwaInstallButton variant="header" desktopOnly />
                 {onManageAccess && (
                     <button style={headerBtn} onClick={onManageAccess}>
                         <i className="ti ti-users-plus" /> Gerenciar acessos

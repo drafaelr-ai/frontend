@@ -1,63 +1,94 @@
 import React, { useEffect, useState } from 'react';
+import Modal from './Modal/Modal';
+import {
+    INSTALL_PROMPT_STATE_EVENT,
+    getInstallPromptState,
+    promptInstall,
+} from '../pwa/installPrompt';
 import './PwaInstallButton.css';
 
-function isStandaloneApp() {
-    return window.matchMedia?.('(display-mode: standalone)').matches
-        || window.navigator.standalone === true;
+function isDesktopBrowser() {
+    const iPadOS = window.navigator.userAgent.includes('Macintosh')
+        && window.navigator.maxTouchPoints > 1;
+    return !iPadOS && !/Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent);
 }
 
-// O navegador só expõe o prompt depois de validar manifesto, HTTPS e service
-// worker. Por isso o botão aparece exclusivamente quando a instalação é válida.
-export default function PwaInstallButton() {
-    const [installPrompt, setInstallPrompt] = useState(null);
-    const [installed, setInstalled] = useState(isStandaloneApp);
+function browserHelp() {
+    const ua = window.navigator.userAgent;
+    if (/Edg\//.test(ua)) {
+        return 'No Microsoft Edge, abra o menu (…) e escolha Aplicativos → Instalar Obraly.';
+    }
+    if (/Safari\//.test(ua) && !/Chrome|Chromium|Edg\//.test(ua)) {
+        return 'No Safari, abra o menu Arquivo e escolha Adicionar ao Dock.';
+    }
+    if (/Firefox\//.test(ua)) {
+        return 'O Firefox não oferece instalação completa de PWA no computador. Abra o Obraly no Chrome ou Edge para instalar como aplicativo.';
+    }
+    return 'No Chrome, clique no ícone de instalação na barra de endereço ou abra o menu (⋮) e escolha Instalar Obraly.';
+}
+
+export default function PwaInstallButton({ variant = 'default', desktopOnly = false }) {
+    const [installState, setInstallState] = useState(getInstallPromptState);
     const [isInstalling, setIsInstalling] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
 
     useEffect(() => {
-        const handleBeforeInstall = (event) => {
-            event.preventDefault();
-            setInstallPrompt(event);
-        };
-        const handleInstalled = () => {
-            setInstalled(true);
-            setInstallPrompt(null);
-        };
-
-        window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-        window.addEventListener('appinstalled', handleInstalled);
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-            window.removeEventListener('appinstalled', handleInstalled);
-        };
+        const handleState = (event) => setInstallState(event.detail);
+        window.addEventListener(INSTALL_PROMPT_STATE_EVENT, handleState);
+        setInstallState(getInstallPromptState());
+        return () => window.removeEventListener(INSTALL_PROMPT_STATE_EVENT, handleState);
     }, []);
 
     const handleInstall = async () => {
-        if (!installPrompt || isInstalling) return;
+        if (isInstalling) return;
+        if (!installState.available) {
+            setShowHelp(true);
+            return;
+        }
 
         setIsInstalling(true);
         try {
-            installPrompt.prompt();
-            await installPrompt.userChoice;
-            // O evento appinstalled confirma a instalação. Removemos o prompt
-            // também em caso de recusa, pois o navegador fornecerá outro quando
-            // voltar a permitir a solicitação.
-            setInstallPrompt(null);
+            await promptInstall();
         } finally {
             setIsInstalling(false);
         }
     };
 
-    if (installed || !installPrompt) return null;
+    const desktop = isDesktopBrowser();
+    if (installState.installed || (desktopOnly && !desktop)) return null;
+    if (!installState.available && !desktop) return null;
 
     return (
-        <button
-            type="button"
-            className="pwa-install-button"
-            onClick={handleInstall}
-            disabled={isInstalling}
-        >
-            <i className="ti ti-device-desktop-down" aria-hidden="true" />
-            {isInstalling ? 'Preparando instalação...' : 'Instalar Obraly no computador'}
-        </button>
+        <>
+            <button
+                type="button"
+                className={`pwa-install-button pwa-install-button--${variant}`}
+                onClick={handleInstall}
+                disabled={isInstalling}
+            >
+                <i className="ti ti-device-desktop-down" aria-hidden="true" />
+                {isInstalling
+                    ? 'Preparando instalação...'
+                    : variant === 'header' ? 'Instalar no computador' : 'Instalar Obraly no computador'}
+            </button>
+            <Modal
+                isOpen={showHelp}
+                onClose={() => setShowHelp(false)}
+                title={<><i className="ti ti-device-desktop-down" /> Instalar Obraly no computador</>}
+                footer={(
+                    <button type="button" className="pwa-install-help-ok" onClick={() => setShowHelp(false)}>
+                        Entendi
+                    </button>
+                )}
+            >
+                <div className="pwa-install-help">
+                    <img src="/logo192.png" alt="" />
+                    <div>
+                        <p>{browserHelp()}</p>
+                        <p>Depois de instalado, o Obraly abre em uma janela própria e pode ser fixado na barra de tarefas ou no Dock.</p>
+                    </div>
+                </div>
+            </Modal>
+        </>
     );
 }
