@@ -7,6 +7,7 @@ jest.mock('./solicitacoesApi', () => ({
     solicitacoesApi: { detalhe: jest.fn(), atender: jest.fn(), exportar: jest.fn() },
 }));
 
+jest.mock('./ComentariosSolicitacao', () => () => null);
 jest.mock('../../components/modals/CotacaoSolicitacaoModal', () => () => null);
 jest.mock('../../components/modals/NovaSolicitacaoModal', () => ({ isOpen }) => (
     isOpen ? <div role="dialog" aria-label="Formulário de edição" /> : null

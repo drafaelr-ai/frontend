@@ -6,6 +6,7 @@ import { brl, dataBR, dataHoraBR, statusBadge, textoDiasSolicitado } from './sol
 import { getTodayString } from '../../utils/format';
 import CotacaoSolicitacaoModal from '../../components/modals/CotacaoSolicitacaoModal';
 import NovaSolicitacaoModal from '../../components/modals/NovaSolicitacaoModal';
+import ComentariosSolicitacao from './ComentariosSolicitacao';
 
 const ABERTOS = ['Aberta', 'Em cotação', 'Aguardando aprovação'];
 
@@ -460,6 +461,8 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                     </div>
                 )}
             </div>
+
+            <ComentariosSolicitacao solicitacaoId={s.id} user={user} />
 
             <CotacaoSolicitacaoModal
                 isOpen={modalCotacao}

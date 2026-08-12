@@ -69,6 +69,16 @@ export const solicitacoesApi = {
     arquivoCotacao: (id, cotId) =>
         fetchWithAuth(`${base}/${id}/cotacoes/${cotId}/arquivo`).then(j),
 
+    // comentários (@menção) — conversa solicitante ↔ comprador
+    usuariosMencao: () => fetchWithAuth(`${base}/usuarios-mencao`).then(j),
+    comentarios: (id) => fetchWithAuth(`${base}/${id}/comentarios`).then(j),
+    comentar: (id, texto, mencionadosIds = []) =>
+        fetchWithAuth(`${base}/${id}/comentarios`, {
+            method: 'POST', body: JSON.stringify({ texto, mencionados_ids: mencionadosIds }),
+        }).then(j),
+    removerComentario: (id, comId) =>
+        fetchWithAuth(`${base}/${id}/comentarios/${comId}`, { method: 'DELETE' }).then(j),
+
     // fluxo de decisão
     enviarAprovacao: (id) =>
         fetchWithAuth(`${base}/${id}/enviar-aprovacao`, { method: 'PATCH' }).then(j),

@@ -229,6 +229,37 @@
 }
 .solc-atender-form .solc-field { margin-bottom: var(--space-2); }
 
+/* ===== comentários (@menção) ===== */
+.solc-coment-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.solc-coment { display: flex; gap: var(--space-3); align-items: flex-start; }
+.solc-coment-av {
+    width: 30px; height: 30px; border-radius: var(--radius-full); flex-shrink: 0;
+    background: var(--solc-accent-soft); color: var(--solc-accent-dark);
+    display: grid; place-items: center; font-weight: 600; font-size: var(--text-sm);
+    text-transform: uppercase;
+}
+.solc-coment-body {
+    flex: 1; min-width: 0; background: var(--surface-subtle);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-3);
+}
+.solc-coment-head { display: flex; align-items: center; gap: var(--space-2); }
+.solc-coment-autor { font-weight: 600; font-size: var(--text-sm); }
+.solc-coment-data { font-size: var(--text-xs); color: var(--text-muted); }
+.solc-coment-del {
+    appearance: none; border: none; background: none; cursor: pointer;
+    color: var(--text-muted); margin-left: auto; padding: 2px; border-radius: var(--radius-sm);
+}
+.solc-coment-del:hover { color: var(--status-danger-text); background: var(--status-danger-bg); }
+.solc-coment-texto { font-size: var(--text-base); white-space: pre-wrap; overflow-wrap: break-word; margin-top: 2px; }
+.solc-mention {
+    color: var(--solc-accent-dark); background: var(--solc-accent-soft);
+    border-radius: var(--radius-sm); padding: 0 3px; font-weight: 600;
+}
+.solc-coment-form { display: flex; gap: var(--space-3); align-items: flex-start; margin-top: var(--space-4); }
+.solc-coment-form .solc-ac { flex: 1; }
+.solc-coment-form textarea.solc-inp { resize: vertical; min-height: 60px; font-family: inherit; }
+
 /* ===== config ===== */
 .solc-userlist { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding: var(--space-2) 0; }
 .solc-usercheck {

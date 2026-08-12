@@ -21,6 +21,8 @@ const getNotifMeta = (tipo) => {
         case 'solicitacao_aprovada': return { icon: 'ti-check',         bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
         case 'solicitacao_rejeitada': return { icon: 'ti-x',            bg: 'var(--status-danger-bg)',   color: 'var(--status-danger-text)'  };
         case 'solicitacao_atendida': return { icon: 'ti-package',      bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
+        case 'solicitacao_mencao':   return { icon: 'ti-at',           bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
+        case 'solicitacao_comentario': return { icon: 'ti-message-circle', bg: 'var(--status-neutral-bg)', color: 'var(--status-neutral-text)' };
         default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
     }
 };
@@ -30,6 +32,63 @@ const NotificacoesDropdown = ({ user }) => {
     const [notificacoes, setNotificacoes] = useState([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    // Telegram: null = ainda não consultado; { configurado, vinculado, ... }
+    const [tg, setTg] = useState(null);
+    const [tgLink, setTgLink] = useState(null);
+    const [tgBusy, setTgBusy] = useState(false);
+    const [tgErro, setTgErro] = useState(null);
+
+    const fetchTelegram = async () => {
+        try {
+            const response = await fetchWithAuth(`${API_URL}/telegram/status`);
+            if (response.ok) setTg(await response.json());
+        } catch (err) {
+            logger.error('Erro ao consultar status do Telegram:', err);
+        }
+    };
+
+    const vincularTelegram = async () => {
+        setTgBusy(true);
+        setTgErro(null);
+        try {
+            const response = await fetchWithAuth(`${API_URL}/telegram/vincular`, { method: 'POST' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.erro || 'Erro ao gerar o link do bot.');
+            setTgLink(data.link);
+            window.open(data.link, '_blank', 'noopener');
+        } catch (err) {
+            setTgErro(err.message);
+        } finally {
+            setTgBusy(false);
+        }
+    };
+
+    const confirmarTelegram = async () => {
+        setTgBusy(true);
+        setTgErro(null);
+        try {
+            const response = await fetchWithAuth(`${API_URL}/telegram/confirmar`, { method: 'POST' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.erro || 'Não foi possível confirmar o vínculo.');
+            setTgLink(null);
+            setTg(prev => ({ ...prev, vinculado: true, chat_nome: data.chat_nome }));
+        } catch (err) {
+            setTgErro(err.message);
+        } finally {
+            setTgBusy(false);
+        }
+    };
+
+    const desvincularTelegram = async () => {
+        if (!await confirmDialog('Parar de receber as notificações no Telegram?', { confirmText: 'Desvincular' })) return;
+        try {
+            await fetchWithAuth(`${API_URL}/telegram/vincular`, { method: 'DELETE' });
+            setTg(prev => ({ ...prev, vinculado: false, chat_nome: null }));
+            setTgLink(null);
+        } catch (err) {
+            logger.error('Erro ao desvincular Telegram:', err);
+        }
+    };
 
     const fetchCount = async () => {
         try {
@@ -117,9 +176,13 @@ const NotificacoesDropdown = ({ user }) => {
         };
     }, []);
 
-    // Busca lista ao abrir
+    // Busca lista ao abrir (status do Telegram só na primeira abertura)
     useEffect(() => {
-        if (isOpen) fetchNotificacoes();
+        if (isOpen) {
+            fetchNotificacoes();
+            if (tg == null) fetchTelegram();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     const formatRelativeTime = (dateStr) => {
@@ -235,6 +298,46 @@ const NotificacoesDropdown = ({ user }) => {
                                 })
                             )}
                         </div>
+
+                        {tg?.configurado && (
+                            <div className="nd-telegram">
+                                {tg.vinculado ? (
+                                    <div className="nd-telegram-row">
+                                        <i className="ti ti-brand-telegram" aria-hidden="true"></i>
+                                        <span className="nd-telegram-txt">
+                                            Telegram conectado{tg.chat_nome ? ` (${tg.chat_nome})` : ''}
+                                        </span>
+                                        <button className="nd-action-btn danger" onClick={desvincularTelegram}>
+                                            Desvincular
+                                        </button>
+                                    </div>
+                                ) : tgLink ? (
+                                    <div className="nd-telegram-row">
+                                        <i className="ti ti-brand-telegram" aria-hidden="true"></i>
+                                        <span className="nd-telegram-txt">
+                                            Toque em <b>Iniciar</b> no bot e confirme aqui.
+                                        </span>
+                                        <a className="nd-action-btn" href={tgLink} target="_blank" rel="noopener noreferrer">
+                                            Abrir bot
+                                        </a>
+                                        <button className="nd-action-btn nd-telegram-cta" onClick={confirmarTelegram} disabled={tgBusy}>
+                                            {tgBusy ? 'Confirmando…' : 'Já dei Start — confirmar'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="nd-telegram-row">
+                                        <i className="ti ti-brand-telegram" aria-hidden="true"></i>
+                                        <span className="nd-telegram-txt">
+                                            Receba estas notificações também no Telegram.
+                                        </span>
+                                        <button className="nd-action-btn nd-telegram-cta" onClick={vincularTelegram} disabled={tgBusy}>
+                                            {tgBusy ? 'Gerando link…' : 'Conectar'}
+                                        </button>
+                                    </div>
+                                )}
+                                {tgErro && <div className="nd-telegram-erro">{tgErro}</div>}
+                            </div>
+                        )}
                     </div>
                 </>
             )}
