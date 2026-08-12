@@ -140,6 +140,24 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
         } finally { setAgindo(false); }
     };
 
+    const enviarEntrega = async () => {
+        setAgindo(true);
+        try {
+            const { token } = await solicitacoesApi.gerarEntrega(s.id);
+            const linkEntrega = `${window.location.origin}/entrega/${token}`;
+            navigator.clipboard?.writeText(linkEntrega).catch(() => {});
+            const texto = `🚚 Entrega Obraly — Solicitação #${s.id}\n`
+                + (s.fornecedor_aprovado ? `Retirar em: ${s.fornecedor_aprovado}\n` : '')
+                + `Entregar na obra: ${s.obra_nome}\n`
+                + `Veja os itens e confirme a entrega por aqui:\n${linkEntrega}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+            notify.success('Link de entrega gerado e copiado — enviando pelo WhatsApp.');
+            await carregar();
+        } catch (e) {
+            notify.error(e.message || 'Erro ao gerar o link de entrega.');
+        } finally { setAgindo(false); }
+    };
+
     const devolver = async () => {
         const ok = await confirmDialog(
             'Desfazer a aprovação? A compra volta para "Em cotação" — o comprador pode '
@@ -248,6 +266,12 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                                 <i className="ti ti-cash" /> Lançada no financeiro da obra como conta a pagar (#{s.pagamento_futuro_id}).
                             </div>
                         )}
+                        {s.entrega?.entregue_em && (
+                            <div className="solc-atendida">
+                                <i className="ti ti-truck-delivery" /> Motorista confirmou a entrega em <b>{dataHoraBR(s.entrega.entregue_em)}</b>
+                                {s.entrega.observacao_entrega && <> — {s.entrega.observacao_entrega}</>}
+                            </div>
+                        )}
                         {s.status === 'Atendida' && (
                             <div className="solc-atendida">
                                 <i className="ti ti-package" /> Compra atendida por <b>{s.atendida_por_nome || '—'}</b> em <b>{dataHoraBR(s.data_atendimento)}</b>
@@ -278,6 +302,15 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                         {s.pode_desaprovar && (
                             <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={devolver} disabled={agindo}>
                                 <i className="ti ti-rotate-2" /> Devolver p/ cotação
+                            </button>
+                        )}
+                        {s.status === 'Aprovada' && s.pode_atender && (
+                            <button
+                                className="solc-btn solc-btn-primary solc-btn-sm"
+                                onClick={enviarEntrega} disabled={agindo}
+                                title={s.entrega ? 'Gerar um novo link invalida o anterior' : undefined}
+                            >
+                                <i className="ti ti-truck-delivery" /> {s.entrega ? 'Reenviar entrega' : 'Enviar entrega'}
                             </button>
                         )}
                         {s.tem_arquivo && (

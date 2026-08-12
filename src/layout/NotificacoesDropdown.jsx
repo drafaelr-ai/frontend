@@ -25,6 +25,8 @@ const getNotifMeta = (tipo) => {
         case 'solicitacao_mencao':   return { icon: 'ti-at',           bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
         case 'solicitacao_comentario': return { icon: 'ti-message-circle', bg: 'var(--status-neutral-bg)', color: 'var(--status-neutral-text)' };
         case 'solicitacao_devolvida': return { icon: 'ti-arrow-back-up', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
+        case 'solicitacao_entregue': return { icon: 'ti-truck-delivery', bg: 'var(--status-success-bg)', color: 'var(--status-success-text)' };
+        case 'solicitacao_mensagem_motorista': return { icon: 'ti-truck', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
         default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
     }
 };

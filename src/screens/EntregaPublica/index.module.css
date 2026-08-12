@@ -1,0 +1,253 @@
+/* Entrega pública (superlink do motorista) — mobile-first, sem login. */
+
+.page {
+    min-height: 100vh;
+    background: var(--surface-page, #f5f8fa);
+    font-family: var(--font-sans, 'Segoe UI', system-ui, sans-serif);
+    color: var(--text-primary, #1a2432);
+}
+
+.center {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+}
+
+.topo {
+    background: var(--surface-dark, #101826);
+    color: #fff;
+    padding: 13px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.marca {
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    background: linear-gradient(135deg, var(--module-solicitacoes, #0EA5A4), var(--module-solicitacoes-dark, #0B7A79));
+}
+
+.corpo {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 14px 14px 28px;
+}
+
+.card {
+    background: var(--surface-card, #fff);
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+}
+
+.titulo {
+    font-size: 17px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bWarn { background: var(--status-warning-bg, #fef3c7); color: var(--status-warning-text, #92400e); }
+.bOk { background: var(--status-success-bg, #d1fae5); color: var(--status-success-text, #065f46); }
+
+.meta {
+    font-size: 13px;
+    color: var(--text-muted, #64748b);
+    margin-top: 8px;
+    line-height: 1.8;
+}
+
+.meta b { color: var(--text-primary, #1a2432); font-weight: 600; }
+
+.secTitulo {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-secondary, #334155);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.pdfBtn {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--module-solicitacoes-dark, #0b7a79);
+    border: 1px solid var(--module-solicitacoes, #0EA5A4);
+    border-radius: 8px;
+    padding: 4px 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Lista grande: rolagem própria pra tabela — o botão de confirmar
+   continua alcançável sem rolar a página inteira. */
+.itensRolagem {
+    max-height: 44vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-subtle, #e2e8f0);
+    border-radius: 10px;
+}
+
+.itensRolagem .tabela thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.tabela th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted, #64748b);
+    padding: 6px 8px;
+    background: var(--surface-muted, #f1f5f9);
+}
+
+.tabela th:last-child, .tabela td:last-child { text-align: right; }
+
+.tabela td {
+    padding: 8px;
+    border-bottom: 1px solid var(--surface-muted, #f1f5f9);
+    vertical-align: top;
+    overflow-wrap: anywhere; /* descrições gigantes quebram, não estouram */
+}
+
+.celMain { font-weight: 600; }
+
+.celObs {
+    display: block;
+    font-weight: 400;
+    font-size: 11.5px;
+    color: var(--text-muted, #64748b);
+    margin-top: 2px;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.hintOk {
+    font-size: 12.5px;
+    color: var(--status-success-text, #065f46);
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.inp {
+    width: 100%;
+    border: 1px solid var(--border-default, #cbd5e1);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text-primary, #1a2432);
+    background: var(--surface-card, #fff);
+    font-family: inherit;
+    resize: none;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.btnPrimario, .btnGhost {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btnPrimario {
+    background: var(--module-solicitacoes, #0EA5A4);
+    color: #fff;
+}
+
+.btnGhost {
+    background: var(--surface-card, #fff);
+    color: var(--module-solicitacoes-dark, #0b7a79);
+    border: 1.5px solid var(--module-solicitacoes, #0EA5A4);
+    font-size: 13.5px;
+    padding: 10px;
+}
+
+.btnPrimario:disabled, .btnGhost:disabled { opacity: .6; cursor: not-allowed; }
+
+.entregueBox {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--status-success-bg, #d1fae5);
+    color: var(--status-success-text, #065f46);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.entregueBox i { font-size: 20px; margin-top: 1px; }
+
+.erro {
+    background: var(--status-danger-bg, #fee2e2);
+    color: var(--status-danger-text, #991b1b);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.rodape {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-muted, #94a3b8);
+    padding-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}

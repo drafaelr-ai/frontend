@@ -23,6 +23,7 @@ const FrotaModule = lazy(() => import('./screens/Frota'));
 const SolicitacoesModule = lazy(() => import('./screens/Solicitacoes'));
 const AlmoxarifadoModule = lazy(() => import('./screens/Almoxarifado'));
 const SolicitacaoPublica = lazy(() => import('./screens/SolicitacaoPublica'));
+const EntregaPublica = lazy(() => import('./screens/EntregaPublica'));
 const AbastecimentoPublico = lazy(() => import('./screens/AbastecimentoPublico'));
 
 const MODULOS_BASE = ['obras', 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
@@ -216,6 +217,14 @@ function App() {
         return (
             <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
                 <SolicitacaoPublica token={_token} />
+            </Suspense>
+        );
+    }
+    if (_path.startsWith('/entrega/')) {
+        const _token = _path.replace('/entrega/', '').split('/')[0];
+        return (
+            <Suspense fallback={<div className="loading-screen">Carregando...</div>}>
+                <EntregaPublica token={_token} />
             </Suspense>
         );
     }

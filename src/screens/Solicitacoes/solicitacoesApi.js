@@ -94,6 +94,10 @@ export const solicitacoesApi = {
     devolver: (id) =>
         fetchWithAuth(`${base}/${id}/devolver`, { method: 'PATCH' }).then(j),
 
+    // superlink de entrega (motorista) — gerar/regenerar invalida o anterior
+    gerarEntrega: (id) =>
+        fetchWithAuth(`${base}/${id}/entrega`, { method: 'POST' }).then(j),
+
     // baixa do comprador — sai da lista de compras e vai para o histórico
     atender: (id, { observacao = '', data_atendimento = null } = {}) =>
         fetchWithAuth(`${base}/${id}/atender`, {
