@@ -97,6 +97,10 @@ export const frotaApi = {
         fetchWithAuth(`${base}/abastecimento-solicitacoes/${id}/cancelar`, {
             method: 'PATCH',
         }).then(j),
+    removerSolicitacaoAbastecimento: (id) =>
+        fetchWithAuth(`${base}/abastecimento-solicitacoes/${id}`, {
+            method: 'DELETE',
+        }).then(j),
 
     // consumo por veículo (km/l, R$/km e histórico)
     consumoVeiculo: (veiculoId, params = '') =>

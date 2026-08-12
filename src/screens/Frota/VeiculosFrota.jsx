@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from './frotaApi';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
@@ -32,6 +33,8 @@ const SUBTABS = [
 ];
 
 export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, onChanged }) {
+    const { user } = useContext(AuthContext) || {};
+    const ehMaster = user?.role === 'master';
     const [sub, setSub] = useState('docs');
     const [dados, setDados] = useState({ docs: null, movs: null, manut: null, abast: null, multas: null });
     const [modalMover, setModalMover] = useState(false);
@@ -239,7 +242,7 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                                         <td className="frota-muted">{a.km ? Number(a.km).toLocaleString('pt-BR') : '—'}</td>
                                         <td className="frota-muted">{a.condutor_nome || '—'}</td>
                                         <td className="frota-valor">{brl(a.valor)}</td>
-                                        <td><button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('abast', a.id)}><i className="ti ti-trash" /></button></td>
+                                        <td>{ehMaster && <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('abast', a.id)}><i className="ti ti-trash" /></button>}</td>
                                     </tr>
                                 ))}
                             </tbody>

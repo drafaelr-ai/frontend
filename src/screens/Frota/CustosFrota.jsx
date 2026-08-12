@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from './frotaApi';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
@@ -7,6 +8,8 @@ import ManutencaoFrotaModal from '../../components/modals/ManutencaoFrotaModal';
 import AbastecimentoModal from '../../components/modals/AbastecimentoModal';
 
 export default function CustosFrota({ condutores }) {
+    const { user } = useContext(AuthContext) || {};
+    const ehMaster = user?.role === 'master';
     const [veiculos, setVeiculos] = useState([]);
     const [manutencoes, setManutencoes] = useState([]);
     const [abastecimentos, setAbastecimentos] = useState([]);
@@ -130,7 +133,7 @@ export default function CustosFrota({ condutores }) {
                                     <td className="frota-muted">{a.km ? Number(a.km).toLocaleString('pt-BR') : '—'}</td>
                                     <td className="frota-muted">{a.local_nome || 'Sem local'}</td>
                                     <td className="frota-valor">{brl(a.valor)}</td>
-                                    <td><button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => remover('abast', a.id)}><i className="ti ti-trash" /></button></td>
+                                    <td>{ehMaster && <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => remover('abast', a.id)}><i className="ti ti-trash" /></button>}</td>
                                 </tr>
                             ))}
                         </tbody>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from './frotaApi';
 import { logger } from '../../utils/logger';
 import { notify, confirmDialog } from '../../utils/notify';
@@ -25,6 +26,8 @@ function statusBadge(status) {
 }
 
 export default function AbastecimentosFrota({ condutores }) {
+    const { user } = useContext(AuthContext) || {};
+    const ehMaster = user?.role === 'master';
     const [veiculos, setVeiculos] = useState([]);
     const [solicitacoes, setSolicitacoes] = useState([]);
     const [abastecimentos, setAbastecimentos] = useState([]);
@@ -115,6 +118,23 @@ export default function AbastecimentosFrota({ condutores }) {
         } catch (e) {
             logger.error('remover abastecimento', e);
             notify.error(e.message || 'Erro ao remover.');
+        }
+    };
+
+    const removerAutorizacao = async (s) => {
+        const ok = await confirmDialog(
+            `Excluir a autorização de ${placaBR(s.veiculo_placa)}? `
+            + 'O link deixará de existir e essa ação não pode ser desfeita.',
+            { danger: true, confirmText: 'Excluir autorização' },
+        );
+        if (!ok) return;
+        try {
+            await frotaApi.removerSolicitacaoAbastecimento(s.id);
+            notify.success('Autorização excluída.');
+            carregar();
+        } catch (e) {
+            logger.error('remover autorização de abastecimento', e);
+            notify.error(e.message || 'Erro ao excluir a autorização.');
         }
     };
 
@@ -243,6 +263,13 @@ export default function AbastecimentosFrota({ condutores }) {
                                                     </button>
                                                 </>
                                             )}
+                                            {ehMaster && s.status !== 'concluida' && (
+                                                <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                    title="Excluir autorização"
+                                                    onClick={() => removerAutorizacao(s)}>
+                                                    <i className="ti ti-trash" />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -305,10 +332,12 @@ export default function AbastecimentosFrota({ condutores }) {
                                             )}>
                                             <i className="ti ti-chart-line" />
                                         </button>
-                                        <button className="frota-btn frota-btn-text frota-btn-sm"
-                                            title="Remover" onClick={() => remover(a.id)}>
-                                            <i className="ti ti-trash" />
-                                        </button>
+                                        {ehMaster && (
+                                            <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                title="Remover" onClick={() => remover(a.id)}>
+                                                <i className="ti ti-trash" />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
