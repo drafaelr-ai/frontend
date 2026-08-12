@@ -37,6 +37,7 @@ const NotificacoesDropdown = ({ user }) => {
     const [tgLink, setTgLink] = useState(null);
     const [tgBusy, setTgBusy] = useState(false);
     const [tgErro, setTgErro] = useState(null);
+    const [tgPrefsOpen, setTgPrefsOpen] = useState(false);
 
     const fetchTelegram = async () => {
         try {
@@ -76,6 +77,31 @@ const NotificacoesDropdown = ({ user }) => {
             setTgErro(err.message);
         } finally {
             setTgBusy(false);
+        }
+    };
+
+    // tipos null = todas as categorias marcadas
+    const tgCategoriaAtiva = (key) => tg?.tipos == null || tg.tipos.includes(key);
+
+    const alternarCategoria = async (key) => {
+        const todas = Object.keys(tg?.categorias || {});
+        const atuais = tg?.tipos == null ? todas : tg.tipos;
+        const novos = atuais.includes(key) ? atuais.filter(k => k !== key) : [...atuais, key];
+        const tipos = novos.length === todas.length ? null : novos;
+        setTg(prev => ({ ...prev, tipos }));   // otimista — o backend confirma
+        setTgErro(null);
+        try {
+            const response = await fetchWithAuth(`${API_URL}/telegram/preferencias`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipos }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.erro || 'Erro ao salvar preferências.');
+            setTg(prev => ({ ...prev, tipos: data.tipos }));
+        } catch (err) {
+            setTgErro(err.message);
+            fetchTelegram();   // desfaz o otimismo com o estado real
         }
     };
 
@@ -302,15 +328,37 @@ const NotificacoesDropdown = ({ user }) => {
                         {tg?.configurado && (
                             <div className="nd-telegram">
                                 {tg.vinculado ? (
-                                    <div className="nd-telegram-row">
-                                        <i className="ti ti-brand-telegram" aria-hidden="true"></i>
-                                        <span className="nd-telegram-txt">
-                                            Telegram conectado{tg.chat_nome ? ` (${tg.chat_nome})` : ''}
-                                        </span>
-                                        <button className="nd-action-btn danger" onClick={desvincularTelegram}>
-                                            Desvincular
-                                        </button>
-                                    </div>
+                                    <>
+                                        <div className="nd-telegram-row">
+                                            <i className="ti ti-brand-telegram" aria-hidden="true"></i>
+                                            <span className="nd-telegram-txt">
+                                                Telegram conectado{tg.chat_nome ? ` (${tg.chat_nome})` : ''}
+                                            </span>
+                                            <button className="nd-action-btn" onClick={() => setTgPrefsOpen(o => !o)}>
+                                                {tgPrefsOpen ? 'Fechar' : 'O que recebo'}
+                                            </button>
+                                            <button className="nd-action-btn danger" onClick={desvincularTelegram}>
+                                                Desvincular
+                                            </button>
+                                        </div>
+                                        {tgPrefsOpen && (
+                                            <div className="nd-telegram-prefs">
+                                                {Object.entries(tg.categorias || {}).map(([key, label]) => (
+                                                    <label key={key} className="nd-telegram-pref">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={tgCategoriaAtiva(key)}
+                                                            onChange={() => alternarCategoria(key)}
+                                                        />
+                                                        {label}
+                                                    </label>
+                                                ))}
+                                                <div className="nd-telegram-pref-hint">
+                                                    Vale só para o Telegram — o sino continua recebendo tudo.
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 ) : tgLink ? (
                                     <div className="nd-telegram-row">
                                         <i className="ti ti-brand-telegram" aria-hidden="true"></i>
