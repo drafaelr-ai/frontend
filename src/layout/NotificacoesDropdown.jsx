@@ -58,7 +58,12 @@ const NotificacoesDropdown = ({ user }) => {
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.erro || 'Erro ao gerar o link do bot.');
             setTgLink(data.link);
-            window.open(data.link, '_blank', 'noopener');
+            // Só no celular o t.me abre o app direto. No desktop sem o app
+            // instalado o tg:// morre sem handler — lá o usuário escolhe
+            // entre Telegram Web, app ou comando manual (botões abaixo).
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                window.open(data.link, '_blank', 'noopener');
+            }
         } catch (err) {
             setTgErro(err.message);
         } finally {
@@ -400,18 +405,27 @@ const NotificacoesDropdown = ({ user }) => {
                                         <div className="nd-telegram-row">
                                             <i className="ti ti-brand-telegram" aria-hidden="true"></i>
                                             <span className="nd-telegram-txt">
-                                                Toque em <b>Iniciar</b> no bot e confirme aqui.
+                                                <b>1.</b> Abra o bot e toque em <b>Iniciar</b> · <b>2.</b> Confirme aqui
                                             </span>
+                                        </div>
+                                        <div className="nd-telegram-row">
+                                            <a
+                                                className="nd-action-btn nd-telegram-cta"
+                                                href={`https://web.telegram.org/k/#?tgaddr=${encodeURIComponent(`tg://resolve?domain=${tg.bot}&start=${tgLink.split('start=')[1]}`)}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                            >
+                                                Telegram Web
+                                            </a>
                                             <a className="nd-action-btn" href={tgLink} target="_blank" rel="noopener noreferrer">
-                                                Abrir bot
+                                                Tenho o app instalado
                                             </a>
                                             <button className="nd-action-btn nd-telegram-cta" onClick={confirmarTelegram} disabled={tgBusy}>
                                                 {tgBusy ? 'Confirmando…' : 'Já dei Start — confirmar'}
                                             </button>
                                         </div>
                                         <div className="nd-telegram-manual">
-                                            Sem o Telegram neste computador? No celular, procure{' '}
-                                            <b>@{tg.bot}</b> e envie <code>{`/start ${tgLink.split('start=')[1]}`}</code>
+                                            Ou, no celular, procure <b>@{tg.bot}</b> e envie{' '}
+                                            <code>{`/start ${tgLink.split('start=')[1]}`}</code>
                                             <button
                                                 className="nd-action-btn"
                                                 onClick={() => {
