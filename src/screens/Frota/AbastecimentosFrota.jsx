@@ -38,6 +38,7 @@ export default function AbastecimentosFrota({ condutores }) {
     const [modalLink, setModalLink] = useState(false);
     const [modalManual, setModalManual] = useState(false);
     const [consumoVeiculo, setConsumoVeiculo] = useState(null);
+    const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
@@ -333,10 +334,17 @@ export default function AbastecimentosFrota({ condutores }) {
                                             <i className="ti ti-chart-line" />
                                         </button>
                                         {ehMaster && (
-                                            <button className="frota-btn frota-btn-text frota-btn-sm"
-                                                title="Remover" onClick={() => remover(a.id)}>
-                                                <i className="ti ti-trash" />
-                                            </button>
+                                            <>
+                                                <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                    title="Editar abastecimento"
+                                                    onClick={() => setAbastecimentoEditando(a)}>
+                                                    <i className="ti ti-edit" />
+                                                </button>
+                                                <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                    title="Remover" onClick={() => remover(a.id)}>
+                                                    <i className="ti ti-trash" />
+                                                </button>
+                                            </>
                                         )}
                                     </td>
                                 </tr>
@@ -360,8 +368,16 @@ export default function AbastecimentosFrota({ condutores }) {
                 onClose={() => setModalManual(false)}
                 onSaved={() => { setModalManual(false); carregar(); }}
             />
+            <AbastecimentoModal
+                isOpen={!!abastecimentoEditando}
+                abastecimento={abastecimentoEditando}
+                veiculos={veiculos}
+                condutores={condutores}
+                onClose={() => setAbastecimentoEditando(null)}
+                onSaved={() => { setAbastecimentoEditando(null); carregar(); }}
+            />
             <ConsumoVeiculoModal
-                isOpen={!!consumoVeiculo} veiculo={consumoVeiculo}
+                isOpen={!!consumoVeiculo} veiculo={consumoVeiculo} condutores={condutores}
                 onClose={() => { setConsumoVeiculo(null); carregar(); }}
             />
         </>

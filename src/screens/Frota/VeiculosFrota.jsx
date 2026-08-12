@@ -41,6 +41,7 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
     const [modalDoc, setModalDoc] = useState(false);
     const [modalManut, setModalManut] = useState(false);
     const [modalAbast, setModalAbast] = useState(false);
+    const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
     const [modalMulta, setModalMulta] = useState(false);
     const [modalEditar, setModalEditar] = useState(false);
     const [condutorSel, setCondutorSel] = useState(veiculo.condutor_atual_id ?? '');
@@ -242,7 +243,10 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                                         <td className="frota-muted">{a.km ? Number(a.km).toLocaleString('pt-BR') : '—'}</td>
                                         <td className="frota-muted">{a.condutor_nome || '—'}</td>
                                         <td className="frota-valor">{brl(a.valor)}</td>
-                                        <td>{ehMaster && <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('abast', a.id)}><i className="ti ti-trash" /></button>}</td>
+                                        <td>{ehMaster && <>
+                                            <button className="frota-btn frota-btn-text frota-btn-sm" title="Editar abastecimento" onClick={() => setAbastecimentoEditando(a)}><i className="ti ti-edit" /></button>
+                                            <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('abast', a.id)}><i className="ti ti-trash" /></button>
+                                        </>}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -295,6 +299,19 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                 isOpen={modalAbast} veiculos={[veiculo]} veiculoFixo={veiculo} condutores={condutores}
                 onClose={() => setModalAbast(false)}
                 onSaved={() => { setModalAbast(false); carregarSub('abast'); onChanged?.(); }}
+            />
+            <AbastecimentoModal
+                isOpen={!!abastecimentoEditando}
+                abastecimento={abastecimentoEditando}
+                veiculos={[veiculo]}
+                veiculoFixo={veiculo}
+                condutores={condutores}
+                onClose={() => setAbastecimentoEditando(null)}
+                onSaved={() => {
+                    setAbastecimentoEditando(null);
+                    carregarSub('abast');
+                    onChanged?.();
+                }}
             />
             <MultaFrotaModal
                 isOpen={modalMulta} veiculos={[veiculo]} veiculoFixo={veiculo} condutores={condutores}

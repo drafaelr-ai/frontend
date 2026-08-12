@@ -16,9 +16,12 @@ function numeroBR(valor) {
     return Number.isFinite(numero) ? numero : null;
 }
 
-export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, condutores, onClose, onSaved }) {
+export default function AbastecimentoModal({
+    isOpen, veiculos, veiculoFixo, condutores, abastecimento, onClose, onSaved,
+}) {
     const [form, setForm] = useState(vazio);
     const [salvando, setSalvando] = useState(false);
+    const editando = Boolean(abastecimento?.id);
     const litros = numeroBR(form.litros);
     const valor = numeroBR(form.valor);
     const precoLitro = litros > 0 && valor > 0
@@ -29,8 +32,27 @@ export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, cond
 
     useEffect(() => {
         if (!isOpen) return;
-        setForm({ ...vazio, veiculo_id: veiculoFixo?.id ?? '', data: new Date().toISOString().slice(0, 10) });
-    }, [isOpen, veiculoFixo]);
+        if (abastecimento?.id) {
+            setForm({
+                ...vazio,
+                veiculo_id: abastecimento.veiculo_id ?? veiculoFixo?.id ?? '',
+                data: abastecimento.data || '',
+                litros: abastecimento.litros ?? '',
+                valor: abastecimento.valor ?? '',
+                km: abastecimento.km ?? '',
+                combustivel: abastecimento.combustivel || '',
+                posto: abastecimento.posto || '',
+                condutor_id: abastecimento.condutor_id ?? '',
+                observacao: abastecimento.observacao || '',
+            });
+            return;
+        }
+        setForm({
+            ...vazio,
+            veiculo_id: veiculoFixo?.id ?? '',
+            data: new Date().toISOString().slice(0, 10),
+        });
+    }, [isOpen, veiculoFixo, abastecimento]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -40,7 +62,7 @@ export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, cond
         if (!form.valor) { notify.warning('Informe o valor.'); return; }
         setSalvando(true);
         try {
-            await frotaApi.criarAbastecimento({
+            const payload = {
                 ...form,
                 litros: form.litros || null,
                 km: form.km || null,
@@ -48,8 +70,10 @@ export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, cond
                 posto: form.posto.trim() || null,
                 condutor_id: form.condutor_id || null,
                 observacao: form.observacao.trim() || null,
-            });
-            notify.success('Abastecimento registrado.');
+            };
+            if (editando) await frotaApi.editarAbastecimento(abastecimento.id, payload);
+            else await frotaApi.criarAbastecimento(payload);
+            notify.success(editando ? 'Abastecimento atualizado.' : 'Abastecimento registrado.');
             onSaved?.();
         } catch (e) {
             logger.error('salvar abastecimento', e);
@@ -63,17 +87,20 @@ export default function AbastecimentoModal({ isOpen, veiculos, veiculoFixo, cond
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={<><i className="ti ti-gas-station" style={{ marginRight: 8 }} />Novo abastecimento</>}
+            title={<>
+                <i className={`ti ${editando ? 'ti-edit' : 'ti-gas-station'}`} style={{ marginRight: 8 }} />
+                {editando ? 'Editar abastecimento' : 'Novo abastecimento'}
+            </>}
             footer={<>
                 <button className="frota-btn frota-btn-text" onClick={onClose}>Cancelar</button>
                 <button className="frota-btn frota-btn-primary" onClick={salvar} disabled={salvando}>
-                    <i className="ti ti-check" /> {salvando ? 'Salvando…' : 'Salvar abastecimento'}
+                    <i className="ti ti-check" /> {salvando ? 'Salvando…' : (editando ? 'Salvar alterações' : 'Salvar abastecimento')}
                 </button>
             </>}
         >
             <div className="frota-row2">
                 <div className="frota-field"><label>Veículo</label>
-                    <select className="frota-inp" value={form.veiculo_id} disabled={!!veiculoFixo} onChange={e => set('veiculo_id', e.target.value)}>
+                    <select className="frota-inp" value={form.veiculo_id} disabled={!!veiculoFixo || editando} onChange={e => set('veiculo_id', e.target.value)}>
                         <option value="">Selecione…</option>
                         {(veiculos || []).map(v => <option key={v.id} value={v.id}>{placaBR(v.placa)} — {v.modelo}</option>)}
                     </select></div>

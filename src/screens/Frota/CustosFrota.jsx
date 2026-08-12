@@ -19,6 +19,7 @@ export default function CustosFrota({ condutores }) {
     const [ate, setAte] = useState('');
     const [modalManut, setModalManut] = useState(false);
     const [modalAbast, setModalAbast] = useState(false);
+    const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
@@ -133,7 +134,10 @@ export default function CustosFrota({ condutores }) {
                                     <td className="frota-muted">{a.km ? Number(a.km).toLocaleString('pt-BR') : '—'}</td>
                                     <td className="frota-muted">{a.local_nome || 'Sem local'}</td>
                                     <td className="frota-valor">{brl(a.valor)}</td>
-                                    <td>{ehMaster && <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => remover('abast', a.id)}><i className="ti ti-trash" /></button>}</td>
+                                    <td>{ehMaster && <>
+                                        <button className="frota-btn frota-btn-text frota-btn-sm" title="Editar abastecimento" onClick={() => setAbastecimentoEditando(a)}><i className="ti ti-edit" /></button>
+                                        <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => remover('abast', a.id)}><i className="ti ti-trash" /></button>
+                                    </>}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -152,6 +156,14 @@ export default function CustosFrota({ condutores }) {
                 isOpen={modalAbast} veiculos={veiculos} condutores={condutores}
                 onClose={() => setModalAbast(false)}
                 onSaved={() => { setModalAbast(false); carregar(); }}
+            />
+            <AbastecimentoModal
+                isOpen={!!abastecimentoEditando}
+                abastecimento={abastecimentoEditando}
+                veiculos={veiculos}
+                condutores={condutores}
+                onClose={() => setAbastecimentoEditando(null)}
+                onSaved={() => { setAbastecimentoEditando(null); carregar(); }}
             />
         </>
     );

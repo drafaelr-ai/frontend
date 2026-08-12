@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import Modal from '../Modal/Modal';
+import AbastecimentoModal from './AbastecimentoModal';
 import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from '../../screens/Frota/frotaApi';
 import { logger } from '../../utils/logger';
@@ -16,12 +17,13 @@ const inteiro = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR'));
 /** Histórico de abastecimentos de um veículo com consumo (km/l) e custo por km.
     O km/l de cada linha é medido contra o abastecimento anterior — o primeiro
     registro do veículo nunca tem consumo. */
-export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
+export default function ConsumoVeiculoModal({ isOpen, veiculo, condutores, onClose }) {
     const { user } = useContext(AuthContext) || {};
     const ehMaster = user?.role === 'master';
     const [dados, setDados] = useState(null);   // null = carregando
     const [de, setDe] = useState('');
     const [ate, setAte] = useState('');
+    const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
 
     const carregar = useCallback(async () => {
         if (!veiculo?.id) return;
@@ -72,7 +74,7 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
 
     const resumo = dados?.resumo || {};
 
-    return (
+    return (<>
         <Modal
             isOpen={isOpen}
             onClose={onClose}
@@ -181,6 +183,11 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
                                     {ehMaster && (
                                         <td>
                                             <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                title="Editar abastecimento"
+                                                onClick={() => setAbastecimentoEditando(a)}>
+                                                <i className="ti ti-edit" />
+                                            </button>
+                                            <button className="frota-btn frota-btn-text frota-btn-sm"
                                                 title="Remover abastecimento"
                                                 onClick={() => remover(a)}>
                                                 <i className="ti ti-trash" />
@@ -200,5 +207,17 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
                 </>
             )}
         </Modal>
-    );
+        <AbastecimentoModal
+            isOpen={!!abastecimentoEditando}
+            abastecimento={abastecimentoEditando}
+            veiculos={veiculo ? [veiculo] : []}
+            veiculoFixo={veiculo}
+            condutores={condutores || []}
+            onClose={() => setAbastecimentoEditando(null)}
+            onSaved={async () => {
+                setAbastecimentoEditando(null);
+                await carregar();
+            }}
+        />
+    </>);
 }
