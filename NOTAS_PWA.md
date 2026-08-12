@@ -86,6 +86,13 @@ registro com `updateViaCache: 'none'`. A Vercel revalida o service worker e o
 manifesto em toda consulta (`max-age=0, must-revalidate`), garantindo que o app
 Android detecte a versão nova sem reutilizar o arquivo de atualização antigo.
 
+**Release 2026-08-12:** removido `display_override: window-controls-overlay`
+(manifesto para `?v=7`). No PWA desktop o overlay tirava a barra de título e,
+sem região `app-region: drag` no app, a janela ficava impossível de arrastar
+quando não maximizada. Volta ao `standalone` puro — barra de título nativa,
+janela arrastável. Apps já instalados pegam a mudança 1–2 aberturas depois
+(Chrome/Edge revalidam o manifesto no launch); persistindo, reinstalar.
+
 ## Passo a passo de instalação para mandar aos usuários (WhatsApp)
 
 > **Instalar o Obraly no iPhone**

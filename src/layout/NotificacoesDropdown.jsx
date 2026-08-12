@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
+import { setToken as storeToken } from '../auth/tokenStorage';
 import { logger } from '../utils/logger';
 import { confirmDialog } from '../utils/notify';
 import './NotificacoesDropdown.css';
@@ -23,6 +24,7 @@ const getNotifMeta = (tipo) => {
         case 'solicitacao_atendida': return { icon: 'ti-package',      bg: 'var(--status-success-bg)',  color: 'var(--status-success-text)' };
         case 'solicitacao_mencao':   return { icon: 'ti-at',           bg: 'var(--status-info-bg)',     color: 'var(--status-info-text)'    };
         case 'solicitacao_comentario': return { icon: 'ti-message-circle', bg: 'var(--status-neutral-bg)', color: 'var(--status-neutral-text)' };
+        case 'solicitacao_devolvida': return { icon: 'ti-arrow-back-up', bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' };
         default:                    return { icon: 'ti-bell',           bg: 'var(--status-neutral-bg)',  color: 'var(--status-neutral-text)' };
     }
 };
@@ -78,6 +80,37 @@ const NotificacoesDropdown = ({ user }) => {
         } finally {
             setTgBusy(false);
         }
+    };
+
+    // Clique na notificação abre o item citado: solicitações vão direto ao
+    // detalhe (?solicitacao=), o resto cai na home da obra (?obra=). Mesmo
+    // mecanismo do push nativo: grava o módulo e recarrega com o deep-link.
+    const destinoNotificacao = (n) => {
+        if (n.item_type === 'solicitacao_compra' && n.item_id) {
+            return { modulo: 'solicitacoes', caminho: `/?solicitacao=${n.item_id}` };
+        }
+        if (n.obra_id) {
+            return { modulo: 'obras', caminho: `/?obra=${n.obra_id}` };
+        }
+        return null;
+    };
+
+    const abrirNotificacao = async (notif) => {
+        const destino = destinoNotificacao(notif);
+        if (!destino) return;
+        if (!notif.lida) {
+            try {
+                await fetchWithAuth(`${API_URL}/notificacoes/${notif.id}/lida`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lida: true })
+                });
+            } catch (err) {
+                logger.warn('Não foi possível marcar como lida antes de abrir:', err);
+            }
+        }
+        await storeToken('selectedModule', destino.modulo);
+        window.location.assign(destino.caminho);
     };
 
     // tipos null = todas as categorias marcadas
@@ -285,10 +318,13 @@ const NotificacoesDropdown = ({ user }) => {
                             ) : (
                                 notificacoes.map(notif => {
                                     const { icon, bg, color } = getNotifMeta(notif.tipo);
+                                    const clicavel = Boolean(destinoNotificacao(notif));
                                     return (
                                         <div
                                             key={notif.id}
-                                            className={`nd-item${notif.lida ? '' : ' nd-item--unread'}`}
+                                            className={`nd-item${notif.lida ? '' : ' nd-item--unread'}${clicavel ? ' nd-item--link' : ''}`}
+                                            onClick={clicavel ? () => abrirNotificacao(notif) : undefined}
+                                            title={clicavel ? 'Abrir' : undefined}
                                         >
                                             <div
                                                 className="nd-icon"
@@ -360,18 +396,34 @@ const NotificacoesDropdown = ({ user }) => {
                                         )}
                                     </>
                                 ) : tgLink ? (
-                                    <div className="nd-telegram-row">
-                                        <i className="ti ti-brand-telegram" aria-hidden="true"></i>
-                                        <span className="nd-telegram-txt">
-                                            Toque em <b>Iniciar</b> no bot e confirme aqui.
-                                        </span>
-                                        <a className="nd-action-btn" href={tgLink} target="_blank" rel="noopener noreferrer">
-                                            Abrir bot
-                                        </a>
-                                        <button className="nd-action-btn nd-telegram-cta" onClick={confirmarTelegram} disabled={tgBusy}>
-                                            {tgBusy ? 'Confirmando…' : 'Já dei Start — confirmar'}
-                                        </button>
-                                    </div>
+                                    <>
+                                        <div className="nd-telegram-row">
+                                            <i className="ti ti-brand-telegram" aria-hidden="true"></i>
+                                            <span className="nd-telegram-txt">
+                                                Toque em <b>Iniciar</b> no bot e confirme aqui.
+                                            </span>
+                                            <a className="nd-action-btn" href={tgLink} target="_blank" rel="noopener noreferrer">
+                                                Abrir bot
+                                            </a>
+                                            <button className="nd-action-btn nd-telegram-cta" onClick={confirmarTelegram} disabled={tgBusy}>
+                                                {tgBusy ? 'Confirmando…' : 'Já dei Start — confirmar'}
+                                            </button>
+                                        </div>
+                                        <div className="nd-telegram-manual">
+                                            Sem o Telegram neste computador? No celular, procure{' '}
+                                            <b>@{tg.bot}</b> e envie <code>{`/start ${tgLink.split('start=')[1]}`}</code>
+                                            <button
+                                                className="nd-action-btn"
+                                                onClick={() => {
+                                                    navigator.clipboard?.writeText(`/start ${tgLink.split('start=')[1]}`)
+                                                        .then(() => setTgErro(null))
+                                                        .catch(() => {});
+                                                }}
+                                            >
+                                                Copiar
+                                            </button>
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="nd-telegram-row">
                                         <i className="ti ti-brand-telegram" aria-hidden="true"></i>

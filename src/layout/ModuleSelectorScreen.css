@@ -46,3 +46,14 @@
         flex: 0 0 auto;
     }
 }
+
+/* Sino de notificações na topbar escura do seletor de módulos */
+.ms-notif .nd-bell {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.ms-notif .nd-bell:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

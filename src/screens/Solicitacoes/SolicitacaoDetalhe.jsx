@@ -140,6 +140,24 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
         } finally { setAgindo(false); }
     };
 
+    const devolver = async () => {
+        const ok = await confirmDialog(
+            'Desfazer a aprovação? A compra volta para "Em cotação" — o comprador pode '
+            + 'ajustar as cotações — e a conta a pagar prevista é removida do financeiro.',
+            { title: 'Devolver para cotação', confirmText: 'Devolver' },
+        );
+        if (!ok) return;
+        setAgindo(true);
+        try {
+            await solicitacoesApi.devolver(s.id);
+            notify.success('Aprovação desfeita — a compra voltou para cotação.');
+            setCotSelecionada(null);
+            await carregar();
+        } catch (e) {
+            notify.error(e.message || 'Erro ao devolver a compra para cotação.');
+        } finally { setAgindo(false); }
+    };
+
     const cancelar = async () => {
         const ok = await confirmDialog('Cancelar esta solicitação?', { danger: true, confirmText: 'Cancelar solicitação' });
         if (!ok) return;
@@ -255,6 +273,11 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                         {s.pode_reabrir && (
                             <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={reabrir} disabled={agindo}>
                                 <i className="ti ti-arrow-back-up" /> Reabrir compra
+                            </button>
+                        )}
+                        {s.pode_desaprovar && (
+                            <button className="solc-btn solc-btn-secondary solc-btn-sm" onClick={devolver} disabled={agindo}>
+                                <i className="ti ti-rotate-2" /> Devolver p/ cotação
                             </button>
                         )}
                         {s.tem_arquivo && (

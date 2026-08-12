@@ -36,6 +36,16 @@ export default function SolicitacoesList({ obras, user, registerContentBack }) {
 
     useEffect(() => { carregar(); }, [carregar]);
 
+    // Deep-link do sino/push: /?solicitacao=<id> abre direto o detalhe.
+    // Limpa o parâmetro pra ele não "grudar" na navegação seguinte.
+    useEffect(() => {
+        const id = Number(new URLSearchParams(window.location.search).get('solicitacao'));
+        if (Number.isInteger(id) && id > 0) {
+            setDetalheId(id);
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+    }, []);
+
     useEffect(() => {
         registerContentBack?.(detalheId
             ? () => { setDetalheId(null); carregar(); }

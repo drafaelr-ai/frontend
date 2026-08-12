@@ -90,6 +90,9 @@ export const solicitacoesApi = {
         fetchWithAuth(`${base}/${id}/rejeitar`, {
             method: 'POST', body: JSON.stringify({ motivo }),
         }).then(j),
+    // aprovador desfaz a aprovação: Aprovada -> Em cotação (remove o PF Previsto)
+    devolver: (id) =>
+        fetchWithAuth(`${base}/${id}/devolver`, { method: 'PATCH' }).then(j),
 
     // baixa do comprador — sai da lista de compras e vai para o histórico
     atender: (id, { observacao = '', data_atendimento = null } = {}) =>
