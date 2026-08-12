@@ -333,7 +333,7 @@ export default function AbastecimentosFrota({ condutores }) {
             />
             <ConsumoVeiculoModal
                 isOpen={!!consumoVeiculo} veiculo={consumoVeiculo}
-                onClose={() => setConsumoVeiculo(null)}
+                onClose={() => { setConsumoVeiculo(null); carregar(); }}
             />
         </>
     );

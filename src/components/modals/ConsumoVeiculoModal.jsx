@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import Modal from '../Modal/Modal';
+import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from '../../screens/Frota/frotaApi';
 import { logger } from '../../utils/logger';
-import { notify } from '../../utils/notify';
+import { notify, confirmDialog } from '../../utils/notify';
 import { brl, dataBR, placaBR } from '../../screens/Frota/frotaFormat';
 
 const num = (v, casas = 2) =>
@@ -16,6 +17,8 @@ const inteiro = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR'));
     O km/l de cada linha é medido contra o abastecimento anterior — o primeiro
     registro do veículo nunca tem consumo. */
 export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
+    const { user } = useContext(AuthContext) || {};
+    const ehMaster = user?.role === 'master';
     const [dados, setDados] = useState(null);   // null = carregando
     const [de, setDe] = useState('');
     const [ate, setAte] = useState('');
@@ -47,6 +50,23 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
             window.open(url, '_blank', 'noopener');
         } catch (e) {
             notify.error(e.message || 'Erro ao abrir o comprovante.');
+        }
+    };
+
+    const remover = async (a) => {
+        const ok = await confirmDialog(
+            `Remover o abastecimento de ${dataBR(a.data)} (${brl(a.valor)})? `
+            + 'Ele sai do histórico e do cálculo de consumo.',
+            { danger: true, confirmText: 'Remover' },
+        );
+        if (!ok) return;
+        try {
+            await frotaApi.removerAbastecimento(a.id);
+            notify.success('Abastecimento removido.');
+            await carregar();
+        } catch (e) {
+            logger.error('remover abastecimento (consumo)', e);
+            notify.error(e.message || 'Erro ao remover.');
         }
     };
 
@@ -119,11 +139,12 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
                             <tr>
                                 <th>Data</th><th>KM</th><th>Rodados</th><th>Litros</th>
                                 <th>km/l</th><th>R$/L</th><th>Posto</th><th>Valor</th>
+                                {ehMaster && <th aria-label="Ações" />}
                             </tr>
                         </thead>
                         <tbody>
                             {(dados.registros || []).length === 0 && (
-                                <tr><td colSpan={8} className="frota-empty">
+                                <tr><td colSpan={ehMaster ? 9 : 8} className="frota-empty">
                                     Nenhum abastecimento no período.
                                 </td></tr>
                             )}
@@ -157,6 +178,15 @@ export default function ConsumoVeiculoModal({ isOpen, veiculo, onClose }) {
                                         )}
                                     </td>
                                     <td className="frota-valor">{brl(a.valor)}</td>
+                                    {ehMaster && (
+                                        <td>
+                                            <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                title="Remover abastecimento"
+                                                onClick={() => remover(a)}>
+                                                <i className="ti ti-trash" />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
