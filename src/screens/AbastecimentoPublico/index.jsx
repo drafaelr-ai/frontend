@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from './index.module.css';
 import '../../styles/tokens.css';
 import { API_URL } from '../../config';
+import { prepareFuelReceiptUpload } from './prepareUpload';
 
 /** Página do motorista — abre pelo link, sem login. Por isso usa `fetch`
     direto: não há JWT a injetar (mesma exceção do SuperlinkPublico). */
@@ -97,9 +98,18 @@ export default function AbastecimentoPublico({ token }) {
         setLendo(true);
         setAviso('');
         setErro('');
+        let arquivoPreparado;
+        try {
+            arquivoPreparado = await prepareFuelReceiptUpload(arquivo);
+        } catch (e) {
+            setErro(e?.message || 'Não foi possível preparar a foto.');
+            setLendo(false);
+            if (fileRef.current) fileRef.current.value = '';
+            return;
+        }
         try {
             const fd = new FormData();
-            fd.append('arquivo', arquivo);
+            fd.append('arquivo', arquivoPreparado);
             const r = await fetch(`${API_URL}/abastecimento/${token}/comprovante`, {
                 method: 'POST', body: fd,
             });
@@ -120,6 +130,7 @@ export default function AbastecimentoPublico({ token }) {
             setErro('Sem conexão. Tente enviar o comprovante novamente.');
         } finally {
             setLendo(false);
+            if (fileRef.current) fileRef.current.value = '';
         }
     };
 
