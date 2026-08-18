@@ -8,16 +8,24 @@ const vazio = { fornecedor: '', valor_total: '', condicao_pagamento: '', prazo_e
 
 export default function CotacaoSolicitacaoModal({ isOpen, solicitacao, onClose, onSaved }) {
     const [form, setForm] = useState(vazio);
-    const [arquivo, setArquivo] = useState(null);
+    const [arquivos, setArquivos] = useState([]);
     const [salvando, setSalvando] = useState(false);
 
     useEffect(() => {
         if (!isOpen) return;
         setForm(vazio);
-        setArquivo(null);
+        setArquivos([]);
     }, [isOpen]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+    const selecionarArquivos = (lista) => {
+        const selecionados = Array.from(lista || []);
+        if (selecionados.length > 5) {
+            notify.warning('Selecione no máximo 5 anexos por cotação.');
+        }
+        setArquivos(selecionados.slice(0, 5));
+    };
 
     const salvar = async () => {
         if (!form.fornecedor.trim()) { notify.warning('Informe o fornecedor.'); return; }
@@ -25,10 +33,10 @@ export default function CotacaoSolicitacaoModal({ isOpen, solicitacao, onClose, 
         setSalvando(true);
         try {
             let resp;
-            if (arquivo) {
+            if (arquivos.length) {
                 const fd = new FormData();
                 Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v); });
-                fd.append('arquivo', arquivo);
+                arquivos.forEach(arquivo => fd.append('arquivos', arquivo));
                 resp = await solicitacoesApi.criarCotacao(solicitacao.id, fd, true);
             } else {
                 resp = await solicitacoesApi.criarCotacao(solicitacao.id, {
@@ -77,9 +85,17 @@ export default function CotacaoSolicitacaoModal({ isOpen, solicitacao, onClose, 
                     <input className="solc-inp" placeholder="Ex.: 5 dias úteis"
                         value={form.prazo_entrega} onChange={e => set('prazo_entrega', e.target.value)} /></div>
             </div>
-            <div className="solc-field"><label>Anexo (opcional — PDF/imagem do orçamento)</label>
-                <input className="solc-inp" type="file" accept=".pdf,image/*"
-                    onChange={e => setArquivo(e.target.files?.[0] || null)} /></div>
+            <div className="solc-field">
+                <label>Anexos (opcional — até 5 PDFs/imagens do mesmo orçamento)</label>
+                <input className="solc-inp" type="file" accept=".pdf,image/*" multiple
+                    onChange={e => selecionarArquivos(e.target.files)} />
+                {arquivos.length > 0 && (
+                    <div className="solc-hint">
+                        <i className="ti ti-paperclip" /> {arquivos.length} arquivo(s):{' '}
+                        {arquivos.map(arquivo => arquivo.name).join(', ')}
+                    </div>
+                )}
+            </div>
             <div className="solc-field"><label>Observação (opcional)</label>
                 <input className="solc-inp" value={form.observacao} onChange={e => set('observacao', e.target.value)} /></div>
         </Modal>

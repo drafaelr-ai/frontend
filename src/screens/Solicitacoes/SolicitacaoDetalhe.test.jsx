@@ -4,7 +4,9 @@ import SolicitacaoDetalhe from './SolicitacaoDetalhe';
 import { solicitacoesApi } from './solicitacoesApi';
 
 jest.mock('./solicitacoesApi', () => ({
-    solicitacoesApi: { detalhe: jest.fn(), atender: jest.fn(), exportar: jest.fn() },
+    solicitacoesApi: {
+        detalhe: jest.fn(), atender: jest.fn(), exportar: jest.fn(), arquivoCotacao: jest.fn(),
+    },
 }));
 
 jest.mock('./ComentariosSolicitacao', () => () => null);
@@ -22,6 +24,7 @@ describe('SolicitacaoDetalhe', () => {
         jest.clearAllMocks();
         window.URL.createObjectURL = jest.fn(() => 'blob:pedido');
         window.URL.revokeObjectURL = jest.fn();
+        window.open = jest.fn();
         HTMLAnchorElement.prototype.click = jest.fn();
     });
 
@@ -127,5 +130,50 @@ describe('SolicitacaoDetalhe', () => {
         fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
         await waitFor(() => expect(solicitacoesApi.exportar).toHaveBeenCalledWith(11, 'pdf'));
         expect(window.URL.createObjectURL).toHaveBeenCalledTimes(2);
+    });
+
+    it('mostra e abre separadamente todos os anexos da mesma cotação', async () => {
+        solicitacoesApi.detalhe.mockResolvedValue({
+            id: 18,
+            obra_id: 1,
+            obra_nome: 'Alphaville',
+            solicitante_nome: 'Diego',
+            data_criacao: '2026-08-18T10:20:00',
+            tipo: 'Material',
+            status: 'Em cotação',
+            itens: [{ id: 1, descricao: 'Tubos', quantidade: 10, unidade: 'm' }],
+            cotacoes: [{
+                id: 91,
+                fornecedor: 'Fornecedor Dois PDFs',
+                valor_total: 1500,
+                tem_arquivo: true,
+                quantidade_arquivos: 2,
+                arquivos: [
+                    { indice: 0, nome: 'orcamento-parte-1.pdf' },
+                    { indice: 1, nome: 'orcamento-parte-2.pdf' },
+                ],
+                criado_por_id: 3,
+            }],
+            token_publico: 'token-publico',
+        });
+        solicitacoesApi.arquivoCotacao
+            .mockResolvedValueOnce({ url: 'https://storage/parte-1' })
+            .mockResolvedValueOnce({ url: 'https://storage/parte-2' });
+
+        render(
+            <SolicitacaoDetalhe
+                solicitacaoId={18}
+                user={{ id: 3, role: 'master' }}
+                obras={[{ id: 1, nome: 'Alphaville' }]}
+                onVoltar={jest.fn()}
+            />
+        );
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Anexo 1' }));
+        await waitFor(() => expect(solicitacoesApi.arquivoCotacao).toHaveBeenCalledWith(18, 91, 0));
+        fireEvent.click(screen.getByRole('button', { name: 'Anexo 2' }));
+        await waitFor(() => expect(solicitacoesApi.arquivoCotacao).toHaveBeenCalledWith(18, 91, 1));
+        expect(window.open).toHaveBeenNthCalledWith(1, 'https://storage/parte-1', '_blank', 'noopener');
+        expect(window.open).toHaveBeenNthCalledWith(2, 'https://storage/parte-2', '_blank', 'noopener');
     });
 });

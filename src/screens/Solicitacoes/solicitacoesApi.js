@@ -66,8 +66,8 @@ export const solicitacoesApi = {
         }).then(j),
     removerCotacao: (id, cotId) =>
         fetchWithAuth(`${base}/${id}/cotacoes/${cotId}`, { method: 'DELETE' }).then(j),
-    arquivoCotacao: (id, cotId) =>
-        fetchWithAuth(`${base}/${id}/cotacoes/${cotId}/arquivo`).then(j),
+    arquivoCotacao: (id, cotId, indice = 0) =>
+        fetchWithAuth(`${base}/${id}/cotacoes/${cotId}/arquivos/${indice}`).then(j),
 
     // comentários (@menção) — conversa solicitante ↔ comprador
     usuariosMencao: () => fetchWithAuth(`${base}/usuarios-mencao`).then(j),

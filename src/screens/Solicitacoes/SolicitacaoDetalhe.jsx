@@ -201,9 +201,9 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
         }
     };
 
-    const abrirAnexo = async (cot) => {
+    const abrirAnexo = async (cot, indice = 0) => {
         try {
-            const { url } = await solicitacoesApi.arquivoCotacao(s.id, cot.id);
+            const { url } = await solicitacoesApi.arquivoCotacao(s.id, cot.id, indice);
             window.open(url, '_blank', 'noopener');
         } catch (e) {
             notify.error(e.message || 'Erro ao abrir o anexo.');
@@ -442,15 +442,20 @@ export default function SolicitacaoDetalhe({ solicitacaoId, user, obras, onVolta
                                         {cot.observacao && <span><i className="ti ti-note" /> {cot.observacao}</span>}
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                    {cot.tem_arquivo && (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                                    {(cot.arquivos || (cot.tem_arquivo ? [{ indice: 0, nome: 'Anexo' }] : [])).map(anexo => (
                                         <button
-                                            className="solc-btn solc-btn-text solc-btn-sm" title="Abrir anexo"
-                                            onClick={(e) => { e.stopPropagation(); abrirAnexo(cot); }}
+                                            key={anexo.indice}
+                                            className="solc-btn solc-btn-text solc-btn-sm"
+                                            title={`Abrir ${anexo.nome || `anexo ${anexo.indice + 1}`}`}
+                                            onClick={(e) => { e.stopPropagation(); abrirAnexo(cot, anexo.indice); }}
                                         >
                                             <i className="ti ti-paperclip" />
+                                            {(cot.quantidade_arquivos || cot.arquivos?.length || 1) > 1
+                                                ? `Anexo ${anexo.indice + 1}`
+                                                : 'Anexo'}
                                         </button>
-                                    )}
+                                    ))}
                                     {emAberto && (user?.role === 'master' || cot.criado_por_id === user?.id) && (
                                         <button
                                             className="solc-btn solc-btn-text solc-btn-sm" title="Remover cotação"
