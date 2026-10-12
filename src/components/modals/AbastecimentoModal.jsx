@@ -5,7 +5,14 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { placaBR, COMBUSTIVEIS } from '../../screens/Frota/frotaFormat';
 
-const vazio = { veiculo_id: '', data: '', litros: '', valor: '', km: '', combustivel: '', posto: '', condutor_id: '', observacao: '' };
+const vazio = {
+    veiculo_id: '', data: '', litros: '', valor: '', km: '', combustivel: '',
+    posto_id: '', posto_modo: 'selecionar', novo_posto_nome: '',
+    condutor_id: '', observacao: '',
+};
+
+const normalizarPosto = (nome) => String(nome || '')
+    .normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
 
 function numeroBR(valor) {
     if (valor === null || valor === undefined || valor === '') return null;
@@ -20,6 +27,8 @@ export default function AbastecimentoModal({
     isOpen, veiculos, veiculoFixo, condutores, abastecimento, onClose, onSaved,
 }) {
     const [form, setForm] = useState(vazio);
+    const [postos, setPostos] = useState([]);
+    const [carregandoPostos, setCarregandoPostos] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const editando = Boolean(abastecimento?.id);
     const litros = numeroBR(form.litros);
@@ -41,7 +50,11 @@ export default function AbastecimentoModal({
                 valor: abastecimento.valor ?? '',
                 km: abastecimento.km ?? '',
                 combustivel: abastecimento.combustivel || '',
-                posto: abastecimento.posto || '',
+                posto_id: abastecimento.posto_id ?? '',
+                posto_modo: abastecimento.posto && !abastecimento.posto_id
+                    ? 'novo' : 'selecionar',
+                novo_posto_nome: abastecimento.posto && !abastecimento.posto_id
+                    ? abastecimento.posto : '',
                 condutor_id: abastecimento.condutor_id ?? '',
                 observacao: abastecimento.observacao || '',
             });
@@ -54,12 +67,48 @@ export default function AbastecimentoModal({
         });
     }, [isOpen, veiculoFixo, abastecimento]);
 
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        let ativo = true;
+        setCarregandoPostos(true);
+        frotaApi.postosCombustivel()
+            .then((lista) => {
+                if (!ativo) return;
+                const disponiveis = Array.isArray(lista) ? lista : [];
+                setPostos(disponiveis);
+                if (abastecimento?.posto && !abastecimento?.posto_id) {
+                    const encontrado = disponiveis.find(
+                        p => normalizarPosto(p.nome) === normalizarPosto(abastecimento.posto),
+                    );
+                    if (encontrado) {
+                        setForm(f => ({
+                            ...f,
+                            posto_id: encontrado.id,
+                            posto_modo: 'selecionar',
+                            novo_posto_nome: '',
+                        }));
+                    }
+                }
+            })
+            .catch((e) => {
+                logger.error('listar postos de combustível', e);
+                if (ativo) setPostos([]);
+            })
+            .finally(() => {
+                if (ativo) setCarregandoPostos(false);
+            });
+        return () => { ativo = false; };
+    }, [isOpen, abastecimento?.posto, abastecimento?.posto_id]);
+
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
     const salvar = async () => {
         if (!form.veiculo_id) { notify.warning('Selecione o veículo.'); return; }
         if (!form.data) { notify.warning('Informe a data.'); return; }
         if (!form.valor) { notify.warning('Informe o valor.'); return; }
+        if (form.posto_modo === 'novo' && !form.novo_posto_nome.trim()) {
+            notify.warning('Informe o nome do novo posto.'); return;
+        }
         setSalvando(true);
         try {
             const payload = {
@@ -67,10 +116,13 @@ export default function AbastecimentoModal({
                 litros: form.litros || null,
                 km: form.km || null,
                 combustivel: form.combustivel || null,
-                posto: form.posto.trim() || null,
+                posto_id: form.posto_modo === 'selecionar' ? (form.posto_id || null) : null,
+                novo_posto_nome: form.posto_modo === 'novo'
+                    ? (form.novo_posto_nome.trim() || null) : null,
                 condutor_id: form.condutor_id || null,
                 observacao: form.observacao.trim() || null,
             };
+            delete payload.posto_modo;
             if (editando) await frotaApi.editarAbastecimento(abastecimento.id, payload);
             else await frotaApi.criarAbastecimento(payload);
             notify.success(editando ? 'Abastecimento atualizado.' : 'Abastecimento registrado.');
@@ -125,8 +177,42 @@ export default function AbastecimentoModal({
                         <option value="">—</option>
                         {COMBUSTIVEIS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select></div>
-                <div className="frota-field"><label>Posto (opcional)</label>
-                    <input className="frota-inp" value={form.posto} onChange={e => set('posto', e.target.value)} /></div>
+                <div className="frota-field"><label htmlFor="posto-combustivel">Posto (opcional)</label>
+                    <select
+                        id="posto-combustivel"
+                        className="frota-inp"
+                        value={form.posto_modo === 'novo' ? '__novo__' : form.posto_id}
+                        disabled={carregandoPostos}
+                        onChange={(e) => {
+                            if (e.target.value === '__novo__') {
+                                setForm(f => ({ ...f, posto_modo: 'novo', posto_id: '' }));
+                            } else {
+                                setForm(f => ({
+                                    ...f,
+                                    posto_modo: 'selecionar',
+                                    posto_id: e.target.value,
+                                    novo_posto_nome: '',
+                                }));
+                            }
+                        }}
+                    >
+                        <option value="">{carregandoPostos ? 'Carregando…' : 'Selecione…'}</option>
+                        {postos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        <option value="__novo__">+ Cadastrar novo posto</option>
+                    </select>
+                    {form.posto_modo === 'novo' && (
+                        <>
+                            <input
+                                className="frota-inp"
+                                aria-label="Nome do novo posto"
+                                maxLength={160}
+                                placeholder="Nome do novo posto"
+                                value={form.novo_posto_nome}
+                                onChange={e => set('novo_posto_nome', e.target.value)}
+                            />
+                            <small className="frota-field-help">Será cadastrado ao salvar.</small>
+                        </>
+                    )}</div>
                 <div className="frota-field"><label>Condutor (opcional)</label>
                     <select className="frota-inp" value={form.condutor_id} onChange={e => set('condutor_id', e.target.value)}>
                         <option value="">—</option>

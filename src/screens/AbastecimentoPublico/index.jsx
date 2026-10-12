@@ -31,12 +31,27 @@ function numeroBR(v) {
 const fmt = (n, casas = 2) =>
     n == null ? '' : String(Number(n).toFixed(casas)).replace('.', ',');
 
+const normalizarPosto = (nome) => String(nome || '')
+    .normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+
+const encontrarPosto = (postos, nome) => (postos || []).find(
+    posto => normalizarPosto(posto.nome) === normalizarPosto(nome),
+);
+
+const camposDoPosto = (postos, nome) => {
+    const encontrado = encontrarPosto(postos, nome);
+    return encontrado
+        ? { posto_id: encontrado.id, posto_modo: 'selecionar', novo_posto_nome: '' }
+        : { posto_id: '', posto_modo: 'novo', novo_posto_nome: nome };
+};
+
 export default function AbastecimentoPublico({ token }) {
     const [estado, setEstado] = useState('carregando'); // carregando|ok|erro|notfound
     const [dados, setDados] = useState(null);
     const [form, setForm] = useState({
         km: '', litros: '', preco_litro: '', valor_total: '',
-        posto: '', data: hoje(), observacao: '',
+        posto_id: '', posto_modo: 'selecionar', novo_posto_nome: '',
+        data: hoje(), observacao: '',
     });
     const [arquivoNome, setArquivoNome] = useState('');
     const [lendo, setLendo] = useState(false);
@@ -55,6 +70,28 @@ export default function AbastecimentoPublico({ token }) {
                 if (!r.ok) { setEstado('notfound'); return; }
                 const d = await r.json();
                 setDados(d);
+                setForm(f => {
+                    const encontrado = d.posto_id
+                        ? (d.postos || []).find(p => String(p.id) === String(d.posto_id))
+                        : encontrarPosto(d.postos, d.posto);
+                    if (encontrado) {
+                        return {
+                            ...f,
+                            posto_id: encontrado.id,
+                            posto_modo: 'selecionar',
+                            novo_posto_nome: '',
+                        };
+                    }
+                    if (d.posto) {
+                        return {
+                            ...f,
+                            posto_id: '',
+                            posto_modo: 'novo',
+                            novo_posto_nome: d.posto,
+                        };
+                    }
+                    return f;
+                });
                 setEstado('ok');
             } catch (_) {
                 if (!cancelado) setEstado('erro');
@@ -121,7 +158,7 @@ export default function AbastecimentoPublico({ token }) {
                 litros: d.litros != null ? fmt(d.litros) : f.litros,
                 preco_litro: d.preco_litro != null ? fmt(d.preco_litro, 3) : f.preco_litro,
                 valor_total: d.valor_total != null ? fmt(d.valor_total) : f.valor_total,
-                posto: d.posto || f.posto,
+                ...(d.posto ? camposDoPosto(dados?.postos, d.posto) : {}),
                 data: d.data || f.data,
                 km: d.km != null ? String(d.km) : f.km,
             }));
@@ -141,6 +178,9 @@ export default function AbastecimentoPublico({ token }) {
         if (!numeroBR(form.valor_total) && !numeroBR(form.preco_litro)) {
             setErro('Informe o valor total ou o preço por litro.'); return;
         }
+        if (form.posto_modo === 'novo' && !form.novo_posto_nome.trim()) {
+            setErro('Informe o nome do novo posto.'); return;
+        }
         setEnviando(true);
         try {
             const r = await fetch(`${API_URL}/abastecimento/${token}`, {
@@ -151,7 +191,9 @@ export default function AbastecimentoPublico({ token }) {
                     litros: form.litros,
                     preco_litro: form.preco_litro || null,
                     valor_total: form.valor_total || null,
-                    posto: form.posto || null,
+                    posto_id: form.posto_modo === 'selecionar' ? (form.posto_id || null) : null,
+                    novo_posto_nome: form.posto_modo === 'novo'
+                        ? (form.novo_posto_nome.trim() || null) : null,
                     data: form.data || null,
                     observacao: form.observacao || null,
                 }),
@@ -331,12 +373,44 @@ export default function AbastecimentoPublico({ token }) {
                                             onChange={e => set('data', e.target.value)} />
                                     </div>
                                     <div className={styles.field}>
-                                        <label htmlFor="posto">Posto</label>
-                                        <input id="posto" className={styles.input}
-                                            placeholder="Nome do posto" value={form.posto}
-                                            onChange={e => set('posto', e.target.value)} />
+                                        <label htmlFor="posto">Posto (opcional)</label>
+                                        <select id="posto" className={styles.input}
+                                            value={form.posto_modo === 'novo'
+                                                ? '__novo__' : form.posto_id}
+                                            onChange={(e) => {
+                                                if (e.target.value === '__novo__') {
+                                                    setForm(f => ({
+                                                        ...f, posto_modo: 'novo', posto_id: '',
+                                                    }));
+                                                } else {
+                                                    setForm(f => ({
+                                                        ...f,
+                                                        posto_modo: 'selecionar',
+                                                        posto_id: e.target.value,
+                                                        novo_posto_nome: '',
+                                                    }));
+                                                }
+                                            }}>
+                                            <option value="">Selecione…</option>
+                                            {(dados.postos || []).map(p => (
+                                                <option key={p.id} value={p.id}>{p.nome}</option>
+                                            ))}
+                                            <option value="__novo__">+ Cadastrar novo posto</option>
+                                        </select>
                                     </div>
                                 </div>
+                                {form.posto_modo === 'novo' && (
+                                    <div className={styles.field}>
+                                        <label htmlFor="novo-posto">Nome do novo posto</label>
+                                        <input id="novo-posto" className={styles.input}
+                                            maxLength={160} placeholder="Ex.: Posto Avenida"
+                                            value={form.novo_posto_nome}
+                                            onChange={e => set('novo_posto_nome', e.target.value)} />
+                                        <small className={styles.help}>
+                                            O posto será cadastrado quando você enviar.
+                                        </small>
+                                    </div>
+                                )}
                                 <div className={styles.field}>
                                     <label htmlFor="obs">Observação (opcional)</label>
                                     <input id="obs" className={styles.input} maxLength={300}

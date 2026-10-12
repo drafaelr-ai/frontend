@@ -4,7 +4,10 @@ import AbastecimentoModal from './AbastecimentoModal';
 import { frotaApi } from '../../screens/Frota/frotaApi';
 
 jest.mock('../../screens/Frota/frotaApi', () => ({
-    frotaApi: { criarAbastecimento: jest.fn(), editarAbastecimento: jest.fn() },
+    frotaApi: {
+        criarAbastecimento: jest.fn(), editarAbastecimento: jest.fn(),
+        postosCombustivel: jest.fn(),
+    },
 }));
 
 jest.mock('../../utils/notify', () => ({
@@ -12,7 +15,10 @@ jest.mock('../../utils/notify', () => ({
 }));
 
 describe('AbastecimentoModal', () => {
-    beforeEach(() => jest.clearAllMocks());
+    beforeEach(() => {
+        jest.clearAllMocks();
+        frotaApi.postosCombustivel.mockResolvedValue([]);
+    });
 
     it('calcula o valor por litro enquanto valor e litros são preenchidos', async () => {
         frotaApi.criarAbastecimento.mockResolvedValue({ id: 31, preco_litro: 7 });
@@ -72,5 +78,60 @@ describe('AbastecimentoModal', () => {
         ));
         expect(frotaApi.criarAbastecimento).not.toHaveBeenCalled();
         expect(onSaved).toHaveBeenCalled();
+    });
+
+    it('permite escolher um posto já cadastrado', async () => {
+        frotaApi.postosCombustivel.mockResolvedValue([
+            { id: 7, nome: 'Posto Central' },
+        ]);
+        frotaApi.criarAbastecimento.mockResolvedValue({ id: 45 });
+
+        render(
+            <AbastecimentoModal
+                isOpen
+                veiculos={[{ id: 5, placa: 'ABC1D23', modelo: 'Saveiro' }]}
+                veiculoFixo={{ id: 5, placa: 'ABC1D23', modelo: 'Saveiro' }}
+                condutores={[]}
+                onClose={jest.fn()}
+                onSaved={jest.fn()}
+            />
+        );
+
+        const posto = await screen.findByLabelText('Posto (opcional)');
+        fireEvent.change(posto, { target: { value: '7' } });
+        fireEvent.change(screen.getByPlaceholderText('0,00'), { target: { value: '250' } });
+        fireEvent.click(screen.getByRole('button', { name: /Salvar abastecimento/i }));
+
+        await waitFor(() => expect(frotaApi.criarAbastecimento).toHaveBeenCalledWith(
+            expect.objectContaining({ posto_id: '7', novo_posto_nome: null }),
+        ));
+    });
+
+    it('cadastra um novo posto junto com o abastecimento', async () => {
+        frotaApi.criarAbastecimento.mockResolvedValue({ id: 46 });
+
+        render(
+            <AbastecimentoModal
+                isOpen
+                veiculos={[{ id: 5, placa: 'ABC1D23', modelo: 'Saveiro' }]}
+                veiculoFixo={{ id: 5, placa: 'ABC1D23', modelo: 'Saveiro' }}
+                condutores={[]}
+                onClose={jest.fn()}
+                onSaved={jest.fn()}
+            />
+        );
+
+        fireEvent.change(await screen.findByLabelText('Posto (opcional)'), {
+            target: { value: '__novo__' },
+        });
+        fireEvent.change(screen.getByLabelText('Nome do novo posto'), {
+            target: { value: 'Posto Avenida' },
+        });
+        fireEvent.change(screen.getByPlaceholderText('0,00'), { target: { value: '250' } });
+        fireEvent.click(screen.getByRole('button', { name: /Salvar abastecimento/i }));
+
+        await waitFor(() => expect(frotaApi.criarAbastecimento).toHaveBeenCalledWith(
+            expect.objectContaining({ posto_id: null, novo_posto_nome: 'Posto Avenida' }),
+        ));
     });
 });

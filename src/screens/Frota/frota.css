@@ -189,6 +189,7 @@
 .frota-inp.money { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .frota-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-4); }
 .frota-field label { font-size: var(--text-sm); font-weight: 500; color: var(--text-secondary); }
+.frota-field-help { color: var(--text-muted); font-size: var(--text-xs); }
 .frota-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 .frota-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); }
 

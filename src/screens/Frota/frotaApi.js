@@ -77,6 +77,13 @@ export const frotaApi = {
     removerManutencao: (id) =>
         fetchWithAuth(`${base}/manutencoes/${id}`, { method: 'DELETE' }).then(j),
 
+    // postos de combustível
+    postosCombustivel: () => fetchWithAuth(`${base}/postos-combustivel`).then(j),
+    criarPostoCombustivel: (nome) =>
+        fetchWithAuth(`${base}/postos-combustivel`, {
+            method: 'POST', body: JSON.stringify({ nome }),
+        }).then(j),
+
     // abastecimentos
     abastecimentos: (params = '') => fetchWithAuth(`${base}/abastecimentos${params}`).then(j),
     criarAbastecimento: (body) =>
