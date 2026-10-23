@@ -18,6 +18,7 @@ export const frotaApi = {
     obras: () => fetchWithAuth(`${API_URL}/obras`).then(j),
     imoveisAdmin: () => fetchWithAuth(`${base}/imoveis-admin`).then(j),
     funcionarios: () => fetchWithAuth(`${API_URL}/rh/funcionarios?status=ativo`).then(j),
+    usuariosNotificaveis: () => fetchWithAuth(`${base}/usuarios-notificaveis`).then(j),
 
     // veículos
     veiculos: (params = '') => fetchWithAuth(`${base}/veiculos${params}`).then(j),
@@ -28,9 +29,12 @@ export const frotaApi = {
         fetchWithAuth(`${base}/veiculos/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then(j),
     inativarVeiculo: (id) =>
         fetchWithAuth(`${base}/veiculos/${id}`, { method: 'DELETE' }).then(j),
-    atribuirCondutor: (id, condutorId) =>
+    atribuirCondutor: (id, condutorId, transferirVeiculo = false) =>
         fetchWithAuth(`${base}/veiculos/${id}/condutor`, {
-            method: 'PATCH', body: JSON.stringify({ condutor_id: condutorId }),
+            method: 'PATCH', body: JSON.stringify({
+                condutor_id: condutorId,
+                transferir_veiculo: transferirVeiculo,
+            }),
         }).then(j),
 
     // movimentações
@@ -123,6 +127,19 @@ export const frotaApi = {
         fetchWithAuth(`${base}/multas/${id}`, { method: 'PUT', body: JSON.stringify(body) }).then(j),
     removerMulta: (id) =>
         fetchWithAuth(`${base}/multas/${id}`, { method: 'DELETE' }).then(j),
+
+    // e-Frotas — credenciais e certificado permanecem exclusivamente na API
+    efrotasStatus: () => fetchWithAuth(`${base}/efrotas/status`).then(j),
+    sincronizacoesEfrotas: () => fetchWithAuth(`${base}/efrotas/sincronizacoes`).then(j),
+    sincronizarInfracoes: (body) =>
+        fetchWithAuth(`${base}/efrotas/sincronizacoes`, {
+            method: 'POST', body: JSON.stringify(body),
+        }).then(j),
+    excecoesEfrotas: () => fetchWithAuth(`${base}/efrotas/excecoes`).then(j),
+    reprocessarExcecaoEfrotas: (id) =>
+        fetchWithAuth(`${base}/efrotas/excecoes/${id}/reprocessar`, {
+            method: 'POST',
+        }).then(j),
 
     // arquivo (signed url) + dashboard
     arquivoUrl: (tipo, id) => fetchWithAuth(`${base}/arquivo/${tipo}/${id}`).then(j),

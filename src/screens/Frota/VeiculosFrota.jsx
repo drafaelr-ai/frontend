@@ -13,6 +13,7 @@ import DocumentoVeiculoModal from '../../components/modals/DocumentoVeiculoModal
 import ManutencaoFrotaModal from '../../components/modals/ManutencaoFrotaModal';
 import AbastecimentoModal from '../../components/modals/AbastecimentoModal';
 import MultaFrotaModal from '../../components/modals/MultaFrotaModal';
+import GerenciarMultaModal from '../../components/modals/GerenciarMultaModal';
 
 function TagLocal({ item }) {
     if (item.local_tipo === 'obra') {
@@ -43,6 +44,7 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
     const [modalAbast, setModalAbast] = useState(false);
     const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
     const [modalMulta, setModalMulta] = useState(false);
+    const [multaGerenciando, setMultaGerenciando] = useState(null);
     const [modalEditar, setModalEditar] = useState(false);
     const [condutorSel, setCondutorSel] = useState(veiculo.condutor_atual_id ?? '');
 
@@ -79,7 +81,17 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
 
     const aplicarCondutor = async () => {
         try {
-            await frotaApi.atribuirCondutor(veiculo.id, condutorSel || null);
+            const vaiTrocar = veiculo.condutor_atual_id
+                && String(veiculo.condutor_atual_id) !== String(condutorSel || '');
+            if (vaiTrocar) {
+                const ok = await confirmDialog(
+                    condutorSel
+                        ? `${placaBR(veiculo.placa)} está atribuído a ${veiculo.condutor_atual_nome || 'outro condutor'}. Transferir para o condutor selecionado?`
+                        : `Remover ${veiculo.condutor_atual_nome || 'o condutor atual'} de ${placaBR(veiculo.placa)}?`
+                );
+                if (!ok) return;
+            }
+            await frotaApi.atribuirCondutor(veiculo.id, condutorSel || null, vaiTrocar);
             notify.success(condutorSel ? 'Condutor atribuído.' : 'Condutor removido.');
             onChanged?.();
         } catch (e) {
@@ -136,12 +148,17 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                     <button className="frota-btn frota-btn-secondary frota-btn-sm" onClick={() => setModalEditar(true)}>
                         <i className="ti ti-pencil" /> Editar veículo
                     </button>
-                    <select className="frota-inp" style={{ maxWidth: 190 }} value={condutorSel} onChange={e => setCondutorSel(e.target.value)}>
+                    <select className="frota-inp" style={{ maxWidth: 230 }} value={condutorSel} onChange={e => setCondutorSel(e.target.value)} title="Para transferir um condutor de outro veículo, use o cadastro do condutor.">
                         <option value="">— Sem condutor —</option>
-                        {condutores.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                        {condutores.map(c => {
+                            const ocupadoEmOutroVeiculo = c.veiculo_atual_id && c.veiculo_atual_id !== veiculo.id;
+                            return <option key={c.id} value={c.id} disabled={ocupadoEmOutroVeiculo}>
+                                {c.nome}{ocupadoEmOutroVeiculo ? ` · em ${placaBR(c.veiculo_atual_placa)}` : ''}
+                            </option>;
+                        })}
                     </select>
                     <button className="frota-btn frota-btn-secondary frota-btn-sm" onClick={aplicarCondutor}>
-                        <i className="ti ti-steering-wheel" /> Aplicar
+                        <i className="ti ti-steering-wheel" /> Atribuir
                     </button>
                     <button className="frota-btn frota-btn-primary frota-btn-sm" onClick={() => setModalMover(true)}>
                         <i className={`ti ${veiculo.local_tipo === 'obra' ? 'ti-arrow-back-up' : 'ti-building'}`} /> {veiculo.local_tipo === 'obra' ? 'Retornar da obra' : 'Ceder à obra'}
@@ -261,12 +278,15 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                                 {lista.map(m => (
                                     <tr key={m.id}>
                                         <td className="frota-muted">{dataBR(m.data_infracao)}</td>
-                                        <td>{m.descricao || '—'}</td>
-                                        <td className="frota-muted">{m.condutor_nome || '—'}</td>
+                                        <td>{m.descricao || '—'}{m.origem === 'efrotas' && <div className="frota-cell-sub">AIT {m.numero_auto_infracao || '—'} · <span className="frota-badge frota-b-info">e-Frotas</span></div>}</td>
+                                        <td className="frota-muted">{m.condutor_nome || (m.origem === 'efrotas' ? 'Revisar atribuição' : '—')}</td>
                                         <td className="frota-muted">{m.pontos ?? '—'}</td>
                                         <td><span className={`frota-badge ${m.status_pagamento === 'paga' ? 'frota-b-success' : m.status_pagamento === 'contestada' ? 'frota-b-info' : 'frota-b-warning'}`}>{m.status_pagamento}</span></td>
                                         <td className="frota-valor">{brl(m.valor)}</td>
-                                        <td><button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('multas', m.id)}><i className="ti ti-trash" /></button></td>
+                                        <td>
+                                            <button className="frota-btn frota-btn-text frota-btn-sm" title="Definir responsável e situação" onClick={() => setMultaGerenciando(m)}><i className="ti ti-clipboard-check" /></button>
+                                            {m.origem !== 'efrotas' && <button className="frota-btn frota-btn-text frota-btn-sm" title="Remover" onClick={() => removerItem('multas', m.id)}><i className="ti ti-trash" /></button>}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -317,6 +337,17 @@ export function DetalheVeiculo({ veiculo, obras, imoveis, condutores, onVoltar, 
                 isOpen={modalMulta} veiculos={[veiculo]} veiculoFixo={veiculo} condutores={condutores}
                 onClose={() => setModalMulta(false)}
                 onSaved={() => { setModalMulta(false); carregarSub('multas'); }}
+            />
+            <GerenciarMultaModal
+                isOpen={!!multaGerenciando}
+                multa={multaGerenciando}
+                condutores={condutores}
+                onClose={() => setMultaGerenciando(null)}
+                onSaved={() => {
+                    setMultaGerenciando(null);
+                    carregarSub('multas');
+                    onChanged?.();
+                }}
             />
         </div>
     );

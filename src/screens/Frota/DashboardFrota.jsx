@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { frotaApi } from './frotaApi';
 import { logger } from '../../utils/logger';
-import { notify } from '../../utils/notify';
 import {
     brl, brlShort, dataBR, placaBR, tipoDocLabel,
     competenciaAtual, opcoesCompetencia,
 } from './frotaFormat';
 
+function hojeISOlocal() {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+}
+
 export default function DashboardFrota() {
     const [competencia, setCompetencia] = useState(competenciaAtual());
     const [dash, setDash] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState('');
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
         const reqId = ++reqIdRef.current;
         setLoading(true);
+        setErro('');
         try {
             const data = await frotaApi.dashboard(competencia);
             if (reqIdRef.current !== reqId) return;
@@ -23,7 +29,7 @@ export default function DashboardFrota() {
         } catch (e) {
             if (reqIdRef.current !== reqId) return;
             logger.error('Frota dashboard', e);
-            notify.error('Erro ao carregar o dashboard da Frota.');
+            setErro(e.message || 'Erro ao carregar o dashboard da Frota.');
         } finally {
             if (reqIdRef.current === reqId) setLoading(false);
         }
@@ -31,13 +37,23 @@ export default function DashboardFrota() {
 
     useEffect(() => { carregar(); }, [carregar]);
 
-    if (loading || !dash) return <div className="frota-loading">Carregando…</div>;
+    if (loading) return <div className="frota-loading">Carregando…</div>;
+    if (erro || !dash) return (
+        <div className="frota-card">
+            <div className="frota-empty">
+                <i className="ti ti-alert-circle" style={{ marginRight: 6 }} /> {erro || 'Não foi possível montar a visão geral.'}
+                <div style={{ marginTop: 12 }}><button className="frota-btn frota-btn-secondary" onClick={carregar}><i className="ti ti-refresh" /> Tentar novamente</button></div>
+            </div>
+        </div>
+    );
 
     const custo = dash.custo_mes || {};
     const docsVencidos = dash.documentos_vencidos || [];
     const docsAVencer = dash.documentos_a_vencer || [];
     const cnhs = dash.cnhs_a_vencer || [];
     const custoLocal = dash.custo_por_local || [];
+    const multasPendentes = dash.multas_pendentes || [];
+    const multasPrazos = dash.multas_prazos_urgentes || [];
     const maxLocal = Math.max(...custoLocal.map(l => l.total), 1);
 
     return (
@@ -130,6 +146,26 @@ export default function DashboardFrota() {
                         </div>
                     ))}
                 </div>
+            </div>
+
+            <div className="frota-card">
+                <div className="frota-card-head">
+                    <div className="frota-card-title"><i className="ti ti-alert-triangle" /> Infrações para acompanhar</div>
+                    <span className={`frota-badge ${multasPrazos.length ? 'frota-b-danger' : 'frota-b-neutral'}`}>{multasPrazos.length} prazo(s) em 7 dias</span>
+                </div>
+                {multasPendentes.length === 0 && <div className="frota-empty"><i className="ti ti-circle-check" style={{ marginRight: 6 }} /> Nenhuma multa pendente.</div>}
+                {multasPendentes.map(multa => {
+                    const prazo = multa.data_limite_defesa || multa.data_vencimento_penalidade;
+                    return (
+                        <div className="frota-bar-row" key={multa.id} style={{ justifyContent: 'space-between' }}>
+                            <div className="frota-bar-label" style={{ width: 'auto', flex: 1 }}>
+                                <i className="ti ti-alert-triangle" /> {placaBR(multa.veiculo_placa)} · {multa.descricao || 'Infração'}
+                            </div>
+                            <div className="frota-cell-sub" style={{ marginRight: 12 }}>{brl(multa.valor)}</div>
+                            {prazo ? <span className={`frota-badge ${prazo <= hojeISOlocal() ? 'frota-b-danger' : 'frota-b-warning'}`}>Prazo {dataBR(prazo)}</span> : <span className="frota-badge frota-b-neutral">Sem prazo</span>}
+                        </div>
+                    );
+                })}
             </div>
         </>
     );

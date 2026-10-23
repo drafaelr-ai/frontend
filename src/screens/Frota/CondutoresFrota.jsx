@@ -9,6 +9,8 @@ export default function CondutoresFrota({ reloadRefs }) {
     const [lista, setLista] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroStatus, setFiltroStatus] = useState('ativo');
+    const [busca, setBusca] = useState('');
+    const [filtroVinculo, setFiltroVinculo] = useState('');
     const [modal, setModal] = useState({ open: false, condutor: null });
     const reqIdRef = useRef(0);
 
@@ -33,6 +35,17 @@ export default function CondutoresFrota({ reloadRefs }) {
     const ativos = lista.filter(c => c.status === 'ativo');
     const cnhVencida = ativos.filter(c => c.cnh_status === 'vencida').length;
     const cnhAVencer = ativos.filter(c => c.cnh_status === 'a_vencer').length;
+    const listaFiltrada = lista.filter(c => {
+        const termo = busca.trim().toLowerCase();
+        const bateBusca = !termo || [c.nome, c.cpf, c.telefone, c.cnh_numero, c.veiculo_atual_placa]
+            .some(valor => String(valor || '').toLowerCase().includes(termo));
+        const bateVinculo = !filtroVinculo
+            || (filtroVinculo === 'sem_veiculo' && !c.veiculo_atual_placa)
+            || (filtroVinculo === 'com_veiculo' && !!c.veiculo_atual_placa)
+            || (filtroVinculo === 'com_alerta' && !!c.usuario_nome)
+            || (filtroVinculo === 'cnh_alerta' && ['vencida', 'a_vencer'].includes(c.cnh_status));
+        return bateBusca && bateVinculo;
+    });
 
     const onSaved = () => {
         setModal({ open: false, condutor: null });
@@ -66,6 +79,14 @@ export default function CondutoresFrota({ reloadRefs }) {
                 <div className="frota-card-head">
                     <div className="frota-card-title"><i className="ti ti-steering-wheel" /> Condutores</div>
                     <div className="frota-card-actions">
+                        <input className="frota-inp" style={{ maxWidth: 190 }} placeholder="Nome, CNH, placa…" value={busca} onChange={e => setBusca(e.target.value)} />
+                        <select className="frota-inp" style={{ maxWidth: 180 }} value={filtroVinculo} onChange={e => setFiltroVinculo(e.target.value)}>
+                            <option value="">Todos os vínculos</option>
+                            <option value="sem_veiculo">Sem veículo</option>
+                            <option value="com_veiculo">Com veículo</option>
+                            <option value="com_alerta">Com alerta</option>
+                            <option value="cnh_alerta">CNH em alerta</option>
+                        </select>
                         <select className="frota-inp" style={{ maxWidth: 150 }} value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
                             <option value="ativo">Ativos</option>
                             <option value="inativo">Inativos</option>
@@ -78,11 +99,11 @@ export default function CondutoresFrota({ reloadRefs }) {
                 </div>
 
                 {loading ? <div className="frota-loading">Carregando…</div> : (
-                    <table className="frota-table">
-                        <thead><tr><th>Condutor</th><th>CNH</th><th>Validade</th><th>Funcionário (RH)</th><th>Veículo atual</th><th></th></tr></thead>
+                    <div className="frota-table-wrap"><table className="frota-table">
+                        <thead><tr><th>Condutor</th><th>CNH</th><th>Validade</th><th>Funcionário (RH)</th><th>Alertas</th><th>Veículo atual</th><th></th></tr></thead>
                         <tbody>
-                            {lista.length === 0 && <tr><td colSpan={6} className="frota-empty">Nenhum condutor.</td></tr>}
-                            {lista.map(c => {
+                            {listaFiltrada.length === 0 && <tr><td colSpan={7} className="frota-empty">Nenhum condutor para estes filtros.</td></tr>}
+                            {listaFiltrada.map(c => {
                                 const vb = vencimentoBadge(c.cnh_status);
                                 return (
                                     <tr key={c.id}>
@@ -98,6 +119,7 @@ export default function CondutoresFrota({ reloadRefs }) {
                                         <td className="frota-muted">{c.cnh_numero || '—'}{c.cnh_categoria ? ` · ${c.cnh_categoria}` : ''}</td>
                                         <td>{dataBR(c.cnh_validade)} {vb && <span className={`frota-badge ${vb.cls}`} style={{ marginLeft: 6 }}>{vb.label}</span>}</td>
                                         <td className="frota-muted">{c.funcionario_nome || '—'}</td>
+                                        <td className="frota-muted">{c.usuario_nome ? <><i className="ti ti-bell" /> {c.usuario_nome}</> : '—'}</td>
                                         <td className="frota-muted">{c.veiculo_atual_placa || '—'}</td>
                                         <td>
                                             <button className="frota-btn frota-btn-text frota-btn-sm" title="Editar" onClick={() => setModal({ open: true, condutor: c })}><i className="ti ti-pencil" /></button>
@@ -107,7 +129,7 @@ export default function CondutoresFrota({ reloadRefs }) {
                                 );
                             })}
                         </tbody>
-                    </table>
+                    </table></div>
                 )}
             </div>
 

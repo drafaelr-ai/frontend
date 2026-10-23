@@ -13,6 +13,7 @@ export default function CustosFrota({ condutores }) {
     const [veiculos, setVeiculos] = useState([]);
     const [manutencoes, setManutencoes] = useState([]);
     const [abastecimentos, setAbastecimentos] = useState([]);
+    const [multasPagas, setMultasPagas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroVeiculo, setFiltroVeiculo] = useState('');
     const [de, setDe] = useState('');
@@ -31,14 +32,31 @@ export default function CustosFrota({ condutores }) {
             if (de) params.set('de', de);
             if (ate) params.set('ate', ate);
             const qs = params.toString() ? `?${params.toString()}` : '';
-            const [vRes, mRes, aRes] = await Promise.allSettled([
+            const paramsMultas = new URLSearchParams();
+            if (filtroVeiculo) paramsMultas.set('veiculo_id', filtroVeiculo);
+            paramsMultas.set('status', 'paga');
+            const qsMultas = `?${paramsMultas.toString()}`;
+            const [vRes, mRes, aRes, multasRes] = await Promise.allSettled([
                 frotaApi.veiculos(), frotaApi.manutencoes(qs), frotaApi.abastecimentos(qs),
+                frotaApi.multas(qsMultas),
             ]);
             if (reqIdRef.current !== reqId) return;
-            if (vRes.status === 'fulfilled') setVeiculos(Array.isArray(vRes.value) ? vRes.value : []);
-            if (mRes.status === 'fulfilled') setManutencoes(Array.isArray(mRes.value) ? mRes.value : []);
-            if (aRes.status === 'fulfilled') setAbastecimentos(Array.isArray(aRes.value) ? aRes.value : []);
-            if ([vRes, mRes, aRes].some(r => r.status === 'rejected')) {
+            setVeiculos(vRes.status === 'fulfilled' && Array.isArray(vRes.value) ? vRes.value : []);
+            setManutencoes(mRes.status === 'fulfilled' && Array.isArray(mRes.value) ? mRes.value : []);
+            setAbastecimentos(aRes.status === 'fulfilled' && Array.isArray(aRes.value) ? aRes.value : []);
+            if (multasRes.status === 'fulfilled') {
+                const dentroDoPeriodo = (data) => {
+                    const valor = String(data || '').slice(0, 10);
+                    return !!valor && (!de || valor >= de) && (!ate || valor <= ate);
+                };
+                setMultasPagas(
+                    (Array.isArray(multasRes.value) ? multasRes.value : [])
+                        .filter(multa => dentroDoPeriodo(multa.data_pagamento)),
+                );
+            } else {
+                setMultasPagas([]);
+            }
+            if ([vRes, mRes, aRes, multasRes].some(r => r.status === 'rejected')) {
                 notify.error('Erro ao carregar custos.');
             }
         } catch (e) {
@@ -53,6 +71,8 @@ export default function CustosFrota({ condutores }) {
 
     const totalManut = manutencoes.reduce((s, m) => s + (Number(m.custo) || 0), 0);
     const totalAbast = abastecimentos.reduce((s, a) => s + (Number(a.valor) || 0), 0);
+    const totalMultasPagas = multasPagas.reduce((s, m) => s + (Number(m.valor) || 0), 0);
+    const totalRealizado = totalManut + totalAbast + totalMultasPagas;
 
     const remover = async (tipo, id) => {
         const ok = await confirmDialog('Remover este registro?', { danger: true });
@@ -70,11 +90,13 @@ export default function CustosFrota({ condutores }) {
 
     return (
         <>
-            <div className="frota-kpis" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="frota-kpis">
                 <div className="frota-kpi accent"><div className="frota-kpi-lbl"><i className="ti ti-tool" /> Manutenções (período)</div><div className="frota-kpi-val">{brlShort(totalManut)}</div></div>
                 <div className="frota-kpi"><div className="frota-kpi-lbl"><i className="ti ti-gas-station" /> Abastecimentos (período)</div><div className="frota-kpi-val">{brlShort(totalAbast)}</div></div>
-                <div className="frota-kpi"><div className="frota-kpi-lbl"><i className="ti ti-sum" /> Total</div><div className="frota-kpi-val">{brlShort(totalManut + totalAbast)}</div></div>
+                <div className="frota-kpi"><div className="frota-kpi-lbl"><i className="ti ti-alert-triangle" /> Multas pagas (período)</div><div className="frota-kpi-val">{brlShort(totalMultasPagas)}</div></div>
+                <div className="frota-kpi"><div className="frota-kpi-lbl"><i className="ti ti-sum" /> Custo realizado</div><div className="frota-kpi-val">{brlShort(totalRealizado)}</div></div>
             </div>
+            <div className="frota-hint" style={{ marginTop: -12, marginBottom: 16 }}><i className="ti ti-info-circle" /> O custo realizado inclui multas pagas pela data do pagamento. Multas pendentes, contestadas ou sem data de pagamento continuam na aba <b>Multas</b>.</div>
 
             <div className="frota-card">
                 <div className="frota-card-head">
