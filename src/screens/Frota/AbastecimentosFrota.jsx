@@ -34,6 +34,10 @@ function statusBadge(status) {
 export default function AbastecimentosFrota({ condutores }) {
     const { user } = useContext(AuthContext) || {};
     const ehMaster = user?.role === 'master';
+    // A aba Recarga é toda de gestor: o saldo é consolidado da empresa e o
+    // extrato traz veículo de qualquer obra, então a API devolve 403 para o
+    // usuário comum. Esconder a aba evita ele cair num erro.
+    const ehGestor = ehMaster || user?.role === 'administrador';
     const [veiculos, setVeiculos] = useState([]);
     const [solicitacoes, setSolicitacoes] = useState([]);
     const [abastecimentos, setAbastecimentos] = useState([]);
@@ -157,7 +161,7 @@ export default function AbastecimentosFrota({ condutores }) {
 
     const subtabs = (
         <div className="frota-subtabs">
-            {SUBTABS.map(t => (
+            {SUBTABS.filter(t => t.id !== 'recarga' || ehGestor).map(t => (
                 <button key={t.id} className={`frota-subtab${sub === t.id ? ' active' : ''}`}
                     onClick={() => setSub(t.id)}>
                     <i className={`ti ${t.icon}`} /> {t.label}
@@ -166,7 +170,7 @@ export default function AbastecimentosFrota({ condutores }) {
         </div>
     );
 
-    if (sub === 'recarga') {
+    if (sub === 'recarga' && ehGestor) {
         return (
             <>
                 {subtabs}

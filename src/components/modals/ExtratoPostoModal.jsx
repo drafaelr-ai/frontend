@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import { AuthContext } from '../../auth/AuthContext';
 import { frotaApi } from '../../screens/Frota/frotaApi';
@@ -15,29 +15,49 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
     const ehMaster = user?.role === 'master';
     const [dados, setDados] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [erro, setErro] = useState(null);
     const [de, setDe] = useState('');
     const [ate, setAte] = useState('');
+    // Mexer rápido nas datas dispara várias buscas: sem este contador a
+    // resposta que chega atrasada sobrescreve a mais nova, e a tela mostra o
+    // movimento de outro período (ou de outro posto) sob o nome certo.
+    const reqIdRef = useRef(0);
     const postoId = posto?.posto_id ?? posto?.id;
 
     const carregar = useCallback(async () => {
         if (!isOpen || !postoId) return;
+        const reqId = ++reqIdRef.current;
         setLoading(true);
+        setErro(null);
         try {
             const params = new URLSearchParams();
             if (de) params.set('de', de);
             if (ate) params.set('ate', ate);
             const qs = params.toString() ? `?${params.toString()}` : '';
-            setDados(await frotaApi.extratoPosto(postoId, qs));
+            const resposta = await frotaApi.extratoPosto(postoId, qs);
+            if (reqIdRef.current !== reqId) return;
+            setDados(resposta);
         } catch (e) {
+            if (reqIdRef.current !== reqId) return;
             logger.error('extrato do posto', e);
+            setErro(e.message || 'Erro ao carregar o extrato.');
             notify.error(e.message || 'Erro ao carregar o extrato.');
         } finally {
-            setLoading(false);
+            if (reqIdRef.current === reqId) setLoading(false);
         }
     }, [isOpen, postoId, de, ate]);
 
     useEffect(() => { carregar(); }, [carregar]);
-    useEffect(() => { if (!isOpen) { setDados(null); setDe(''); setAte(''); } }, [isOpen]);
+    useEffect(() => {
+        if (isOpen) return;
+        // Invalida o que estiver em voo: o modal pode reabrir em outro posto
+        // antes de a resposta anterior chegar.
+        reqIdRef.current += 1;
+        setDados(null);
+        setErro(null);
+        setDe('');
+        setAte('');
+    }, [isOpen]);
 
     const removerRecarga = async (mov) => {
         const ok = await confirmDialog(
@@ -58,6 +78,7 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
 
     const resumo = dados?.resumo;
     const movimentos = dados?.movimentos || [];
+    const saldoInicial = dados?.saldo_inicial;
 
     return (
         <Modal
@@ -111,7 +132,9 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                         <tbody>
                             {movimentos.length === 0 && (
                                 <tr><td colSpan={6} className="frota-empty">
-                                    Nenhum movimento no período.
+                                    {erro
+                                        ? `Não foi possível carregar o extrato: ${erro}`
+                                        : 'Nenhum movimento no período.'}
                                 </td></tr>
                             )}
                             {movimentos.map(m => (
@@ -147,13 +170,29 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                                     </td>
                                 </tr>
                             ))}
+                            {!!saldoInicial && (
+                                <tr>
+                                    <td className="frota-muted">—</td>
+                                    <td className="frota-muted">
+                                        Saldo anterior ao período
+                                    </td>
+                                    <td className="frota-muted">—</td>
+                                    <td className="frota-muted frota-right">—</td>
+                                    <td className="frota-muted frota-right">
+                                        {brl(saldoInicial)}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             )}
             <div className="frota-hint">
                 <i className="ti ti-info-circle" /> Os totais acima são do posto inteiro,
-                não do período filtrado — é o número que fecha com o extrato do posto.
+                não do período filtrado — é o número que fecha com o extrato do posto. A
+                coluna de saldo acompanha isso: com filtro de data ela parte do saldo
+                anterior ao período, não do zero.
             </div>
         </Modal>
     );

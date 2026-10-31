@@ -15,6 +15,7 @@ export default function RecargaPostos() {
     const [resumo, setResumo] = useState(null);
     const [recargas, setRecargas] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState(null);
     const [modalRecarga, setModalRecarga] = useState(null);   // null | {} | posto
     const [extratoPosto, setExtratoPosto] = useState(null);
     const reqIdRef = useRef(0);
@@ -22,6 +23,7 @@ export default function RecargaPostos() {
     const carregar = useCallback(async () => {
         const reqId = ++reqIdRef.current;
         setLoading(true);
+        setErro(null);
         try {
             const [sRes, rRes] = await Promise.allSettled([
                 frotaApi.saldosPostos(), frotaApi.recargasPostos(),
@@ -34,12 +36,20 @@ export default function RecargaPostos() {
             if (rRes.status === 'fulfilled') {
                 setRecargas(Array.isArray(rRes.value) ? rRes.value : []);
             }
-            if ([sRes, rRes].some(r => r.status === 'rejected')) {
-                notify.error('Erro ao carregar o saldo dos postos.');
+            // Falha tem de ficar distinta de "não há nada": a tabela afirmando
+            // que não existe posto cadastrado quando a busca falhou é mentira —
+            // e é o que se vê na janela em que o frontend já subiu e a API não.
+            const falha = [sRes, rRes].find(r => r.status === 'rejected');
+            if (falha) {
+                const msg = falha.reason?.message || 'Erro ao carregar o saldo dos postos.';
+                logger.error('Frota recarga de postos', falha.reason);
+                setErro(msg);
+                notify.error(msg);
             }
         } catch (e) {
             logger.error('Frota recarga de postos', e);
-            notify.error('Erro ao carregar o saldo dos postos.');
+            setErro(e.message || 'Erro ao carregar o saldo dos postos.');
+            notify.error(e.message || 'Erro ao carregar o saldo dos postos.');
         } finally {
             if (reqIdRef.current === reqId) setLoading(false);
         }
@@ -118,8 +128,22 @@ export default function RecargaPostos() {
                             <tbody>
                                 {saldos.length === 0 && (
                                     <tr><td colSpan={6} className="frota-empty">
-                                        Nenhum posto cadastrado. Use "Nova recarga" para cadastrar
-                                        o posto e lançar o saldo que já existe na conta dele.
+                                        {erro ? (
+                                            <>
+                                                Não foi possível carregar o saldo dos postos: {erro}
+                                                <div style={{ marginTop: 10 }}>
+                                                    <button className="frota-btn frota-btn-secondary frota-btn-sm"
+                                                        onClick={carregar}>
+                                                        <i className="ti ti-refresh" /> Tentar de novo
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                Nenhum posto cadastrado. Use "Nova recarga" para cadastrar
+                                                o posto e lançar o saldo que já existe na conta dele.
+                                            </>
+                                        )}
                                     </td></tr>
                                 )}
                                 {saldos.map(p => (
@@ -147,11 +171,13 @@ export default function RecargaPostos() {
                                             {p.ultima_recarga ? dataBR(p.ultima_recarga) : '—'}
                                         </td>
                                         <td>
-                                            <button className="frota-btn frota-btn-text frota-btn-sm"
-                                                title="Ver extrato do posto"
-                                                onClick={() => setExtratoPosto(p)}>
-                                                <i className="ti ti-receipt" />
-                                            </button>
+                                            {ehGestor && (
+                                                <button className="frota-btn frota-btn-text frota-btn-sm"
+                                                    title="Ver extrato do posto"
+                                                    onClick={() => setExtratoPosto(p)}>
+                                                    <i className="ti ti-receipt" />
+                                                </button>
+                                            )}
                                             {ehGestor && (
                                                 <button className="frota-btn frota-btn-text frota-btn-sm"
                                                     title="Recarregar este posto"
@@ -192,7 +218,8 @@ export default function RecargaPostos() {
                             <tbody>
                                 {recargas.length === 0 && (
                                     <tr><td colSpan={6} className="frota-empty">
-                                        Nenhuma recarga lançada.
+                                        {erro ? 'Não foi possível carregar as recargas.'
+                                            : 'Nenhuma recarga lançada.'}
                                     </td></tr>
                                 )}
                                 {recargas.map(r => (

@@ -10,11 +10,15 @@ const vazio = {
     data: '', valor: '', observacao: '',
 };
 
+// Mesma regra do limpar_valor do backend: o preview não pode divergir do que
+// a API grava. '1.250' digitado é mil duzentos e cinquenta, não um e vinte e cinco.
 function numeroBR(valor) {
     if (valor === null || valor === undefined || valor === '') return null;
     let texto = String(valor).replace('R$', '').trim();
-    if (texto.includes(',') && texto.includes('.')) texto = texto.replace(/\./g, '').replace(',', '.');
-    else if (texto.includes(',')) texto = texto.replace(',', '.');
+    // Vírgula presente: o ponto só pode ser separador de milhar ('1.250,50').
+    if (texto.includes(',')) texto = texto.replace(/\./g, '').replace(',', '.');
+    // Sem vírgula, grupos de 3 dígitos são milhar BR ('1.250' -> 1250).
+    else if (/^\d{1,3}(\.\d{3})+$/.test(texto)) texto = texto.replace(/\./g, '');
     const numero = Number(texto);
     return Number.isFinite(numero) ? numero : null;
 }
@@ -23,6 +27,7 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
     const [form, setForm] = useState(vazio);
     const [postos, setPostos] = useState([]);
     const [carregandoPostos, setCarregandoPostos] = useState(false);
+    const [falhouLista, setFalhouLista] = useState(false);
     const [salvando, setSalvando] = useState(false);
 
     const valor = numeroBR(form.valor);
@@ -44,11 +49,17 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
         if (!isOpen) return undefined;
         let ativo = true;
         setCarregandoPostos(true);
+        setFalhouLista(false);
         frotaApi.postosCombustivel()
             .then((lista) => { if (ativo) setPostos(Array.isArray(lista) ? lista : []); })
             .catch((e) => {
                 logger.error('listar postos de combustível', e);
-                if (ativo) setPostos([]);
+                if (!ativo) return;
+                setPostos([]);
+                // Sem o aviso a lista aparecia vazia e empurrava o gestor a
+                // cadastrar de novo um posto que já existe.
+                setFalhouLista(true);
+                notify.error('Não foi possível carregar os postos. Tente de novo antes de cadastrar um novo.');
             })
             .finally(() => { if (ativo) setCarregandoPostos(false); });
         return () => { ativo = false; };
@@ -68,15 +79,29 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
         try {
             // Posto novo é cadastrado primeiro: a recarga precisa de um id.
             let postoId = form.posto_id;
+            let postoCriado = null;
             if (criandoPosto) {
                 const posto = await frotaApi.criarPostoCombustivel(form.novo_posto_nome.trim());
                 postoId = posto.id;
+                postoCriado = posto.nome;
             }
-            await frotaApi.criarRecargaPosto(postoId, {
-                data: form.data,
-                valor: form.valor,
-                observacao: form.observacao.trim() || null,
-            });
+            try {
+                await frotaApi.criarRecargaPosto(postoId, {
+                    data: form.data,
+                    valor: form.valor,
+                    observacao: form.observacao.trim() || null,
+                });
+            } catch (e) {
+                // São duas chamadas: o posto pode ter sido cadastrado e a
+                // recarga falhar. Dizer isso evita o gestor cadastrar de novo
+                // achando que nada aconteceu.
+                if (postoCriado) {
+                    e.message = `O posto "${postoCriado}" foi cadastrado, mas a recarga `
+                        + `não foi lançada: ${e.message || 'erro na API'}. `
+                        + 'Selecione o posto na lista e lance a recarga de novo.';
+                }
+                throw e;
+            }
             notify.success('Recarga lançada.');
             onSaved?.();
         } catch (e) {
@@ -119,7 +144,10 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
                         }
                     }}
                 >
-                    <option value="">{carregandoPostos ? 'Carregando…' : 'Selecione…'}</option>
+                    <option value="">
+                        {carregandoPostos ? 'Carregando…'
+                            : (falhouLista ? 'Erro ao carregar os postos' : 'Selecione…')}
+                    </option>
                     {postos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                     {!postoFixo && <option value="__novo__">+ Cadastrar novo posto</option>}
                 </select>
