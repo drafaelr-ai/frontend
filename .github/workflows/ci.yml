@@ -1,0 +1,85 @@
+# CI do frontend: lint, testes e build.
+#
+# LIMITE IMPORTANTE: este workflow NAO bloqueia o deploy. A Vercel publica no
+# push da main pela integracao git dela, sem olhar o status do GitHub Actions.
+# Para virar gate de verdade e preciso ligar branch protection na main exigindo
+# o check "Lint, testes e build" — isso e configuracao do repositorio, nao de
+# arquivo. Enquanto isso nao for feito, o valor aqui e avisar cedo (no PR) em
+# vez de impedir.
+#
+# Por que existe: antes disto nada verificava este codigo antes de ir ao ar.
+# O "npm run build" do projeto roda com DISABLE_ESLINT_PLUGIN=true, ou seja o
+# build da Vercel passa verde com erro de lint — conforme docs/DEPLOY.md, que
+# manda rodar o eslint separado na mao antes de cada merge. Este workflow faz
+# essa conferencia virar automatica.
+name: CI Frontend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancela execucoes antigas do mesmo ref para nao enfileirar runner a cada push.
+concurrency:
+  group: ci-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Lint, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Node 22 com cache do npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Gate de lint com TETO DE AVISOS.
+      # Medido em 31/10/2026: o codigo de producao (src sem testes + api)
+      # tem 0 erros e exatamente 80 avisos. O teto 80 deixa o gate verde
+      # hoje e vermelho no 81o aviso. Ao corrigir avisos, ABAIXE o numero
+      # (o teto so desce; nunca suba para "consertar" o CI).
+      # Os arquivos *.test.* ficam fora deste step porque concentram os
+      # 9 erros pre-existentes - ver o step informativo logo abaixo.
+      - name: Lint do codigo de producao (teto de avisos)
+        run: >-
+          npx eslint --ext .js,.jsx src api
+          --ignore-pattern '**/*.test.js'
+          --ignore-pattern '**/*.test.jsx'
+          --max-warnings 80
+
+      # Informativo, nao bloqueia: 9 erros pre-existentes nos arquivos de
+      # teste (6 testing-library/no-node-access, 2 import/first,
+      # 1 testing-library/no-container). Ficam visiveis em todo run para
+      # nao serem esquecidos. Quando forem corrigidos, apague este step
+      # e os dois --ignore-pattern do step anterior.
+      - name: Lint dos arquivos de teste (informativo, nao bloqueia)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npx eslint 'src/**/*.test.js' 'src/**/*.test.jsx'
+
+      # 26 suites / 67 testes, ~10s. CI=true tira o modo watch.
+      - name: Testes
+        if: ${{ !cancelled() }}
+        run: npm test -- --watchAll=false
+        env:
+          CI: 'true'
+
+      # Espelha exatamente o comando que a Vercel roda no push da main.
+      # NUNCA troque por "npx react-scripts build" puro: o GitHub Actions
+      # define CI=true automaticamente, e isso transforma os 80 avisos de
+      # ESLint em erro e derruba o build na primeira execucao.
+      - name: Build (espelho da Vercel)
+        if: ${{ !cancelled() }}
+        run: npm run build
