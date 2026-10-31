@@ -7,6 +7,7 @@ import { brl, brlShort, dataBR, placaBR } from './frotaFormat';
 import SolicitarAbastecimentoModal from '../../components/modals/SolicitarAbastecimentoModal';
 import AbastecimentoModal from '../../components/modals/AbastecimentoModal';
 import ConsumoVeiculoModal from '../../components/modals/ConsumoVeiculoModal';
+import RecargaPostos from './RecargaPostos';
 
 const num = (v, casas = 2) =>
     v == null ? '—' : Number(v).toLocaleString('pt-BR', {
@@ -14,6 +15,11 @@ const num = (v, casas = 2) =>
     });
 
 const inteiro = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR'));
+
+const SUBTABS = [
+    { id: 'abast', icon: 'ti-gas-station', label: 'Abastecimentos' },
+    { id: 'recarga', icon: 'ti-wallet', label: 'Recarga' },
+];
 
 function statusBadge(status) {
     switch (status) {
@@ -39,6 +45,7 @@ export default function AbastecimentosFrota({ condutores }) {
     const [modalManual, setModalManual] = useState(false);
     const [consumoVeiculo, setConsumoVeiculo] = useState(null);
     const [abastecimentoEditando, setAbastecimentoEditando] = useState(null);
+    const [sub, setSub] = useState('abast');
     const reqIdRef = useRef(0);
 
     const carregar = useCallback(async () => {
@@ -71,7 +78,7 @@ export default function AbastecimentosFrota({ condutores }) {
         }
     }, [filtroVeiculo, de, ate]);
 
-    useEffect(() => { carregar(); }, [carregar]);
+    useEffect(() => { if (sub === 'abast') carregar(); }, [carregar, sub]);
 
     const pendentes = solicitacoes.filter(s => s.status === 'pendente');
     const totalPeriodo = abastecimentos.reduce((s, a) => s + (Number(a.valor) || 0), 0);
@@ -148,8 +155,29 @@ export default function AbastecimentosFrota({ condutores }) {
         }
     };
 
+    const subtabs = (
+        <div className="frota-subtabs">
+            {SUBTABS.map(t => (
+                <button key={t.id} className={`frota-subtab${sub === t.id ? ' active' : ''}`}
+                    onClick={() => setSub(t.id)}>
+                    <i className={`ti ${t.icon}`} /> {t.label}
+                </button>
+            ))}
+        </div>
+    );
+
+    if (sub === 'recarga') {
+        return (
+            <>
+                {subtabs}
+                <RecargaPostos />
+            </>
+        );
+    }
+
     return (
         <>
+            {subtabs}
             <div className="frota-kpis" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className={`frota-kpi${pendentes.length ? ' alert' : ' accent'}`}>
                     <div className="frota-kpi-lbl"><i className="ti ti-clock" /> Aguardando motorista</div>

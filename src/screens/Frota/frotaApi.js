@@ -88,6 +88,22 @@ export const frotaApi = {
             method: 'POST', body: JSON.stringify({ nome }),
         }).then(j),
 
+    // recarga: saldo pré-pago na conta de cada posto
+    saldosPostos: (params = '') =>
+        fetchWithAuth(`${base}/postos-combustivel/saldos${params}`).then(j),
+    recargasPostos: (params = '') =>
+        fetchWithAuth(`${base}/postos-combustivel/recargas${params}`).then(j),
+    criarRecargaPosto: (postoId, body) =>
+        fetchWithAuth(`${base}/postos-combustivel/${postoId}/recargas`, {
+            method: 'POST', body: JSON.stringify(body),
+        }).then(j),
+    removerRecargaPosto: (id) =>
+        fetchWithAuth(`${base}/postos-combustivel/recargas/${id}`, {
+            method: 'DELETE',
+        }).then(j),
+    extratoPosto: (postoId, params = '') =>
+        fetchWithAuth(`${base}/postos-combustivel/${postoId}/extrato${params}`).then(j),
+
     // abastecimentos
     abastecimentos: (params = '') => fetchWithAuth(`${base}/abastecimentos${params}`).then(j),
     criarAbastecimento: (body) =>
