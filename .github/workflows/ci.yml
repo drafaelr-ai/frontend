@@ -45,29 +45,15 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      # Gate de lint com TETO DE AVISOS.
-      # Medido em 31/10/2026: o codigo de producao (src sem testes + api)
-      # tem 0 erros e exatamente 80 avisos. O teto 80 deixa o gate verde
-      # hoje e vermelho no 81o aviso. Ao corrigir avisos, ABAIXE o numero
-      # (o teto so desce; nunca suba para "consertar" o CI).
-      # Os arquivos *.test.* ficam fora deste step porque concentram os
-      # 9 erros pre-existentes - ver o step informativo logo abaixo.
-      - name: Lint do codigo de producao (teto de avisos)
-        run: >-
-          npx eslint --ext .js,.jsx src api
-          --ignore-pattern '**/*.test.js'
-          --ignore-pattern '**/*.test.jsx'
-          --max-warnings 80
-
-      # Informativo, nao bloqueia: 9 erros pre-existentes nos arquivos de
-      # teste (6 testing-library/no-node-access, 2 import/first,
-      # 1 testing-library/no-container). Ficam visiveis em todo run para
-      # nao serem esquecidos. Quando forem corrigidos, apague este step
-      # e os dois --ignore-pattern do step anterior.
-      - name: Lint dos arquivos de teste (informativo, nao bloqueia)
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: npx eslint 'src/**/*.test.js' 'src/**/*.test.jsx'
+      # Gate de lint com TETO DE AVISOS, agora cobrindo TUDO.
+      # Medido em 01/11/2026: src (com os testes) + api tem 0 erros e 81
+      # avisos. Os 9 erros que viviam nos arquivos *.test.* foram
+      # corrigidos de verdade (F-07) — nao suprimidos — entao o gate
+      # deixou de precisar do --ignore-pattern que os escondia.
+      # O teto SO DESCE: ao corrigir avisos, abaixe o numero; nunca suba
+      # para "consertar" o CI vermelho.
+      - name: Lint (producao e testes, teto de avisos)
+        run: npx eslint --ext .js,.jsx src api --max-warnings 81
 
       # 26 suites / 67 testes, ~10s. CI=true tira o modo watch.
       - name: Testes

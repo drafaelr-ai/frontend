@@ -4,6 +4,7 @@ import { frotaApi } from '../../screens/Frota/frotaApi';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { placaBR, COMBUSTIVEIS } from '../../screens/Frota/frotaFormat';
+import { paraNumero } from '../../utils/numeroBR';
 
 const vazio = {
     veiculo_id: '', data: '', litros: '', valor: '', km: '', combustivel: '',
@@ -14,14 +15,6 @@ const vazio = {
 const normalizarPosto = (nome) => String(nome || '')
     .normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
 
-function numeroBR(valor) {
-    if (valor === null || valor === undefined || valor === '') return null;
-    let texto = String(valor).replace('R$', '').trim();
-    if (texto.includes(',') && texto.includes('.')) texto = texto.replace(/\./g, '').replace(',', '.');
-    else if (texto.includes(',')) texto = texto.replace(',', '.');
-    const numero = Number(texto);
-    return Number.isFinite(numero) ? numero : null;
-}
 
 export default function AbastecimentoModal({
     isOpen, veiculos, veiculoFixo, condutores, abastecimento, onClose, onSaved,
@@ -31,8 +24,8 @@ export default function AbastecimentoModal({
     const [carregandoPostos, setCarregandoPostos] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const editando = Boolean(abastecimento?.id);
-    const litros = numeroBR(form.litros);
-    const valor = numeroBR(form.valor);
+    const litros = paraNumero(form.litros);
+    const valor = paraNumero(form.valor);
     const precoLitro = litros > 0 && valor > 0
         ? (valor / litros).toLocaleString('pt-BR', {
             minimumFractionDigits: 3, maximumFractionDigits: 3,

@@ -40,7 +40,7 @@ describe('CotacaoSolicitacaoModal', () => {
         });
         const parte1 = new File(['parte 1'], 'orcamento-parte-1.pdf', { type: 'application/pdf' });
         const parte2 = new File(['parte 2'], 'orcamento-parte-2.pdf', { type: 'application/pdf' });
-        fireEvent.change(container.querySelector('input[type="file"]'), {
+        fireEvent.change(screen.getByLabelText('Anexos da cotação'), {
             target: { files: [parte1, parte2] },
         });
         fireEvent.click(screen.getByRole('button', { name: /Salvar cotação/i }));

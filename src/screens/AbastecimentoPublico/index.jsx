@@ -3,6 +3,7 @@ import styles from './index.module.css';
 import '../../styles/tokens.css';
 import { API_URL } from '../../config';
 import { prepareFuelReceiptUpload } from './prepareUpload';
+import { paraNumero, paraPreco } from '../../utils/numeroBR';
 
 /** Página do motorista — abre pelo link, sem login. Por isso usa `fetch`
     direto: não há JWT a injetar (mesma exceção do SuperlinkPublico). */
@@ -18,15 +19,6 @@ const placaBR = (p) => {
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
-/** '42,5' | '1.234,56' → number. null se não der. Motorista digita com vírgula. */
-function numeroBR(v) {
-    if (v === null || v === undefined || v === '') return null;
-    let s = String(v).replace('R$', '').trim();
-    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
-    else if (s.includes(',')) s = s.replace(',', '.');
-    const n = parseFloat(s);
-    return Number.isNaN(n) ? null : n;
-}
 
 const fmt = (n, casas = 2) =>
     n == null ? '' : String(Number(n).toFixed(casas)).replace('.', ',');
@@ -105,24 +97,24 @@ export default function AbastecimentoPublico({ token }) {
     /** Mantém litros × preço = total conforme o motorista digita, sem
         sobrescrever o campo que ele está editando. */
     const setLitros = (v) => {
-        const litros = numeroBR(v);
-        const preco = numeroBR(form.preco_litro);
+        const litros = paraNumero(v);
+        const preco = paraPreco(form.preco_litro);
         setForm(f => ({
             ...f, litros: v,
             valor_total: litros && preco ? fmt(litros * preco) : f.valor_total,
         }));
     };
     const setPreco = (v) => {
-        const preco = numeroBR(v);
-        const litros = numeroBR(form.litros);
+        const preco = paraPreco(v);
+        const litros = paraNumero(form.litros);
         setForm(f => ({
             ...f, preco_litro: v,
             valor_total: litros && preco ? fmt(litros * preco) : f.valor_total,
         }));
     };
     const setTotal = (v) => {
-        const total = numeroBR(v);
-        const litros = numeroBR(form.litros);
+        const total = paraNumero(v);
+        const litros = paraNumero(form.litros);
         setForm(f => ({
             ...f, valor_total: v,
             preco_litro: total && litros ? fmt(total / litros, 3) : f.preco_litro,
@@ -173,9 +165,9 @@ export default function AbastecimentoPublico({ token }) {
 
     const enviar = async () => {
         setErro('');
-        if (!numeroBR(form.km)) { setErro('Informe o KM do painel.'); return; }
-        if (!numeroBR(form.litros)) { setErro('Informe quantos litros você abasteceu.'); return; }
-        if (!numeroBR(form.valor_total) && !numeroBR(form.preco_litro)) {
+        if (!paraNumero(form.km)) { setErro('Informe o KM do painel.'); return; }
+        if (!paraNumero(form.litros)) { setErro('Informe quantos litros você abasteceu.'); return; }
+        if (!paraNumero(form.valor_total) && !paraNumero(form.preco_litro)) {
             setErro('Informe o valor total ou o preço por litro.'); return;
         }
         if (form.posto_modo === 'novo' && !form.novo_posto_nome.trim()) {

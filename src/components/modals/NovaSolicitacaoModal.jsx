@@ -223,6 +223,9 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
                     accept=".xlsx,.pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf"
                     onChange={lerArquivoPedido}
                     hidden
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    data-testid="input-pedido"
                 />
                 <span className="solc-item-tools-hint">Excel (.xlsx) ou PDF, até 10 MB</span>
             </div>
@@ -240,6 +243,7 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
 
             <div className="solc-field"><label>{editando ? 'Novo anexo (opcional — substitui o atual)' : 'Anexo (opcional — PDF/imagem, ex.: lista de materiais, projeto)'}</label>
                 <input className="solc-inp" type="file" accept=".pdf,image/*"
+                    aria-label="Anexos da solicitação"
                     onChange={e => setArquivo(e.target.files?.[0] || null)} /></div>
 
             <div className="solc-field"><label>Observação (opcional)</label>
