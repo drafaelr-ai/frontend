@@ -46,14 +46,14 @@ jobs:
         run: npm ci
 
       # Gate de lint com TETO DE AVISOS, agora cobrindo TUDO.
-      # Medido em 01/11/2026: src (com os testes) + api tem 0 erros e 81
+      # Medido em 01/11/2026: src (com os testes) + api tem 0 erros e 80
       # avisos. Os 9 erros que viviam nos arquivos *.test.* foram
       # corrigidos de verdade (F-07) — nao suprimidos — entao o gate
       # deixou de precisar do --ignore-pattern que os escondia.
       # O teto SO DESCE: ao corrigir avisos, abaixe o numero; nunca suba
       # para "consertar" o CI vermelho.
       - name: Lint (producao e testes, teto de avisos)
-        run: npx eslint --ext .js,.jsx src api --max-warnings 81
+        run: npx eslint --ext .js,.jsx src api --max-warnings 80
 
       # 26 suites / 67 testes, ~10s. CI=true tira o modo watch.
       - name: Testes

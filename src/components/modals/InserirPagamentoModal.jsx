@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
@@ -11,35 +11,47 @@ const InserirPagamentoModal = ({
     obraId,
     obras = [],
     onObraChange,
-    loadingItensOrcamento = false,
+    loadingItensOrcamento,
+    embedded = false,
 }) => {
-    const [data, setData] = useState(getTodayString());
-    const [dataVencimento, setDataVencimento] = useState(getTodayString());
-    const [descricao, setDescricao] = useState('');
-    const [fornecedor, setFornecedor] = useState('');
-    const [pix, setPix] = useState('');
-    const [codigoBarras, setCodigoBarras] = useState('');
-    const [valor, setValor] = useState('');
-    const [tipo, setTipo] = useState('Material');
-    const [status, setStatus] = useState('A Pagar');
-    const [orcamentoItemId, setOrcamentoItemId] = useState('');
+    // Um objeto de formulario em vez de 19 useState soltos, seguindo o padrao
+    // da casa (ver AbastecimentoModal): `set(campo, valor)` para escrever e
+    // desestruturacao para ler. Desestruturar e de proposito — mantem todas as
+    // leituras do JSX inalteradas, o que deixa este refactor verificavel num
+    // arquivo de 677 linhas.
+    const [form, setForm] = useState(() => ({
+        data: getTodayString(),
+        dataVencimento: getTodayString(),
+        descricao: '',
+        fornecedor: '',
+        pix: '',
+        codigoBarras: '',
+        valor: '',
+        tipo: 'Material',
+        status: 'A Pagar',
+        orcamentoItemId: '',
+        tipoFormaPagamento: 'avista',
+        meioPagamento: 'PIX',
+        numeroParcelas: '',
+        periodicidade: 'Mensal',
+        dataPrimeiraParcela: getTodayString(),
+        temEntrada: false,
+        percentualEntrada: 30,
+        dataEntrada: getTodayString(),
+        valoresIguais: true,
+    }));
+    const set = (campo, valor) => setForm(f => ({ ...f, [campo]: valor }));
+    const {
+        data, dataVencimento, descricao, fornecedor, pix, codigoBarras, valor,
+        tipo, status, orcamentoItemId, tipoFormaPagamento, meioPagamento,
+        numeroParcelas, periodicidade, dataPrimeiraParcela, temEntrada,
+        percentualEntrada, dataEntrada, valoresIguais,
+    } = form;
 
-    const [tipoFormaPagamento, setTipoFormaPagamento] = useState('avista');
-    const [meioPagamento, setMeioPagamento] = useState('PIX');
-    const [numeroParcelas, setNumeroParcelas] = useState('');
-    const [periodicidade, setPeriodicidade] = useState('Mensal');
-    const [dataPrimeiraParcela, setDataPrimeiraParcela] = useState(getTodayString());
-
-    const [temEntrada, setTemEntrada] = useState(false);
-    const [percentualEntrada, setPercentualEntrada] = useState(30);
-    const [dataEntrada, setDataEntrada] = useState(getTodayString());
-
-    const [valoresIguais, setValoresIguais] = useState(true);
     const [boletosConfig, setBoletosConfig] = useState([]);
-
     const [contadorInseridos, setContadorInseridos] = useState(0);
-    const [toastMsg, setToastMsg] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const salvarENovoRef = useRef(false);
 
     // Valores derivados — candidatos a useMemo na fase 5
     const valorTotal = parseFloat(valor) || 0;
@@ -75,23 +87,18 @@ const InserirPagamentoModal = ({
     }, [numeroParcelas, valor, dataPrimeiraParcela, periodicidade, meioPagamento, tipoFormaPagamento, valoresIguais, temEntrada, percentualEntrada]);
 
     useEffect(() => {
-        if (obras.length > 0) setOrcamentoItemId('');
+        if (obras.length > 0) set('orcamentoItemId', '');
     }, [obraId, obras.length]);
 
     const limparCamposParaNovo = () => {
-        setDescricao('');
-        setValor('');
-        setCodigoBarras('');
-        setDataVencimento(getTodayString());
-        setNumeroParcelas('');
-        setTemEntrada(false);
+        set('descricao', '');
+        set('valor', '');
+        set('codigoBarras', '');
+        set('dataVencimento', getTodayString());
+        set('numeroParcelas', '');
+        set('temEntrada', false);
         setBoletosConfig([]);
         // Mantém: fornecedor, pix, tipo, orcamentoItemId, meioPagamento, tipoFormaPagamento, periodicidade
-    };
-
-    const mostrarToast = (msg) => {
-        setToastMsg(msg);
-        setTimeout(() => setToastMsg(''), 3000);
     };
 
     const handleBoletoChange = (index, field, value) => {
@@ -111,7 +118,12 @@ const InserirPagamentoModal = ({
             notify.error('Selecione a obra do lançamento.');
             return;
         }
-        const salvarENovo = e.nativeEvent?.submitter?.dataset?.saveNew === 'true';
+        // Qual botao submeteu vem de um ref setado no onClick (o clique dispara
+        // antes do submit), e nao de event.submitter: este so chegou ao Safari
+        // 15.4, e num app Capacitor para iOS mais antigo "Salvar e Novo"
+        // viraria "Salvar e Fechar" sem avisar ninguem.
+        const salvarENovo = salvarENovoRef.current;
+        salvarENovoRef.current = false;
         setIsSubmitting(true);
 
         const dadosPagamento = {
@@ -155,7 +167,7 @@ const InserirPagamentoModal = ({
 
             if (salvarENovo) {
                 setContadorInseridos(prev => prev + 1);
-                mostrarToast(`Pagamento "${descricao}" inserido com sucesso!`);
+                notify.success(`Pagamento "${descricao}" inserido com sucesso!`);
                 limparCamposParaNovo();
             }
         } catch (error) {
@@ -168,6 +180,7 @@ const InserirPagamentoModal = ({
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title={obras.length > 0 ? 'Novo lançamento' : 'Inserir Pagamento'}
             subtitle={obras.length > 0
@@ -180,11 +193,14 @@ const InserirPagamentoModal = ({
                     <button type="button" className="m-btn-cancel" onClick={onClose} disabled={isSubmitting}>
                         {contadorInseridos > 0 ? `Fechar (${contadorInseridos} inserido${contadorInseridos > 1 ? 's' : ''})` : 'Cancelar'}
                     </button>
-                    <button type="submit" form="form-inserir-pagamento" data-save-new="true" className="m-btn-cancel" disabled={isSubmitting}>
+                    <button type="submit" form="form-inserir-pagamento" className="m-btn-cancel"
+                        onClick={() => { salvarENovoRef.current = true; }} disabled={isSubmitting}>
                         <i className="ti ti-plus" aria-hidden="true"></i>
                         {isSubmitting ? '...' : 'Salvar e Novo'}
                     </button>
-                    <button type="submit" form="form-inserir-pagamento" className="m-btn-primary" disabled={isSubmitting} style={{ background: 'var(--module-obras)' }}>
+                    <button type="submit" form="form-inserir-pagamento" className="m-btn-primary"
+                        onClick={() => { salvarENovoRef.current = false; }}
+                        disabled={isSubmitting} style={{ background: 'var(--module-obras)' }}>
                         <i className="ti ti-device-floppy" aria-hidden="true"></i>
                         {isSubmitting ? '...' : 'Salvar e Fechar'}
                     </button>
@@ -214,17 +230,17 @@ const InserirPagamentoModal = ({
 
                 <div className="m-field">
                     <label className="m-label">Descrição</label>
-                    <input className="m-input" aria-label="Descrição" type="text" value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+                    <input className="m-input" aria-label="Descrição" type="text" value={descricao} onChange={(e) => set('descricao', e.target.value)} required />
                 </div>
 
                 <div className="m-field">
                     <label className="m-label">Fornecedor <span className="m-label-opt">(opcional)</span></label>
-                    <input className="m-input" type="text" value={fornecedor} onChange={(e) => setFornecedor(e.target.value)} />
+                    <input className="m-input" aria-label="Fornecedor" type="text" value={fornecedor} onChange={(e) => set('fornecedor', e.target.value)} />
                 </div>
 
                 <div className="m-field">
                     <label className="m-label">Valor Total (R$)</label>
-                    <input className="m-input" aria-label="Valor total" type="number" step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} required />
+                    <input className="m-input" aria-label="Valor total" type="number" step="0.01" value={valor} onChange={(e) => set('valor', e.target.value)} required />
                 </div>
 
                 {/* TIPO DE FORMA DE PAGAMENTO */}
@@ -236,7 +252,7 @@ const InserirPagamentoModal = ({
                                 type="radio"
                                 value="avista"
                                 checked={tipoFormaPagamento === 'avista'}
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
+                                onChange={(e) => set('tipoFormaPagamento', e.target.value)}
                                 style={{ marginRight: 'var(--space-2)' }}
                             />
                             À vista
@@ -246,7 +262,7 @@ const InserirPagamentoModal = ({
                                 type="radio"
                                 value="parcelado"
                                 checked={tipoFormaPagamento === 'parcelado'}
-                                onChange={(e) => setTipoFormaPagamento(e.target.value)}
+                                onChange={(e) => set('tipoFormaPagamento', e.target.value)}
                                 style={{ marginRight: 'var(--space-2)' }}
                             />
                             Parcelado
@@ -257,7 +273,7 @@ const InserirPagamentoModal = ({
                 {/* MEIO DE PAGAMENTO */}
                 <div className="m-field">
                     <label className="m-label">Meio de Pagamento</label>
-                    <select className="m-select" value={meioPagamento} onChange={(e) => setMeioPagamento(e.target.value)} required>
+                    <select className="m-select" value={meioPagamento} onChange={(e) => set('meioPagamento', e.target.value)} required>
                         <option value="PIX">PIX</option>
                         <option value="Boleto">Boleto</option>
                         <option value="Transferência">Transferência</option>
@@ -281,7 +297,7 @@ const InserirPagamentoModal = ({
                                     <input
                                         type="checkbox"
                                         checked={temEntrada}
-                                        onChange={(e) => setTemEntrada(e.target.checked)}
+                                        onChange={(e) => set('temEntrada', e.target.checked)}
                                         style={{ width: '18px', height: '18px' }}
                                     />
                                     Tem entrada?
@@ -299,7 +315,7 @@ const InserirPagamentoModal = ({
                                                 min="1"
                                                 max="99"
                                                 value={percentualEntrada}
-                                                onChange={(e) => setPercentualEntrada(parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => set('percentualEntrada', parseFloat(e.target.value) || 0)}
                                                 style={{ width: '80px' }}
                                             />
                                             <span style={{ color: 'var(--status-success-text)', fontWeight: 'var(--weight-medium)', fontSize: 'var(--text-sm)' }}>
@@ -313,7 +329,7 @@ const InserirPagamentoModal = ({
                                             className="m-input"
                                             type="date"
                                             value={dataEntrada}
-                                            onChange={(e) => setDataEntrada(e.target.value)}
+                                            onChange={(e) => set('dataEntrada', e.target.value)}
                                             required
                                         />
                                     </div>
@@ -353,14 +369,14 @@ const InserirPagamentoModal = ({
                                     min="1"
                                     max="60"
                                     value={numeroParcelas}
-                                    onChange={(e) => setNumeroParcelas(e.target.value)}
+                                    onChange={(e) => set('numeroParcelas', e.target.value)}
                                     required
                                 />
                             </div>
 
                             <div className="m-field">
                                 <label className="m-label">Periodicidade</label>
-                                <select className="m-select" value={periodicidade} onChange={(e) => setPeriodicidade(e.target.value)} required>
+                                <select className="m-select" value={periodicidade} onChange={(e) => set('periodicidade', e.target.value)} required>
                                     <option value="Semanal">Semanal (7 dias)</option>
                                     <option value="Quinzenal">Quinzenal (15 dias)</option>
                                     <option value="Mensal">Mensal (30 dias)</option>
@@ -373,7 +389,7 @@ const InserirPagamentoModal = ({
                                     className="m-input"
                                     type="date"
                                     value={dataPrimeiraParcela}
-                                    onChange={(e) => setDataPrimeiraParcela(e.target.value)}
+                                    onChange={(e) => set('dataPrimeiraParcela', e.target.value)}
                                     required
                                 />
                             </div>
@@ -482,7 +498,7 @@ const InserirPagamentoModal = ({
                                 <input
                                     type="checkbox"
                                     checked={valoresIguais}
-                                    onChange={(e) => setValoresIguais(e.target.checked)}
+                                    onChange={(e) => set('valoresIguais', e.target.checked)}
                                 />
                                 Valores iguais
                             </label>
@@ -561,7 +577,7 @@ const InserirPagamentoModal = ({
                 {tipoFormaPagamento === 'avista' && (
                     <div className="m-field">
                         <label className="m-label">Data de Vencimento</label>
-                        <input className="m-input" type="date" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} required />
+                        <input className="m-input" type="date" value={dataVencimento} onChange={(e) => set('dataVencimento', e.target.value)} required />
                     </div>
                 )}
 
@@ -573,7 +589,7 @@ const InserirPagamentoModal = ({
                             rows={2}
                             maxLength={2048}
                             value={pix}
-                            onChange={(e) => setPix(e.target.value)}
+                            onChange={(e) => set('pix', e.target.value)}
                             placeholder="CPF, CNPJ, e-mail, telefone, chave aleatória ou código Pix Copia e Cola"
                         />
                     </div>
@@ -587,7 +603,7 @@ const InserirPagamentoModal = ({
                                 className="m-input"
                                 type="text"
                                 value={codigoBarras}
-                                onChange={(e) => setCodigoBarras(e.target.value)}
+                                onChange={(e) => set('codigoBarras', e.target.value)}
                                 placeholder="Cole a linha digitável do boleto"
                                 style={{ flex: 1 }}
                             />
@@ -617,7 +633,7 @@ const InserirPagamentoModal = ({
 
                 <div className="m-field">
                     <label className="m-label">Tipo</label>
-                    <select className="m-select" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
+                    <select className="m-select" value={tipo} onChange={(e) => set('tipo', e.target.value)} required>
                         <option value="Material">Material</option>
                         <option value="Mão de Obra">Mão de Obra</option>
                         <option value="Serviço">Serviço</option>
@@ -627,7 +643,7 @@ const InserirPagamentoModal = ({
 
                 <div className="m-field">
                     <label className="m-label">Status</label>
-                    <select className="m-select" aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} required>
+                    <select className="m-select" aria-label="Status" value={status} onChange={(e) => set('status', e.target.value)} required>
                         <option value="Pago">Pago</option>
                         <option value="A Pagar">A Pagar</option>
                     </select>
@@ -639,7 +655,7 @@ const InserirPagamentoModal = ({
                         className="m-select"
                         aria-label="Vincular ao item do orçamento"
                         value={orcamentoItemId}
-                        onChange={(e) => setOrcamentoItemId(e.target.value)}
+                        onChange={(e) => set('orcamentoItemId', e.target.value)}
                         disabled={loadingItensOrcamento || (obras.length > 0 && !obraId)}
                     >
                         <option value="">
@@ -652,24 +668,6 @@ const InserirPagamentoModal = ({
                 </div>
             </form>
 
-            {/* Toast de sucesso — padrão useState catalogado em NOTAS_REFACTOR.md, não migrado em D2 */}
-            {toastMsg && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'var(--status-success)',
-                    color: 'var(--text-on-dark)',
-                    padding: 'var(--space-3) var(--space-6)',
-                    borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-popup)',
-                    zIndex: 10000,
-                    fontWeight: 'var(--weight-medium)'
-                }}>
-                    {toastMsg}
-                </div>
-            )}
         </Modal>
     );
 };

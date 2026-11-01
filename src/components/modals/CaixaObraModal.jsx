@@ -7,7 +7,7 @@ import { notify, confirmDialog } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
 import ModalNovaMovimentacaoCaixa from './ModalNovaMovimentacaoCaixa';
 
-const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
+const CaixaObraModal = ({ obraId, obraNome, onClose, embedded = false }) => {
     const [caixa, setCaixa] = useState(null);
     const [movimentacoes, setMovimentacoes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -180,7 +180,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
 
     if (isLoading) {
         return (
-            <Modal isOpen={true} onClose={onClose} title="Caixa de Obra" subtitle={obraNome} width="xlarge">
+            <Modal isOpen={true} embedded={embedded} onClose={onClose} title="Caixa de Obra" subtitle={obraNome} width="xlarge">
                 <div style={{ padding: 'var(--space-10)', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Carregando...
                 </div>
@@ -191,6 +191,7 @@ const CaixaObraModal = ({ obraId, obraNome, onClose }) => {
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title="Caixa de Obra"
             subtitle={obraNome}

@@ -6,7 +6,7 @@ import { API_URL } from '../../config';
 import { logger } from '../../utils/logger';
 import { confirmDialog } from '../../utils/notify';
 
-const AdminPanelModal = ({ allObras, onClose }) => {
+const AdminPanelModal = ({ allObras, onClose, embedded = false }) => {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -163,6 +163,7 @@ const AdminPanelModal = ({ allObras, onClose }) => {
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title="Painel de Administração"
             width="xlarge"

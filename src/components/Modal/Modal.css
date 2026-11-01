@@ -42,6 +42,18 @@
 .m-container--large   { max-width: 640px; }
 .m-container--xlarge  { max-width: 800px; }
 
+/* Embutido na página (prop `embedded`): é conteúdo de página, não diálogo.
+   Sem teto de largura, sem teto de altura (quem rola é a página), sem sombra
+   de modal e sem a animação de entrada — ela faria a página "pular" a cada
+   troca de aba. */
+.m-container--embedded {
+    max-width: 100%;
+    max-height: none;
+    box-shadow: none;
+    border-radius: var(--radius-lg);
+    animation: none;
+}
+
 /* ── Header ─────────────────────────────────── */
 
 .m-header {

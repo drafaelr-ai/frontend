@@ -322,6 +322,17 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
         );
     };
 
+    // A API devolve `arquivo_url` (PDF no Storage, caminho novo) ou
+    // `arquivo_base64` (registros antigos, que seguem na coluna do banco).
+    // Os dois precisam funcionar: é o que permite migrar o banco depois, sem
+    // janela de indisponibilidade.
+    const urlDoPdf = modalPreview && (
+        modalPreview.arquivo_url
+        || (modalPreview.arquivo_base64
+            ? `data:application/pdf;base64,${modalPreview.arquivo_base64}`
+            : null)
+    );
+
     return (
         <div className="m-section-card">
             {/* Header */}
@@ -520,7 +531,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     <div style={{ height: '70vh', marginTop: '15px', position: 'relative' }}>
                         {/* Usar object em vez de iframe para evitar disparo de impressão */}
                         <object
-                            data={`data:application/pdf;base64,${modalPreview.arquivo_base64}#toolbar=1&navpanes=0&scrollbar=1`}
+                            data={`${urlDoPdf}#toolbar=1&navpanes=0&scrollbar=1`}
                             type="application/pdf"
                             style={{ width: '100%', height: '100%', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}
                         >
@@ -535,7 +546,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                             }}>
                                 <p>Seu navegador não suporta visualização de PDF.</p>
                                 <a
-                                    href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                                    href={urlDoPdf}
                                     download={modalPreview.arquivo_nome || 'boleto.pdf'}
                                     style={{
                                         padding: '10px 20px',
@@ -556,7 +567,7 @@ const GestaoBoletos = ({ obraId, obraNome, onUpdate }) => {
                     </div>
                     <div style={{ marginTop: '15px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                         <a
-                            href={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                            href={urlDoPdf}
                             download={modalPreview.arquivo_nome || 'boleto.pdf'}
                             style={{
                                 padding: '10px 20px',
