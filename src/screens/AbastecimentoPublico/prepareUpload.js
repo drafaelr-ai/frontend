@@ -1,3 +1,6 @@
+/* global globalThis */
+// O eslint-config-react-app ainda roda em ES2018, onde globalThis não é
+// global conhecido — sem esta diretiva o build de produção quebra.
 const MB = 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 10 * MB;
 const MAX_SOURCE_IMAGE_BYTES = 25 * MB;
