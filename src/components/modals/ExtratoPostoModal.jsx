@@ -10,6 +10,11 @@ const litrosFmt = (v) => (v == null ? '' : `${Number(v).toLocaleString('pt-BR', 
     minimumFractionDigits: 2, maximumFractionDigits: 2,
 })} L`);
 
+// Cada posto tem sua unidade: em posto de litros o extrato anda em litros e o
+// valor pago fica como informação ao lado.
+const quantidade = (valor, unidade) =>
+    (unidade === 'litros' ? litrosFmt(valor) : brl(valor));
+
 export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged }) {
     const { user } = useContext(AuthContext) || {};
     const ehMaster = user?.role === 'master';
@@ -60,9 +65,11 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
     }, [isOpen]);
 
     const removerRecarga = async (mov) => {
+        const rotulo = mov.tipo === 'ajuste' ? 'o ajuste de' : 'a recarga de';
         const ok = await confirmDialog(
-            `Excluir a recarga de ${brl(mov.valor)}? O saldo do posto volta a subtrair esse valor.`,
-            { danger: true, confirmText: 'Excluir recarga' },
+            `Excluir ${rotulo} ${fmt(Math.abs(mov.valor))}? `
+            + 'O saldo do posto volta a desconsiderar esse movimento.',
+            { danger: true, confirmText: 'Excluir' },
         );
         if (!ok) return;
         try {
@@ -79,6 +86,8 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
     const resumo = dados?.resumo;
     const movimentos = dados?.movimentos || [];
     const saldoInicial = dados?.saldo_inicial;
+    const unidade = dados?.unidade || posto?.unidade || 'reais';
+    const fmt = (v) => quantidade(v, unidade);
 
     return (
         <Modal
@@ -99,15 +108,18 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                 <div className="frota-kpis" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="frota-kpi">
                         <div className="frota-kpi-lbl"><i className="ti ti-wallet" /> Recarregado</div>
-                        <div className="frota-kpi-val">{brl(resumo.total_recarregado)}</div>
+                        <div className="frota-kpi-val">{fmt(resumo.total_recarregado)}</div>
+                        {resumo.total_pago != null && (
+                            <div className="frota-cell-sub">pago {brl(resumo.total_pago)}</div>
+                        )}
                     </div>
                     <div className="frota-kpi">
                         <div className="frota-kpi-lbl"><i className="ti ti-gas-station" /> Consumido</div>
-                        <div className="frota-kpi-val">{brl(resumo.total_consumido)}</div>
+                        <div className="frota-kpi-val">{fmt(resumo.total_consumido)}</div>
                     </div>
                     <div className={`frota-kpi${resumo.saldo < 0 ? ' alert' : ' accent'}`}>
                         <div className="frota-kpi-lbl"><i className="ti ti-cash" /> Saldo atual</div>
-                        <div className="frota-kpi-val">{brl(resumo.saldo)}</div>
+                        <div className="frota-kpi-val">{fmt(resumo.saldo)}</div>
                     </div>
                 </div>
             )}
@@ -141,11 +153,16 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                                 <tr key={`${m.tipo}-${m.id}`}>
                                     <td className="frota-muted">{dataBR(m.data)}</td>
                                     <td>
-                                        <span className={`frota-badge ${m.tipo === 'recarga'
-                                            ? 'frota-b-success' : 'frota-b-neutral'}`}>
-                                            <i className={`ti ${m.tipo === 'recarga'
-                                                ? 'ti-wallet' : 'ti-gas-station'}`} />
-                                            {m.tipo === 'recarga' ? 'Recarga' : 'Abastecimento'}
+                                        <span className={`frota-badge ${
+                                            m.tipo === 'recarga' ? 'frota-b-success'
+                                                : (m.tipo === 'ajuste' ? 'frota-b-info'
+                                                    : 'frota-b-neutral')}`}>
+                                            <i className={`ti ${
+                                                m.tipo === 'recarga' ? 'ti-wallet'
+                                                    : (m.tipo === 'ajuste' ? 'ti-equal'
+                                                        : 'ti-gas-station')}`} />
+                                            {m.tipo === 'recarga' ? 'Recarga'
+                                                : (m.tipo === 'ajuste' ? 'Ajuste' : 'Abastecimento')}
                                         </span>
                                         <div className="frota-cell-sub">{m.descricao}</div>
                                     </td>
@@ -156,13 +173,27 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                                         )}
                                     </td>
                                     <td className="frota-valor frota-right">
-                                        {m.valor < 0 ? `- ${brl(Math.abs(m.valor))}` : brl(m.valor)}
+                                        {m.valor < 0
+                                            ? `- ${fmt(Math.abs(m.valor))}`
+                                            : fmt(m.valor)}
+                                        {m.sem_quantidade && (
+                                            <div className="frota-cell-sub">
+                                                <i className="ti ti-alert-triangle" /> sem litros
+                                            </div>
+                                        )}
+                                        {m.valor_pago != null && (
+                                            <div className="frota-cell-sub">
+                                                pago {brl(m.valor_pago)}
+                                            </div>
+                                        )}
                                     </td>
-                                    <td className="frota-muted frota-right">{brl(m.saldo_acumulado)}</td>
+                                    <td className="frota-muted frota-right">
+                                        {fmt(m.saldo_acumulado)}
+                                    </td>
                                     <td>
-                                        {ehMaster && m.tipo === 'recarga' && (
+                                        {ehMaster && m.tipo !== 'abastecimento' && (
                                             <button className="frota-btn frota-btn-text frota-btn-sm"
-                                                title="Excluir recarga"
+                                                title="Excluir movimento"
                                                 onClick={() => removerRecarga(m)}>
                                                 <i className="ti ti-trash" />
                                             </button>
@@ -179,7 +210,7 @@ export default function ExtratoPostoModal({ isOpen, posto, onClose, onChanged })
                                     <td className="frota-muted">—</td>
                                     <td className="frota-muted frota-right">—</td>
                                     <td className="frota-muted frota-right">
-                                        {brl(saldoInicial)}
+                                        {fmt(saldoInicial)}
                                     </td>
                                     <td></td>
                                 </tr>

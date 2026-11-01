@@ -7,8 +7,13 @@ import { brl } from '../../screens/Frota/frotaFormat';
 
 const vazio = {
     posto_id: '', posto_modo: 'selecionar', novo_posto_nome: '',
-    data: '', valor: '', observacao: '',
+    nova_posto_unidade: 'reais',
+    data: '', valor: '', litros: '', observacao: '',
 };
+
+const litrosFmt = (v) => `${Number(v).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2,
+})} L`;
 
 // Mesma regra do limpar_valor do backend: o preview não pode divergir do que
 // a API grava. '1.250' digitado é mil duzentos e cinquenta, não um e vinte e cinco.
@@ -30,11 +35,26 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
     const [falhouLista, setFalhouLista] = useState(false);
     const [salvando, setSalvando] = useState(false);
 
+    const criandoPosto = form.posto_modo === 'novo';
+    const postoSelecionado = postos.find(
+        p => String(p.id) === String(form.posto_id),
+    );
+    // A unidade manda em qual campo é obrigatório: em posto de litros o saldo
+    // anda por litros, e o valor pago fica como informação ao lado.
+    const unidade = criandoPosto
+        ? form.nova_posto_unidade
+        : (postoSelecionado?.unidade || 'reais');
+    const emLitros = unidade === 'litros';
     const valor = numeroBR(form.valor);
+    const litros = numeroBR(form.litros);
+    const movimento = emLitros ? litros : valor;
     const saldoAtual = (saldos || []).find(
         s => String(s.posto_id) === String(form.posto_id),
     );
-    const saldoDepois = saldoAtual && valor > 0 ? saldoAtual.saldo + valor : null;
+    const saldoDepois = saldoAtual && movimento > 0
+        ? Math.round((saldoAtual.saldo + movimento) * 100) / 100
+        : null;
+    const mostraSaldo = (v) => (emLitros ? litrosFmt(v) : brl(v));
 
     useEffect(() => {
         if (!isOpen) return;
@@ -68,27 +88,34 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
     const salvar = async () => {
-        const criandoPosto = form.posto_modo === 'novo';
         if (!criandoPosto && !form.posto_id) { notify.warning('Selecione o posto.'); return; }
         if (criandoPosto && !form.novo_posto_nome.trim()) {
             notify.warning('Informe o nome do novo posto.'); return;
         }
         if (!form.data) { notify.warning('Informe a data da recarga.'); return; }
-        if (!(valor > 0)) { notify.warning('Informe um valor maior que zero.'); return; }
+        if (!(movimento > 0)) {
+            notify.warning(emLitros
+                ? 'Informe os litros da recarga.'
+                : 'Informe um valor maior que zero.');
+            return;
+        }
         setSalvando(true);
         try {
             // Posto novo é cadastrado primeiro: a recarga precisa de um id.
             let postoId = form.posto_id;
             let postoCriado = null;
             if (criandoPosto) {
-                const posto = await frotaApi.criarPostoCombustivel(form.novo_posto_nome.trim());
+                const posto = await frotaApi.criarPostoCombustivel(
+                    form.novo_posto_nome.trim(), form.nova_posto_unidade,
+                );
                 postoId = posto.id;
                 postoCriado = posto.nome;
             }
             try {
                 await frotaApi.criarRecargaPosto(postoId, {
                     data: form.data,
-                    valor: form.valor,
+                    valor: form.valor || null,
+                    litros: form.litros || null,
                     observacao: form.observacao.trim() || null,
                 });
             } catch (e) {
@@ -165,20 +192,57 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
                     </>
                 )}
             </div>
+            {criandoPosto && (
+                <div className="frota-field">
+                    <label htmlFor="recarga-unidade">Saldo deste posto controlado em</label>
+                    <select id="recarga-unidade" className="frota-inp"
+                        value={form.nova_posto_unidade}
+                        onChange={e => set('nova_posto_unidade', e.target.value)}>
+                        <option value="reais">Reais (R$) — crédito em dinheiro</option>
+                        <option value="litros">Litros — litros pré-comprados</option>
+                    </select>
+                </div>
+            )}
             <div className="frota-row2">
-                <div className="frota-field"><label htmlFor="recarga-valor">Valor da recarga</label>
-                    <input id="recarga-valor" className="frota-inp money" placeholder="0,00"
-                        value={form.valor} onChange={e => set('valor', e.target.value)} /></div>
+                {emLitros ? (
+                    <div className="frota-field"><label htmlFor="recarga-litros">
+                        Litros da recarga</label>
+                        <input id="recarga-litros" className="frota-inp" placeholder="0,00"
+                            value={form.litros}
+                            onChange={e => set('litros', e.target.value)} />
+                        <small className="frota-field-help">
+                            É isto que entra no saldo deste posto.
+                        </small></div>
+                ) : (
+                    <div className="frota-field"><label htmlFor="recarga-valor">
+                        Valor da recarga</label>
+                        <input id="recarga-valor" className="frota-inp money" placeholder="0,00"
+                            value={form.valor}
+                            onChange={e => set('valor', e.target.value)} /></div>
+                )}
                 <div className="frota-field"><label htmlFor="recarga-data">Data</label>
                     <input id="recarga-data" className="frota-inp" type="date"
                         value={form.data} onChange={e => set('data', e.target.value)} /></div>
             </div>
+            {emLitros && (
+                <div className="frota-field"><label htmlFor="recarga-pago">
+                    Valor pago (opcional)</label>
+                    <input id="recarga-pago" className="frota-inp money" placeholder="0,00"
+                        value={form.valor} onChange={e => set('valor', e.target.value)} />
+                    <small className="frota-field-help">
+                        Fica registrado para custo, mas não entra na conta do saldo —
+                        neste posto o saldo anda em litros.
+                    </small></div>
+            )}
             {saldoAtual && (
                 <div className="frota-callout frota-callout-info">
                     <i className="ti ti-info-circle" />
                     <span>
-                        Saldo atual de {saldoAtual.posto_nome}: <strong>{brl(saldoAtual.saldo)}</strong>
-                        {saldoDepois != null && <> → <strong>{brl(saldoDepois)}</strong> após a recarga</>}
+                        Saldo atual de {saldoAtual.posto_nome}:{' '}
+                        <strong>{mostraSaldo(saldoAtual.saldo)}</strong>
+                        {saldoDepois != null && (
+                            <> → <strong>{mostraSaldo(saldoDepois)}</strong> após a recarga</>
+                        )}
                     </span>
                 </div>
             )}
@@ -187,9 +251,10 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
                     placeholder="Depósito, PIX, nota do posto…"
                     value={form.observacao} onChange={e => set('observacao', e.target.value)} /></div>
             <div className="frota-hint">
-                <i className="ti ti-info-circle" /> O saldo é sempre as recargas menos os
-                abastecimentos lançados neste posto. Para começar, lance o saldo que já
-                existe hoje na conta dele.
+                <i className="ti ti-info-circle" /> O saldo é sempre os movimentos menos os
+                abastecimentos lançados neste posto. Para corrigir um saldo que já existe,
+                não precisa de recarga: clique no saldo do posto na lista e informe quanto
+                ele diz que você tem.
             </div>
         </Modal>
     );

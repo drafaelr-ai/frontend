@@ -83,9 +83,13 @@ export const frotaApi = {
 
     // postos de combustível
     postosCombustivel: () => fetchWithAuth(`${base}/postos-combustivel`).then(j),
-    criarPostoCombustivel: (nome) =>
+    criarPostoCombustivel: (nome, unidade = 'reais') =>
         fetchWithAuth(`${base}/postos-combustivel`, {
-            method: 'POST', body: JSON.stringify({ nome }),
+            method: 'POST', body: JSON.stringify({ nome, unidade }),
+        }).then(j),
+    editarPostoCombustivel: (id, body) =>
+        fetchWithAuth(`${base}/postos-combustivel/${id}`, {
+            method: 'PATCH', body: JSON.stringify(body),
         }).then(j),
 
     // recarga: saldo pré-pago na conta de cada posto
@@ -103,6 +107,12 @@ export const frotaApi = {
         }).then(j),
     extratoPosto: (postoId, params = '') =>
         fetchWithAuth(`${base}/postos-combustivel/${postoId}/extrato${params}`).then(j),
+    // O operador informa o saldo que o posto diz que ele tem; a API grava a
+    // diferença como ajuste, mantendo o saldo derivado dos movimentos.
+    ajustarSaldoPosto: (postoId, body) =>
+        fetchWithAuth(`${base}/postos-combustivel/${postoId}/saldo`, {
+            method: 'PUT', body: JSON.stringify(body),
+        }).then(j),
 
     // abastecimentos
     abastecimentos: (params = '') => fetchWithAuth(`${base}/abastecimentos${params}`).then(j),
