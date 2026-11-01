@@ -1625,7 +1625,9 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                     <span className="orcamento-item-codigo">{etapa.codigo}</span>
                                                     <span className="orcamento-item-nome">{etapa.nome}</span>
                                                     {etapa.ja_importado && (
-                                                        <span className="orcamento-item-badge imported">✓ Já importado</span>
+                                                        <span className="orcamento-item-badge imported">
+                                                        <i className="ti ti-check" aria-hidden="true" /> Já importado
+                                                    </span>
                                                     )}
                                                 </div>
                                                 <div className="orcamento-item-details">

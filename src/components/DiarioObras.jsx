@@ -238,7 +238,7 @@ const DiarioFormModal = ({ entrada, obraId, onClose, onSave }) => {
                 const entradaId = data.entrada?.id || data.id;
                 
                 try {
-                    // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
+                    // Comprimir imagens antes de enviar
                     logger.debug('Comprimindo imagens...');
                     const compressedFiles = await compressImages(arquivos, {
                         maxWidth: 1920,
@@ -600,7 +600,7 @@ const DiarioDetalhesModal = ({ entrada, onClose, onEdit, onDelete, onAddImage })
 
         setIsUploading(true);
         try {
-            // ⭐ COMPRIMIR IMAGENS ANTES DE ENVIAR
+            // Comprimir imagens antes de enviar
             logger.debug('Comprimindo imagens...');
             const compressedFiles = await compressImages(imageFiles, {
                 maxWidth: 1920,

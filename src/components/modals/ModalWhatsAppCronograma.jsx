@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import Modal from '../Modal/Modal';
 import { formatCurrency } from '../../utils/format';
 
+// `tipo` e CHAVE, nao texto exibivel. Antes era '📦 Parcela' e servia para
+// comparacao em cinco lugares — e a UI tirava o emoji na hora de exibir com
+// `tipo.replace(/^\S+\s*/, '')`. Ou seja o emoji estava no dado so para ser
+// removido depois, e um caractere trocado quebrava a comparacao em silencio.
+const TIPO = { vencido: 'vencido', aVencer: 'a_vencer', parcela: 'parcela' };
+const ROTULO_TIPO = {
+    [TIPO.vencido]: 'Vencido',
+    [TIPO.aVencer]: 'A Vencer',
+    [TIPO.parcela]: 'Parcela',
+};
+
+
 const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcelados, onClose }) => {
     const hoje = new Date();
     const formatDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
@@ -11,7 +23,8 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
             .filter(p => p.status === 'Previsto')
             .map(p => ({
                 key: `futuro-${p.id}`,
-                tipo: new Date(p.data_vencimento + 'T00:00:00') < hoje ? '🚨 Vencido' : '⏰ A Vencer',
+                tipo: new Date(p.data_vencimento + 'T00:00:00') < hoje
+                    ? TIPO.vencido : TIPO.aVencer,
                 descricao: p.descricao,
                 valor: p.valor,
                 data_vencimento: p.data_vencimento,
@@ -31,7 +44,7 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                 : (pp.tem_entrada ? (proxima.numero_parcela + 1) : (proxima.numero_parcela || '?'));
             return {
                 key: `parcela-${proxima.id}`,
-                tipo: '📦 Parcela',
+                tipo: TIPO.parcela,
                 descricao: `${pp.descricao} (${numDisplay}/${totalParcelas})`,
                 valor: proxima.valor_parcela || proxima.valor || 0,
                 data_vencimento: proxima.data_vencimento,
@@ -72,8 +85,8 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
         linhas.push(`─────────────────────────`);
 
         const vencidos = itensSelecionados.filter(p => p.vencido);
-        const aVencer = itensSelecionados.filter(p => !p.vencido && p.tipo !== '📦 Parcela');
-        const parcelas = itensSelecionados.filter(p => p.tipo === '📦 Parcela');
+        const aVencer = itensSelecionados.filter(p => !p.vencido && p.tipo !== TIPO.parcela);
+        const parcelas = itensSelecionados.filter(p => p.tipo === TIPO.parcela);
 
         if (vencidos.length > 0) {
             linhas.push(`\n🚨 *VENCIDOS (${vencidos.length})*`);
@@ -202,11 +215,11 @@ const ModalWhatsAppCronograma = ({ obraNome, pagamentosFuturos, pagamentosParcel
                                     fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-medium)',
                                     padding: '2px var(--space-2)', borderRadius: 'var(--radius-full)',
                                     display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                    background: item.vencido ? 'var(--status-danger-bg)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-bg)' : 'var(--status-warning-bg)',
-                                    color: item.vencido ? 'var(--status-danger-text)' : item.tipo === '📦 Parcela' ? 'var(--status-purple-text)' : 'var(--status-warning-text)',
+                                    background: item.vencido ? 'var(--status-danger-bg)' : item.tipo === TIPO.parcela ? 'var(--status-purple-bg)' : 'var(--status-warning-bg)',
+                                    color: item.vencido ? 'var(--status-danger-text)' : item.tipo === TIPO.parcela ? 'var(--status-purple-text)' : 'var(--status-warning-text)',
                                 }}>
-                                    <i className={`ti ${item.vencido ? 'ti-alert-triangle' : item.tipo === '📦 Parcela' ? 'ti-package' : 'ti-clock'}`} aria-hidden="true"></i>
-                                    {item.tipo.replace(/^\S+\s*/, '')}
+                                    <i className={`ti ${item.vencido ? 'ti-alert-triangle' : item.tipo === TIPO.parcela ? 'ti-package' : 'ti-clock'}`} aria-hidden="true"></i>
+                                    {ROTULO_TIPO[item.tipo] || item.tipo}
                                 </span>
                                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>{item.descricao}</span>
                             </div>
