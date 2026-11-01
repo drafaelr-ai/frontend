@@ -62,7 +62,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             setParcelaEditando(null);
             setObservacaoEditando(null);
 
-            showToast('Parcela atualizada com sucesso!');
+            notify.success('Parcela atualizada com sucesso!');
 
             if (onSave) onSave();
         } catch (err) {
@@ -87,7 +87,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
             if (!response.ok) throw new Error('Erro ao marcar parcela como paga');
 
             const resultado = await response.json();
-            showToast(resultado.mensagem);
+            notify.success(resultado.mensagem);
             await carregarParcelas();
 
             if (onSave) onSave();
@@ -110,7 +110,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                 throw new Error(erro.erro || 'Erro ao desfazer pagamento');
             }
 
-            showToast('Pagamento desfeito com sucesso!');
+            notify.success('Pagamento desfeito com sucesso!');
             await carregarParcelas();
 
             if (onSave) onSave();
@@ -157,7 +157,7 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
                 }
             }
 
-            showToast(`${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
+            notify.success(`${sucessos} lançamentos recriados${erros > 0 ? `, ${erros} erros` : ''}`);
 
             if (onSave) onSave();
         } catch (err) {
@@ -177,22 +177,13 @@ const EditarParcelasModal = ({ obraId, pagamentoParcelado, onClose, onSave, iten
 
             if (!response.ok) throw new Error('Erro ao salvar dados gerais');
 
-            showToast('Dados atualizados com sucesso!');
+            notify.success('Dados atualizados com sucesso!');
             setEditandoDadosGerais(false);
 
             if (onSave) onSave();
         } catch (err) {
             notify.error(`Erro: ${err.message}`);
         }
-    };
-
-    // Inline toast via DOM — candidate for notify.success in fase-6
-    const showToast = (message) => {
-        const toast = document.createElement('div');
-        toast.className = 'cf-toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
     };
 
     const calcularValorTotal = () => {

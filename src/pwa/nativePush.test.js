@@ -1,3 +1,8 @@
+// Os imports ficam no topo: o babel-jest iça os jest.mock() acima deles,
+// então a ordem no arquivo não muda o comportamento.
+import { deactivateNativePush, initializeNativePush } from './nativePush';
+import { PushNotifications } from '@capacitor/push-notifications';
+
 jest.mock('@capacitor/core', () => ({
     Capacitor: {
         isNativePlatform: () => true,
@@ -25,8 +30,6 @@ jest.mock('@capacitor/push-notifications', () => ({
 
 jest.mock('../auth/tokenStorage', () => ({ setToken: jest.fn(() => Promise.resolve()) }));
 
-import { deactivateNativePush, initializeNativePush } from './nativePush';
-import { PushNotifications } from '@capacitor/push-notifications';
 
 describe('nativePush', () => {
     beforeEach(() => {

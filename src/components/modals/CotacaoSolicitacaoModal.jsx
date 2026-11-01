@@ -88,6 +88,7 @@ export default function CotacaoSolicitacaoModal({ isOpen, solicitacao, onClose, 
             <div className="solc-field">
                 <label>Anexos (opcional — até 5 PDFs/imagens do mesmo orçamento)</label>
                 <input className="solc-inp" type="file" accept=".pdf,image/*" multiple
+                    aria-label="Anexos da cotação"
                     onChange={e => selecionarArquivos(e.target.files)} />
                 {arquivos.length > 0 && (
                     <div className="solc-hint">

@@ -2355,24 +2355,6 @@ body {
     gap: 8px;
 }
 
-/* ============================================
-   TOAST NOTIFICATION
-   ============================================ */
-
-.cf-toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--status-success);
-    color: white;
-    padding: 14px 24px;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    z-index: 10001;
-    animation: slideInRight 0.3s ease-out;
-}
-
 @keyframes slideInRight {
     from {
         opacity: 0;

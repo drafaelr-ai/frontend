@@ -34,7 +34,7 @@ describe('GlobalPlanejamento', () => {
         expect(await screen.findByText('Concretagem')).toBeInTheDocument();
         expect(screen.getAllByText('Obra Aurora').length).toBeGreaterThan(0);
 
-        fireEvent.click(screen.getByText('Concretagem').closest('button'));
+        fireEvent.click(screen.getByRole('button', { name: /Concretagem/ }));
         expect(onOpenWork).toHaveBeenCalledWith(1, 9);
 
         fireEvent.click(screen.getByRole('button', { name: 'Ver impedimentos em aberto' }));

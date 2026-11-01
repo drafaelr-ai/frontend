@@ -4,6 +4,7 @@ import { frotaApi } from '../../screens/Frota/frotaApi';
 import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { brl } from '../../screens/Frota/frotaFormat';
+import { paraNumero } from '../../utils/numeroBR';
 
 const vazio = {
     posto_id: '', posto_modo: 'selecionar', novo_posto_nome: '',
@@ -15,18 +16,6 @@ const litrosFmt = (v) => `${Number(v).toLocaleString('pt-BR', {
     minimumFractionDigits: 2, maximumFractionDigits: 2,
 })} L`;
 
-// Mesma regra do limpar_valor do backend: o preview não pode divergir do que
-// a API grava. '1.250' digitado é mil duzentos e cinquenta, não um e vinte e cinco.
-function numeroBR(valor) {
-    if (valor === null || valor === undefined || valor === '') return null;
-    let texto = String(valor).replace('R$', '').trim();
-    // Vírgula presente: o ponto só pode ser separador de milhar ('1.250,50').
-    if (texto.includes(',')) texto = texto.replace(/\./g, '').replace(',', '.');
-    // Sem vírgula, grupos de 3 dígitos são milhar BR ('1.250' -> 1250).
-    else if (/^\d{1,3}(\.\d{3})+$/.test(texto)) texto = texto.replace(/\./g, '');
-    const numero = Number(texto);
-    return Number.isFinite(numero) ? numero : null;
-}
 
 export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, onSaved }) {
     const [form, setForm] = useState(vazio);
@@ -45,8 +34,8 @@ export default function RecargaPostoModal({ isOpen, postoFixo, saldos, onClose, 
         ? form.nova_posto_unidade
         : (postoSelecionado?.unidade || 'reais');
     const emLitros = unidade === 'litros';
-    const valor = numeroBR(form.valor);
-    const litros = numeroBR(form.litros);
+    const valor = paraNumero(form.valor);
+    const litros = paraNumero(form.litros);
     const movimento = emLitros ? litros : valor;
     const saldoAtual = (saldos || []).find(
         s => String(s.posto_id) === String(form.posto_id),

@@ -98,7 +98,7 @@ describe('NovaSolicitacaoModal em modo de edição', () => {
             />
         );
 
-        const input = document.querySelector('input[accept*=".xlsx"]');
+        const input = screen.getByTestId('input-pedido');
         const arquivo = new File(['pedido'], 'materiais.xlsx', {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });

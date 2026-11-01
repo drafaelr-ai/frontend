@@ -1,3 +1,4 @@
+import { paraNumero } from '../../utils/numeroBR';
 const _MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -62,15 +63,13 @@ export function iniciais(nome) {
     return ((p[0]?.[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
 }
 
-/** '2.640,00' | 2640 -> 2640.00 (number). null se vazio. */
+/** '2.640,00' | '1.250' | 2640 -> number. null se vazio.
+ *
+ * Delega para utils/numeroBR: a regra do milhar vive num lugar só, espelhando
+ * services/numero_br.py no backend. Antes cada arquivo tinha sua cópia, e
+ * todas liam '1.250' como 1.25. */
 export function moedaParaNumero(v) {
-    if (v === null || v === undefined || v === '') return null;
-    if (typeof v === 'number') return v;
-    let s = String(v).replace('R$', '').trim();
-    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
-    else if (s.includes(',')) s = s.replace(',', '.');
-    const n = parseFloat(s);
-    return Number.isNaN(n) ? null : n;
+    return paraNumero(v);
 }
 
 export const TIPOS_VEICULO = [

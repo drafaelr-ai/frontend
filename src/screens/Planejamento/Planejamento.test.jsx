@@ -174,8 +174,7 @@ describe('Planejamento', () => {
 
     it('abre detalhes, aponta produção e resolve impedimento', async () => {
         render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'comum' }} />);
-        const cardTitle = await screen.findByText('Concretagem da laje');
-        fireEvent.click(cardTitle.closest('button'));
+        fireEvent.click(await screen.findByRole('button', { name: /Concretagem da laje/ }));
         expect(screen.getByRole('heading', { name: 'Concretagem da laje' })).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: /Apontar produção/ }));
@@ -193,8 +192,7 @@ describe('Planejamento', () => {
 
     it('aponta avanço percentual sem enviar data pelo navegador', async () => {
         render(<Planejamento obraId={1} obraNome="Residencial Aurora" user={{ role: 'comum' }} />);
-        const cardTitle = await screen.findByText('Concretagem da laje');
-        fireEvent.click(cardTitle.closest('button'));
+        fireEvent.click(await screen.findByRole('button', { name: /Concretagem da laje/ }));
 
         fireEvent.click(screen.getByRole('button', { name: /Apontar produção/ }));
         fireEvent.click(screen.getByRole('button', { name: 'Percentual' }));
