@@ -2647,9 +2647,14 @@ const GestaoBoletos = () => {
                             <button onClick={() => setModalPreview(null)} style={styles.closeButton}>×</button>
                         </div>
                         <div style={{ padding: '24px', textAlign: 'center' }}>
-                            {modalPreview.arquivo_base64 && (
+                            {/* A API devolve `arquivo_url` (PDF no Storage) ou
+                                `arquivo_base64` (registros antigos, ainda na coluna do
+                                banco). Os dois precisam funcionar: e o que permite
+                                migrar o banco depois, sem janela de indisponibilidade. */}
+                            {(modalPreview.arquivo_url || modalPreview.arquivo_base64) && (
                                 <iframe
-                                    src={`data:application/pdf;base64,${modalPreview.arquivo_base64}`}
+                                    src={modalPreview.arquivo_url
+                                        || `data:application/pdf;base64,${modalPreview.arquivo_base64}`}
                                     style={{ width: '100%', height: '500px', border: 'none', borderRadius: '8px' }}
                                     title="Boleto PDF"
                                 />

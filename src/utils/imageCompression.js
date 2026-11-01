@@ -60,7 +60,7 @@ export const compressImage = (file, options = {}) => {
                 // Converter para base64 com qualidade reduzida
                 const base64 = canvas.toDataURL('image/jpeg', quality);
                 
-                logger.debug(`📸 Imagem comprimida: ${file.name}`);
+                logger.debug(`Imagem comprimida: ${file.name}`);
                 logger.debug(`   Original: ${(file.size / 1024).toFixed(1)}KB`);
                 logger.debug(`   Comprimida: ${(base64.length * 0.75 / 1024).toFixed(1)}KB`);
                 logger.debug(`   Dimensões: ${img.width}x${img.height} → ${Math.round(width)}x${Math.round(height)}`);

@@ -89,7 +89,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                 if (dados.sucesso) {
                     if (dados.multiplos && dados.quantidade > 1) {
                         setMultiplosBoletos(dados.boletos);
-                        notify.info(`📄 Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
+                        notify.info(`Encontrados ${dados.quantidade} boletos neste PDF!\n\nVocê pode cadastrar todos de uma vez ou selecionar um específico.`);
                     } else {
                         const dadosExtraidos = [];
 
@@ -110,19 +110,19 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
                             dadosExtraidos.push('Beneficiário');
                         }
 
-                        notify.success(`✅ Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
+                        notify.success(`Dados extraídos: ${dadosExtraidos.join(', ')}.\n\nConfira e complete as informações restantes.`);
                     }
                 } else {
-                    notify.error('⚠️ Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
+                    notify.error('Não foi possível extrair dados automaticamente.\n\nPreencha os campos manualmente.');
                 }
             } else {
                 const erro = await response.json();
                 logger.error('Erro na API:', erro);
-                notify.error('⚠️ Erro ao processar PDF. Preencha manualmente.');
+                notify.error('Erro ao processar PDF. Preencha manualmente.');
             }
         } catch (error) {
             logger.error('Erro ao extrair dados:', error);
-            notify.error('⚠️ Erro de conexão. Preencha manualmente.');
+            notify.error('Erro de conexão. Preencha manualmente.');
         } finally {
             setExtraindo(false);
         }
@@ -175,7 +175,12 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             }
 
             // BUG: notify.error used for success message — catalogado em NOTAS_REFACTOR.md, não corrigido em D2
-            notify.error(`✅ ${sucessos} boletos cadastrados com sucesso!${erros > 0 ? `\n⚠️ ${erros} falharam.` : ''}`);
+            // Era notify.error numa mensagem de SUCESSO: o toast saía vermelho
+            // dizendo que tudo deu certo. Erro parcial agora vai em warning.
+            (erros > 0 ? notify.warning : notify.success)(
+                `${sucessos} boletos cadastrados com sucesso!`
+                + (erros > 0 ? `\n${erros} falharam.` : ''),
+            );
             setMultiplosBoletos(null);
             onSave();
             onClose();
@@ -223,7 +228,7 @@ const CadastrarBoletoModal = ({ obraId, onClose, onSave }) => {
             });
 
             if (response.ok) {
-                notify.success('✅ Boleto cadastrado com sucesso!');
+                notify.success('Boleto cadastrado com sucesso!');
                 onSave();
             } else {
                 const error = await response.json();

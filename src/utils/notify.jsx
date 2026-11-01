@@ -146,11 +146,26 @@ export function ToastContainer() {
 // Sub-componentes (estilo inline simples — depois fase 6 pode migrar pra CSS)
 // ---------------------------------------------------------------------------
 
+// Cores dos tokens, nao hex: a convencao proibe hex fora de tokens.css, e
+// aqui os valores eram copias dos proprios tokens (#d1fae5 == --status-success-bg).
+// Icone em Tabler, nao glifo: o glifo muda de forma por fonte e sistema.
 const COLORS = {
-  success: { bg: '#d1fae5', border: '#10b981', text: '#065f46', icon: '✓' },
-  error:   { bg: '#fee2e2', border: '#ef4444', text: '#991b1b', icon: '✕' },
-  warning: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e', icon: '⚠' },
-  info:    { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af', icon: 'ℹ' },
+  success: {
+    bg: 'var(--status-success-bg)', border: 'var(--status-success)',
+    text: 'var(--status-success-text)', icon: 'ti-circle-check',
+  },
+  error: {
+    bg: 'var(--status-danger-bg)', border: 'var(--status-danger)',
+    text: 'var(--status-danger-text)', icon: 'ti-alert-circle',
+  },
+  warning: {
+    bg: 'var(--status-warning-bg)', border: 'var(--status-warning)',
+    text: 'var(--status-warning-text)', icon: 'ti-alert-triangle',
+  },
+  info: {
+    bg: 'var(--status-info-bg)', border: 'var(--status-info)',
+    text: 'var(--status-info-text)', icon: 'ti-info-circle',
+  },
 };
 
 function Toast({ toast, onClose }) {
@@ -175,7 +190,7 @@ function Toast({ toast, onClose }) {
       }}
       role="alert"
     >
-      <span style={{ fontWeight: 700, fontSize: 16 }}>{c.icon}</span>
+      <i className={`ti ${c.icon}`} style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true" />
       <span style={{ flex: 1 }}>{toast.message}</span>
       <button
         onClick={onClose}
@@ -201,7 +216,7 @@ function ConfirmModal({ state, onConfirm }) {
     <div style={overlayStyle} role="dialog" aria-modal="true">
       <div style={confirmBoxStyle}>
         <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>{state.title}</h3>
-        <p style={{ margin: '0 0 24px', color: '#475569' }}>{state.message}</p>
+        <p style={{ margin: '0 0 24px', color: 'var(--text-muted)' }}>{state.message}</p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button onClick={() => onConfirm(false)} style={btnSecondaryStyle}>
             {state.cancelText}
@@ -239,7 +254,7 @@ const overlayStyle = {
 };
 
 const confirmBoxStyle = {
-  background: '#fff',
+  background: 'var(--surface-card)',
   borderRadius: 12,
   padding: 24,
   minWidth: 320,
@@ -250,9 +265,9 @@ const confirmBoxStyle = {
 const btnSecondaryStyle = {
   padding: '8px 16px',
   borderRadius: 6,
-  border: '1px solid #cbd5e1',
-  background: '#fff',
-  color: '#334155',
+  border: '1px solid var(--border-default)',
+  background: 'var(--surface-card)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   fontSize: 14,
 };
@@ -261,8 +276,8 @@ const btnPrimaryStyle = {
   padding: '8px 16px',
   borderRadius: 6,
   border: 'none',
-  background: '#6366f1',
-  color: '#fff',
+  background: 'var(--brand-primary)',
+  color: 'var(--text-on-dark)',
   cursor: 'pointer',
   fontSize: 14,
   fontWeight: 600,
@@ -270,5 +285,5 @@ const btnPrimaryStyle = {
 
 const btnDangerStyle = {
   ...btnPrimaryStyle,
-  background: '#ef4444',
+  background: 'var(--status-danger)',
 };

@@ -108,9 +108,9 @@ const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
         setSelecionados([]);
 
         if (erros.length > 0) {
-            notify.success(`✅ ${aprovados} aprovado(s)\n❌ ${erros.length} erro(s):\n${erros.join('\n')}`);
+            notify.success(`${aprovados} aprovado(s)\n${erros.length} erro(s):\n${erros.join('\n')}`);
         } else {
-            notify.success(`✅ ${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
+            notify.success(`${aprovados} solicitação(ões) aprovada(s) com sucesso!`);
         }
 
         if (onSave) onSave();
@@ -135,7 +135,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
                 throw new Error(data.erro || data.error || 'Erro ao aprovar solicitação');
             }
 
-            notify.success(data.sucesso || '✅ Solicitação aprovada com sucesso!');
+            notify.success(data.sucesso || 'Solicitação aprovada com sucesso!');
             setAprovandoOrcamento(null);
             if (onSave) onSave();
         } catch (err) {
@@ -155,7 +155,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
 
             if (!response.ok) throw new Error('Erro ao rejeitar solicitação');
 
-            notify.success('✅ Solicitação rejeitada!');
+            notify.success('Solicitação rejeitada!');
             if (onSave) onSave();
         } catch (err) {
             notify.error(`Erro: ${err.message}`);
@@ -178,7 +178,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
                 throw new Error(error.erro || 'Erro ao salvar orçamento');
             }
 
-            notify.success('✅ Solicitação enviada com sucesso!');
+            notify.success('Solicitação enviada com sucesso!');
             setAddModalVisible(false);
             carregarDados();
             if (onSave) onSave();
@@ -225,7 +225,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
                 }
             }
 
-            notify.success('✅ Solicitação atualizada com sucesso!');
+            notify.success('Solicitação atualizada com sucesso!');
             setEditingOrcamento(null);
             carregarDados();
             if (onSave) onSave();
