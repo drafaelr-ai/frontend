@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { notify } from '../../utils/notify';
 import { formatCurrency } from '../../utils/format';
 
-const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
+const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios, embedded = false }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadType, setDownloadType] = useState(null);
     const [error, setError] = useState(null);
@@ -147,6 +147,7 @@ const RelatoriosModal = ({ onClose, obraId, obraNome, sumarios }) => {
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title="Relatórios da Obra"
             subtitle={obraNome}

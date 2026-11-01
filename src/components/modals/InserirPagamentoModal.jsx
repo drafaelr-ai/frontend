@@ -11,7 +11,8 @@ const InserirPagamentoModal = ({
     obraId,
     obras = [],
     onObraChange,
-    loadingItensOrcamento = false,
+    loadingItensOrcamento,
+    embedded = false,
 }) => {
     const [data, setData] = useState(getTodayString());
     const [dataVencimento, setDataVencimento] = useState(getTodayString());
@@ -168,6 +169,7 @@ const InserirPagamentoModal = ({
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title={obras.length > 0 ? 'Novo lançamento' : 'Inserir Pagamento'}
             subtitle={obras.length > 0

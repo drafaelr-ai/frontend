@@ -9,7 +9,7 @@ import ModalAprovarOrcamento from './ModalAprovarOrcamento';
 import AddOrcamentoModal from './AddOrcamentoModal';
 import EditOrcamentoModal from './EditOrcamentoModal';
 
-const OrcamentosModal = ({ obraId, onClose, onSave }) => {
+const OrcamentosModal = ({ obraId, onClose, onSave, embedded = false }) => {
     const [orcamentos, setOrcamentos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -240,7 +240,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
 
     if (isLoading) {
         return (
-            <Modal isOpen={true} onClose={onClose} title="Solicitações" width="xlarge">
+            <Modal isOpen={true} embedded={embedded} onClose={onClose} title="Solicitações" width="xlarge">
                 <p style={{ textAlign: 'center', padding: '40px' }}>Carregando...</p>
             </Modal>
         );
@@ -249,6 +249,7 @@ const OrcamentosModal = ({ obraId, onClose, onSave }) => {
     return (
         <Modal
             isOpen={true}
+            embedded={embedded}
             onClose={onClose}
             title="Solicitações Pendentes"
             width="xlarge"
