@@ -262,14 +262,14 @@ export default function GerarSuperlinkModal({ pagamentos = [], obraId = null, on
               {linkGerado.url}
             </code>
             <button
-              style={{ fontFamily: 'inherit', fontSize: 'var(--text-sm)', fontWeight: 500, background: copied ? 'var(--status-success)' : 'var(--surface-card)', color: copied ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
+              style={{ fontFamily: 'inherit', fontSize: 'var(--text-sm)', fontWeight: 500, background: copied ? 'var(--status-success)' : 'var(--surface-card)', color: copied ? 'var(--text-on-dark)' : 'var(--text-secondary)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
               onClick={copyLink}
             >
               <i className={`ti ${copied ? 'ti-check' : 'ti-copy'}`} />
               {copied ? 'Copiado!' : 'Copiar'}
             </button>
             <button
-              style={{ fontFamily: 'inherit', fontSize: 'var(--text-sm)', fontWeight: 500, background: 'var(--status-success)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              style={{ fontFamily: 'inherit', fontSize: 'var(--text-sm)', fontWeight: 500, background: 'var(--status-success)', color: 'var(--text-on-dark)', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
               onClick={openWhatsApp}
             >
               <i className="ti ti-brand-whatsapp" />

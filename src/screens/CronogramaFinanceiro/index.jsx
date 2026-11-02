@@ -665,7 +665,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                         type="button"
                         onClick={() => setShowWhatsAppModal(true)}
                         className="m-btn-primary"
-                        style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}
+                        style={{ background: 'var(--brand-whatsapp)', color: 'var(--text-on-dark)', borderColor: 'var(--brand-whatsapp)' }}
                         title="Compartilhar cronograma pelo WhatsApp"
                     >
                         <i className="ti ti-brand-whatsapp" aria-hidden="true" /> WhatsApp

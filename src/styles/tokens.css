@@ -23,6 +23,7 @@
   --brand-primary-soft:  #1e293b;   /* Slate 800 — hover de itens escuros */
   --brand-accent:        #f59e0b;   /* Amber 500 — logo, atenção */
   --brand-accent-soft:   #fef3c7;   /* Amber 100 — bg de badges/avisos */
+  --brand-whatsapp:      #25d366;   /* verde oficial do WhatsApp */
 
   /* ============================================================
      CORES — SUPERFÍCIES
@@ -85,6 +86,42 @@
   --status-purple-bg:      #ede9fe;   /* violet 100 */
   --status-purple-text:    #6b21a8;   /* violet 800 */
 
+  /* ------------------------------------------------------------
+     Degraus que faltavam nas famílias de status.
+     Cada família tem cinco passos, do mais claro ao mais escuro:
+       -surface (50)  área grande, fundo de bloco inteiro
+       -bg      (100) fundo de badge/chip
+       -border  (200) borda de bloco destacado
+       -strong  (500/600) ícone, número, texto forte sobre -surface
+       -text    (700) texto sobre -bg
+     Foram extraídos dos hex que já estavam espalhados pelas telas
+     (BiModule, AppAdmin, GestaoBoletos), então não mudam nada do que
+     já se vê — só passam a ter um nome.
+     ------------------------------------------------------------ */
+  --status-danger-surface:  #fef2f2;   /* red 50 */
+  --status-danger-border:   #fecaca;   /* red 200 */
+  --status-danger-strong:   #ef4444;   /* red 500 */
+  --status-danger-deep:     #991b1b;   /* red 800 */
+
+  --status-warning-surface: #fffbeb;   /* amber 50 */
+  --status-warning-border:  #fde68a;   /* amber 200 */
+  --status-warning-strong:  #d97706;   /* amber 600 */
+  --status-warning-deep:    #92400e;   /* amber 800 */
+
+  --status-info-surface:    #eff6ff;   /* blue 50 */
+  --status-info-border:     #bfdbfe;   /* blue 200 */
+  --status-info-strong:     #2563eb;   /* blue 600 */
+
+  --status-success-surface: #f0fdf4;   /* green 50 */
+  --status-success-border:  #bbf7d0;   /* green 200 */
+  --status-success-strong:  #16a34a;   /* green 600 */
+
+  /* Índigo — não é status, é o acento do módulo administrativo
+     (badge "próprio", KPI primário do BI). */
+  --accent-indigo:          #4f46e5;   /* indigo 600 */
+  --accent-indigo-bg:       #e0e7ff;   /* indigo 100 */
+  --accent-indigo-surface:  #eef2ff;   /* indigo 50 */
+
   /* ============================================================
      CORES — MARCA POR MÓDULO (rebrand 2026)
      Usadas no seletor de módulos e nos headers/home de cada módulo,
@@ -104,6 +141,38 @@
   --module-almoxarifado-dark: #075985;
   --module-navy:         #001560;
   --module-navy-soft:    #06216E;
+  --module-financeiro:        #16a36a;
+  --module-financeiro-dark:   #08764a;
+  --module-planejamento:      #7c3aed;
+  --module-planejamento-dark: #5421b5;
+
+  /* ============================================================
+     GRÁFICOS — rampa categórica
+     Union das duas paletas que existiam soltas no código (BiModule e
+     DashboardObra), na mesma ordem de antes, então nenhum gráfico muda
+     de cor. Quem consome é src/theme/chartColors.js.
+
+     var() resolve em atributo de SVG (stroke=/fill=) — o
+     DashboardObra já depende disso em produção. NÃO resolve em
+     <canvas>; se um dia um gráfico for para canvas, ele precisa de
+     valor literal, não destes tokens.
+     ============================================================ */
+  --chart-1:  #4f46e5;   /* indigo 600 */
+  --chart-2:  #10b981;   /* emerald 500 */
+  --chart-3:  #f59e0b;   /* amber 500 */
+  --chart-4:  #ef4444;   /* red 500 */
+  --chart-5:  #3b82f6;   /* blue 500 */
+  --chart-6:  #8b5cf6;   /* violet 500 */
+  --chart-7:  #ec4899;   /* pink 500 */
+  --chart-8:  #06b6d4;   /* cyan 500 */
+  --chart-9:  #84cc16;   /* lime 500 */
+  --chart-10: #f97316;   /* orange 500 */
+  --chart-11: #6366f1;   /* indigo 500 */
+  --chart-12: #14b8a6;   /* teal 500 */
+  --chart-13: #a855f7;   /* purple 500 */
+  --chart-14: #eab308;   /* yellow 500 */
+  --chart-15: #22c55e;   /* green 500 */
+  --chart-16: #0ea5e9;   /* sky 500 */
 
   /* ============================================================
      TIPOGRAFIA
@@ -122,9 +191,20 @@
   --text-2xl:  22px;
   --text-3xl:  28px;
 
-  /* Pesos — APENAS dois */
-  --weight-normal: 400;
-  --weight-medium: 500;
+  /* Pesos
+     O comentário aqui dizia "APENAS dois", mas 21 declarações em
+     Dashboard.css, HistoricoPagamentos.css, AlertStatCard.jsx,
+     CaixaObraModal.jsx e HistoricoPagamentosCard/index.jsx já pediam
+     --weight-semibold, --weight-bold e --weight-regular. Sem definição,
+     `font-weight: var(--weight-semibold)` é CSS inválido: o navegador
+     descarta a declaração em silêncio e o texto sai no peso herdado.
+     Definir é o que faz essas telas renderizarem o que o código pede.
+     O teste em styles/tokens.test.js impede que volte a acontecer. */
+  --weight-regular:  400;   /* apelido de --weight-normal */
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
 
   /* Letter spacing */
   --tracking-tight: -0.01em;

@@ -102,6 +102,8 @@ export const initializeNativePush = async (authToken) => {
             visibility: 1,
             vibration: true,
             lights: true,
+            // Hex literal de proposito: isto atravessa a ponte do Capacitor
+            // e vai para o canal de notificacao do Android, que nao le CSS.
             lightColor: '#0B5CFF',
         });
     }

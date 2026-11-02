@@ -1086,7 +1086,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                     }}
                                 ></div>
                             </div>
-                            <span style={{ fontSize: '0.75em', color: '#666', marginTop: '3px' }}>Clique para editar</span>
+                            <span style={{ fontSize: '0.75em', color: 'var(--text-muted)', marginTop: '3px' }}>Clique para editar</span>
                         </div>
 
                         {/* EVM Simplificado */}
@@ -1164,7 +1164,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                 style={{ cursor: 'pointer' }}
                             >
                                 <span>Área: <strong>{servico.area_executada || 0}</strong> / {servico.area_total} {servico.unidade_medida || 'm²'}</span>
-                                <span style={{ marginLeft: '15px', color: '#1976d2', fontSize: '0.85em' }}>Clique para editar</span>
+                                <span style={{ marginLeft: '15px', color: 'var(--status-info-text)', fontSize: '0.85em' }}>Clique para editar</span>
                             </div>
                         )}
 
@@ -1530,7 +1530,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <h3><i className="ti ti-clipboard-list" aria-hidden="true" /> Importar Serviços</h3>
                         {servicosDisponiveis.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Todos os serviços já estão no cronograma.</div>
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Todos os serviços já estão no cronograma.</div>
                         ) : (
                             <>
                                 <div style={{ marginBottom: '10px' }}>
@@ -1562,12 +1562,12 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                 <div className="modal-overlay" onClick={() => setShowImportOrcamentoModal(false)}>
                     <div className="modal-content large" onClick={e => e.stopPropagation()}>
                         <h3><i className="ti ti-chart-bar" aria-hidden="true" /> Importar do Orçamento de Engenharia</h3>
-                        <p style={{ color: '#666', marginBottom: '15px' }}>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '15px' }}>
                             Importe etapas do Orçamento de Engenharia diretamente para o Cronograma.
                         </p>
                         
                         {etapasOrcamento.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                            <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
                                 <p style={{ fontSize: '1.1rem', marginBottom: '10px' }}>Nenhuma etapa encontrada no Orçamento.</p>
                                 <p style={{ fontSize: '0.9rem' }}>Crie etapas no módulo de Orçamento de Engenharia primeiro.</p>
                             </div>
@@ -1820,7 +1820,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                             <select
                                 value={editingServico.tipo_medicao || 'empreitada'}
                                 onChange={(e) => setEditingServico({...editingServico, tipo_medicao: e.target.value})}
-                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-default)', fontSize: '14px' }}
                             >
                                 <option value="etapas">Por Etapas</option>
                                 <option value="empreitada">Empreitada (% manual)</option>
@@ -1830,22 +1830,22 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         
                         {/* Progresso por tipo */}
                         {editingServico.tipo_medicao === 'area' && (
-                            <div className="form-group" style={{ backgroundColor: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#1565c0', fontWeight: 'bold' }}>Medição por Área</label>
+                            <div className="form-group" style={{ backgroundColor: 'var(--status-info-surface)', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: 'var(--status-info-text)', fontWeight: 'bold' }}>Medição por Área</label>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px', marginBottom: '12px' }}>
                                     <div style={{ flex: 1 }}>
-                                        <label style={{ fontSize: '12px', color: '#555' }}>Área Total</label>
+                                        <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Área Total</label>
                                         <input type="number" min="0" step="0.1"
                                             value={editingServico.area_total || ''}
                                             onChange={(e) => setEditingServico({...editingServico, area_total: parseFloat(e.target.value) || 0})}
-                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #90caf9' }}
+                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--status-info-border)' }}
                                         />
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <label style={{ fontSize: '12px', color: '#555' }}>Unidade</label>
+                                        <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Unidade</label>
                                         <select value={editingServico.unidade_medida || 'm²'}
                                             onChange={(e) => setEditingServico({...editingServico, unidade_medida: e.target.value})}
-                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #90caf9' }}>
+                                            style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--status-info-border)' }}>
                                             <option value="m²">m²</option>
                                             <option value="m³">m³</option>
                                             <option value="m">m</option>
@@ -1853,7 +1853,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                         </select>
                                     </div>
                                 </div>
-                                <label style={{ fontSize: '12px', color: '#555' }}>Área Executada</label>
+                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Área Executada</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
                                     <input type="range" min="0" max={editingServico.area_total || 100} step="0.1" value={editingServico.area_executada || 0} 
                                         onChange={(e) => {
@@ -1867,16 +1867,16 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                         )}
                         
                         {editingServico.tipo_medicao === 'etapas' && (
-                            <div className="form-group" style={{ backgroundColor: '#fff3e0', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#e65100', fontWeight: 'bold' }}>Medição por Etapas</label>
-                                <p style={{ margin: '10px 0', color: '#666' }}>O percentual é calculado automaticamente pelas etapas.</p>
+                            <div className="form-group" style={{ backgroundColor: 'var(--status-warning-surface)', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: 'var(--status-warning-deep)', fontWeight: 'bold' }}>Medição por Etapas</label>
+                                <p style={{ margin: '10px 0', color: 'var(--text-muted)' }}>O percentual é calculado automaticamente pelas etapas.</p>
                                 <div style={{ textAlign: 'center', fontWeight: 'bold' }}>Execução: {(editingServico.percentual_conclusao || 0).toFixed(1)}%</div>
                             </div>
                         )}
                         
                         {(editingServico.tipo_medicao === 'empreitada' || !editingServico.tipo_medicao) && (
-                            <div className="form-group" style={{ backgroundColor: '#e8f5e9', padding: '15px', borderRadius: '8px' }}>
-                                <label style={{ color: '#2e7d32', fontWeight: 'bold' }}>Execução (%)</label>
+                            <div className="form-group" style={{ backgroundColor: 'var(--status-success-surface)', padding: '15px', borderRadius: '8px' }}>
+                                <label style={{ color: 'var(--status-success-text)', fontWeight: 'bold' }}>Execução (%)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
                                     <input type="range" min="0" max="100" value={editingServico.percentual_conclusao || 0} 
                                         onChange={(e) => setEditingServico({...editingServico, percentual_conclusao: parseFloat(e.target.value)})} style={{ flex: 1 }} />

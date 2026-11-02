@@ -147,7 +147,7 @@ export function ToastContainer() {
 // ---------------------------------------------------------------------------
 
 // Cores dos tokens, nao hex: a convencao proibe hex fora de tokens.css, e
-// aqui os valores eram copias dos proprios tokens (#d1fae5 == --status-success-bg).
+// aqui os valores eram copias dos proprios tokens (var(--status-success-bg) == --status-success-bg).
 // Icone em Tabler, nao glifo: o glifo muda de forma por fonte e sistema.
 const COLORS = {
   success: {

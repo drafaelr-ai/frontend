@@ -79,15 +79,15 @@ const styles = {
     },
     buttonSuccess: {
         backgroundColor: 'var(--status-success)',
-        color: '#fff'
+        color: 'var(--text-on-dark)'
     },
     buttonWarning: {
         backgroundColor: 'var(--status-warning)',
-        color: '#fff'
+        color: 'var(--text-on-dark)'
     },
     buttonDanger: {
         backgroundColor: 'var(--status-danger)',
-        color: '#fff'
+        color: 'var(--text-on-dark)'
     },
     card: {
         backgroundColor: 'var(--surface-card)',

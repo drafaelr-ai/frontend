@@ -23,21 +23,22 @@ import {
     PieChart, Pie, Cell, LineChart, Line, Area, AreaChart, ComposedChart
 } from 'recharts';
 import { logger } from './utils/logger';
+import { CHART_COLORS, CHART_GRID } from './theme/chartColors';
 
 // =====================================================
 // CONSTANTES E CONFIGURAÇÕES
 // =====================================================
 
 const COLORS = {
-    primary: '#4f46e5',
-    success: '#10b981',
-    warning: '#f59e0b',
-    danger: '#ef4444',
-    info: '#3b82f6',
-    purple: '#8b5cf6',
-    pink: '#ec4899',
-    gray: '#6b7280',
-    chartColors: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4']
+    primary: 'var(--accent-indigo)',
+    success: 'var(--status-success)',
+    warning: 'var(--status-warning)',
+    danger: 'var(--status-danger-strong)',
+    info: 'var(--status-info)',
+    purple: 'var(--chart-6)',
+    pink: 'var(--chart-7)',
+    gray: 'var(--status-neutral)',
+    chartColors: CHART_COLORS
 };
 
 const formatCurrency = (value) => {
@@ -63,7 +64,7 @@ const formatCompactCurrency = (value) => {
 const styles = {
     container: {
         padding: '24px',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-subtle)',
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
@@ -73,7 +74,7 @@ const styles = {
     title: {
         fontSize: '28px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         margin: '0 0 8px 0',
         display: 'flex',
         alignItems: 'center',
@@ -81,7 +82,7 @@ const styles = {
     },
     subtitle: {
         fontSize: '14px',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         margin: 0
     },
     grid: {
@@ -99,11 +100,11 @@ const styles = {
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'
     },
     card: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--surface-card)',
         borderRadius: '12px',
         padding: '20px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        border: '1px solid #e2e8f0'
+        border: '1px solid var(--border-subtle)'
     },
     cardHeader: {
         display: 'flex',
@@ -114,7 +115,7 @@ const styles = {
     cardTitle: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#64748b',
+        color: 'var(--status-neutral)',
         margin: 0,
         textTransform: 'uppercase',
         letterSpacing: '0.5px'
@@ -122,7 +123,7 @@ const styles = {
     kpiValue: {
         fontSize: '32px',
         fontWeight: '700',
-        color: '#1e293b',
+        color: 'var(--surface-dark-soft)',
         margin: '8px 0'
     },
     kpiChange: {
@@ -139,7 +140,7 @@ const styles = {
     },
     progressBar: {
         height: '8px',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'var(--border-subtle)',
         borderRadius: '4px',
         overflow: 'hidden',
         marginTop: '12px'
@@ -160,16 +161,16 @@ const styles = {
     th: {
         textAlign: 'left',
         padding: '12px',
-        borderBottom: '2px solid #e2e8f0',
-        color: '#64748b',
+        borderBottom: '2px solid var(--border-subtle)',
+        color: 'var(--status-neutral)',
         fontWeight: '600',
         fontSize: '12px',
         textTransform: 'uppercase'
     },
     td: {
         padding: '12px',
-        borderBottom: '1px solid #f1f5f9',
-        color: '#334155'
+        borderBottom: '1px solid var(--surface-muted)',
+        color: 'var(--text-secondary)'
     },
     alertItem: {
         display: 'flex',
@@ -189,9 +190,9 @@ const styles = {
     select: {
         padding: '8px 12px',
         borderRadius: '8px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border-subtle)',
         fontSize: '14px',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--surface-card)',
         cursor: 'pointer'
     },
     button: {
@@ -206,7 +207,7 @@ const styles = {
     tabContainer: {
         display: 'flex',
         gap: '4px',
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'var(--surface-muted)',
         padding: '4px',
         borderRadius: '10px',
         marginBottom: '20px'
@@ -220,11 +221,11 @@ const styles = {
         cursor: 'pointer',
         transition: 'all 0.2s',
         backgroundColor: 'transparent',
-        color: '#64748b'
+        color: 'var(--status-neutral)'
     },
     tabActive: {
-        backgroundColor: '#ffffff',
-        color: '#4f46e5',
+        backgroundColor: 'var(--surface-card)',
+        color: 'var(--accent-indigo)',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     },
     loading: {
@@ -232,12 +233,12 @@ const styles = {
         justifyContent: 'center',
         alignItems: 'center',
         height: '200px',
-        color: '#64748b'
+        color: 'var(--status-neutral)'
     },
     emptyState: {
         textAlign: 'center',
         padding: '40px',
-        color: '#64748b'
+        color: 'var(--status-neutral)'
     }
 };
 
@@ -283,7 +284,7 @@ const ChartCard = ({ title, children, subtitle, action, icon }) => (
                     {icon && <i className={`ti ${icon}`} aria-hidden="true" style={{ marginRight: 6 }} />}
                     {title}
                 </h3>
-                {subtitle && <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>{subtitle}</p>}
+                {subtitle && <p style={{ fontSize: '12px', color: 'var(--border-strong)', margin: '4px 0 0 0' }}>{subtitle}</p>}
             </div>
             {action}
         </div>
@@ -293,10 +294,10 @@ const ChartCard = ({ title, children, subtitle, action, icon }) => (
 
 const AlertItem = ({ type, message, value }) => {
     const colors = {
-        danger: { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', icon: 'ti-alert-octagon' },
-        warning: { bg: '#fffbeb', border: '#fde68a', text: '#d97706', icon: 'ti-alert-triangle' },
-        info: { bg: '#eff6ff', border: '#bfdbfe', text: '#2563eb', icon: 'ti-info-circle' },
-        success: { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a', icon: 'ti-circle-check' }
+        danger: { bg: 'var(--status-danger-surface)', border: 'var(--status-danger-border)', text: 'var(--status-danger)', icon: 'ti-alert-octagon' },
+        warning: { bg: 'var(--status-warning-surface)', border: 'var(--status-warning-border)', text: 'var(--status-warning-strong)', icon: 'ti-alert-triangle' },
+        info: { bg: 'var(--status-info-surface)', border: 'var(--status-info-border)', text: 'var(--status-info-strong)', icon: 'ti-info-circle' },
+        success: { bg: 'var(--status-success-surface)', border: 'var(--status-success-border)', text: 'var(--status-success-strong)', icon: 'ti-circle-check' }
     };
     const c = colors[type] || colors.info;
     
@@ -321,12 +322,12 @@ const CustomTooltip = ({ active, payload, label, formatter }) => {
     if (!active || !payload?.length) return null;
     return (
         <div style={{
-            backgroundColor: '#1e293b',
+            backgroundColor: 'var(--surface-dark-soft)',
             padding: '12px 16px',
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
         }}>
-            <p style={{ margin: '0 0 8px 0', color: '#94a3b8', fontSize: '12px' }}>{label}</p>
+            <p style={{ margin: '0 0 8px 0', color: 'var(--border-strong)', fontSize: '12px' }}>{label}</p>
             {payload.map((entry, index) => (
                 <p key={index} style={{ margin: '4px 0', color: entry.color, fontWeight: '500' }}>
                     {entry.name}: {formatter ? formatter(entry.value) : entry.value}
@@ -411,7 +412,7 @@ const FinanceiroDashboard = ({ dados }) => {
                 <ChartCard icon="ti-chart-bar" title="Orçamento vs Executado por Obra" subtitle="Top 8 obras por valor">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={dadosObras} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                             <XAxis 
                                 dataKey="nome" 
                                 tick={{ fontSize: 11 }} 
@@ -455,7 +456,7 @@ const FinanceiroDashboard = ({ dados }) => {
                         {dadosPizza.map((item, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: item.color }} />
-                                <span style={{ fontSize: '12px', color: '#64748b' }}>{item.name}</span>
+                                <span style={{ fontSize: '12px', color: 'var(--status-neutral)' }}>{item.name}</span>
                             </div>
                         ))}
                     </div>
@@ -542,8 +543,8 @@ const ObrasDashboard = ({ dados }) => {
                                         <td style={styles.td}>
                                             <span style={{
                                                 ...styles.badge,
-                                                backgroundColor: i < 3 ? COLORS.chartColors[i] : '#e2e8f0',
-                                                color: i < 3 ? '#fff' : '#64748b'
+                                                backgroundColor: i < 3 ? COLORS.chartColors[i] : 'var(--border-subtle)',
+                                                color: i < 3 ? 'var(--text-on-dark)' : 'var(--status-neutral)'
                                             }}>
                                                 {i + 1}º
                                             </span>
@@ -563,7 +564,7 @@ const ObrasDashboard = ({ dados }) => {
                 <ChartCard icon="ti-users" title="Obras por Cliente" subtitle="Distribuição de valor orçado">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={dadosCliente} layout="vertical" margin={{ left: 80 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                             <XAxis type="number" tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                             <YAxis type="category" dataKey="nome" tick={{ fontSize: 12 }} width={80} />
                             <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
@@ -671,7 +672,7 @@ const FluxoCaixaDashboard = ({ dados }) => {
             <ChartCard icon="ti-trending-up" title="Fluxo de Caixa Mensal" subtitle="Previsto vs Realizado">
                 <ResponsiveContainer width="100%" height={350}>
                     <ComposedChart data={dadosFluxo} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                         <XAxis dataKey="mes_nome" tick={{ fontSize: 12 }} />
                         <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} tick={{ fontSize: 12 }} />
                         <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
@@ -742,9 +743,9 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
     
     const getStatusColor = (status) => {
         switch(status) {
-            case 'vencido': return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' };
-            case 'hoje': return { bg: '#fffbeb', border: '#fde68a', text: '#d97706' };
-            default: return { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a' };
+            case 'vencido': return { bg: 'var(--status-danger-surface)', border: 'var(--status-danger-border)', text: 'var(--status-danger)' };
+            case 'hoje': return { bg: 'var(--status-warning-surface)', border: 'var(--status-warning-border)', text: 'var(--status-warning-strong)' };
+            default: return { bg: 'var(--status-success-surface)', border: 'var(--status-success-border)', text: 'var(--status-success-strong)' };
         }
     };
     
@@ -786,7 +787,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
             <div style={{ ...styles.card, marginBottom: '20px' }}>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <div>
-                        <label style={{ fontSize: '12px', color: '#64748b', marginRight: '8px' }}>Status:</label>
+                        <label style={{ fontSize: '12px', color: 'var(--status-neutral)', marginRight: '8px' }}>Status:</label>
                         <select 
                             value={filtroStatus} 
                             onChange={(e) => setFiltroStatus(e.target.value)}
@@ -799,7 +800,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                         </select>
                     </div>
                     <div>
-                        <label style={{ fontSize: '12px', color: '#64748b', marginRight: '8px' }}>Obra:</label>
+                        <label style={{ fontSize: '12px', color: 'var(--status-neutral)', marginRight: '8px' }}>Obra:</label>
                         <select 
                             value={filtroObra} 
                             onChange={(e) => setFiltroObra(e.target.value)}
@@ -810,7 +811,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                             ))}
                         </select>
                     </div>
-                    <div style={{ marginLeft: 'auto', fontSize: '14px', color: '#64748b' }}>
+                    <div style={{ marginLeft: 'auto', fontSize: '14px', color: 'var(--status-neutral)' }}>
                         {vencimentosFiltrados.length} vencimentos encontrados
                     </div>
                 </div>
@@ -830,7 +831,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                             <div key={dia} style={{ 
                                 textAlign: 'center', 
                                 fontSize: '11px', 
-                                color: '#94a3b8',
+                                color: 'var(--border-strong)',
                                 padding: '4px'
                             }}>
                                 {dia}
@@ -861,11 +862,11 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                                         borderRadius: '8px',
                                         textAlign: 'center',
                                         backgroundColor: vencimentosDia.length > 0 
-                                            ? (temVencido ? '#fef2f2' : temHoje ? '#fffbeb' : '#f0fdf4')
-                                            : '#f8fafc',
+                                            ? (temVencido ? 'var(--status-danger-surface)' : temHoje ? 'var(--status-warning-surface)' : 'var(--status-success-surface)')
+                                            : 'var(--surface-subtle)',
                                         border: vencimentosDia.length > 0 
-                                            ? `2px solid ${temVencido ? '#fecaca' : temHoje ? '#fde68a' : '#bbf7d0'}`
-                                            : '1px solid #e2e8f0',
+                                            ? `2px solid ${temVencido ? 'var(--status-danger-border)' : temHoje ? 'var(--status-warning-border)' : 'var(--status-success-border)'}`
+                                            : '1px solid var(--border-subtle)',
                                         cursor: vencimentosDia.length > 0 ? 'pointer' : 'default',
                                         transition: 'all 0.2s'
                                     }}
@@ -875,7 +876,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                                     {vencimentosDia.length > 0 && (
                                         <div style={{ 
                                             fontSize: '10px', 
-                                            color: temVencido ? '#dc2626' : temHoje ? '#d97706' : '#16a34a',
+                                            color: temVencido ? 'var(--status-danger)' : temHoje ? 'var(--status-warning-strong)' : 'var(--status-success-strong)',
                                             fontWeight: '600'
                                         }}>
                                             {vencimentosDia.length}
@@ -918,23 +919,23 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                                             <div style={{ fontSize: '18px', fontWeight: '700', color: statusColor.text }}>
                                                 {v.data ? new Date(v.data + 'T12:00:00').getDate() : '-'}
                                             </div>
-                                            <div style={{ fontSize: '10px', color: '#64748b' }}>
+                                            <div style={{ fontSize: '10px', color: 'var(--status-neutral)' }}>
                                                 {v.data ? new Date(v.data + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short' }) : ''}
                                             </div>
                                         </div>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: '500', fontSize: '14px', color: '#1e293b' }}>
+                                            <div style={{ fontWeight: '500', fontSize: '14px', color: 'var(--surface-dark-soft)' }}>
                                                 {v.descricao}
                                                 {v.is_entrada && <span style={{ 
                                                     marginLeft: '8px',
                                                     padding: '2px 6px',
-                                                    backgroundColor: '#dbeafe',
-                                                    color: '#1d4ed8',
+                                                    backgroundColor: 'var(--status-info-bg)',
+                                                    color: 'var(--status-info-text)',
                                                     borderRadius: '4px',
                                                     fontSize: '10px'
                                                 }}>ENTRADA</span>}
                                             </div>
-                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                            <div style={{ fontSize: '12px', color: 'var(--status-neutral)' }}>
                                                 {v.obra_nome} {v.fornecedor && `• ${v.fornecedor}`}
                                             </div>
                                         </div>
@@ -947,7 +948,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                                                 padding: '2px 8px',
                                                 borderRadius: '10px',
                                                 backgroundColor: statusColor.text,
-                                                color: '#fff'
+                                                color: 'var(--text-on-dark)'
                                             }}>
                                                 {v.status === 'vencido' ? 'VENCIDO' : v.status === 'hoje' ? 'HOJE' : 'PENDENTE'}
                                             </div>
@@ -957,7 +958,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                             })
                         )}
                         {vencimentosFiltrados.length > 20 && (
-                            <p style={{ textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                            <p style={{ textAlign: 'center', color: 'var(--status-neutral)', fontSize: '12px' }}>
                                 ... e mais {vencimentosFiltrados.length - 20} vencimentos
                             </p>
                         )}
@@ -1061,8 +1062,8 @@ const TemporalDashboard = ({ dados }) => {
                             onClick={() => setVisualizacao(v.id)}
                             style={{
                                 ...styles.button,
-                                backgroundColor: visualizacao === v.id ? COLORS.primary : '#f1f5f9',
-                                color: visualizacao === v.id ? '#fff' : '#64748b'
+                                backgroundColor: visualizacao === v.id ? COLORS.primary : 'var(--surface-muted)',
+                                color: visualizacao === v.id ? 'var(--text-on-dark)' : 'var(--status-neutral)'
                             }}
                         >
                             <i className={`ti ${v.icone}`} aria-hidden="true" /> {v.label}
@@ -1083,7 +1084,7 @@ const TemporalDashboard = ({ dados }) => {
                         <ResponsiveContainer width="100%" height={350}>
                             {visualizacao === 'barras' ? (
                                 <BarChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                                     <XAxis 
                                         dataKey="mes_display" 
                                         tick={{ fontSize: 11 }}
@@ -1098,7 +1099,7 @@ const TemporalDashboard = ({ dados }) => {
                                 </BarChart>
                             ) : visualizacao === 'linha' ? (
                                 <LineChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                                     <XAxis 
                                         dataKey="mes_display" 
                                         tick={{ fontSize: 11 }}
@@ -1114,7 +1115,7 @@ const TemporalDashboard = ({ dados }) => {
                                 </LineChart>
                             ) : (
                                 <AreaChart data={dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                                     <XAxis 
                                         dataKey="mes_display" 
                                         tick={{ fontSize: 11 }}
@@ -1143,7 +1144,7 @@ const TemporalDashboard = ({ dados }) => {
                     ) : (
                         <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={sazonalidade}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                                 <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
                                 <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                                 <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
@@ -1162,7 +1163,7 @@ const TemporalDashboard = ({ dados }) => {
                     ) : (
                         <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={dadosPorAno} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
                                 <XAxis type="number" tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
                                 <YAxis type="category" dataKey="ano" tick={{ fontSize: 12 }} width={50} />
                                 <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
@@ -1310,8 +1311,8 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                             onClick={onClose}
                             style={{
                                 ...styles.button,
-                                backgroundColor: '#f1f5f9',
-                                color: '#64748b'
+                                backgroundColor: 'var(--surface-muted)',
+                                color: 'var(--status-neutral)'
                             }}
                         >
                             <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
@@ -1350,7 +1351,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                     <p>Erro ao carregar dados: {error}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        style={{ ...styles.button, backgroundColor: COLORS.primary, color: '#fff', marginTop: '16px' }}
+                        style={{ ...styles.button, backgroundColor: COLORS.primary, color: 'var(--text-on-dark)', marginTop: '16px' }}
                     >
                         Tentar novamente
                     </button>
@@ -1360,7 +1361,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
             )}
             
             {/* Footer */}
-            <div style={{ marginTop: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>
+            <div style={{ marginTop: '40px', textAlign: 'center', color: 'var(--border-strong)', fontSize: '12px' }}>
                 <p>Obraly BI Module v1.1 • Dados atualizados em tempo real</p>
             </div>
         </div>

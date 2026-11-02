@@ -13,63 +13,63 @@ const MODULES = [
         icon: 'building-skyscraper',
         title: 'Obras',
         description: 'Gestão de construções, orçamentos e pagamentos.',
-        color: '#0061FC',
-        colorDark: '#0138A5',
-        gradient: 'linear-gradient(135deg, #0061FC 0%, #0138A5 100%)'
+        color: 'var(--module-obras)',
+        colorDark: 'var(--module-obras-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-obras) 0%, var(--module-obras-dark) 100%)'
     },
     {
         id: 'financeiro',
         icon: 'cash-banknote',
         title: 'Financeiro',
         description: 'Pagamentos, boletos, caixa e compromissos de todas as obras.',
-        color: '#16A36A',
-        colorDark: '#08764A',
-        gradient: 'linear-gradient(135deg, #16A36A 0%, #08764A 100%)'
+        color: 'var(--module-financeiro)',
+        colorDark: 'var(--module-financeiro-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-financeiro) 0%, var(--module-financeiro-dark) 100%)'
     },
     {
         id: 'planejamento',
         icon: 'calendar-stats',
         title: 'Planejamento',
         description: 'Semanas, meses, atividades e impedimentos das obras.',
-        color: '#7C3AED',
-        colorDark: '#5421B5',
-        gradient: 'linear-gradient(135deg, #7C3AED 0%, #5421B5 100%)'
+        color: 'var(--module-planejamento)',
+        colorDark: 'var(--module-planejamento-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-planejamento) 0%, var(--module-planejamento-dark) 100%)'
     },
     {
         id: 'admin',
         icon: 'home-2',
         title: 'Administração',
         description: 'Patrimônio: imóveis, aluguéis e despesas.',
-        color: '#25B663',
-        colorDark: '#108C54',
-        gradient: 'linear-gradient(135deg, #25B663 0%, #108C54 100%)'
+        color: 'var(--module-admin)',
+        colorDark: 'var(--module-admin-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-admin) 0%, var(--module-admin-dark) 100%)'
     },
     {
         id: 'rh',
         icon: 'users-group',
         title: 'Pessoal / RH',
         description: 'Funcionários, convenções e encargos.',
-        color: '#FE6901',
-        colorDark: '#CD4E00',
-        gradient: 'linear-gradient(135deg, #FE6901 0%, #CD4E00 100%)'
+        color: 'var(--module-rh)',
+        colorDark: 'var(--module-rh-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-rh) 0%, var(--module-rh-dark) 100%)'
     },
     {
         id: 'frota',
         icon: 'truck',
         title: 'Frota',
         description: 'Veículos, manutenções e documentos.',
-        color: '#632ED6',
-        colorDark: '#4818A8',
-        gradient: 'linear-gradient(135deg, #632ED6 0%, #4818A8 100%)'
+        color: 'var(--module-frota)',
+        colorDark: 'var(--module-frota-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-frota) 0%, var(--module-frota-dark) 100%)'
     },
     {
         id: 'solicitacoes',
         icon: 'shopping-cart',
         title: 'Solicitações',
         description: 'Pedidos de compra, cotações e aprovações.',
-        color: '#0EA5A4',
-        colorDark: '#0B7A79',
-        gradient: 'linear-gradient(135deg, #0EA5A4 0%, #0B7A79 100%)'
+        color: 'var(--module-solicitacoes)',
+        colorDark: 'var(--module-solicitacoes-dark)',
+        gradient: 'linear-gradient(135deg, var(--module-solicitacoes) 0%, var(--module-solicitacoes-dark) 100%)'
     },
     {
         id: 'almoxarifado',
@@ -83,7 +83,7 @@ const MODULES = [
 ];
 
 const MOD_LABEL = { obras: 'OBRAS', financeiro: 'FIN.', planejamento: 'PLAN.', admin: 'ADM', rh: 'RH', frota: 'FROTA', solicitacoes: 'COMPRAS', almoxarifado: 'ALMOX.' };
-const MOD_COLOR = { obras: '#0061FC', financeiro: '#16A36A', planejamento: '#7C3AED', admin: '#25B663', rh: '#FE6901', frota: '#632ED6', solicitacoes: '#0EA5A4', almoxarifado: 'var(--module-almoxarifado)' };
+const MOD_COLOR = { obras: 'var(--module-obras)', financeiro: 'var(--module-financeiro)', planejamento: 'var(--module-planejamento)', admin: 'var(--module-admin)', rh: 'var(--module-rh)', frota: 'var(--module-frota)', solicitacoes: 'var(--module-solicitacoes)', almoxarifado: 'var(--module-almoxarifado)' };
 
 function dataBR(iso) {
     if (!iso) return '';
@@ -186,7 +186,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
     const headerBtn = {
         background: 'rgba(255,255,255,0.1)',
         border: '1px solid rgba(255,255,255,0.25)',
-        color: '#fff',
+        color: 'var(--text-on-dark)',
         borderRadius: '10px',
         padding: '8px 16px',
         fontSize: '13px',
@@ -223,7 +223,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img src="/obraly-mark.png" alt="" style={{ width: 26, height: 26, objectFit: 'contain' }} />
-                    <span style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>Obraly</span>
+                    <span style={{ color: 'var(--text-on-dark)', fontWeight: 700, fontSize: 17 }}>Obraly</span>
                 </div>
                 <span style={{ flex: 1 }} />
                 {user && (
@@ -255,7 +255,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
             {/* Saudação */}
             <div style={{ margin: '40px 0 28px', textAlign: 'center', maxWidth: '640px' }}>
                 <h1 style={{
-                    fontSize: '28px', fontWeight: '700', color: '#fff', margin: 0,
+                    fontSize: '28px', fontWeight: '700', color: 'var(--text-on-dark)', margin: 0,
                     letterSpacing: '-0.5px'
                 }}>
                     {saudacao()}{user?.username ? `, ${user.username}` : ''}
@@ -281,7 +281,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '16px',
-                            boxShadow: `0 12px 32px ${heroModule.color}40`
+                            boxShadow: `0 12px 32px color-mix(in srgb, ${heroModule.color} 25%, transparent)`
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -290,7 +290,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                 background: 'rgba(255,255,255,0.18)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}>
-                                <i className={`ti ti-${heroModule.icon}`} style={{ color: '#fff', fontSize: 26 }} />
+                                <i className={`ti ti-${heroModule.icon}`} style={{ color: 'var(--text-on-dark)', fontSize: 26 }} />
                             </div>
                             {vencidosPorModulo[heroModule.id] > 0 && (
                                 <span style={{
@@ -302,7 +302,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             )}
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff', margin: 0, letterSpacing: '-0.3px' }}>
+                            <h2 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-on-dark)', margin: 0, letterSpacing: '-0.3px' }}>
                                 {heroModule.title}
                             </h2>
                             <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.85)', margin: '4px 0 0', lineHeight: 1.5 }}>
@@ -311,7 +311,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                         </div>
                         <div style={{
                             marginTop: 'auto', padding: '13px 0', borderRadius: '12px',
-                            background: '#fff', color: heroModule.color, fontSize: '14px', fontWeight: '700',
+                            background: 'var(--surface-card)', color: heroModule.color, fontSize: '14px', fontWeight: '700',
                             textAlign: 'center'
                         }}>
                             Entrar em {heroModule.title} <i className="ti ti-arrow-right" aria-hidden="true" />
@@ -340,7 +340,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                     >
                                         <div style={{
                                             width: '46px', height: '46px', borderRadius: '14px',
-                                            background: `${module.color}38`,
+                                            background: `color-mix(in srgb, ${module.color} 22%, transparent)`,
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             flexShrink: 0
                                         }}>
@@ -348,7 +348,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>{module.title}</span>
+                                                <span style={{ color: 'var(--text-on-dark)', fontSize: '16px', fontWeight: '700' }}>{module.title}</span>
                                                 {vencidos > 0 && (
                                                     <span style={{
                                                         background: 'var(--status-danger-bg)', color: 'var(--status-danger-text)',
@@ -381,7 +381,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                         <i className="ti ti-alert-triangle" style={{ color: 'var(--status-warning)', fontSize: 16 }} />
-                        <span style={{ color: '#fff', fontSize: '15px', fontWeight: 700 }}>Atenção hoje</span>
+                        <span style={{ color: 'var(--text-on-dark)', fontSize: '15px', fontWeight: 700 }}>Atenção hoje</span>
                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px' }}>
                             · {pendencias.length} pendência{pendencias.length !== 1 ? 's' : ''} vencida{pendencias.length !== 1 ? 's' : ''} ou vencendo
                         </span>
@@ -399,7 +399,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                 style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '6px',
                                     background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.25)',
-                                    color: '#fff', borderRadius: '10px', padding: '6px 12px',
+                                    color: 'var(--text-on-dark)', borderRadius: '10px', padding: '6px 12px',
                                     fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
                                 }}
                             >
@@ -412,7 +412,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                     <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setExportMenuOpen(false)} />
                                     <div style={{
                                         position: 'absolute', top: 'calc(100% + 6px)', right: 0, minWidth: '230px',
-                                        background: '#1b2340', border: '1px solid rgba(255,255,255,0.15)',
+                                        background: 'var(--surface-dark-soft)', border: '1px solid rgba(255,255,255,0.15)',
                                         borderRadius: '12px', boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
                                         padding: '6px', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '2px'
                                     }}>
@@ -421,7 +421,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                             style={{
                                                 display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
                                                 background: 'none', border: 'none', textAlign: 'left', padding: '8px 10px',
-                                                borderRadius: '8px', fontSize: '13px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit'
+                                                borderRadius: '8px', fontSize: '13px', color: 'var(--text-on-dark)', cursor: 'pointer', fontFamily: 'inherit'
                                             }}
                                         >
                                             <i className="ti ti-alert-triangle" aria-hidden="true" /> Só vencidas
@@ -431,7 +431,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                                             style={{
                                                 display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
                                                 background: 'none', border: 'none', textAlign: 'left', padding: '8px 10px',
-                                                borderRadius: '8px', fontSize: '13px', color: '#fff', cursor: 'pointer', fontFamily: 'inherit'
+                                                borderRadius: '8px', fontSize: '13px', color: 'var(--text-on-dark)', cursor: 'pointer', fontFamily: 'inherit'
                                             }}
                                         >
                                             <i className="ti ti-calendar-due" aria-hidden="true" /> Vencidas + a vencer no mês
@@ -454,18 +454,18 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                         >
                             <span style={{
                                 width: '58px', textAlign: 'center',
-                                border: `1px solid ${MOD_COLOR[p.modulo] || '#fff'}80`,
-                                background: `${MOD_COLOR[p.modulo] || '#fff'}2e`,
-                                color: MOD_COLOR[p.modulo] || '#fff',
+                                border: `1px solid color-mix(in srgb, ${MOD_COLOR[p.modulo] || 'var(--surface-card)'} 50%, transparent)`,
+                                background: `color-mix(in srgb, ${MOD_COLOR[p.modulo] || 'var(--surface-card)'} 18%, transparent)`,
+                                color: MOD_COLOR[p.modulo] || 'var(--text-on-dark)',
                                 fontSize: '10px', fontWeight: 700, borderRadius: '999px', padding: '3px 0'
                             }}>
                                 {MOD_LABEL[p.modulo] || p.modulo}
                             </span>
-                            <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                            <span style={{ color: 'var(--text-on-dark)', fontSize: '13px', fontWeight: 600 }}>
                                 {p.descricao} — {brl(p.valor)}
                             </span>
                             <span style={{
-                                color: p.situacao === 'vencido' ? '#f87171' : 'var(--status-warning)',
+                                color: p.situacao === 'vencido' ? 'var(--status-danger-strong)' : 'var(--status-warning)',
                                 fontSize: '12px', fontWeight: 500
                             }}>
                                 · {situacaoLabel(p)}
@@ -474,7 +474,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
                                 em {p.origem || '—'}
                             </span>
-                            <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>Ver <i className="ti ti-arrow-right" aria-hidden="true" /></span>
+                            <span style={{ color: 'var(--text-on-dark)', fontSize: '12px', fontWeight: 700 }}>Ver <i className="ti ti-arrow-right" aria-hidden="true" /></span>
                         </div>
                     ))}
                     </div>

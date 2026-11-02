@@ -84,6 +84,8 @@ export async function prepareFuelReceiptUpload(file) {
         canvas.height = height;
         const context = canvas.getContext('2d', { alpha: false });
         if (!context) throw new Error('O aparelho não conseguiu preparar a foto.');
+        // Hex literal de proposito: <canvas> nao resolve var() —
+        // medido, ctx.fillStyle = 'var(--x)' cai para preto.
         context.fillStyle = '#fff';
         context.fillRect(0, 0, width, height);
         context.drawImage(bitmap, 0, 0, width, height);

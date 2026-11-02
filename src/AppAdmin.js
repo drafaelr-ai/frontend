@@ -230,7 +230,7 @@ const AdminMobileStyles = () => (
                 border-radius: 8px;
                 border: none;
                 background: var(--module-admin-dark);
-                color: #fff;
+                color: var(--text-on-dark);
                 font-size: 22px;
                 cursor: pointer;
                 z-index: 1001;
@@ -256,7 +256,7 @@ const AdminMobileStyles = () => (
                 border-radius: 8px;
                 border: none;
                 background: var(--module-admin-dark);
-                color: #fff;
+                color: var(--text-on-dark);
                 font-size: 14px;
                 font-weight: 600;
                 cursor: pointer;
@@ -347,7 +347,7 @@ const Dashboard = ({ onIrImoveis }) => {
                 .filter(l => l.tipo === 'despesa' && l.status !== 'cancelado')
                 .forEach(l => {
                     const key = l.categoria_nome || 'Outros';
-                    if (!porCategoria[key]) porCategoria[key] = { nome: key, icone: l.categoria_icone || '', cor: '#6b7280', total: 0 };
+                    if (!porCategoria[key]) porCategoria[key] = { nome: key, icone: l.categoria_icone || '', cor: 'var(--status-neutral)', total: 0 };
                     porCategoria[key].total += l.valor;
                 });
 
@@ -380,9 +380,9 @@ const Dashboard = ({ onIrImoveis }) => {
         const map = {
             alugado: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
             alugado_terceiro: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
-            proprio: { label: 'Próprio', bg: '#e0e7ff', fg: '#4f46e5' },
-            a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: '#d97706' },
-            em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: '#d97706' },
+            proprio: { label: 'Próprio', bg: 'var(--accent-indigo-bg)', fg: 'var(--accent-indigo)' },
+            a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: 'var(--status-warning-strong)' },
+            em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: 'var(--status-warning-strong)' },
         };
         return map[status] || { label: status || '—', bg: 'var(--surface-muted)', fg: 'var(--text-muted)' };
     };
@@ -777,12 +777,12 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
                                                 background: l.status === 'pago' ? 'var(--status-success-bg)' : l.status === 'cancelado' ? 'var(--surface-muted)' : 'var(--status-warning-bg)',
-                                                color: l.status === 'pago' ? 'var(--status-success-text)' : l.status === 'cancelado' ? 'var(--border-strong)' : '#92400e',
+                                                color: l.status === 'pago' ? 'var(--status-success-text)' : l.status === 'cancelado' ? 'var(--border-strong)' : 'var(--status-warning-deep)',
                                             }}>
                                                 <><i className={`ti ${l.status === 'pago' ? 'ti-check' : l.status === 'cancelado' ? 'ti-ban' : 'ti-clock'}`} aria-hidden="true" /> {l.status === 'pago' ? 'Pago' : l.status === 'cancelado' ? 'Cancelado' : 'Pendente'}</>
                                             </span>
                                         </td>
-                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? '#ef4444' : 'var(--module-admin)', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? 'var(--status-danger-strong)' : 'var(--module-admin)', whiteSpace: 'nowrap' }}>
                                             {l.tipo === 'despesa' ? '-' : '+'}{formatCurrency(l.valor)}
                                         </td>
                                     </tr>
@@ -796,7 +796,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                     <button
                         onClick={() => setShowSuperlink(true)}
                         disabled={lancamentos.length === 0}
-                        style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}>
+                        style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, background: 'var(--brand-primary)', color: 'var(--text-on-dark)', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}>
                         <i className="ti ti-share-2" /> Gerar superlink
                     </button>
                     <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--surface-card)', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
@@ -905,10 +905,10 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                     </select>
                 </div>
                 {/* Resumo */}
-                <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
-                    <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
+                <div style={{ padding:'10px 24px', background:'var(--accent-indigo-surface)', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
+                    <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'var(--status-danger-strong)' }}>{formatCurrency(totalDespesas)}</strong></div>
                     {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Receitas </span><strong style={{ color:'var(--module-admin)' }}>{formatCurrency(totalReceitas)}</strong></div>}
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{formatCurrency(saldo)}</strong></div>}
                     {isProprio && <span style={{ fontSize:'12px', color:'var(--border-strong)', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
                     <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>{lancamentos.length} lançamentos</span></div>
                 </div>
@@ -938,20 +938,20 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.status==='pago'?'var(--status-success-bg)':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'var(--status-success-text)':l.status==='cancelado'?'var(--border-strong)':'#92400e' }}>
+                                            <span style={{ ...styles.badge, background: l.status==='pago'?'var(--status-success-bg)':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'var(--status-success-text)':l.status==='cancelado'?'var(--border-strong)':'var(--status-warning-deep)' }}>
                                                 <><i className={`ti ${l.status==='pago'?'ti-check':l.status==='cancelado'?'ti-ban':'ti-clock'}`} aria-hidden="true" /> {l.status==='pago'?'Pago':l.status==='cancelado'?'Cancelado':'Pendente'}</>
                                             </span>
                                         </td>
-                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'#ef4444':'var(--module-admin)', fontWeight:700 }}>
+                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'var(--status-danger-strong)':'var(--module-admin)', fontWeight:700 }}>
                                             {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
                                         </td>
                                         <td style={{ ...styles.td, textAlign:'center' }}>
-                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }} title="Ver comprovante"><i className="ti ti-paperclip" aria-hidden="true" /></a> : <span style={{ color:'#d1d5db' }}>—</span>}
+                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }} title="Ver comprovante"><i className="ti ti-paperclip" aria-hidden="true" /></a> : <span style={{ color:'var(--border-default)' }}>—</span>}
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{ display:'flex', gap:'6px' }}>
-                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
-                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }} title="Remover" aria-label="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
+                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'var(--status-info-strong)', background:'var(--status-info-surface)', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
+                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'var(--status-danger-surface)', padding:'4px 8px', borderRadius:'6px' }} title="Remover" aria-label="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1054,7 +1054,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                         {['despesa','receita'].map(t => (
                             <button key={t} type='button' onClick={() => setForm(f => ({ ...f, tipo:t, categoria_id:'' }))}
                                 style={{ flex:1, padding:'10px', borderRadius:'10px', border:'2px solid', cursor:'pointer', fontWeight:700, fontSize:'14px',
-                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'var(--module-admin)') : 'var(--border-subtle)',
+                                    borderColor: form.tipo===t ? (t==='despesa'?'var(--status-danger-strong)':'var(--module-admin)') : 'var(--border-subtle)',
                                     background: form.tipo===t ? (t==='despesa'?'var(--status-danger-bg)':'var(--status-success-bg)') : 'var(--surface-card)',
                                     color: form.tipo===t ? (t==='despesa'?'var(--status-danger-text)':'var(--module-admin-dark)') : 'var(--border-strong)' }}>
                                 <><i className={`ti ${t==='despesa'?'ti-arrow-down':'ti-arrow-up'}`} aria-hidden="true" /> {t==='despesa'?'Despesa':'Receita'}</>
@@ -1130,8 +1130,8 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                                     <><i className={`ti ${comprovanteBase64 !== undefined && comprovanteBase64 !== null ? 'ti-circle-check' : 'ti-paperclip'}`} aria-hidden="true" /> {comprovanteBase64 !== undefined && comprovanteBase64 !== null ? 'Novo comprovante selecionado' : 'Comprovante atual'}</>
                                 </div>
                                 <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-refresh" aria-hidden="true" /> Trocar</button>
-                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-trash" aria-hidden="true" /> Remover</button>
+                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'var(--status-info-strong)', background:'var(--status-info-surface)', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-refresh" aria-hidden="true" /> Trocar</button>
+                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'var(--status-danger-surface)', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-trash" aria-hidden="true" /> Remover</button>
                                 </div>
                             </div>
                         ) : (
@@ -1339,12 +1339,12 @@ const Imoveis = () => {
     ];
 
     const statusImovel = [
-        { value: 'proprio', label: 'Próprio', icon: 'ti-home', cor: '#e0e7ff', corTexto: '#4f46e5' },
+        { value: 'proprio', label: 'Próprio', icon: 'ti-home', cor: 'var(--accent-indigo-bg)', corTexto: 'var(--accent-indigo)' },
         { value: 'alugado', label: 'Alugado', icon: 'ti-cash', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
-        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: 'ti-key', cor: 'var(--status-info-bg)', corTexto: '#2563eb' },
-        { value: 'a_venda', label: 'À Venda', icon: 'ti-tag', cor: 'var(--status-warning-bg)', corTexto: '#d97706' },
+        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: 'ti-key', cor: 'var(--status-info-bg)', corTexto: 'var(--status-info-strong)' },
+        { value: 'a_venda', label: 'À Venda', icon: 'ti-tag', cor: 'var(--status-warning-bg)', corTexto: 'var(--status-warning-strong)' },
         { value: 'vendido', label: 'Vendido', icon: 'ti-circle-check', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
-        { value: 'em_obra', label: 'Em Obra', icon: 'ti-bricks', cor: '#fae8ff', corTexto: '#a855f7' },
+        { value: 'em_obra', label: 'Em Obra', icon: 'ti-bricks', cor: 'var(--status-purple-bg)', corTexto: 'var(--chart-13)' },
         { value: 'em_espera', label: 'Em Espera', icon: 'ti-clock', cor: 'var(--surface-muted)', corTexto: 'var(--status-neutral)' },
         { value: 'inativo', label: 'Inativo', icon: 'ti-ban', cor: 'var(--status-danger-bg)', corTexto: 'var(--status-danger)' },
     ];
@@ -1377,8 +1377,8 @@ const Imoveis = () => {
                                     return (
                                         <span style={{
                                             ...styles.statusBadge,
-                                            backgroundColor: statusInfo?.cor || '#e0e7ff',
-                                            color: statusInfo?.corTexto || '#4f46e5'
+                                            backgroundColor: statusInfo?.cor || 'var(--accent-indigo-bg)',
+                                            color: statusInfo?.corTexto || 'var(--accent-indigo)'
                                         }}>
                                             <i className={`ti ${statusInfo?.icon || 'ti-building'}`} aria-hidden="true" /> {statusInfo?.label || imovel.status}
                                         </span>
@@ -1427,7 +1427,7 @@ const Imoveis = () => {
                             <div style={styles.imovelActions}>
                                 <button 
                                     onClick={() => setImovelLancamentos(imovel)} 
-                                    style={{ ...styles.actionButton, color: '#0369a1', background: '#f0f9ff' }}
+                                    style={{ ...styles.actionButton, color: 'var(--module-almoxarifado)', background: 'var(--status-info-surface)' }}
                                 >
                                     <i className="ti ti-list" aria-hidden="true" /> Lançamentos
                                 </button>
@@ -1953,7 +1953,7 @@ const Lancamentos = () => {
                                             backgroundColor: lanc.status === 'pago' ? 'var(--status-success-bg)' : 
                                                             lanc.status === 'pendente' ? 'var(--status-warning-bg)' : 'var(--status-danger-bg)',
                                             color: lanc.status === 'pago' ? 'var(--module-admin-dark)' : 
-                                                   lanc.status === 'pendente' ? '#d97706' : 'var(--status-danger)'
+                                                   lanc.status === 'pendente' ? 'var(--status-warning-strong)' : 'var(--status-danger)'
                                         }}>
                                             <><i className={`ti ${lanc.status === 'pago' ? 'ti-check' : lanc.status === 'pendente' ? 'ti-clock' : 'ti-x'}`} aria-hidden="true" />{' '}
                                              {lanc.status === 'pago' ? 'Pago' : lanc.status === 'pendente' ? 'Pendente' : 'Cancelado'}</>
@@ -1988,7 +1988,7 @@ const Lancamentos = () => {
                                             )}
                                             <button
                                                 onClick={() => setEditandoLanc(lanc)}
-                                                style={{ ...styles.smallButton, color: '#2563eb' }}
+                                                style={{ ...styles.smallButton, color: 'var(--status-info-strong)' }}
                                                 title="Editar lançamento"
                                             >
                                                 <i className="ti ti-pencil" aria-hidden="true" />
@@ -2501,8 +2501,8 @@ const GestaoBoletos = () => {
             vencido: { bg: 'var(--status-danger-bg)', border: 'var(--status-danger)', badge: 'var(--status-danger-text)' },
             urgente: { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
             hoje:    { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
-            atencao: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
-            normal:  { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
+            atencao: { bg: 'var(--status-warning-surface)', border: 'var(--status-warning)', badge: 'var(--status-warning-strong)' },
+            normal:  { bg: 'var(--surface-muted)', border: 'var(--border-subtle)', badge: 'var(--status-neutral)' },
             pago:    { bg: 'var(--status-success-bg)', border: 'var(--status-success)', badge: 'var(--status-success-text)' },
         };
         const cor = cores[urgencia] || cores.normal;
@@ -2513,8 +2513,8 @@ const GestaoBoletos = () => {
             <div key={boleto.id} style={{ background: cor.bg, border: `2px solid ${cor.border}`, borderRadius: '10px', padding: '16px', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                     <div>
-                        <h4 style={{ margin: '0 0 4px', color: '#333' }}><i className="ti ti-building" aria-hidden="true" /> {boleto.descricao}</h4>
-                        {boleto.beneficiario && <span style={{ fontSize: '0.85em', color: '#666' }}>Beneficiário: {boleto.beneficiario}</span>}
+                        <h4 style={{ margin: '0 0 4px', color: 'var(--text-primary)' }}><i className="ti ti-building" aria-hidden="true" /> {boleto.descricao}</h4>
+                        {boleto.beneficiario && <span style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>Beneficiário: {boleto.beneficiario}</span>}
                     </div>
                     <span style={{ background: cor.badge, color: 'white', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8em', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                         {boleto.status === 'Pago' ? 'Pago' :
@@ -2525,14 +2525,14 @@ const GestaoBoletos = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
-                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span><div style={{ fontWeight: 'bold', color: 'var(--status-info)', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
-                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span><div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>{formatDate(boleto.data_pagamento)}</div></div>}
+                    <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
+                    <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Valor</span><div style={{ fontWeight: 'bold', color: 'var(--status-info)', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
+                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Pago em</span><div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>{formatDate(boleto.data_pagamento)}</div></div>}
                 </div>
 
                 {boleto.codigo_barras && (
                     <div style={{ background: 'white', padding: '10px', borderRadius: '5px', marginBottom: '10px', fontFamily: 'monospace', fontSize: '0.85em', wordBreak: 'break-all' }}>
-                        <span style={{ fontSize: '0.75em', color: '#666', display: 'block', marginBottom: '4px' }}>Código de Barras:</span>
+                        <span style={{ fontSize: '0.75em', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Código de Barras:</span>
                         {boleto.codigo_barras}
                     </div>
                 )}
@@ -2581,14 +2581,14 @@ const GestaoBoletos = () => {
                     {resumo && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
                             {[
-                                { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: '#ffebee', color: '#d32f2f' },
-                                { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: '#fff3e0', color: '#f57c00' },
+                                { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: 'var(--status-danger-surface)', color: 'var(--status-danger-text)' },
+                                { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: 'var(--status-warning-surface)', color: 'var(--status-warning-strong)' },
                                 { label: 'Pagos', val: resumo.total_pago, qtd: resumo.quantidade_pago, bg: 'var(--status-success-bg)', color: 'var(--module-admin-dark)' },
                             ].map(k => (
                                 <div key={k.label} style={{ background: k.bg, padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
                                     <div style={{ fontSize: '0.85em', color: k.color }}>{k.label}</div>
                                     <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: k.color }}>{(k.val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-                                    <div style={{ fontSize: '0.8em', color: '#666' }}>{k.qtd} boletos</div>
+                                    <div style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>{k.qtd} boletos</div>
                                 </div>
                             ))}
                         </div>
@@ -2608,10 +2608,10 @@ const GestaoBoletos = () => {
                         <div style={styles.emptyState}><div style={styles.emptyIcon}><i className="ti ti-file-description" aria-hidden="true" /></div><p>Nenhum boleto encontrado</p><button onClick={() => setModalCadastro(true)} style={styles.primaryButton}>+ Cadastrar primeiro boleto</button></div>
                     ) : (
                         <>
-                            {boletosVencidos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#d32f2f' }}><i className="ti ti-alert-octagon" aria-hidden="true" /> VENCIDOS ({boletosVencidos.length})</h3>{boletosVencidos.map(b => renderCard(b, 'vencido'))}</div>}
-                            {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#f57c00' }}><i className="ti ti-alert-triangle" aria-hidden="true" /> URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
-                            {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#ffa000' }}><i className="ti ti-clock-exclamation" aria-hidden="true" /> Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
-                            {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#666' }}><i className="ti ti-file-description" aria-hidden="true" /> Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
+                            {boletosVencidos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-danger-text)' }}><i className="ti ti-alert-octagon" aria-hidden="true" /> VENCIDOS ({boletosVencidos.length})</h3>{boletosVencidos.map(b => renderCard(b, 'vencido'))}</div>}
+                            {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-warning-strong)' }}><i className="ti ti-alert-triangle" aria-hidden="true" /> URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
+                            {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-warning-strong)' }}><i className="ti ti-clock-exclamation" aria-hidden="true" /> Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
+                            {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--text-muted)' }}><i className="ti ti-file-description" aria-hidden="true" /> Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
                             {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--module-admin-dark)' }}><i className="ti ti-circle-check" aria-hidden="true" /> Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
                         </>
                     )}
@@ -2771,18 +2771,18 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
 
                     {/* Múltiplos boletos */}
                     {multiplos && (
-                        <div style={{ padding: '14px', background: '#e3f2fd', borderRadius: '10px', marginBottom: '16px' }}>
-                            <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
+                        <div style={{ padding: '14px', background: 'var(--status-info-surface)', borderRadius: '10px', marginBottom: '16px' }}>
+                            <p style={{ fontWeight: 700, color: 'var(--status-info-text)', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
                             <div style={{ marginBottom: '10px' }}>
                                 <label style={{ ...styles.label, fontSize: '0.85em' }}>Descrição base para os boletos</label>
                                 <input type="text" value={descBaseMultiplos} onChange={e => setDescBaseMultiplos(e.target.value)}
-                                    placeholder="Ex: Boleto" style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #90caf9' }} />
+                                    placeholder="Ex: Boleto" style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--status-info-border)' }} />
                             </div>
                             <button type="button" onClick={cadastrarTodos} disabled={salvandoTodos}
                                 style={{ padding: '10px 20px', background: 'var(--status-info)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
                                 <><i className={`ti ${salvandoTodos ? 'ti-loader-2' : 'ti-circle-check'}`} aria-hidden="true" /> {salvandoTodos ? 'Cadastrando...' : `Cadastrar todos (${multiplos.length})`}</>
                             </button>
-                            <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: '#757575', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                            <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: 'var(--status-neutral)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                                 Cadastrar um por um
                             </button>
                         </div>
@@ -2797,7 +2797,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                         <input type="text" value={form.beneficiario} onChange={e => setForm({ ...form, beneficiario: e.target.value })} style={styles.input} placeholder="Nome do beneficiário" />
                     </div>
                     <div style={styles.formGroup}>
-                        <label style={styles.label}>Vínculo Orçamento (item_id) <span style={{ fontWeight: 400, color: '#999' }}>(opcional)</span></label>
+                        <label style={styles.label}>Vínculo Orçamento (item_id) <span style={{ fontWeight: 400, color: 'var(--border-strong)' }}>(opcional)</span></label>
                         <input type="number" min="1" value={form.orcamento_item_id} onChange={e => setForm({ ...form, orcamento_item_id: e.target.value })} style={styles.input} placeholder="ID do item de orçamento" />
                     </div>
                     <div style={styles.formRow}>
@@ -3068,14 +3068,21 @@ const Relatorios = () => {
 <meta charset="UTF-8">
 <title>${escapeHtml(titulo)} — ${escapeHtml(periodoLabel)}</title>
 <style>
+    /* O documento de impressão abre em window.open(), fora do React e
+       fora do styles/tokens.css — então os tokens que ele usa precisam
+       ser DEFINIDOS aqui, com valor literal. Isto não é hex solto: é a
+       única cópia possível. Mantenha igual ao tokens.css. */
     :root {
         --surface-dark-soft:#1e293b; --text-secondary:#334155; --text-muted:#475569;
         --status-neutral:#64748b; --border-strong:#94a3b8; --border-default:#cbd5e1;
         --border-subtle:#e2e8f0; --surface-muted:#f1f5f9; --surface-subtle:#f8fafc;
         --surface-card:#fff; --status-danger:#dc2626; --status-danger-bg:#fee2e2;
         --status-danger-text:#b91c1c; --status-warning:#f59e0b; --status-warning-bg:#fef3c7;
-        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:var(--status-success-text);
+        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:#047857;
         --status-info:#3b82f6; --status-info-bg:#dbeafe;
+        --status-danger-surface:#fef2f2; --status-danger-border:#fecaca;
+        --status-danger-deep:#991b1b; --text-on-dark:#ffffff;
+        --module-admin-dark:#108c54;
     }
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: var(--surface-dark-soft); margin: 24px; font-size: 13px; }
@@ -3084,12 +3091,12 @@ const Relatorios = () => {
     .header .sub { color: var(--text-muted); margin-top: 6px; font-size: 13px; }
     .header .meta { color: var(--border-strong); font-size: 11px; margin-top: 4px; }
     .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-subtle); background: #fff; }
+    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-subtle); background: var(--surface-card); }
     .kpi span { display: block; font-size: 10px; color: var(--status-neutral); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
     .kpi strong { font-size: 18px; font-weight: 800; }
     .kpi.red strong { color: var(--status-danger); }
     .kpi.green strong { color: var(--module-admin-dark); }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: var(--surface-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
     th { background: var(--surface-subtle); padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; }
     th.r, td.r { text-align: right; }
     td { padding: 8px 12px; border-bottom: 1px solid var(--surface-muted); }
@@ -3100,13 +3107,13 @@ const Relatorios = () => {
     .empty-row td { opacity: 0.4; }
     .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface-muted); color: var(--status-neutral); }
     .dre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .dre-box { border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: #fff; }
+    .dre-box { border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: var(--surface-card); }
     .dre-box table { border: none; border-radius: 0; margin: 0; }
     .dre-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
     .dre-head span { font-weight: 700; font-size: 14px; }
     .dre-head strong { font-size: 17px; font-weight: 800; }
     .green-bg { background: var(--status-success-bg); color: var(--status-success-text); }
-    .red-bg { background: var(--status-danger-bg); color: #991b1b; }
+    .red-bg { background: var(--status-danger-bg); color: var(--status-danger-deep); }
     .resultado { padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
     .resultado div { display: flex; flex-direction: column; }
     .resultado span { font-weight: 700; color: var(--status-neutral); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -3114,10 +3121,10 @@ const Relatorios = () => {
     .resultado strong { font-size: 26px; font-weight: 900; }
     .green-box { background: var(--status-success-bg); border: 2px solid var(--status-success-bg); }
     .green-box strong { color: var(--module-admin-dark); }
-    .red-box { background: #fff1f2; border: 2px solid #fecdd3; }
+    .red-box { background: var(--status-danger-surface); border: 2px solid var(--status-danger-border); }
     .red-box strong { color: var(--status-danger); }
     .empty { text-align: center; color: var(--border-strong); padding: 24px; margin: 0; font-style: italic; }
-    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: var(--module-admin-dark); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: var(--module-admin-dark); color: var(--text-on-dark); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     @media print {
         body { margin: 14mm; }
         .print-btn { display: none; }
@@ -3231,7 +3238,7 @@ const Relatorios = () => {
                             {fluxoPorMes.map((m, i) => (
                                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', height: '100%', justifyContent: 'flex-end' }}>
                                     <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', width: '100%' }}>
-                                        <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: '#ef4444', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
+                                        <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: 'var(--status-danger-strong)', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
                                         <div title={`Receitas: ${fmtCur(m.receitas)}`} style={{ flex: 1, background: 'var(--module-admin)', borderRadius: '3px 3px 0 0', height: `${(m.receitas / maxFluxo) * 130}px`, minHeight: m.receitas > 0 ? '2px' : 0 }} />
                                     </div>
                                     <div style={{ fontSize: '10px', color: 'var(--border-strong)', marginTop: '4px' }}>{m.mes}</div>
@@ -3239,7 +3246,7 @@ const Relatorios = () => {
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: '16px', marginTop: '8px', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
+                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: 'var(--status-danger-strong)', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
                             <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: 'var(--module-admin)', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
                         </div>
                     </div>
@@ -3258,16 +3265,16 @@ const Relatorios = () => {
                                 {fluxoPorMes.map((m, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)', opacity: m.despesas === 0 && m.receitas === 0 ? 0.4 : 1 }}>
                                         <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{m.mes}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--status-danger-strong)', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{m.receitas > 0 ? fmtCur(m.receitas) : '—'}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
                                     </tr>
                                 ))}
                                 <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                     <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(totalFluxo.despesas)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--status-danger-strong)' }}>{fmtCur(totalFluxo.despesas)}</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(totalFluxo.receitas)}</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(totalFluxo.saldo)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(totalFluxo.saldo)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -3299,19 +3306,19 @@ const Relatorios = () => {
                                                     <><i className={`ti ${i.status === 'proprio' ? 'ti-home' : i.status === 'alugado' ? 'ti-key' : 'ti-building'}`} aria-hidden="true" /> {i.status === 'proprio' ? 'Próprio' : i.status === 'alugado' ? 'Alugado' : i.status}</>
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{fmtCur(i.despesas)}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--status-danger-strong)', fontWeight: 600 }}>{fmtCur(i.despesas)}</td>
                                             <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{i.receitas > 0 ? fmtCur(i.receitas) : '—'}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(i.saldo)}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? 'var(--module-admin)' : '#ef4444' }}>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(i.saldo)}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>
                                                 {i.rentabilidade != null ? `${i.rentabilidade}%` : '—'}
                                             </td>
                                         </tr>
                                     ))}
                                     <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                         <td colSpan={2} style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--status-danger-strong)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.receitas, 0))}</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
                                         <td style={{ padding: '12px 16px' }} />
                                     </tr>
                                 </tbody>
@@ -3335,7 +3342,7 @@ const Relatorios = () => {
                                 <tbody>
                                     {dreReceitas.map((c, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
-                                            <td style={{ padding: '10px 16px', color: '#374151' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
+                                            <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--module-admin-dark)' }}>{fmtCur(c.total)}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
@@ -3347,16 +3354,16 @@ const Relatorios = () => {
 
                     {/* Despesas */}
                     <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-                        <div style={{ background: 'var(--status-danger-bg)', padding: '14px 16px', borderBottom: '1px solid #fecaca' }}>
-                            <h3 style={{ margin: 0, color: '#991b1b', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-down" aria-hidden="true" /> Despesas</h3>
-                            <div style={{ fontSize: '20px', fontWeight: 800, color: '#991b1b', marginTop: '4px' }}>{fmtCur(totalDREDespesas)}</div>
+                        <div style={{ background: 'var(--status-danger-bg)', padding: '14px 16px', borderBottom: '1px solid var(--status-danger-border)' }}>
+                            <h3 style={{ margin: 0, color: 'var(--status-danger-deep)', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-down" aria-hidden="true" /> Despesas</h3>
+                            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--status-danger-deep)', marginTop: '4px' }}>{fmtCur(totalDREDespesas)}</div>
                         </div>
                         {dreDespesas.length === 0 ? <p style={{ padding: '16px', color: 'var(--border-strong)', textAlign: 'center' }}>Nenhuma despesa</p> : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                                 <tbody>
                                     {dreDespesas.map((c, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
-                                            <td style={{ padding: '10px 16px', color: '#374151' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
+                                            <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--status-danger)' }}>{fmtCur(c.total)}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
@@ -3367,7 +3374,7 @@ const Relatorios = () => {
                     </div>
 
                     {/* Resultado */}
-                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fff1f2', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fecdd3'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-surface)', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-border)'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                             <div style={{ fontSize: '13px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase' }}>Resultado do Período</div>
                             <div style={{ fontSize: '13px', color: 'var(--border-strong)', marginTop: '2px' }}>Receitas − Despesas</div>
@@ -3575,7 +3582,7 @@ const styles = {
     // Sidebar
     sidebar: {
         width: '260px',
-        background: 'linear-gradient(180deg, var(--module-admin-dark) 0%, #0b1220 130%)',
+        background: 'linear-gradient(180deg, var(--module-admin-dark) 0%, var(--brand-primary) 130%)',
         color: 'var(--surface-card)',
         display: 'flex',
         flexDirection: 'column',
@@ -3717,7 +3724,7 @@ const styles = {
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     },
     cardBlue: {
-        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+        background: 'linear-gradient(135deg, var(--chart-11) 0%, var(--chart-6) 100%)',
         color: 'var(--surface-card)',
     },
     cardGreen: {
@@ -3725,7 +3732,7 @@ const styles = {
         color: 'var(--surface-card)',
     },
     cardRed: {
-        background: 'linear-gradient(135deg, #ef4444 0%, var(--status-danger) 100%)',
+        background: 'linear-gradient(135deg, var(--status-danger-strong) 0%, var(--status-danger) 100%)',
         color: 'var(--surface-card)',
     },
     cardIcon: {
@@ -3746,8 +3753,8 @@ const styles = {
         padding: '16px 20px',
         borderRadius: '12px',
         backgroundColor: 'var(--status-warning-bg)',
-        border: '1px solid #fcd34d',
-        color: '#92400e',
+        border: '1px solid var(--status-warning-border)',
+        color: 'var(--status-warning-deep)',
         marginBottom: '24px',
         fontSize: '15px',
     },
@@ -4070,7 +4077,7 @@ const styles = {
         display: 'block',
         fontSize: '14px',
         fontWeight: '500',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '6px',
     },
     input: {
@@ -4100,7 +4107,7 @@ const styles = {
         color: 'var(--status-neutral)',
     },
     tipoButtonActiveDespesa: {
-        borderColor: '#ef4444',
+        borderColor: 'var(--status-danger-strong)',
         backgroundColor: 'var(--status-danger-bg)',
         color: 'var(--status-danger)',
     },
@@ -4159,12 +4166,12 @@ const styles = {
     loginTitle: {
         fontSize: '28px',
         fontWeight: '700',
-        color: '#1f2937',
+        color: 'var(--text-primary)',
         margin: '0 0 4px 0',
     },
     loginSubtitle: {
         fontSize: '14px',
-        color: '#6b7280',
+        color: 'var(--status-neutral)',
         margin: 0,
     },
     loginForm: {
@@ -4216,15 +4223,15 @@ const styles = {
         marginBottom: '24px',
     },
     alertaVencido: {
-        backgroundColor: '#fef2f2',
-        border: '1px solid #fecaca',
+        backgroundColor: 'var(--status-danger-surface)',
+        border: '1px solid var(--status-danger-border)',
         borderRadius: '16px',
         padding: '20px',
         borderLeft: '4px solid var(--status-danger)',
     },
     alertaAVencer: {
-        backgroundColor: '#fffbeb',
-        border: '1px solid #fde68a',
+        backgroundColor: 'var(--status-warning-surface)',
+        border: '1px solid var(--status-warning-border)',
         borderRadius: '16px',
         padding: '20px',
         borderLeft: '4px solid var(--status-warning)',
@@ -4277,7 +4284,7 @@ const styles = {
         fontSize: '12px',
     },
     alertaDiasVencer: {
-        color: '#d97706',
+        color: 'var(--status-warning-strong)',
         fontWeight: '600',
         fontSize: '12px',
     },
@@ -4301,7 +4308,7 @@ const styles = {
         cursor: 'pointer',
         fontSize: '15px',
         fontWeight: '500',
-        color: '#374151',
+        color: 'var(--text-secondary)',
     },
     checkbox: {
         width: '18px',
@@ -4408,7 +4415,7 @@ const styles = {
     },
     statusOptionActivePendente: {
         borderColor: 'var(--status-warning)',
-        backgroundColor: '#fffbeb',
+        backgroundColor: 'var(--status-warning-surface)',
     },
     statusOptionActivePago: {
         borderColor: 'var(--module-admin)',
@@ -4431,8 +4438,8 @@ const styles = {
         padding: '12px 16px',
         borderRadius: '8px',
         backgroundColor: 'var(--status-warning-bg)',
-        border: '1px solid #fcd34d',
-        color: '#92400e',
+        border: '1px solid var(--status-warning-border)',
+        color: 'var(--status-warning-deep)',
         fontSize: '13px',
     },
 
@@ -4441,13 +4448,13 @@ const styles = {
         width: '36px',
         height: '36px',
         borderRadius: '50%',
-        backgroundColor: '#e0e7ff',
+        backgroundColor: 'var(--accent-indigo-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '14px',
         fontWeight: '600',
-        color: '#4f46e5',
+        color: 'var(--accent-indigo)',
     },
     roleSelector: {
         display: 'flex',
@@ -4467,12 +4474,12 @@ const styles = {
         transition: 'all 0.2s',
     },
     roleOptionActive: {
-        borderColor: '#4f46e5',
-        backgroundColor: '#eef2ff',
+        borderColor: 'var(--accent-indigo)',
+        backgroundColor: 'var(--accent-indigo-surface)',
     },
     roleOptionActiveAdmin: {
         borderColor: 'var(--status-danger)',
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'var(--status-danger-surface)',
     },
 };
 
