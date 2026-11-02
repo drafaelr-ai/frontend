@@ -249,7 +249,9 @@ const KpiCard = ({ title, value, subtitle, icon, color = COLORS.primary, progres
     <div style={styles.card}>
         <div style={styles.cardHeader}>
             <p style={styles.cardTitle}>{title}</p>
-            <span style={{ fontSize: '24px' }}>{icon}</span>
+            {/* `icon` e classe Tabler (ex: 'ti-cash'), nao emoji: emoji muda de
+                forma por sistema operacional, que e o motivo da convencao. */}
+            {icon && <i className={`ti ${icon}`} aria-hidden="true" style={{ fontSize: '24px' }} />}
         </div>
         <p style={{ ...styles.kpiValue, color }}>{value}</p>
         {subtitle && (
@@ -272,11 +274,15 @@ const KpiCard = ({ title, value, subtitle, icon, color = COLORS.primary, progres
     </div>
 );
 
-const ChartCard = ({ title, children, subtitle, action }) => (
+const ChartCard = ({ title, children, subtitle, action, icon }) => (
     <div style={styles.card}>
         <div style={styles.cardHeader}>
             <div>
-                <h3 style={{ ...styles.cardTitle, fontSize: '16px', textTransform: 'none' }}>{title}</h3>
+                <h3 style={{ ...styles.cardTitle, fontSize: '16px', textTransform: 'none' }}>
+                    {/* `icon` e classe Tabler; o titulo deixou de carregar emoji. */}
+                    {icon && <i className={`ti ${icon}`} aria-hidden="true" style={{ marginRight: 6 }} />}
+                    {title}
+                </h3>
                 {subtitle && <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>{subtitle}</p>}
             </div>
             {action}
@@ -287,10 +293,10 @@ const ChartCard = ({ title, children, subtitle, action }) => (
 
 const AlertItem = ({ type, message, value }) => {
     const colors = {
-        danger: { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', icon: '🚨' },
-        warning: { bg: '#fffbeb', border: '#fde68a', text: '#d97706', icon: '⚠️' },
-        info: { bg: '#eff6ff', border: '#bfdbfe', text: '#2563eb', icon: 'ℹ️' },
-        success: { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a', icon: '✅' }
+        danger: { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', icon: 'ti-alert-octagon' },
+        warning: { bg: '#fffbeb', border: '#fde68a', text: '#d97706', icon: 'ti-alert-triangle' },
+        info: { bg: '#eff6ff', border: '#bfdbfe', text: '#2563eb', icon: 'ti-info-circle' },
+        success: { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a', icon: 'ti-circle-check' }
     };
     const c = colors[type] || colors.info;
     
@@ -300,7 +306,7 @@ const AlertItem = ({ type, message, value }) => {
             backgroundColor: c.bg,
             border: `1px solid ${c.border}`
         }}>
-            <span style={{ fontSize: '20px' }}>{c.icon}</span>
+            <i className={`ti ${c.icon}`} aria-hidden="true" style={{ fontSize: '20px' }} />
             <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, color: c.text, fontWeight: '500' }}>{message}</p>
             </div>
@@ -372,14 +378,14 @@ const FinanceiroDashboard = ({ dados }) => {
                 <KpiCard
                     title="Orçamento Total"
                     value={formatCompactCurrency(totalOrcamento)}
-                    icon="💰"
+                    icon="ti-cash"
                     color={COLORS.primary}
                     subtitle={`${obras.length} obras ativas`}
                 />
                 <KpiCard
                     title="Valores Executados"
                     value={formatCompactCurrency(totalPago)}
-                    icon="✅"
+                    icon="ti-circle-check"
                     color={COLORS.success}
                     progress={percentualExecutado}
                     subtitle={`${formatPercent(percentualExecutado)} do orçamento`}
@@ -387,14 +393,14 @@ const FinanceiroDashboard = ({ dados }) => {
                 <KpiCard
                     title="A Liberar (Fila)"
                     value={formatCompactCurrency(totalLiberado)}
-                    icon="📋"
+                    icon="ti-clipboard-list"
                     color={COLORS.warning}
                     subtitle="Pagamentos pendentes"
                 />
                 <KpiCard
                     title="Despesas Extras"
                     value={formatCompactCurrency(totalExtras)}
-                    icon="⚠️"
+                    icon="ti-alert-triangle"
                     color={COLORS.danger}
                     subtitle="Fora do orçamento"
                 />
@@ -402,7 +408,7 @@ const FinanceiroDashboard = ({ dados }) => {
             
             {/* Gráficos */}
             <div style={{ ...styles.grid, ...styles.grid2 }}>
-                <ChartCard title="📊 Orçamento vs Executado por Obra" subtitle="Top 8 obras por valor">
+                <ChartCard icon="ti-chart-bar" title="Orçamento vs Executado por Obra" subtitle="Top 8 obras por valor">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={dadosObras} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -425,7 +431,7 @@ const FinanceiroDashboard = ({ dados }) => {
                     </ResponsiveContainer>
                 </ChartCard>
                 
-                <ChartCard title="🥧 Distribuição Financeira" subtitle="Visão geral do status">
+                <ChartCard icon="ti-chart-pie" title="Distribuição Financeira" subtitle="Visão geral do status">
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -494,32 +500,32 @@ const ObrasDashboard = ({ dados }) => {
                 <KpiCard
                     title="Obras Ativas"
                     value={obrasAtivas}
-                    icon="🏗️"
+                    icon="ti-building-community"
                     color={COLORS.primary}
                 />
                 <KpiCard
                     title="Obras Concluídas"
                     value={obrasConcluidas}
-                    icon="✅"
+                    icon="ti-circle-check"
                     color={COLORS.success}
                 />
                 <KpiCard
                     title="Total de Obras"
                     value={obras.length}
-                    icon="📊"
+                    icon="ti-chart-bar"
                     color={COLORS.info}
                 />
                 <KpiCard
                     title="Clientes Ativos"
                     value={Object.keys(porCliente).length}
-                    icon="👥"
+                    icon="ti-users"
                     color={COLORS.purple}
                 />
             </div>
             
             {/* Tabelas e Gráficos */}
             <div style={{ ...styles.grid, ...styles.grid2 }}>
-                <ChartCard title="🏆 Ranking de Obras" subtitle="Por valor executado">
+                <ChartCard icon="ti-trophy" title="Ranking de Obras" subtitle="Por valor executado">
                     <div style={styles.tableContainer}>
                         <table style={styles.table}>
                             <thead>
@@ -554,7 +560,7 @@ const ObrasDashboard = ({ dados }) => {
                     </div>
                 </ChartCard>
                 
-                <ChartCard title="👥 Obras por Cliente" subtitle="Distribuição de valor orçado">
+                <ChartCard icon="ti-users" title="Obras por Cliente" subtitle="Distribuição de valor orçado">
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={dadosCliente} layout="vertical" margin={{ left: 80 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -629,10 +635,10 @@ const AlertasDashboard = ({ dados }) => {
     
     return (
         <div style={{ ...styles.grid, gridTemplateColumns: '1fr' }}>
-            <ChartCard title="🔔 Central de Alertas" subtitle={`${alertas.length} alertas ativos`}>
+            <ChartCard icon="ti-bell" title="Central de Alertas" subtitle={`${alertas.length} alertas ativos`}>
                 {alertas.length === 0 ? (
                     <div style={styles.emptyState}>
-                        <span style={{ fontSize: '48px' }}>✨</span>
+                        <i className="ti ti-sparkles" aria-hidden="true" style={{ fontSize: '48px' }} />
                         <p>Nenhum alerta no momento. Tudo está em ordem!</p>
                     </div>
                 ) : (
@@ -662,7 +668,7 @@ const FluxoCaixaDashboard = ({ dados }) => {
     
     return (
         <div style={{ ...styles.grid, gridTemplateColumns: '1fr' }}>
-            <ChartCard title="📈 Fluxo de Caixa Mensal" subtitle="Previsto vs Realizado">
+            <ChartCard icon="ti-trending-up" title="Fluxo de Caixa Mensal" subtitle="Previsto vs Realizado">
                 <ResponsiveContainer width="100%" height={350}>
                     <ComposedChart data={dadosFluxo} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -750,28 +756,28 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                     title="Vencidos"
                     value={resumoVencimentos.vencidos || 0}
                     subtitle={formatCurrency(resumoVencimentos.valor_vencido || 0)}
-                    icon="🚨"
+                    icon="ti-alert-octagon"
                     color={COLORS.danger}
                 />
                 <KpiCard
                     title="Vencem Hoje"
                     value={resumoVencimentos.hoje || 0}
                     subtitle={formatCurrency(resumoVencimentos.valor_hoje || 0)}
-                    icon="⚠️"
+                    icon="ti-alert-triangle"
                     color={COLORS.warning}
                 />
                 <KpiCard
                     title="Próximos 7 Dias"
                     value={resumoVencimentos.semana || 0}
                     subtitle={formatCurrency(resumoVencimentos.valor_semana || 0)}
-                    icon="📅"
+                    icon="ti-calendar"
                     color={COLORS.info}
                 />
                 <KpiCard
                     title="Próximos 30 Dias"
                     value={resumoVencimentos.mes || 0}
                     subtitle={formatCurrency(resumoVencimentos.valor_mes || 0)}
-                    icon="📆"
+                    icon="ti-calendar-event"
                     color={COLORS.success}
                 />
             </div>
@@ -813,7 +819,7 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
             {/* Visualização em Grid de Calendário */}
             <div style={{ ...styles.grid, ...styles.grid2 }}>
                 {/* Mini Calendário dos próximos 30 dias */}
-                <ChartCard title="📅 Próximos 30 Dias" subtitle="Clique em um dia para ver detalhes">
+                <ChartCard icon="ti-calendar" title="Próximos 30 Dias" subtitle="Clique em um dia para ver detalhes">
                     <div style={{ 
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(7, 1fr)', 
@@ -884,11 +890,11 @@ const CalendarioVencimentosDashboard = ({ dados }) => {
                 </ChartCard>
                 
                 {/* Lista de Vencimentos */}
-                <ChartCard title="📋 Lista de Vencimentos" subtitle="Ordenado por data">
+                <ChartCard icon="ti-clipboard-list" title="Lista de Vencimentos" subtitle="Ordenado por data">
                     <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
                         {vencimentosFiltrados.length === 0 ? (
                             <div style={styles.emptyState}>
-                                <span style={{ fontSize: '32px' }}>✨</span>
+                                <i className="ti ti-sparkles" aria-hidden="true" style={{ fontSize: '32px' }} />
                                 <p>Nenhum vencimento encontrado</p>
                             </div>
                         ) : (
@@ -1017,27 +1023,27 @@ const TemporalDashboard = ({ dados }) => {
                     title="Total Histórico"
                     value={formatCompactCurrency(resumoHistorico.total_geral || 0)}
                     subtitle={`${resumoHistorico.total_meses || 0} meses de dados`}
-                    icon="💰"
+                    icon="ti-cash"
                     color={COLORS.primary}
                 />
                 <KpiCard
                     title="Média Mensal"
                     value={formatCompactCurrency(resumoHistorico.media_mensal || 0)}
-                    icon="📊"
+                    icon="ti-chart-bar"
                     color={COLORS.info}
                 />
                 <KpiCard
                     title="Melhor Mês"
                     value={resumoHistorico.melhor_mes?.mes_nome || '-'}
                     subtitle={formatCurrency(resumoHistorico.melhor_mes?.total || 0)}
-                    icon="📈"
+                    icon="ti-trending-up"
                     color={COLORS.success}
                 />
                 <KpiCard
                     title="Menor Mês"
                     value={resumoHistorico.pior_mes?.mes_nome || '-'}
                     subtitle={formatCurrency(resumoHistorico.pior_mes?.total || 0)}
-                    icon="📉"
+                    icon="ti-trending-down"
                     color={COLORS.warning}
                 />
             </div>
@@ -1046,9 +1052,9 @@ const TemporalDashboard = ({ dados }) => {
             <div style={{ ...styles.card, marginBottom: '20px' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {[
-                        { id: 'barras', label: '📊 Barras' },
-                        { id: 'linha', label: '📈 Linha' },
-                        { id: 'area', label: '🌊 Área' }
+                        { id: 'barras', icone: 'ti-chart-bar', label: 'Barras' },
+                        { id: 'linha', icone: 'ti-chart-line', label: 'Linha' },
+                        { id: 'area', icone: 'ti-chart-area', label: 'Área' }
                     ].map(v => (
                         <button
                             key={v.id}
@@ -1059,7 +1065,7 @@ const TemporalDashboard = ({ dados }) => {
                                 color: visualizacao === v.id ? '#fff' : '#64748b'
                             }}
                         >
-                            {v.label}
+                            <i className={`ti ${v.icone}`} aria-hidden="true" /> {v.label}
                         </button>
                     ))}
                 </div>
@@ -1067,10 +1073,10 @@ const TemporalDashboard = ({ dados }) => {
             
             {/* Gráfico Principal - Histórico Mensal */}
             <div style={{ ...styles.grid, gridTemplateColumns: '1fr' }}>
-                <ChartCard title="📅 Histórico de Pagamentos" subtitle="Evolução mensal dos gastos">
+                <ChartCard icon="ti-calendar" title="Histórico de Pagamentos" subtitle="Evolução mensal dos gastos">
                     {dadosGrafico.length === 0 ? (
                         <div style={styles.emptyState}>
-                            <span style={{ fontSize: '48px' }}>📊</span>
+                            <i className="ti ti-chart-bar-off" aria-hidden="true" style={{ fontSize: '48px' }} />
                             <p>Nenhum dado histórico disponível</p>
                         </div>
                     ) : (
@@ -1129,7 +1135,7 @@ const TemporalDashboard = ({ dados }) => {
             {/* Gráficos Secundários */}
             <div style={{ ...styles.grid, ...styles.grid2 }}>
                 {/* Sazonalidade */}
-                <ChartCard title="🌡️ Sazonalidade" subtitle="Média de gastos por mês do ano">
+                <ChartCard icon="ti-temperature" title="Sazonalidade" subtitle="Média de gastos por mês do ano">
                     {sazonalidade.length === 0 ? (
                         <div style={styles.emptyState}>
                             <p>Dados insuficientes</p>
@@ -1148,7 +1154,7 @@ const TemporalDashboard = ({ dados }) => {
                 </ChartCard>
                 
                 {/* Comparativo Anual */}
-                <ChartCard title="📆 Comparativo Anual" subtitle="Total por ano">
+                <ChartCard icon="ti-calendar-event" title="Comparativo Anual" subtitle="Total por ano">
                     {dadosPorAno.length === 0 ? (
                         <div style={styles.emptyState}>
                             <p>Dados insuficientes</p>
@@ -1276,12 +1282,12 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
     }, [apiUrl, fetchWithAuth]);
     
     const tabs = [
-        { id: 'financeiro', label: '💰 Financeiro', component: FinanceiroDashboard },
-        { id: 'obras', label: '🏗️ Obras', component: ObrasDashboard },
-        { id: 'calendario', label: '📅 Calendário', component: CalendarioVencimentosDashboard },
-        { id: 'temporal', label: '📈 Temporal', component: TemporalDashboard },
-        { id: 'alertas', label: '🔔 Alertas', component: AlertasDashboard },
-        { id: 'fluxo', label: '💸 Projeção', component: FluxoCaixaDashboard }
+        { id: 'financeiro', icone: 'ti-cash', label: 'Financeiro', component: FinanceiroDashboard },
+        { id: 'obras', icone: 'ti-building-community', label: 'Obras', component: ObrasDashboard },
+        { id: 'calendario', icone: 'ti-calendar', label: 'Calendário', component: CalendarioVencimentosDashboard },
+        { id: 'temporal', icone: 'ti-trending-up', label: 'Temporal', component: TemporalDashboard },
+        { id: 'alertas', icone: 'ti-bell', label: 'Alertas', component: AlertasDashboard },
+        { id: 'fluxo', icone: 'ti-cash-banknote', label: 'Projeção', component: FluxoCaixaDashboard }
     ];
     
     const TabComponent = tabs.find(t => t.id === activeTab)?.component || FinanceiroDashboard;
@@ -1293,7 +1299,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h1 style={styles.title}>
-                            📊 Business Intelligence
+                            <i className="ti ti-chart-bar" aria-hidden="true" /> Business Intelligence
                         </h1>
                         <p style={styles.subtitle}>
                             Análises e insights do seu negócio • Atualizado em tempo real
@@ -1325,7 +1331,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                             ...(activeTab === tab.id ? styles.tabActive : {})
                         }}
                     >
-                        {tab.label}
+                        <i className={`ti ${tab.icone}`} aria-hidden="true" /> {tab.label}
                     </button>
                 ))}
             </div>
@@ -1340,7 +1346,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                 </div>
             ) : error ? (
                 <div style={{ ...styles.card, textAlign: 'center', color: COLORS.danger }}>
-                    <span style={{ fontSize: '48px' }}>❌</span>
+                    <i className="ti ti-circle-x" aria-hidden="true" style={{ fontSize: '48px' }} />
                     <p>Erro ao carregar dados: {error}</p>
                     <button
                         onClick={() => window.location.reload()}
