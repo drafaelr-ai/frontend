@@ -22,13 +22,13 @@ const WindowsNavStyles = () => (
         }
 
         .app-layout-windows--financeiro {
-            --module-context: #16a36a;
-            --module-context-dark: #08764a;
+            --module-context: var(--module-financeiro);
+            --module-context-dark: var(--module-financeiro-dark);
         }
 
         .app-layout-windows--planejamento {
-            --module-context: #7c3aed;
-            --module-context-dark: #5421b5;
+            --module-context: var(--module-planejamento);
+            --module-context-dark: var(--module-planejamento-dark);
         }
 
         .main-content-windows {

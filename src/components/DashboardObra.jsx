@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import './DashboardObra.css';
 import { API_URL } from '../config';
 import { fetchWithAuth } from '../auth/fetchWithAuth';
+import { CHART_COLORS_MATERIAIS } from '../theme/chartColors';
 
 // Helper para formatar moeda
 const formatCurrency = (value) => {
@@ -66,11 +67,7 @@ const CORES = {
     outros: 'var(--status-neutral)'
 };
 
-const CORES_MATERIAIS = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-    '#14b8a6', '#a855f7', '#eab308', '#22c55e', '#0ea5e9'
-];
+const CORES_MATERIAIS = CHART_COLORS_MATERIAIS;
 
 // ============================================
 // COMPONENTE: Gráfico de Pizza Simples

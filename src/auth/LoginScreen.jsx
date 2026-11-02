@@ -88,7 +88,7 @@ const LoginScreen = ({ onBack }) => {
             <div className="ls-light">
                 {onBack && (
                     <button className="ls-back" onClick={onBack} type="button">
-                        ← Voltar
+                        <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
                     </button>
                 )}
 

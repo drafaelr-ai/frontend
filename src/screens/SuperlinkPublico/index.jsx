@@ -155,8 +155,8 @@ export default function SuperlinkPublico({ token }) {
                   <span style={{
                     display: 'inline-block', marginTop: 4, fontSize: 11, fontWeight: 700,
                     padding: '2px 8px', borderRadius: 999,
-                    background: 'var(--status-success-bg, #dcfce7)',
-                    color: 'var(--status-success, #16a34a)',
+                    background: 'var(--status-success-bg, var(--status-success-bg))',
+                    color: 'var(--status-success, var(--status-success-strong))',
                   }}>
                     <i className="ti ti-check" /> pago
                   </span>
@@ -165,9 +165,9 @@ export default function SuperlinkPublico({ token }) {
                   const v = formatVencimento(item.data_vencimento);
                   if (!v) return null;
                   const colors = {
-                    danger:  { bg: 'var(--status-danger-bg,  #fee2e2)', color: 'var(--status-danger,  #dc2626)' },
-                    warning: { bg: 'var(--status-warning-bg, #fef3c7)', color: 'var(--status-warning, #d97706)' },
-                    neutral: { bg: 'var(--surface-muted,    #f1f5f9)', color: 'var(--text-muted,     #64748b)' },
+                    danger:  { bg: 'var(--status-danger-bg,  var(--status-danger-bg))', color: 'var(--status-danger,  var(--status-danger))' },
+                    warning: { bg: 'var(--status-warning-bg, var(--status-warning-bg))', color: 'var(--status-warning, var(--status-warning-strong))' },
+                    neutral: { bg: 'var(--surface-muted,    var(--surface-muted))', color: 'var(--text-muted,     var(--status-neutral))' },
                   }[v.urgency];
                   return (
                     <span style={{

@@ -14,6 +14,7 @@ import { API_URL } from './config';
 import { setToken as storeToken, getToken as loadToken, removeToken as deleteToken } from './auth/tokenStorage';
 import GerarSuperlinkAdminModal from './components/modals/GerarSuperlinkAdminModal';
 import useModuleTabHistory from './hooks/useModuleTabHistory';
+import { iconeCategoria } from './utils/iconeCategoria';
 
 
 // ===================================================================================
@@ -229,7 +230,7 @@ const AdminMobileStyles = () => (
                 border-radius: 8px;
                 border: none;
                 background: var(--module-admin-dark);
-                color: #fff;
+                color: var(--text-on-dark);
                 font-size: 22px;
                 cursor: pointer;
                 z-index: 1001;
@@ -255,7 +256,7 @@ const AdminMobileStyles = () => (
                 border-radius: 8px;
                 border: none;
                 background: var(--module-admin-dark);
-                color: #fff;
+                color: var(--text-on-dark);
                 font-size: 14px;
                 font-weight: 600;
                 cursor: pointer;
@@ -346,7 +347,7 @@ const Dashboard = ({ onIrImoveis }) => {
                 .filter(l => l.tipo === 'despesa' && l.status !== 'cancelado')
                 .forEach(l => {
                     const key = l.categoria_nome || 'Outros';
-                    if (!porCategoria[key]) porCategoria[key] = { nome: key, icone: l.categoria_icone || '💰', cor: '#6b7280', total: 0 };
+                    if (!porCategoria[key]) porCategoria[key] = { nome: key, icone: l.categoria_icone || '', cor: 'var(--status-neutral)', total: 0 };
                     porCategoria[key].total += l.valor;
                 });
 
@@ -379,9 +380,9 @@ const Dashboard = ({ onIrImoveis }) => {
         const map = {
             alugado: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
             alugado_terceiro: { label: 'Alugado', bg: 'var(--status-success-bg)', fg: 'var(--module-admin-dark)' },
-            proprio: { label: 'Próprio', bg: '#e0e7ff', fg: '#4f46e5' },
-            a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: '#d97706' },
-            em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: '#d97706' },
+            proprio: { label: 'Próprio', bg: 'var(--accent-indigo-bg)', fg: 'var(--accent-indigo)' },
+            a_venda: { label: 'À venda', bg: 'var(--status-warning-bg)', fg: 'var(--status-warning-strong)' },
+            em_obra: { label: 'Em obra', bg: 'var(--status-warning-bg)', fg: 'var(--status-warning-strong)' },
         };
         return map[status] || { label: status || '—', bg: 'var(--surface-muted)', fg: 'var(--text-muted)' };
     };
@@ -425,13 +426,13 @@ const Dashboard = ({ onIrImoveis }) => {
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {/* Toggle Modo */}
                     <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                        {[['mes', '📅 Mensal'], ['acumulado', '📊 Acumulado']].map(([m, label]) => (
+                        {[['mes', 'ti-calendar', 'Mensal'], ['acumulado', 'ti-chart-bar', 'Acumulado']].map(([m, icone, label]) => (
                             <button key={m} onClick={() => setModo(m)} style={{
                                 padding: '8px 16px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                                 background: modo === m ? 'var(--surface-dark-soft)' : 'var(--surface-card)',
                                 color: modo === m ? 'var(--surface-card)' : 'var(--status-neutral)',
                                 transition: 'all 0.15s'
-                            }}>{label}</button>
+                            }}><i className={`ti ${icone}`} aria-hidden="true" /> {label}</button>
                         ))}
                     </div>
 
@@ -480,7 +481,7 @@ const Dashboard = ({ onIrImoveis }) => {
                     borderRadius: '12px', padding: '10px 16px', marginBottom: '16px',
                     color: 'var(--status-danger)', fontSize: '13px', fontWeight: 600
                 }}>
-                    <span>⚠</span>
+                    <span><i className="ti ti-alert-triangle" aria-hidden="true" /></span>
                     <span>
                         {vencidos.length} vencido{vencidos.length !== 1 ? 's' : ''} ({formatCurrency(dados?.alertas?.total_vencido || 0)})
                         {' '}— {[...new Set(vencidos.map(v => v.imovel_nome).filter(Boolean))].slice(0, 3).join(', ')}
@@ -498,7 +499,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                 background: 'none', border: 'none', color: 'var(--module-admin-dark)', fontWeight: 700,
                                 fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit'
                             }}>
-                                Ver todos →
+                                Ver todos <i className="ti ti-arrow-right" aria-hidden="true" />
                             </button>
                         )}
                     </div>
@@ -515,7 +516,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                         borderRadius: '12px', padding: '10px 14px', flex: '1 1 260px'
                                     }}
                                 >
-                                    <span style={{ fontSize: '16px' }}>📋</span>
+                                    <span style={{ fontSize: '16px' }}><i className="ti ti-clipboard-list" aria-hidden="true" /></span>
                                     <div style={{ minWidth: 0 }}>
                                         <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                                             {cg.nome} <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>· conta geral da empresa</span>
@@ -524,7 +525,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                             Despesas: {formatCurrency(cg.total_despesas || 0)}
                                         </div>
                                     </div>
-                                    <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: 'var(--module-admin-dark)' }}>Ver →</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: 'var(--module-admin-dark)' }}>Ver <i className="ti ti-arrow-right" aria-hidden="true" /></span>
                                 </div>
                             ))}
                         </div>
@@ -599,7 +600,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                     width: '30px', height: '30px', borderRadius: '999px', flexShrink: 0,
                                     background: l._v ? 'var(--status-danger-bg)' : 'var(--status-warning-bg)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px'
-                                }}>{l.categoria_icone || '🧾'}</div>
+                                }}><i className={`ti ${iconeCategoria(l.categoria_icone)}`} aria-hidden="true" /></div>
                                 <div style={{ minWidth: 0 }}>
                                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                                         {l.descricao} — {formatCurrency(l.valor)}
@@ -613,7 +614,7 @@ const Dashboard = ({ onIrImoveis }) => {
                             </div>
                         ))}
                         {vencidos.length + aVencer.length === 0 && (
-                            <p style={{ ...styles.emptyText, padding: '14px 0' }}>Nada vencendo nos próximos dias. 🎉</p>
+                            <p style={{ ...styles.emptyText, padding: '14px 0' }}>Nada vencendo nos próximos dias.</p>
                         )}
                     </div>
                 </div>
@@ -627,7 +628,7 @@ const Dashboard = ({ onIrImoveis }) => {
                         dadosAtivos.despesas_por_categoria.map((cat, i) => (
                             <div key={i} style={styles.categoryItem}>
                                 <div style={styles.categoryInfo}>
-                                    <span style={styles.categoryIcon}>{cat.icone}</span>
+                                    <span style={styles.categoryIcon}><i className={`ti ${iconeCategoria(cat.icone)}`} aria-hidden="true" /></span>
                                     <span>{cat.nome}</span>
                                 </div>
                                 <div style={styles.categoryBar}>
@@ -676,7 +677,7 @@ const Dashboard = ({ onIrImoveis }) => {
                                                 backgroundColor: lanc.tipo === 'receita' ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
                                                 color: lanc.tipo === 'receita' ? 'var(--module-admin-dark)' : 'var(--status-danger)'
                                             }}>
-                                                {lanc.tipo === 'receita' ? '↑ Receita' : '↓ Despesa'}
+                                                <><i className={`ti ${lanc.tipo === 'receita' ? 'ti-arrow-up' : 'ti-arrow-down'}`} aria-hidden="true" /> {lanc.tipo === 'receita' ? 'Receita' : 'Despesa'}</>
                                             </span>
                                         </td>
                                         <td style={{ ...styles.tdRight, color: lanc.tipo === 'receita' ? 'var(--module-admin-dark)' : 'var(--status-danger)', fontWeight: '600' }}>
@@ -744,7 +745,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                 {/* Header */}
                 <div style={{ padding: '18px 24px', background: 'var(--surface-dark-soft)', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h2 style={{ margin: 0, color: 'var(--surface-card)', fontSize: '17px', fontWeight: 700 }}>📋 {titulo}</h2>
+                        <h2 style={{ margin: 0, color: 'var(--surface-card)', fontSize: '17px', fontWeight: 700 }}><i className="ti ti-clipboard-list" aria-hidden="true" /> {titulo}</h2>
                         <p style={{ margin: '2px 0 0', color: 'var(--border-strong)', fontSize: '13px' }}>{lancamentos.length} lançamentos · Total: {formatCurrency(total)}</p>
                     </div>
                     <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--surface-card)', borderRadius: '8px', width: '34px', height: '34px', cursor: 'pointer', fontSize: '18px' }}>×</button>
@@ -776,12 +777,12 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                                             <span style={{
                                                 padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
                                                 background: l.status === 'pago' ? 'var(--status-success-bg)' : l.status === 'cancelado' ? 'var(--surface-muted)' : 'var(--status-warning-bg)',
-                                                color: l.status === 'pago' ? 'var(--status-success-text)' : l.status === 'cancelado' ? 'var(--border-strong)' : '#92400e',
+                                                color: l.status === 'pago' ? 'var(--status-success-text)' : l.status === 'cancelado' ? 'var(--border-strong)' : 'var(--status-warning-deep)',
                                             }}>
-                                                {l.status === 'pago' ? '✓ Pago' : l.status === 'cancelado' ? 'Cancelado' : '⏳ Pendente'}
+                                                <><i className={`ti ${l.status === 'pago' ? 'ti-check' : l.status === 'cancelado' ? 'ti-ban' : 'ti-clock'}`} aria-hidden="true" /> {l.status === 'pago' ? 'Pago' : l.status === 'cancelado' ? 'Cancelado' : 'Pendente'}</>
                                             </span>
                                         </td>
-                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? '#ef4444' : 'var(--module-admin)', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '10px 14px', fontWeight: 700, color: l.tipo === 'despesa' ? 'var(--status-danger-strong)' : 'var(--module-admin)', whiteSpace: 'nowrap' }}>
                                             {l.tipo === 'despesa' ? '-' : '+'}{formatCurrency(l.valor)}
                                         </td>
                                     </tr>
@@ -795,7 +796,7 @@ const ModalLancamentosDashboard = ({ titulo, tipo, mes, ano, token, onClose }) =
                     <button
                         onClick={() => setShowSuperlink(true)}
                         disabled={lancamentos.length === 0}
-                        style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, background: 'var(--brand-primary)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}>
+                        style={{ fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, background: 'var(--brand-primary)', color: 'var(--text-on-dark)', border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: lancamentos.length === 0 ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, opacity: lancamentos.length === 0 ? 0.5 : 1 }}>
                         <i className="ti ti-share-2" /> Gerar superlink
                     </button>
                     <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: '8px', border: '1px solid var(--border-subtle)', background: 'var(--surface-card)', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>
@@ -904,10 +905,10 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                     </select>
                 </div>
                 {/* Resumo */}
-                <div style={{ padding:'10px 24px', background:'#f0f4ff', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
-                    <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'#ef4444' }}>{formatCurrency(totalDespesas)}</strong></div>
+                <div style={{ padding:'10px 24px', background:'var(--accent-indigo-surface)', borderBottom:'1px solid var(--border-subtle)', display:'flex', gap:'24px', alignItems:'center' }}>
+                    <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Despesas </span><strong style={{ color:'var(--status-danger-strong)' }}>{formatCurrency(totalDespesas)}</strong></div>
                     {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Receitas </span><strong style={{ color:'var(--module-admin)' }}>{formatCurrency(totalReceitas)}</strong></div>}
-                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{formatCurrency(saldo)}</strong></div>}
+                    {!isProprio && <div><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>Saldo </span><strong style={{ color: saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{formatCurrency(saldo)}</strong></div>}
                     {isProprio && <span style={{ fontSize:'12px', color:'var(--border-strong)', fontStyle:'italic' }}>Imóvel próprio — receitas/saldo não aplicáveis</span>}
                     <div style={{ marginLeft:'auto' }}><span style={{ fontSize:'12px', color:'var(--status-neutral)' }}>{lancamentos.length} lançamentos</span></div>
                 </div>
@@ -937,20 +938,20 @@ const LancamentosImovelModal = ({ imovel, token, onClose }) => {
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            <span style={{ ...styles.badge, background: l.status==='pago'?'var(--status-success-bg)':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'var(--status-success-text)':l.status==='cancelado'?'var(--border-strong)':'#92400e' }}>
-                                                {l.status==='pago'?'✓ Pago':l.status==='cancelado'?'Cancelado':'⏳ Pendente'}
+                                            <span style={{ ...styles.badge, background: l.status==='pago'?'var(--status-success-bg)':l.status==='cancelado'?'var(--surface-muted)':'var(--status-warning-bg)', color: l.status==='pago'?'var(--status-success-text)':l.status==='cancelado'?'var(--border-strong)':'var(--status-warning-deep)' }}>
+                                                <><i className={`ti ${l.status==='pago'?'ti-check':l.status==='cancelado'?'ti-ban':'ti-clock'}`} aria-hidden="true" /> {l.status==='pago'?'Pago':l.status==='cancelado'?'Cancelado':'Pendente'}</>
                                             </span>
                                         </td>
-                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'#ef4444':'var(--module-admin)', fontWeight:700 }}>
+                                        <td style={{ ...styles.tdRight, color: l.tipo==='despesa'?'var(--status-danger-strong)':'var(--module-admin)', fontWeight:700 }}>
                                             {l.tipo==='despesa'?'-':'+'}{formatCurrency(l.valor)}
                                         </td>
                                         <td style={{ ...styles.td, textAlign:'center' }}>
-                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }} title="Ver comprovante"><i className="ti ti-paperclip" aria-hidden="true" /></a> : <span style={{ color:'#d1d5db' }}>—</span>}
+                                            {l.comprovante_url ? <a href={l.comprovante_url} target='_blank' rel='noreferrer' style={{ fontSize:'18px', textDecoration:'none' }} title="Ver comprovante"><i className="ti ti-paperclip" aria-hidden="true" /></a> : <span style={{ color:'var(--border-default)' }}>—</span>}
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{ display:'flex', gap:'6px' }}>
-                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
-                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'4px 8px', borderRadius:'6px' }} title="Remover" aria-label="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
+                                                <button onClick={() => setEditandoLanc(l)} style={{ ...styles.smallButton, color:'var(--status-info-strong)', background:'var(--status-info-surface)', padding:'4px 8px', borderRadius:'6px' }}><i className="ti ti-pencil" aria-hidden="true" /> Editar</button>
+                                                <button onClick={() => handleDelete(l.id)} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'var(--status-danger-surface)', padding:'4px 8px', borderRadius:'6px' }} title="Remover" aria-label="Remover"><i className="ti ti-trash" aria-hidden="true" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1044,7 +1045,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
              onClick={e => e.target === e.currentTarget && onClose()}>
             <div style={{ background:'var(--surface-card)', borderRadius:'16px', width:'100%', maxWidth:'540px', maxHeight:'90vh', display:'flex', flexDirection:'column', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
                 <div style={{ padding:'16px 24px', background:'var(--surface-dark-soft)', borderRadius:'16px 16px 0 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <h3 style={{ margin:0, color:'var(--surface-card)', fontSize:'16px', fontWeight:700 }}>✏️ Editar Lançamento #{lancamento.id}</h3>
+                    <h3 style={{ margin:0, color:'var(--surface-card)', fontSize:'16px', fontWeight:700 }}><i className="ti ti-pencil" aria-hidden="true" /> Editar Lançamento #{lancamento.id}</h3>
                     <button onClick={onClose} style={{ background:'rgba(255,255,255,0.15)', border:'none', color:'var(--surface-card)', borderRadius:'8px', width:'32px', height:'32px', cursor:'pointer', fontSize:'16px' }}>×</button>
                 </div>
                 <div style={{ overflow:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:'14px' }}>
@@ -1053,10 +1054,10 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                         {['despesa','receita'].map(t => (
                             <button key={t} type='button' onClick={() => setForm(f => ({ ...f, tipo:t, categoria_id:'' }))}
                                 style={{ flex:1, padding:'10px', borderRadius:'10px', border:'2px solid', cursor:'pointer', fontWeight:700, fontSize:'14px',
-                                    borderColor: form.tipo===t ? (t==='despesa'?'#ef4444':'var(--module-admin)') : 'var(--border-subtle)',
+                                    borderColor: form.tipo===t ? (t==='despesa'?'var(--status-danger-strong)':'var(--module-admin)') : 'var(--border-subtle)',
                                     background: form.tipo===t ? (t==='despesa'?'var(--status-danger-bg)':'var(--status-success-bg)') : 'var(--surface-card)',
                                     color: form.tipo===t ? (t==='despesa'?'var(--status-danger-text)':'var(--module-admin-dark)') : 'var(--border-strong)' }}>
-                                {t==='despesa'?'📤 Despesa':'📥 Receita'}
+                                <><i className={`ti ${t==='despesa'?'ti-arrow-down':'ti-arrow-up'}`} aria-hidden="true" /> {t==='despesa'?'Despesa':'Receita'}</>
                             </button>
                         ))}
                     </div>
@@ -1075,7 +1076,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                             <label style={styles.label}>Categoria *</label>
                             <select value={form.categoria_id} onChange={e => setForm(f => ({ ...f, categoria_id:e.target.value }))} style={styles.select}>
                                 <option value=''>Selecione…</option>
-                                {categoriasFiltradas.map(c => <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>)}
+                                {categoriasFiltradas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                             </select>
                         </div>
                     </div>
@@ -1095,9 +1096,9 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                         <div style={styles.formGroup}>
                             <label style={styles.label}>Status</label>
                             <select value={form.status} onChange={e => setForm(f => ({ ...f, status:e.target.value }))} style={styles.select}>
-                                <option value='pendente'>⏳ Pendente</option>
-                                <option value='pago'>✓ Pago</option>
-                                <option value='cancelado'>✗ Cancelado</option>
+                                <option value='pendente'>Pendente</option>
+                                <option value='pago'>Pago</option>
+                                <option value='cancelado'>Cancelado</option>
                             </select>
                         </div>
                         {form.status === 'pago' && (
@@ -1124,13 +1125,13 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                             <div style={{ border:'1px solid var(--border-subtle)', borderRadius:'10px', padding:'12px', display:'flex', alignItems:'center', gap:'12px', background:'var(--surface-subtle)' }}>
                                 {comprovantePreview.startsWith('data:image') ? (
                                     <img src={comprovantePreview} alt='Comprovante' style={{ width:'60px', height:'60px', objectFit:'cover', borderRadius:'6px' }} />
-                                ) : <div style={{ fontSize:'28px' }}>📄</div>}
+                                ) : <div style={{ fontSize:'28px' }}><i className="ti ti-file-description" aria-hidden="true" /></div>}
                                 <div style={{ flex:1, fontSize:'13px', color:'var(--text-muted)' }}>
-                                    {comprovanteBase64 !== undefined && comprovanteBase64 !== null ? '✅ Novo comprovante selecionado' : '📎 Comprovante atual'}
+                                    <><i className={`ti ${comprovanteBase64 !== undefined && comprovanteBase64 !== null ? 'ti-circle-check' : 'ti-paperclip'}`} aria-hidden="true" /> {comprovanteBase64 !== undefined && comprovanteBase64 !== null ? 'Novo comprovante selecionado' : 'Comprovante atual'}</>
                                 </div>
                                 <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
-                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'#2563eb', background:'#eff6ff', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-refresh" aria-hidden="true" /> Trocar</button>
-                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'#fff0f0', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-trash" aria-hidden="true" /> Remover</button>
+                                    <button type='button' onClick={() => fileRef.current?.click()} style={{ ...styles.smallButton, color:'var(--status-info-strong)', background:'var(--status-info-surface)', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-refresh" aria-hidden="true" /> Trocar</button>
+                                    <button type='button' onClick={removerComprovante} style={{ ...styles.smallButton, color:'var(--status-danger)', background:'var(--status-danger-surface)', padding:'5px 10px', borderRadius:'6px' }}><i className="ti ti-trash" aria-hidden="true" /> Remover</button>
                                 </div>
                             </div>
                         ) : (
@@ -1145,7 +1146,7 @@ const EditarLancamentoModal = ({ lancamento, token, categorias, onClose, onSalvo
                 <div style={{ padding:'14px 24px', borderTop:'1px solid var(--border-subtle)', display:'flex', justifyContent:'flex-end', gap:'10px', background:'var(--surface-subtle)', borderRadius:'0 0 16px 16px' }}>
                     <button type='button' onClick={onClose} style={{ ...styles.cancelButton }}>Cancelar</button>
                     <button type='button' onClick={handleSalvar} disabled={salvando} style={{ ...styles.primaryButton, opacity: salvando ? 0.7 : 1 }}>
-                        {salvando ? '⏳ Salvando…' : '✅ Salvar Alterações'}
+                        <><i className={`ti ${salvando ? 'ti-loader-2' : 'ti-device-floppy'}`} aria-hidden="true" /> {salvando ? 'Salvando…' : 'Salvar Alterações'}</>
                     </button>
                 </div>
             </div>
@@ -1328,24 +1329,24 @@ const Imoveis = () => {
     };
 
     const tiposImovel = [
-        { value: 'apartamento', label: '🏢 Apartamento' },
-        { value: 'casa', label: '🏠 Casa' },
-        { value: 'sala_comercial', label: '🏪 Sala Comercial' },
-        { value: 'terreno', label: '🌳 Terreno' },
-        { value: 'escritorio', label: '💼 Escritório' },
-        { value: 'geral', label: '📋 Conta geral (empresa) — não é imóvel' },
-        { value: 'galpao', label: '🏭 Galpão' },
+        { value: 'apartamento', label: 'Apartamento', icone: 'ti-building-skyscraper' },
+        { value: 'casa', label: 'Casa', icone: 'ti-home' },
+        { value: 'sala_comercial', label: 'Sala Comercial', icone: 'ti-building-store' },
+        { value: 'terreno', label: 'Terreno', icone: 'ti-map-pin' },
+        { value: 'escritorio', label: 'Escritório', icone: 'ti-building' },
+        { value: 'geral', label: 'Conta geral (empresa) — não é imóvel', icone: 'ti-clipboard-list' },
+        { value: 'galpao', label: 'Galpão', icone: 'ti-building-warehouse' },
     ];
 
     const statusImovel = [
-        { value: 'proprio', label: 'Próprio', icon: '🏠', cor: '#e0e7ff', corTexto: '#4f46e5' },
-        { value: 'alugado', label: 'Alugado', icon: '💰', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
-        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: '🔑', cor: 'var(--status-info-bg)', corTexto: '#2563eb' },
-        { value: 'a_venda', label: 'À Venda', icon: '🏷️', cor: 'var(--status-warning-bg)', corTexto: '#d97706' },
-        { value: 'vendido', label: 'Vendido', icon: '✅', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
-        { value: 'em_obra', label: 'Em Obra', icon: '🏗️', cor: '#fae8ff', corTexto: '#a855f7' },
-        { value: 'em_espera', label: 'Em Espera', icon: '⏸️', cor: 'var(--surface-muted)', corTexto: 'var(--status-neutral)' },
-        { value: 'inativo', label: 'Inativo', icon: '🚫', cor: 'var(--status-danger-bg)', corTexto: 'var(--status-danger)' },
+        { value: 'proprio', label: 'Próprio', icon: 'ti-home', cor: 'var(--accent-indigo-bg)', corTexto: 'var(--accent-indigo)' },
+        { value: 'alugado', label: 'Alugado', icon: 'ti-cash', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
+        { value: 'alugado_terceiro', label: 'Alugado (Inquilino)', icon: 'ti-key', cor: 'var(--status-info-bg)', corTexto: 'var(--status-info-strong)' },
+        { value: 'a_venda', label: 'À Venda', icon: 'ti-tag', cor: 'var(--status-warning-bg)', corTexto: 'var(--status-warning-strong)' },
+        { value: 'vendido', label: 'Vendido', icon: 'ti-circle-check', cor: 'var(--status-success-bg)', corTexto: 'var(--module-admin-dark)' },
+        { value: 'em_obra', label: 'Em Obra', icon: 'ti-bricks', cor: 'var(--status-purple-bg)', corTexto: 'var(--chart-13)' },
+        { value: 'em_espera', label: 'Em Espera', icon: 'ti-clock', cor: 'var(--surface-muted)', corTexto: 'var(--status-neutral)' },
+        { value: 'inativo', label: 'Inativo', icon: 'ti-ban', cor: 'var(--status-danger-bg)', corTexto: 'var(--status-danger)' },
     ];
 
     if (loading) {
@@ -1369,24 +1370,24 @@ const Imoveis = () => {
                         <div key={imovel.id} style={styles.imovelCard}>
                             <div style={styles.imovelHeader}>
                                 <span style={styles.imovelIcon}>
-                                    {tiposImovel.find(t => t.value === imovel.tipo)?.label?.split(' ')[0] || '🏠'}
+                                    <i className={`ti ${tiposImovel.find(t => t.value === imovel.tipo)?.icone || 'ti-home'}`} aria-hidden="true" />
                                 </span>
                                 {(() => {
                                     const statusInfo = statusImovel.find(s => s.value === imovel.status);
                                     return (
                                         <span style={{
                                             ...styles.statusBadge,
-                                            backgroundColor: statusInfo?.cor || '#e0e7ff',
-                                            color: statusInfo?.corTexto || '#4f46e5'
+                                            backgroundColor: statusInfo?.cor || 'var(--accent-indigo-bg)',
+                                            color: statusInfo?.corTexto || 'var(--accent-indigo)'
                                         }}>
-                                            {statusInfo?.icon} {statusInfo?.label || imovel.status}
+                                            <i className={`ti ${statusInfo?.icon || 'ti-building'}`} aria-hidden="true" /> {statusInfo?.label || imovel.status}
                                         </span>
                                     );
                                 })()}
                             </div>
                             <h3 style={styles.imovelNome}>{imovel.nome}</h3>
                             <p style={styles.imovelEndereco}>
-                                📍 {imovel.endereco || 'Endereço não informado'}
+                                <i className="ti ti-map-pin" aria-hidden="true" /> {imovel.endereco || 'Endereço não informado'}
                                 {imovel.cidade && `, ${imovel.cidade}`}
                             </p>
                             
@@ -1426,7 +1427,7 @@ const Imoveis = () => {
                             <div style={styles.imovelActions}>
                                 <button 
                                     onClick={() => setImovelLancamentos(imovel)} 
-                                    style={{ ...styles.actionButton, color: '#0369a1', background: '#f0f9ff' }}
+                                    style={{ ...styles.actionButton, color: 'var(--module-almoxarifado)', background: 'var(--status-info-surface)' }}
                                 >
                                     <i className="ti ti-list" aria-hidden="true" /> Lançamentos
                                 </button>
@@ -1447,7 +1448,7 @@ const Imoveis = () => {
                     ))
                 ) : (
                     <div style={styles.emptyState}>
-                        <div style={styles.emptyIcon}>🏠</div>
+                        <div style={styles.emptyIcon}><i className="ti ti-home" aria-hidden="true" /></div>
                         <p>Nenhum imóvel cadastrado</p>
                         <button onClick={() => openModal()} style={styles.primaryButton}>
                             Cadastrar primeiro imóvel
@@ -1471,7 +1472,7 @@ const Imoveis = () => {
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
                             <h2 style={styles.modalTitle}>
-                                {editando ? '✏️ Editar Imóvel' : '🏠 Novo Imóvel'}
+                                <><i className={`ti ${editando ? 'ti-pencil' : 'ti-home'}`} aria-hidden="true" /> {editando ? 'Editar Imóvel' : 'Novo Imóvel'}</>
                             </h2>
                             <button onClick={closeModal} style={styles.closeButton} aria-label="Fechar">×</button>
                         </div>
@@ -1482,7 +1483,7 @@ const Imoveis = () => {
                                     padding: '10px 14px', marginBottom: '14px'
                                 }}>
                                     <label style={{ ...styles.label, color: 'var(--status-info-text)' }}>
-                                        🏗️ Importar de uma obra (opcional)
+                                        <i className="ti ti-bricks" aria-hidden="true" /> Importar de uma obra (opcional)
                                     </label>
                                     <select
                                         value={obraImportar}
@@ -1537,7 +1538,7 @@ const Imoveis = () => {
                                         style={styles.select}
                                     >
                                         {statusImovel.map(s => (
-                                            <option key={s.value} value={s.value}>{s.icon} {s.label}</option>
+                                            <option key={s.value} value={s.value}>{s.label}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -1952,10 +1953,10 @@ const Lancamentos = () => {
                                             backgroundColor: lanc.status === 'pago' ? 'var(--status-success-bg)' : 
                                                             lanc.status === 'pendente' ? 'var(--status-warning-bg)' : 'var(--status-danger-bg)',
                                             color: lanc.status === 'pago' ? 'var(--module-admin-dark)' : 
-                                                   lanc.status === 'pendente' ? '#d97706' : 'var(--status-danger)'
+                                                   lanc.status === 'pendente' ? 'var(--status-warning-strong)' : 'var(--status-danger)'
                                         }}>
-                                            {lanc.status === 'pago' ? '✓ Pago' : 
-                                             lanc.status === 'pendente' ? '⏳ Pendente' : '✗ Cancelado'}
+                                            <><i className={`ti ${lanc.status === 'pago' ? 'ti-check' : lanc.status === 'pendente' ? 'ti-clock' : 'ti-x'}`} aria-hidden="true" />{' '}
+                                             {lanc.status === 'pago' ? 'Pago' : lanc.status === 'pendente' ? 'Pendente' : 'Cancelado'}</>
                                         </span>
                                     </td>
                                     <td style={{
@@ -1987,7 +1988,7 @@ const Lancamentos = () => {
                                             )}
                                             <button
                                                 onClick={() => setEditandoLanc(lanc)}
-                                                style={{ ...styles.smallButton, color: '#2563eb' }}
+                                                style={{ ...styles.smallButton, color: 'var(--status-info-strong)' }}
                                                 title="Editar lançamento"
                                             >
                                                 <i className="ti ti-pencil" aria-hidden="true" />
@@ -2007,7 +2008,7 @@ const Lancamentos = () => {
                     </table>
                 ) : (
                     <div style={styles.emptyState}>
-                        <div style={styles.emptyIcon}>💰</div>
+                        <div style={styles.emptyIcon}><i className="ti ti-cash" aria-hidden="true" /></div>
                         <p>Nenhum lançamento encontrado</p>
                         <button onClick={() => setShowModal(true)} style={styles.primaryButton}>
                             Criar primeiro lançamento
@@ -2083,7 +2084,7 @@ const Lancamentos = () => {
                                                 ) : (
                                                     <div style={styles.pdfIcon}><i className="ti ti-file-description" aria-hidden="true" /> PDF</div>
                                                 )}
-                                                <span style={styles.uploadedText}>✓ Arquivo selecionado</span>
+                                                <span style={styles.uploadedText}><i className="ti ti-check" aria-hidden="true" /> Arquivo selecionado</span>
                                             </div>
                                         ) : (
                                             <>
@@ -2100,7 +2101,7 @@ const Lancamentos = () => {
                                         onClick={() => setPagamentoForm({ ...pagamentoForm, comprovante_base64: '' })}
                                         style={styles.removeFileButton}
                                     >
-                                        ✕ Remover arquivo
+                                        <i className="ti ti-x" aria-hidden="true" /> Remover arquivo
                                     </button>
                                 )}
                             </div>
@@ -2110,7 +2111,7 @@ const Lancamentos = () => {
                                     Cancelar
                                 </button>
                                 <button type="button" onClick={handlePagar} style={styles.primaryButton}>
-                                    ✓ Confirmar Pagamento
+                                    <i className="ti ti-check" aria-hidden="true" /> Confirmar Pagamento
                                 </button>
                             </div>
                         </div>
@@ -2138,7 +2139,7 @@ const Lancamentos = () => {
                                 />
                             ) : showComprovante.comprovante_url?.startsWith('data:application/pdf') ? (
                                 <div>
-                                    <p style={{ fontSize: '48px', marginBottom: '16px' }}>📄</p>
+                                    <p style={{ fontSize: '48px', marginBottom: '16px' }}><i className="ti ti-file-type-pdf" aria-hidden="true" /></p>
                                     <a 
                                         href={showComprovante.comprovante_url} 
                                         download={`comprovante_${showComprovante.id}.pdf`}
@@ -2185,7 +2186,7 @@ const Lancamentos = () => {
                                         ...(form.tipo === 'despesa' ? styles.tipoButtonActiveDespesa : {})
                                     }}
                                 >
-                                    ↓ Despesa
+                                    <i className="ti ti-arrow-down" aria-hidden="true" /> Despesa
                                 </button>
                                 <button
                                     type="button"
@@ -2195,7 +2196,7 @@ const Lancamentos = () => {
                                         ...(form.tipo === 'receita' ? styles.tipoButtonActiveReceita : {})
                                     }}
                                 >
-                                    ↑ Receita
+                                    <i className="ti ti-arrow-up" aria-hidden="true" /> Receita
                                 </button>
                             </div>
 
@@ -2224,7 +2225,7 @@ const Lancamentos = () => {
                                     >
                                         <option value="">Selecione...</option>
                                         {categoriasFiltradas.map(c => (
-                                            <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>
+                                            <option key={c.id} value={c.id}>{c.nome}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -2284,7 +2285,7 @@ const Lancamentos = () => {
                                             onChange={e => setForm({ ...form, status: e.target.value, data_pagamento: '' })}
                                             style={{ display: 'none' }}
                                         />
-                                        <span style={styles.statusIcon}>⏳</span>
+                                        <span style={styles.statusIcon}><i className="ti ti-clock" aria-hidden="true" /></span>
                                         <div>
                                             <div style={styles.statusTitle}>Lançamento Futuro</div>
                                             <div style={styles.statusDesc}>Aguardando pagamento</div>
@@ -2304,7 +2305,7 @@ const Lancamentos = () => {
                                             onChange={e => setForm({ ...form, status: e.target.value, data_pagamento: getTodayString() })}
                                             style={{ display: 'none' }}
                                         />
-                                        <span style={styles.statusIcon}>✅</span>
+                                        <span style={styles.statusIcon}><i className="ti ti-circle-check" aria-hidden="true" /></span>
                                         <div>
                                             <div style={styles.statusTitle}>Já Pago</div>
                                             <div style={styles.statusDesc}>Pagamento realizado</div>
@@ -2328,7 +2329,7 @@ const Lancamentos = () => {
                                 {/* Alerta de vencimento */}
                                 {form.status === 'pendente' && form.data_vencimento && (
                                     <div style={styles.alertaVencimentoForm}>
-                                        ⏰ Este lançamento aparecerá nos alertas quando o vencimento estiver próximo
+                                        <i className="ti ti-clock-exclamation" aria-hidden="true" /> Este lançamento aparecerá nos alertas quando o vencimento estiver próximo
                                     </div>
                                 )}
                             </div>
@@ -2500,8 +2501,8 @@ const GestaoBoletos = () => {
             vencido: { bg: 'var(--status-danger-bg)', border: 'var(--status-danger)', badge: 'var(--status-danger-text)' },
             urgente: { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
             hoje:    { bg: 'var(--status-warning-bg)', border: 'var(--status-warning)', badge: 'var(--status-warning-text)' },
-            atencao: { bg: '#fffde7', border: '#ffc107', badge: '#ffa000' },
-            normal:  { bg: '#f5f5f5', border: '#e0e0e0', badge: '#757575' },
+            atencao: { bg: 'var(--status-warning-surface)', border: 'var(--status-warning)', badge: 'var(--status-warning-strong)' },
+            normal:  { bg: 'var(--surface-muted)', border: 'var(--border-subtle)', badge: 'var(--status-neutral)' },
             pago:    { bg: 'var(--status-success-bg)', border: 'var(--status-success)', badge: 'var(--status-success-text)' },
         };
         const cor = cores[urgencia] || cores.normal;
@@ -2512,26 +2513,26 @@ const GestaoBoletos = () => {
             <div key={boleto.id} style={{ background: cor.bg, border: `2px solid ${cor.border}`, borderRadius: '10px', padding: '16px', marginBottom: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                     <div>
-                        <h4 style={{ margin: '0 0 4px', color: '#333' }}>🏢 {boleto.descricao}</h4>
-                        {boleto.beneficiario && <span style={{ fontSize: '0.85em', color: '#666' }}>Beneficiário: {boleto.beneficiario}</span>}
+                        <h4 style={{ margin: '0 0 4px', color: 'var(--text-primary)' }}><i className="ti ti-building" aria-hidden="true" /> {boleto.descricao}</h4>
+                        {boleto.beneficiario && <span style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>Beneficiário: {boleto.beneficiario}</span>}
                     </div>
                     <span style={{ background: cor.badge, color: 'white', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8em', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                        {boleto.status === 'Pago' ? '✅ Pago' :
+                        {boleto.status === 'Pago' ? 'Pago' :
                          boleto.dias_para_vencer < 0 ? `Vencido há ${Math.abs(boleto.dias_para_vencer)}d` :
-                         boleto.dias_para_vencer === 0 ? '🚨 Vence HOJE' :
+                         boleto.dias_para_vencer === 0 ? 'Vence HOJE' :
                          `${boleto.dias_para_vencer}d para vencer`}
                     </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
-                    <div><span style={{ fontSize: '0.8em', color: '#666' }}>Valor</span><div style={{ fontWeight: 'bold', color: 'var(--status-info)', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
-                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: '#666' }}>Pago em</span><div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>{formatDate(boleto.data_pagamento)}</div></div>}
+                    <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Vencimento</span><div style={{ fontWeight: 'bold' }}>{formatDate(boleto.data_vencimento)}</div></div>
+                    <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Valor</span><div style={{ fontWeight: 'bold', color: 'var(--status-info)', fontSize: '1.1em' }}>{formatVal(boleto.valor)}</div></div>
+                    {boleto.data_pagamento && <div><span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>Pago em</span><div style={{ fontWeight: 'bold', color: 'var(--status-success-text)' }}>{formatDate(boleto.data_pagamento)}</div></div>}
                 </div>
 
                 {boleto.codigo_barras && (
                     <div style={{ background: 'white', padding: '10px', borderRadius: '5px', marginBottom: '10px', fontFamily: 'monospace', fontSize: '0.85em', wordBreak: 'break-all' }}>
-                        <span style={{ fontSize: '0.75em', color: '#666', display: 'block', marginBottom: '4px' }}>Código de Barras:</span>
+                        <span style={{ fontSize: '0.75em', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Código de Barras:</span>
                         {boleto.codigo_barras}
                     </div>
                 )}
@@ -2573,21 +2574,21 @@ const GestaoBoletos = () => {
             </div>
 
             {!imovelSelecionado ? (
-                <div style={styles.emptyState}><div style={styles.emptyIcon}>📄</div><p>Selecione um imóvel para ver os boletos</p></div>
+                <div style={styles.emptyState}><div style={styles.emptyIcon}><i className="ti ti-file-description" aria-hidden="true" /></div><p>Selecione um imóvel para ver os boletos</p></div>
             ) : (
                 <>
                     {/* Resumo */}
                     {resumo && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px', marginBottom: '20px' }}>
                             {[
-                                { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: '#ffebee', color: '#d32f2f' },
-                                { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: '#fff3e0', color: '#f57c00' },
+                                { label: 'Vencidos', val: resumo.total_vencido, qtd: resumo.quantidade_vencido, bg: 'var(--status-danger-surface)', color: 'var(--status-danger-text)' },
+                                { label: 'Pendentes', val: resumo.total_pendente, qtd: resumo.quantidade_pendente, bg: 'var(--status-warning-surface)', color: 'var(--status-warning-strong)' },
                                 { label: 'Pagos', val: resumo.total_pago, qtd: resumo.quantidade_pago, bg: 'var(--status-success-bg)', color: 'var(--module-admin-dark)' },
                             ].map(k => (
                                 <div key={k.label} style={{ background: k.bg, padding: '15px', borderRadius: '10px', textAlign: 'center' }}>
                                     <div style={{ fontSize: '0.85em', color: k.color }}>{k.label}</div>
                                     <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: k.color }}>{(k.val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-                                    <div style={{ fontSize: '0.8em', color: '#666' }}>{k.qtd} boletos</div>
+                                    <div style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>{k.qtd} boletos</div>
                                 </div>
                             ))}
                         </div>
@@ -2604,14 +2605,14 @@ const GestaoBoletos = () => {
                     </div>
 
                     {loading ? <div style={styles.loading}>Carregando...</div> : boletos.length === 0 ? (
-                        <div style={styles.emptyState}><div style={styles.emptyIcon}>📄</div><p>Nenhum boleto encontrado</p><button onClick={() => setModalCadastro(true)} style={styles.primaryButton}>+ Cadastrar primeiro boleto</button></div>
+                        <div style={styles.emptyState}><div style={styles.emptyIcon}><i className="ti ti-file-description" aria-hidden="true" /></div><p>Nenhum boleto encontrado</p><button onClick={() => setModalCadastro(true)} style={styles.primaryButton}>+ Cadastrar primeiro boleto</button></div>
                     ) : (
                         <>
-                            {boletosVencidos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#d32f2f' }}>❌ VENCIDOS ({boletosVencidos.length})</h3>{boletosVencidos.map(b => renderCard(b, 'vencido'))}</div>}
-                            {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#f57c00' }}>🚨 URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
-                            {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#ffa000' }}>⚠️ Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
-                            {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: '#666' }}>📄 Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
-                            {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--module-admin-dark)' }}>✅ Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
+                            {boletosVencidos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-danger-text)' }}><i className="ti ti-alert-octagon" aria-hidden="true" /> VENCIDOS ({boletosVencidos.length})</h3>{boletosVencidos.map(b => renderCard(b, 'vencido'))}</div>}
+                            {boletosUrgentes.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-warning-strong)' }}><i className="ti ti-alert-triangle" aria-hidden="true" /> URGENTE — Vence em até 3 dias ({boletosUrgentes.length})</h3>{boletosUrgentes.map(b => renderCard(b, 'urgente'))}</div>}
+                            {boletosProximos.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--status-warning-strong)' }}><i className="ti ti-clock-exclamation" aria-hidden="true" /> Vence em até 7 dias ({boletosProximos.length})</h3>{boletosProximos.map(b => renderCard(b, 'atencao'))}</div>}
+                            {boletosNormais.length > 0 && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--text-muted)' }}><i className="ti ti-file-description" aria-hidden="true" /> Próximos vencimentos ({boletosNormais.length})</h3>{boletosNormais.map(b => renderCard(b, 'normal'))}</div>}
+                            {boletosPagos.length > 0 && filtroStatus === 'todos' && <div style={{ marginBottom: '20px' }}><h3 style={{ color: 'var(--module-admin-dark)' }}><i className="ti ti-circle-check" aria-hidden="true" /> Pagos ({boletosPagos.length})</h3>{boletosPagos.map(b => renderCard(b, 'pago'))}</div>}
                         </>
                     )}
                 </>
@@ -2770,18 +2771,18 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
 
                     {/* Múltiplos boletos */}
                     {multiplos && (
-                        <div style={{ padding: '14px', background: '#e3f2fd', borderRadius: '10px', marginBottom: '16px' }}>
-                            <p style={{ fontWeight: 700, color: '#1565c0', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
+                        <div style={{ padding: '14px', background: 'var(--status-info-surface)', borderRadius: '10px', marginBottom: '16px' }}>
+                            <p style={{ fontWeight: 700, color: 'var(--status-info-text)', marginBottom: '10px' }}><i className="ti ti-file" aria-hidden="true" /> {multiplos.length} boletos encontrados no PDF</p>
                             <div style={{ marginBottom: '10px' }}>
                                 <label style={{ ...styles.label, fontSize: '0.85em' }}>Descrição base para os boletos</label>
                                 <input type="text" value={descBaseMultiplos} onChange={e => setDescBaseMultiplos(e.target.value)}
-                                    placeholder="Ex: Boleto" style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #90caf9' }} />
+                                    placeholder="Ex: Boleto" style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--status-info-border)' }} />
                             </div>
                             <button type="button" onClick={cadastrarTodos} disabled={salvandoTodos}
                                 style={{ padding: '10px 20px', background: 'var(--status-info)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                {salvandoTodos ? '⏳ Cadastrando...' : `✅ Cadastrar todos (${multiplos.length})`}
+                                <><i className={`ti ${salvandoTodos ? 'ti-loader-2' : 'ti-circle-check'}`} aria-hidden="true" /> {salvandoTodos ? 'Cadastrando...' : `Cadastrar todos (${multiplos.length})`}</>
                             </button>
-                            <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: '#757575', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                            <button type="button" onClick={() => setMultiplos(null)} style={{ marginLeft: '10px', padding: '10px 16px', background: 'var(--status-neutral)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                                 Cadastrar um por um
                             </button>
                         </div>
@@ -2796,7 +2797,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                         <input type="text" value={form.beneficiario} onChange={e => setForm({ ...form, beneficiario: e.target.value })} style={styles.input} placeholder="Nome do beneficiário" />
                     </div>
                     <div style={styles.formGroup}>
-                        <label style={styles.label}>Vínculo Orçamento (item_id) <span style={{ fontWeight: 400, color: '#999' }}>(opcional)</span></label>
+                        <label style={styles.label}>Vínculo Orçamento (item_id) <span style={{ fontWeight: 400, color: 'var(--border-strong)' }}>(opcional)</span></label>
                         <input type="number" min="1" value={form.orcamento_item_id} onChange={e => setForm({ ...form, orcamento_item_id: e.target.value })} style={styles.input} placeholder="ID do item de orçamento" />
                     </div>
                     <div style={styles.formRow}>
@@ -2815,7 +2816,7 @@ const CadastrarBoletoAdminModal = ({ imovelId, token, onClose, onSave }) => {
                     </div>
                     <div style={styles.modalFooter}>
                         <button type="button" onClick={onClose} style={styles.cancelButton}>Cancelar</button>
-                        <button type="submit" disabled={salvando} style={styles.primaryButton}>{salvando ? '⏳ Salvando...' : '✅ Cadastrar Boleto'}</button>
+                        <button type="submit" disabled={salvando} style={styles.primaryButton}><><i className={`ti ${salvando ? 'ti-loader-2' : 'ti-check'}`} aria-hidden="true" /> {salvando ? 'Salvando...' : 'Cadastrar Boleto'}</></button>
                     </div>
                 </form>
             </div>
@@ -2891,7 +2892,7 @@ const Relatorios = () => {
         .filter(l => !filtroImovel || String(l.imovel_id) === String(filtroImovel))
         .forEach(l => {
             const cat = l.categoria_nome || 'Outros';
-            const icone = l.categoria_icone || '💰';
+            const icone = l.categoria_icone || '';
             if (!categoriasDRE[cat]) categoriasDRE[cat] = { nome: cat, icone, tipo: l.tipo, total: 0 };
             categoriasDRE[cat].total += l.valor;
         });
@@ -2922,10 +2923,10 @@ const Relatorios = () => {
         } else {
             csv += `DRE - ${imovelNome} - ${periodoLabel}\n\n`;
             csv += 'RECEITAS\nCategoria;Valor\n';
-            dreReceitas.forEach(c => csv += `"${c.icone} ${c.nome}";${c.total.toFixed(2)}\n`);
+            dreReceitas.forEach(c => csv += `"${c.nome}";${c.total.toFixed(2)}\n`);
             csv += `TOTAL RECEITAS;${totalDREReceitas.toFixed(2)}\n\n`;
             csv += 'DESPESAS\nCategoria;Valor\n';
-            dreDespesas.forEach(c => csv += `"${c.icone} ${c.nome}";${c.total.toFixed(2)}\n`);
+            dreDespesas.forEach(c => csv += `"${c.nome}";${c.total.toFixed(2)}\n`);
             csv += `TOTAL DESPESAS;${totalDREDespesas.toFixed(2)}\n\n`;
             csv += `RESULTADO;${resultadoDRE.toFixed(2)}\n`;
         }
@@ -2995,7 +2996,7 @@ const Relatorios = () => {
                             ${rentabilidade.map(i => `
                                 <tr>
                                     <td><strong>${escapeHtml(i.nome)}</strong></td>
-                                    <td><span class="badge">${i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : escapeHtml(i.status)}</span></td>
+                                    <td><span class="badge">${i.status === 'proprio' ? 'Próprio' : i.status === 'alugado' ? 'Alugado' : escapeHtml(i.status)}</span></td>
                                     <td class="r red">${fmtBR(i.despesas)}</td>
                                     <td class="r green">${i.receitas > 0 ? fmtBR(i.receitas) : '—'}</td>
                                     <td class="r ${i.saldo >= 0 ? 'green' : 'red'}">${fmtBR(i.saldo)}</td>
@@ -3022,7 +3023,7 @@ const Relatorios = () => {
                     <tbody>
                         ${dreReceitas.map(c => `
                             <tr>
-                                <td>${escapeHtml(c.icone)} ${escapeHtml(c.nome)}</td>
+                                <td>${escapeHtml(c.nome)}</td>
                                 <td class="r green"><strong>${fmtBR(c.total)}</strong></td>
                                 <td class="r muted">${totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                             </tr>
@@ -3035,7 +3036,7 @@ const Relatorios = () => {
                     <tbody>
                         ${dreDespesas.map(c => `
                             <tr>
-                                <td>${escapeHtml(c.icone)} ${escapeHtml(c.nome)}</td>
+                                <td>${escapeHtml(c.nome)}</td>
                                 <td class="r red"><strong>${fmtBR(c.total)}</strong></td>
                                 <td class="r muted">${totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
                             </tr>
@@ -3046,11 +3047,11 @@ const Relatorios = () => {
             conteudo = `
                 <div class="dre-grid">
                     <div class="dre-box">
-                        <div class="dre-head green-bg"><span>📥 Receitas</span><strong>${fmtBR(totalDREReceitas)}</strong></div>
+                        <div class="dre-head green-bg"><span>Receitas</span><strong>${fmtBR(totalDREReceitas)}</strong></div>
                         ${receitasHTML}
                     </div>
                     <div class="dre-box">
-                        <div class="dre-head red-bg"><span>📤 Despesas</span><strong>${fmtBR(totalDREDespesas)}</strong></div>
+                        <div class="dre-head red-bg"><span>Despesas</span><strong>${fmtBR(totalDREDespesas)}</strong></div>
                         ${despesasHTML}
                     </div>
                 </div>
@@ -3067,14 +3068,21 @@ const Relatorios = () => {
 <meta charset="UTF-8">
 <title>${escapeHtml(titulo)} — ${escapeHtml(periodoLabel)}</title>
 <style>
+    /* O documento de impressão abre em window.open(), fora do React e
+       fora do styles/tokens.css — então os tokens que ele usa precisam
+       ser DEFINIDOS aqui, com valor literal. Isto não é hex solto: é a
+       única cópia possível. Mantenha igual ao tokens.css. */
     :root {
         --surface-dark-soft:#1e293b; --text-secondary:#334155; --text-muted:#475569;
         --status-neutral:#64748b; --border-strong:#94a3b8; --border-default:#cbd5e1;
         --border-subtle:#e2e8f0; --surface-muted:#f1f5f9; --surface-subtle:#f8fafc;
         --surface-card:#fff; --status-danger:#dc2626; --status-danger-bg:#fee2e2;
         --status-danger-text:#b91c1c; --status-warning:#f59e0b; --status-warning-bg:#fef3c7;
-        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:var(--status-success-text);
+        --status-success:#10b981; --status-success-bg:#d1fae5; --status-success-text:#047857;
         --status-info:#3b82f6; --status-info-bg:#dbeafe;
+        --status-danger-surface:#fef2f2; --status-danger-border:#fecaca;
+        --status-danger-deep:#991b1b; --text-on-dark:#ffffff;
+        --module-admin-dark:#108c54;
     }
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: var(--surface-dark-soft); margin: 24px; font-size: 13px; }
@@ -3083,12 +3091,12 @@ const Relatorios = () => {
     .header .sub { color: var(--text-muted); margin-top: 6px; font-size: 13px; }
     .header .meta { color: var(--border-strong); font-size: 11px; margin-top: 4px; }
     .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-subtle); background: #fff; }
+    .kpi { padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border-subtle); background: var(--surface-card); }
     .kpi span { display: block; font-size: 10px; color: var(--status-neutral); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
     .kpi strong { font-size: 18px; font-weight: 800; }
     .kpi.red strong { color: var(--status-danger); }
     .kpi.green strong { color: var(--module-admin-dark); }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; background: var(--surface-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-subtle); }
     th { background: var(--surface-subtle); padding: 10px 12px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border-subtle); color: var(--text-muted); font-size: 12px; }
     th.r, td.r { text-align: right; }
     td { padding: 8px 12px; border-bottom: 1px solid var(--surface-muted); }
@@ -3099,13 +3107,13 @@ const Relatorios = () => {
     .empty-row td { opacity: 0.4; }
     .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface-muted); color: var(--status-neutral); }
     .dre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .dre-box { border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: #fff; }
+    .dre-box { border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; background: var(--surface-card); }
     .dre-box table { border: none; border-radius: 0; margin: 0; }
     .dre-head { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
     .dre-head span { font-weight: 700; font-size: 14px; }
     .dre-head strong { font-size: 17px; font-weight: 800; }
     .green-bg { background: var(--status-success-bg); color: var(--status-success-text); }
-    .red-bg { background: var(--status-danger-bg); color: #991b1b; }
+    .red-bg { background: var(--status-danger-bg); color: var(--status-danger-deep); }
     .resultado { padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
     .resultado div { display: flex; flex-direction: column; }
     .resultado span { font-weight: 700; color: var(--status-neutral); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -3113,10 +3121,10 @@ const Relatorios = () => {
     .resultado strong { font-size: 26px; font-weight: 900; }
     .green-box { background: var(--status-success-bg); border: 2px solid var(--status-success-bg); }
     .green-box strong { color: var(--module-admin-dark); }
-    .red-box { background: #fff1f2; border: 2px solid #fecdd3; }
+    .red-box { background: var(--status-danger-surface); border: 2px solid var(--status-danger-border); }
     .red-box strong { color: var(--status-danger); }
     .empty { text-align: center; color: var(--border-strong); padding: 24px; margin: 0; font-style: italic; }
-    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: var(--module-admin-dark); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: var(--module-admin-dark); color: var(--text-on-dark); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     @media print {
         body { margin: 14mm; }
         .print-btn { display: none; }
@@ -3126,9 +3134,9 @@ const Relatorios = () => {
 </style>
 </head>
 <body>
-    <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
     <div class="header">
-        <h1>📈 ${escapeHtml(titulo)}</h1>
+        <h1>${escapeHtml(titulo)}</h1>
         <div class="sub"><strong>${escapeHtml(imovelNome)}</strong> · Período: <strong>${escapeHtml(periodoLabel)}</strong></div>
         <div class="meta">Gerado em ${dataGeracao} · Obraly Patrimonial</div>
     </div>
@@ -3191,10 +3199,10 @@ const Relatorios = () => {
             {/* Abas */}
             <div style={{ display: 'flex', borderBottom: '2px solid var(--border-subtle)', marginBottom: '24px', gap: '4px' }}>
                 {[
-                    ['fluxo', '💸 Fluxo de Caixa'],
-                    ['rentabilidade', '📊 Rentabilidade'],
-                    ['dre', '📋 DRE'],
-                ].map(([id, label]) => (
+                    ['fluxo', 'ti-arrows-exchange', 'Fluxo de Caixa'],
+                    ['rentabilidade', 'ti-chart-bar', 'Rentabilidade'],
+                    ['dre', 'ti-clipboard-list', 'DRE'],
+                ].map(([id, icone, label]) => (
                     <button key={id} onClick={() => setAbaAtiva(id)} style={{
                         padding: '10px 20px', border: 'none', cursor: 'pointer', fontWeight: 700,
                         fontSize: '14px', borderRadius: '8px 8px 0 0',
@@ -3202,7 +3210,7 @@ const Relatorios = () => {
                         color: abaAtiva === id ? 'var(--surface-card)' : 'var(--status-neutral)',
                         borderBottom: abaAtiva === id ? '2px solid var(--surface-dark-soft)' : 'none',
                         marginBottom: '-2px',
-                    }}>{label}</button>
+                    }}><i className={`ti ${icone}`} aria-hidden="true" /> {label}</button>
                 ))}
             </div>
 
@@ -3230,7 +3238,7 @@ const Relatorios = () => {
                             {fluxoPorMes.map((m, i) => (
                                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', height: '100%', justifyContent: 'flex-end' }}>
                                     <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', width: '100%' }}>
-                                        <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: '#ef4444', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
+                                        <div title={`Despesas: ${fmtCur(m.despesas)}`} style={{ flex: 1, background: 'var(--status-danger-strong)', borderRadius: '3px 3px 0 0', height: `${(m.despesas / maxFluxo) * 130}px`, minHeight: m.despesas > 0 ? '2px' : 0 }} />
                                         <div title={`Receitas: ${fmtCur(m.receitas)}`} style={{ flex: 1, background: 'var(--module-admin)', borderRadius: '3px 3px 0 0', height: `${(m.receitas / maxFluxo) * 130}px`, minHeight: m.receitas > 0 ? '2px' : 0 }} />
                                     </div>
                                     <div style={{ fontSize: '10px', color: 'var(--border-strong)', marginTop: '4px' }}>{m.mes}</div>
@@ -3238,7 +3246,7 @@ const Relatorios = () => {
                             ))}
                         </div>
                         <div style={{ display: 'flex', gap: '16px', marginTop: '8px', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: '#ef4444', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
+                            <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: 'var(--status-danger-strong)', borderRadius: '2px', display: 'inline-block' }} /> Despesas</span>
                             <span style={{ fontSize: '12px', color: 'var(--status-neutral)', display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '12px', height: '12px', background: 'var(--module-admin)', borderRadius: '2px', display: 'inline-block' }} /> Receitas</span>
                         </div>
                     </div>
@@ -3257,16 +3265,16 @@ const Relatorios = () => {
                                 {fluxoPorMes.map((m, i) => (
                                     <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)', opacity: m.despesas === 0 && m.receitas === 0 ? 0.4 : 1 }}>
                                         <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{m.mes}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--status-danger-strong)', fontWeight: 600 }}>{m.despesas > 0 ? fmtCur(m.despesas) : '—'}</td>
                                         <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{m.receitas > 0 ? fmtCur(m.receitas) : '—'}</td>
-                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
+                                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: m.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{m.despesas > 0 || m.receitas > 0 ? fmtCur(m.saldo) : '—'}</td>
                                     </tr>
                                 ))}
                                 <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                     <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(totalFluxo.despesas)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--status-danger-strong)' }}>{fmtCur(totalFluxo.despesas)}</td>
                                     <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(totalFluxo.receitas)}</td>
-                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(totalFluxo.saldo)}</td>
+                                    <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(totalFluxo.saldo)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -3278,7 +3286,7 @@ const Relatorios = () => {
             {abaAtiva === 'rentabilidade' && (
                 <div>
                     {rentabilidade.length === 0 ? (
-                        <div style={styles.emptyState}><div style={styles.emptyIcon}>📊</div><p>Nenhum dado encontrado para o período</p></div>
+                        <div style={styles.emptyState}><div style={styles.emptyIcon}><i className="ti ti-chart-bar" aria-hidden="true" /></div><p>Nenhum dado encontrado para o período</p></div>
                     ) : (
                         <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
@@ -3295,22 +3303,22 @@ const Relatorios = () => {
                                             <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--surface-dark-soft)' }}>{i.nome}</td>
                                             <td style={{ padding: '12px 16px' }}>
                                                 <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '999px', background: 'var(--surface-muted)', color: 'var(--status-neutral)' }}>
-                                                    {i.status === 'proprio' ? '🏠 Próprio' : i.status === 'alugado' ? '🔑 Alugado' : i.status}
+                                                    <><i className={`ti ${i.status === 'proprio' ? 'ti-home' : i.status === 'alugado' ? 'ti-key' : 'ti-building'}`} aria-hidden="true" /> {i.status === 'proprio' ? 'Próprio' : i.status === 'alugado' ? 'Alugado' : i.status}</>
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>{fmtCur(i.despesas)}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--status-danger-strong)', fontWeight: 600 }}>{fmtCur(i.despesas)}</td>
                                             <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--module-admin)', fontWeight: 600 }}>{i.receitas > 0 ? fmtCur(i.receitas) : '—'}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(i.saldo)}</td>
-                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? 'var(--module-admin)' : '#ef4444' }}>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(i.saldo)}</td>
+                                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: i.rentabilidade >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>
                                                 {i.rentabilidade != null ? `${i.rentabilidade}%` : '—'}
                                             </td>
                                         </tr>
                                     ))}
                                     <tr style={{ background: 'var(--surface-subtle)', borderTop: '2px solid var(--border-subtle)' }}>
                                         <td colSpan={2} style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--surface-dark-soft)' }}>TOTAL</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--status-danger-strong)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.despesas, 0))}</td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: 'var(--module-admin)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.receitas, 0))}</td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : '#ef4444' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: totalFluxo.saldo >= 0 ? 'var(--module-admin)' : 'var(--status-danger-strong)' }}>{fmtCur(rentabilidade.reduce((a, i) => a + i.saldo, 0))}</td>
                                         <td style={{ padding: '12px 16px' }} />
                                     </tr>
                                 </tbody>
@@ -3334,7 +3342,7 @@ const Relatorios = () => {
                                 <tbody>
                                     {dreReceitas.map((c, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
-                                            <td style={{ padding: '10px 16px', color: '#374151' }}>{c.icone} {c.nome}</td>
+                                            <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--module-admin-dark)' }}>{fmtCur(c.total)}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREReceitas > 0 ? ((c.total / totalDREReceitas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
@@ -3346,16 +3354,16 @@ const Relatorios = () => {
 
                     {/* Despesas */}
                     <div style={{ background: 'var(--surface-card)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
-                        <div style={{ background: 'var(--status-danger-bg)', padding: '14px 16px', borderBottom: '1px solid #fecaca' }}>
-                            <h3 style={{ margin: 0, color: '#991b1b', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-down" aria-hidden="true" /> Despesas</h3>
-                            <div style={{ fontSize: '20px', fontWeight: 800, color: '#991b1b', marginTop: '4px' }}>{fmtCur(totalDREDespesas)}</div>
+                        <div style={{ background: 'var(--status-danger-bg)', padding: '14px 16px', borderBottom: '1px solid var(--status-danger-border)' }}>
+                            <h3 style={{ margin: 0, color: 'var(--status-danger-deep)', fontSize: '15px', fontWeight: 700 }}><i className="ti ti-trending-down" aria-hidden="true" /> Despesas</h3>
+                            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--status-danger-deep)', marginTop: '4px' }}>{fmtCur(totalDREDespesas)}</div>
                         </div>
                         {dreDespesas.length === 0 ? <p style={{ padding: '16px', color: 'var(--border-strong)', textAlign: 'center' }}>Nenhuma despesa</p> : (
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                                 <tbody>
                                     {dreDespesas.map((c, i) => (
                                         <tr key={i} style={{ borderBottom: '1px solid var(--surface-muted)' }}>
-                                            <td style={{ padding: '10px 16px', color: '#374151' }}>{c.icone} {c.nome}</td>
+                                            <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}><i className={`ti ${iconeCategoria(c.icone)}`} aria-hidden="true" /> {c.nome}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--status-danger)' }}>{fmtCur(c.total)}</td>
                                             <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--border-strong)', fontSize: '12px' }}>{totalDREDespesas > 0 ? ((c.total / totalDREDespesas) * 100).toFixed(0) + '%' : '—'}</td>
                                         </tr>
@@ -3366,7 +3374,7 @@ const Relatorios = () => {
                     </div>
 
                     {/* Resultado */}
-                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fff1f2', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? 'var(--status-success-bg)' : '#fecdd3'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ gridColumn: '1/-1', background: resultadoDRE >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-surface)', borderRadius: '12px', border: `2px solid ${resultadoDRE >= 0 ? 'var(--status-success-bg)' : 'var(--status-danger-border)'}`, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                             <div style={{ fontSize: '13px', color: 'var(--status-neutral)', fontWeight: 600, textTransform: 'uppercase' }}>Resultado do Período</div>
                             <div style={{ fontSize: '13px', color: 'var(--border-strong)', marginTop: '2px' }}>Receitas − Despesas</div>
@@ -3574,7 +3582,7 @@ const styles = {
     // Sidebar
     sidebar: {
         width: '260px',
-        background: 'linear-gradient(180deg, var(--module-admin-dark) 0%, #0b1220 130%)',
+        background: 'linear-gradient(180deg, var(--module-admin-dark) 0%, var(--brand-primary) 130%)',
         color: 'var(--surface-card)',
         display: 'flex',
         flexDirection: 'column',
@@ -3716,7 +3724,7 @@ const styles = {
         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     },
     cardBlue: {
-        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+        background: 'linear-gradient(135deg, var(--chart-11) 0%, var(--chart-6) 100%)',
         color: 'var(--surface-card)',
     },
     cardGreen: {
@@ -3724,7 +3732,7 @@ const styles = {
         color: 'var(--surface-card)',
     },
     cardRed: {
-        background: 'linear-gradient(135deg, #ef4444 0%, var(--status-danger) 100%)',
+        background: 'linear-gradient(135deg, var(--status-danger-strong) 0%, var(--status-danger) 100%)',
         color: 'var(--surface-card)',
     },
     cardIcon: {
@@ -3745,8 +3753,8 @@ const styles = {
         padding: '16px 20px',
         borderRadius: '12px',
         backgroundColor: 'var(--status-warning-bg)',
-        border: '1px solid #fcd34d',
-        color: '#92400e',
+        border: '1px solid var(--status-warning-border)',
+        color: 'var(--status-warning-deep)',
         marginBottom: '24px',
         fontSize: '15px',
     },
@@ -4069,7 +4077,7 @@ const styles = {
         display: 'block',
         fontSize: '14px',
         fontWeight: '500',
-        color: '#374151',
+        color: 'var(--text-secondary)',
         marginBottom: '6px',
     },
     input: {
@@ -4099,7 +4107,7 @@ const styles = {
         color: 'var(--status-neutral)',
     },
     tipoButtonActiveDespesa: {
-        borderColor: '#ef4444',
+        borderColor: 'var(--status-danger-strong)',
         backgroundColor: 'var(--status-danger-bg)',
         color: 'var(--status-danger)',
     },
@@ -4158,12 +4166,12 @@ const styles = {
     loginTitle: {
         fontSize: '28px',
         fontWeight: '700',
-        color: '#1f2937',
+        color: 'var(--text-primary)',
         margin: '0 0 4px 0',
     },
     loginSubtitle: {
         fontSize: '14px',
-        color: '#6b7280',
+        color: 'var(--status-neutral)',
         margin: 0,
     },
     loginForm: {
@@ -4215,15 +4223,15 @@ const styles = {
         marginBottom: '24px',
     },
     alertaVencido: {
-        backgroundColor: '#fef2f2',
-        border: '1px solid #fecaca',
+        backgroundColor: 'var(--status-danger-surface)',
+        border: '1px solid var(--status-danger-border)',
         borderRadius: '16px',
         padding: '20px',
         borderLeft: '4px solid var(--status-danger)',
     },
     alertaAVencer: {
-        backgroundColor: '#fffbeb',
-        border: '1px solid #fde68a',
+        backgroundColor: 'var(--status-warning-surface)',
+        border: '1px solid var(--status-warning-border)',
         borderRadius: '16px',
         padding: '20px',
         borderLeft: '4px solid var(--status-warning)',
@@ -4276,7 +4284,7 @@ const styles = {
         fontSize: '12px',
     },
     alertaDiasVencer: {
-        color: '#d97706',
+        color: 'var(--status-warning-strong)',
         fontWeight: '600',
         fontSize: '12px',
     },
@@ -4300,7 +4308,7 @@ const styles = {
         cursor: 'pointer',
         fontSize: '15px',
         fontWeight: '500',
-        color: '#374151',
+        color: 'var(--text-secondary)',
     },
     checkbox: {
         width: '18px',
@@ -4407,7 +4415,7 @@ const styles = {
     },
     statusOptionActivePendente: {
         borderColor: 'var(--status-warning)',
-        backgroundColor: '#fffbeb',
+        backgroundColor: 'var(--status-warning-surface)',
     },
     statusOptionActivePago: {
         borderColor: 'var(--module-admin)',
@@ -4430,8 +4438,8 @@ const styles = {
         padding: '12px 16px',
         borderRadius: '8px',
         backgroundColor: 'var(--status-warning-bg)',
-        border: '1px solid #fcd34d',
-        color: '#92400e',
+        border: '1px solid var(--status-warning-border)',
+        color: 'var(--status-warning-deep)',
         fontSize: '13px',
     },
 
@@ -4440,13 +4448,13 @@ const styles = {
         width: '36px',
         height: '36px',
         borderRadius: '50%',
-        backgroundColor: '#e0e7ff',
+        backgroundColor: 'var(--accent-indigo-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '14px',
         fontWeight: '600',
-        color: '#4f46e5',
+        color: 'var(--accent-indigo)',
     },
     roleSelector: {
         display: 'flex',
@@ -4466,12 +4474,12 @@ const styles = {
         transition: 'all 0.2s',
     },
     roleOptionActive: {
-        borderColor: '#4f46e5',
-        backgroundColor: '#eef2ff',
+        borderColor: 'var(--accent-indigo)',
+        backgroundColor: 'var(--accent-indigo-surface)',
     },
     roleOptionActiveAdmin: {
         borderColor: 'var(--status-danger)',
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'var(--status-danger-surface)',
     },
 };
 
