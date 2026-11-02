@@ -2196,7 +2196,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                             }}>
                                                 {idx < stepAtual
                                                 ? <i className="ti ti-check" aria-hidden="true" />
-                                                : idx === stepAtual ? '...' : '○'}
+                                                : idx === stepAtual ? '...' : ''}
                                             </div>
                                             <span style={{ color: idx <= stepAtual ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                                                 {step}
@@ -2428,7 +2428,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         style={{ ...uploadStyles.button, ...uploadStyles.buttonSecondary }}
                                         onClick={() => setEtapa('upload')}
                                     >
-                                        ← Voltar
+                                        <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
                                     </button>
                                     <button 
                                         style={{ 
@@ -2936,7 +2936,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         } else if (percent > 0) {
             return <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}><i className="ti ti-refresh" aria-hidden="true" /> {percent.toFixed(0)}%</span>;
         } else {
-            return <span style={{ ...styles.statusBadge, ...styles.statusAFazer }}>⏳ A Fazer</span>;
+            return <span style={{ ...styles.statusBadge, ...styles.statusAFazer }}><i className="ti ti-clock" aria-hidden="true" /> A Fazer</span>;
         }
     };
 
@@ -3186,7 +3186,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                         >
                                             <td style={styles.etapaTd}>
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    {etapasExpandidas[etapa.id] ? '▼' : '▶'} {etapa.codigo}
+                                                    <i className={`ti ${etapasExpandidas[etapa.id] ? 'ti-chevron-down' : 'ti-chevron-right'}`} aria-hidden="true" /> {etapa.codigo}
                                                 </span>
                                             </td>
                                             <td style={styles.etapaTd} colSpan={5}>{etapa.nome}</td>

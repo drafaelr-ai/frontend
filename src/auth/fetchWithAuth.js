@@ -41,7 +41,7 @@ export const fetchWithAuth = async (url, options = {}) => {
 
         try { sessionStorage.setItem(SESSION_EXPIRED_FLAG, '1'); } catch {}
 
-        notify.warning('⏰ Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
+        notify.warning('Sua sessão expirou por inatividade.\n\nPor favor, faça login novamente para continuar.');
 
         setTimeout(() => {
             window.location.reload();

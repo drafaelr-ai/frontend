@@ -257,7 +257,7 @@ const KpiCard = ({ title, value, subtitle, icon, color = COLORS.primary, progres
         {subtitle && (
             <p style={{ ...styles.kpiChange, color: trend > 0 ? COLORS.success : trend < 0 ? COLORS.danger : COLORS.gray }}>
                 {trend !== undefined && (
-                    <span>{trend > 0 ? '↑' : trend < 0 ? '↓' : '→'}</span>
+                    <span><i className={`ti ${trend > 0 ? 'ti-trending-up' : trend < 0 ? 'ti-trending-down' : 'ti-minus'}`} aria-hidden="true" /></span>
                 )}
                 {subtitle}
             </p>
@@ -1314,7 +1314,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
                                 color: '#64748b'
                             }}
                         >
-                            ← Voltar
+                            <i className="ti ti-arrow-left" aria-hidden="true" /> Voltar
                         </button>
                     )}
                 </div>
@@ -1340,7 +1340,7 @@ export const BiDashboard = ({ apiUrl, fetchWithAuth, onClose, embedded = false }
             {isLoading ? (
                 <div style={styles.loading}>
                     <div>
-                        <span style={{ fontSize: '32px' }}>⏳</span>
+                        <span style={{ fontSize: '32px' }}><i className="ti ti-loader-2" aria-hidden="true" /></span>
                         <p>Carregando dados...</p>
                     </div>
                 </div>

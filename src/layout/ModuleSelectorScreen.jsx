@@ -314,7 +314,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             background: '#fff', color: heroModule.color, fontSize: '14px', fontWeight: '700',
                             textAlign: 'center'
                         }}>
-                            Entrar em {heroModule.title} →
+                            Entrar em {heroModule.title} <i className="ti ti-arrow-right" aria-hidden="true" />
                         </div>
                     </div>
 
@@ -474,7 +474,7 @@ const ModuleSelectorScreen = ({ onSelectModule, user, allowedModules, onLogout, 
                             <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
                                 em {p.origem || '—'}
                             </span>
-                            <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>Ver →</span>
+                            <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>Ver <i className="ti ti-arrow-right" aria-hidden="true" /></span>
                         </div>
                     ))}
                     </div>

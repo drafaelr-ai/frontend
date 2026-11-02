@@ -1194,7 +1194,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
                                                 >
                                                     <div className="etapa-pai-left">
                                                         <span className="etapa-expand-icon">
-                                                            {hasSubetapas ? (isExpanded ? '▼' : '▶') : '○'}
+                                                            <i className={`ti ${hasSubetapas ? (isExpanded ? 'ti-chevron-down' : 'ti-chevron-right') : 'ti-circle'}`} aria-hidden="true" />
                                                         </span>
                                                         <span className="etapa-numero">Etapa {etapaIdx + 1}</span>
                                                         <span className="etapa-nome">{etapa.nome}</span>
@@ -1950,7 +1950,7 @@ const CronogramaObra = ({ obraId, obraNome, onClose, embedded = false }) => {
     return (
         <div className="cronograma-obra-fullscreen">
             <div className="fullscreen-header">
-                <button className="btn-back" onClick={onClose}>← Voltar</button>
+                <button className="btn-back" onClick={onClose}><i className="ti ti-arrow-left" aria-hidden="true" /> Voltar</button>
             </div>
             {content}
         </div>

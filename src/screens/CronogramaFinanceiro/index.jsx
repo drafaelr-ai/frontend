@@ -978,7 +978,7 @@ const CronogramaFinanceiro = ({ onClose, obraId, obraNome, embedded = false, sim
                                 </span>
                             </div>
                             <div className="cf-section-subtitle">
-                                Clique no card para editar · Bolinhas = parcelas (● paga ○ pendente)
+                                Clique no card para editar · Bolinhas = parcelas (<i className="ti ti-circle-filled" aria-hidden="true" /> paga <i className="ti ti-circle" aria-hidden="true" /> pendente)
                             </div>
                         </div>
                         <button

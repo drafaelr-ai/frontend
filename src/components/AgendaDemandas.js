@@ -609,18 +609,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         return date.toLocaleDateString('pt-BR');
     };
 
-    const formatDateShort = (dateStr) => {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr + 'T00:00:00');
-        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    };
-
+    // Classe do Tabler Icons — docs/CONVENCOES.md proíbe emoji na interface.
     const getTipoIcon = (tipo) => {
         switch (tipo) {
-            case 'material': return '📦';
-            case 'servico': return '🔧';
-            case 'visita': return '👷';
-            default: return '📋';
+            case 'material': return 'ti-package';
+            case 'servico': return 'ti-tool';
+            case 'visita': return 'ti-hard-hat';
+            default: return 'ti-clipboard-list';
         }
     };
 
@@ -640,23 +635,6 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
     const formatHorario = (horario) => {
         if (!horario) return '';
         return horario.substring(0, 5); // HH:MM
-    };
-
-    // Verificar se evento é hoje
-    const isHoje = (dateStr) => {
-        if (!dateStr) return false;
-        const hoje = new Date();
-        const data = new Date(dateStr + 'T00:00:00');
-        return data.toDateString() === hoje.toDateString();
-    };
-
-    // Verificar se evento já passou
-    const isPassado = (dateStr) => {
-        if (!dateStr) return false;
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const data = new Date(dateStr + 'T00:00:00');
-        return data < hoje;
     };
 
     // =====================================================
@@ -981,19 +959,6 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         return data > fimProxSemana;
     }).sort((a, b) => new Date(a.data_prevista) - new Date(b.data_prevista));
 
-    // Aplicar filtro de visualização
-    const aplicarFiltro = (eventos) => {
-        if (filtro === 'todos') return eventos;
-        if (filtro === 'hoje') return eventos.filter(d => isHoje(d.data_prevista));
-        if (filtro === 'semana') {
-            return eventos.filter(d => {
-                const data = new Date(d.data_prevista + 'T00:00:00');
-                return data >= hoje && data <= fimSemana;
-            });
-        }
-        return eventos;
-    };
-
     // Filtrar lista de importação
     const pagamentosFiltrados = pagamentosImportar.filter(p => 
         p.descricao?.toLowerCase().includes(buscaImportar.toLowerCase()) ||
@@ -1019,7 +984,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         return (
             <div style={styles.container}>
                 <div style={{ textAlign: 'center', padding: '60px' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+                    <div style={{ fontSize: '24px', marginBottom: '16px' }}><i className="ti ti-loader-2" aria-hidden="true" /></div>
                     <div>Carregando agenda...</div>
                 </div>
             </div>
@@ -1030,7 +995,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
         return (
             <div style={styles.container}>
                 <div style={{ textAlign: 'center', padding: '60px', color: 'var(--status-danger)' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '16px' }}>❌</div>
+                    <div style={{ fontSize: '24px', marginBottom: '16px' }}><i className="ti ti-alert-octagon" aria-hidden="true" /></div>
                     <div>{error}</div>
                     <button 
                         style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '16px' }}
@@ -1126,7 +1091,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {eventosAtivos.length === 0 && (
                 <div style={styles.card}>
                     <div style={styles.emptyState}>
-                        <div style={styles.emptyIcon}>📅</div>
+                        <div style={styles.emptyIcon}><i className="ti ti-calendar" aria-hidden="true" /></div>
                         <div style={styles.emptyTitle}>Nenhum evento agendado</div>
                         <div style={styles.emptyText}>
                             Importe de pagamentos, orçamento, cronograma ou cadastre manualmente
@@ -1136,13 +1101,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.button, ...styles.buttonPrimary }}
                                 onClick={() => setShowModalImportar(true)}
                             >
-                                📥 Importar
+                                <i className="ti ti-file-import" aria-hidden="true" /> Importar
                             </button>
                             <button 
                                 style={{ ...styles.button, ...styles.buttonSecondary }}
                                 onClick={() => setShowModalManual(true)}
                             >
-                                ✏️ Novo Evento
+                                <i className="ti ti-pencil" aria-hidden="true" /> Novo Evento
                             </button>
                         </div>
                     </div>
@@ -1152,7 +1117,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {/* Hoje */}
             {eventosHoje.length > 0 && (filtro === 'todos' || filtro === 'hoje' || filtro === 'semana') && (
                 <div style={styles.section}>
-                    <h3 style={{ ...styles.sectionTitle, color: 'var(--status-danger)' }}>🔴 Hoje</h3>
+                    <h3 style={{ ...styles.sectionTitle, color: 'var(--status-danger)' }}><i className="ti ti-circle-filled" aria-hidden="true" /> Hoje</h3>
                     <div style={styles.card}>
                         {eventosHoje.map(demanda => (
                             <div
@@ -1160,16 +1125,16 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.demandaItem, backgroundColor: 'var(--status-danger-bg)', cursor: 'pointer' }}
                                 onClick={() => abrirModalEditar(demanda)}
                             >
-                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaIcon}><i className={`ti ${getTipoIcon(demanda.tipo)}`} aria-hidden="true" /></div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
                                         {demanda.descricao}
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
-                                        <span>👤 {demanda.fornecedor || '-'}</span>
-                                        {demanda.telefone && <span>📞 {demanda.telefone}</span>}
+                                        {demanda.horario && <span><i className="ti ti-clock" aria-hidden="true" /> {formatHorario(demanda.horario)}</span>}
+                                        <span><i className="ti ti-user" aria-hidden="true" /> {demanda.fornecedor || '-'}</span>
+                                        {demanda.telefone && <span>{demanda.telefone}</span>}
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
@@ -1179,7 +1144,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onClick={() => excluirDemanda(demanda)}
                                         title="Excluir"
                                     >
-                                        🗑️
+                                        <i className="ti ti-trash" aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
@@ -1199,16 +1164,16 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.demandaItem, cursor: 'pointer' }}
                                 onClick={() => abrirModalEditar(demanda)}
                             >
-                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaIcon}><i className={`ti ${getTipoIcon(demanda.tipo)}`} aria-hidden="true" /></div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
                                         {demanda.descricao}
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
-                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
-                                        <span>👤 {demanda.fornecedor || '-'}</span>
+                                        <span><i className="ti ti-calendar" aria-hidden="true" /> {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span><i className="ti ti-clock" aria-hidden="true" /> {formatHorario(demanda.horario)}</span>}
+                                        <span><i className="ti ti-user" aria-hidden="true" /> {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
@@ -1218,7 +1183,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onClick={() => excluirDemanda(demanda)}
                                         title="Excluir"
                                     >
-                                        🗑️
+                                        <i className="ti ti-trash" aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
@@ -1238,16 +1203,16 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.demandaItem, cursor: 'pointer' }}
                                 onClick={() => abrirModalEditar(demanda)}
                             >
-                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaIcon}><i className={`ti ${getTipoIcon(demanda.tipo)}`} aria-hidden="true" /></div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
                                         {demanda.descricao}
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
-                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
-                                        <span>👤 {demanda.fornecedor || '-'}</span>
+                                        <span><i className="ti ti-calendar" aria-hidden="true" /> {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span><i className="ti ti-clock" aria-hidden="true" /> {formatHorario(demanda.horario)}</span>}
+                                        <span><i className="ti ti-user" aria-hidden="true" /> {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
@@ -1257,7 +1222,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onClick={() => excluirDemanda(demanda)}
                                         title="Excluir"
                                     >
-                                        🗑️
+                                        <i className="ti ti-trash" aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
@@ -1269,7 +1234,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
             {/* Futuro */}
             {futuro.length > 0 && filtro === 'todos' && (
                 <div style={styles.section}>
-                    <h3 style={styles.sectionTitle}>🗓️ Mais Adiante</h3>
+                    <h3 style={styles.sectionTitle}><i className="ti ti-calendar-week" aria-hidden="true" /> Mais Adiante</h3>
                     <div style={styles.card}>
                         {futuro.map(demanda => (
                             <div 
@@ -1277,16 +1242,16 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.demandaItem, cursor: 'pointer' }}
                                 onClick={() => abrirModalEditar(demanda)}
                             >
-                                <div style={styles.demandaIcon}>{getTipoIcon(demanda.tipo)}</div>
+                                <div style={styles.demandaIcon}><i className={`ti ${getTipoIcon(demanda.tipo)}`} aria-hidden="true" /></div>
                                 <div style={styles.demandaInfo}>
                                     <div style={styles.demandaTitle}>
                                         {demanda.descricao}
                                         {getOrigemBadge(demanda.origem)}
                                     </div>
                                     <div style={styles.demandaMeta}>
-                                        <span>📅 {formatDate(demanda.data_prevista)}</span>
-                                        {demanda.horario && <span>🕐 {formatHorario(demanda.horario)}</span>}
-                                        <span>👤 {demanda.fornecedor || '-'}</span>
+                                        <span><i className="ti ti-calendar" aria-hidden="true" /> {formatDate(demanda.data_prevista)}</span>
+                                        {demanda.horario && <span><i className="ti ti-clock" aria-hidden="true" /> {formatHorario(demanda.horario)}</span>}
+                                        <span><i className="ti ti-user" aria-hidden="true" /> {demanda.fornecedor || '-'}</span>
                                     </div>
                                 </div>
                                 <div style={styles.demandaValor}>{formatCurrency(demanda.valor)}</div>
@@ -1296,7 +1261,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         onClick={() => excluirDemanda(demanda)}
                                         title="Excluir"
                                     >
-                                        🗑️
+                                        <i className="ti ti-trash" aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>
@@ -1310,12 +1275,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalManual(false)}>
                     <div style={styles.modalSmall} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>✏️ Novo Evento</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-pencil" aria-hidden="true" /> Novo Evento</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalManual(false)}>×</button>
                         </div>
                         <div style={styles.modalBody}>
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📝 Descrição *</label>
+                                <label style={styles.label}>Descrição *</label>
                                 <input 
                                     type="text" 
                                     style={styles.input}
@@ -1326,22 +1291,22 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             </div>
 
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📋 Tipo</label>
+                                <label style={styles.label}>Tipo</label>
                                 <select 
                                     style={styles.input}
                                     value={formManual.tipo}
                                     onChange={(e) => setFormManual({...formManual, tipo: e.target.value})}
                                 >
-                                    <option value="material">📦 Material / Entrega</option>
-                                    <option value="servico">🔧 Início de Serviço</option>
-                                    <option value="visita">👷 Visita / Reunião</option>
-                                    <option value="outro">📋 Outro</option>
+                                    <option value="material">Material / Entrega</option>
+                                    <option value="servico">Início de Serviço</option>
+                                    <option value="visita">Visita / Reunião</option>
+                                    <option value="outro">Outro</option>
                                 </select>
                             </div>
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <label style={styles.label}>Fornecedor</label>
                                     <input 
                                         type="text" 
                                         style={styles.input}
@@ -1351,7 +1316,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📞 Telefone</label>
+                                    <label style={styles.label}>Telefone</label>
                                     <input 
                                         type="text" 
                                         style={styles.input}
@@ -1364,7 +1329,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>💰 Valor (R$)</label>
+                                    <label style={styles.label}>Valor (R$)</label>
                                     <input 
                                         type="text" 
                                         style={styles.input}
@@ -1374,7 +1339,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📅 Data *</label>
+                                    <label style={styles.label}>Data *</label>
                                     <input 
                                         type="date" 
                                         style={styles.input}
@@ -1386,7 +1351,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>🕐 Horário</label>
+                                    <label style={styles.label}>Horário</label>
                                     <input 
                                         type="time" 
                                         style={styles.input}
@@ -1398,7 +1363,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             </div>
 
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📝 Observações</label>
+                                <label style={styles.label}>Observações</label>
                                 <textarea 
                                     style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
                                     value={formManual.observacoes}
@@ -1423,7 +1388,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 onClick={criarDemandaManual}
                                 disabled={!formManual.descricao || !formManual.data_prevista}
                             >
-                                ✅ Adicionar à Agenda
+                                <i className="ti ti-circle-check" aria-hidden="true" /> Adicionar à Agenda
                             </button>
                         </div>
                     </div>
@@ -1435,7 +1400,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalImportar(false)}>
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>📥 Importar para Agenda</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-file-import" aria-hidden="true" /> Importar para Agenda</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalImportar(false)}>×</button>
                         </div>
                         
@@ -1445,19 +1410,19 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 style={{ ...styles.tab, ...(abaImportar === 'pagamentos' ? styles.tabActive : {}) }}
                                 onClick={() => setAbaImportar('pagamentos')}
                             >
-                                💳 Pagamentos ({pagamentosImportar.length})
+                                <i className="ti ti-credit-card" aria-hidden="true" /> Pagamentos ({pagamentosImportar.length})
                             </button>
                             <button 
                                 style={{ ...styles.tab, ...(abaImportar === 'orcamento' ? styles.tabActive : {}) }}
                                 onClick={() => setAbaImportar('orcamento')}
                             >
-                                📋 Orçamento ({orcamentoImportar.length})
+                                <i className="ti ti-clipboard-list" aria-hidden="true" /> Orçamento ({orcamentoImportar.length})
                             </button>
                             <button 
                                 style={{ ...styles.tab, ...(abaImportar === 'cronograma' ? styles.tabActive : {}) }}
                                 onClick={() => setAbaImportar('cronograma')}
                             >
-                                🔧 Serviços a Iniciar ({servicosImportar.length})
+                                <i className="ti ti-tool" aria-hidden="true" /> Serviços a Iniciar ({servicosImportar.length})
                             </button>
                         </div>
 
@@ -1466,7 +1431,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             <input 
                                 type="text" 
                                 style={styles.searchInput}
-                                placeholder="🔍 Buscar..."
+                                placeholder="Buscar..."
                                 value={buscaImportar}
                                 onChange={(e) => setBuscaImportar(e.target.value)}
                             />
@@ -1489,7 +1454,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                                 ...styles.listIcon, 
                                                 backgroundColor: item.tipo === 'material' ? 'var(--status-success-bg)' : item.tipo === 'mao_de_obra' ? 'var(--status-info-bg)' : 'var(--status-warning-bg)'
                                             }}>
-                                                {item.tipo === 'material' ? '📦' : item.tipo === 'mao_de_obra' ? '👷' : '💳'}
+                                                <i className={`ti ${item.tipo === 'material' ? 'ti-package' : item.tipo === 'mao_de_obra' ? 'ti-hard-hat' : 'ti-credit-card'}`} aria-hidden="true" />
                                             </div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>
@@ -1516,13 +1481,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                                     )}
                                                 </div>
                                                 <div style={styles.listMeta}>
-                                                    <span>🔧 {item.servico || '-'}</span>
-                                                    <span>👤 {item.fornecedor || '-'}</span>
-                                                    <span>📅 {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : formatDate(item.data_pagamento)}</span>
+                                                    <span><i className="ti ti-tool" aria-hidden="true" /> {item.servico || '-'}</span>
+                                                    <span><i className="ti ti-user" aria-hidden="true" /> {item.fornecedor || '-'}</span>
+                                                    <span><i className="ti ti-calendar" aria-hidden="true" /> {item.status === 'Pago' ? `Pago em ${formatDate(item.data_pagamento)}` : formatDate(item.data_pagamento)}</span>
                                                     <span style={{ 
                                                         color: item.status === 'Pago' ? 'var(--status-success-text)' : item.status === 'Previsto' ? 'var(--status-warning-text)' : 'var(--status-neutral)'
                                                     }}>
-                                                        {item.status === 'Pago' ? '✅' : item.status === 'Previsto' ? '⏳' : '📋'} {item.status}
+                                                        <i className={`ti ${item.status === 'Pago' ? 'ti-circle-check' : item.status === 'Previsto' ? 'ti-clock' : 'ti-clipboard-list'}`} aria-hidden="true" /> {item.status}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1547,12 +1512,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     orcamentoFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-warning-bg)' }}>📋</div>
+                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-warning-bg)' }}><i className="ti ti-clipboard-list" aria-hidden="true" /></div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>{item.descricao}</div>
                                                 <div style={styles.listMeta}>
-                                                    <span>📁 {item.etapa}</span>
-                                                    <span>📦 {item.quantidade}</span>
+                                                    <span><i className="ti ti-list-details" aria-hidden="true" /> {item.etapa}</span>
+                                                    <span><i className="ti ti-package" aria-hidden="true" /> {item.quantidade}</span>
                                                 </div>
                                             </div>
                                             <div style={styles.listValor}>{formatCurrency(item.valor)}</div>
@@ -1576,13 +1541,13 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 ) : (
                                     servicosFiltrados.map(item => (
                                         <div key={item.id} style={styles.listItem}>
-                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-info-bg)' }}>🔧</div>
+                                            <div style={{ ...styles.listIcon, backgroundColor: 'var(--status-info-bg)' }}><i className="ti ti-tool" aria-hidden="true" /></div>
                                             <div style={styles.listInfo}>
                                                 <div style={styles.listTitle}>{item.nome}</div>
                                                 <div style={styles.listMeta}>
-                                                    <span>📁 {item.etapa || '-'}</span>
-                                                    <span>📅 Início: {formatDate(item.data_inicio)}</span>
-                                                    {item.responsavel && <span>👤 {item.responsavel}</span>}
+                                                    <span><i className="ti ti-list-details" aria-hidden="true" /> {item.etapa || '-'}</span>
+                                                    <span><i className="ti ti-calendar" aria-hidden="true" /> Início: {formatDate(item.data_inicio)}</span>
+                                                    {item.responsavel && <span><i className="ti ti-user" aria-hidden="true" /> {item.responsavel}</span>}
                                                 </div>
                                             </div>
                                             <div style={{ ...styles.listValor, color: 'var(--status-info)' }}>
@@ -1623,7 +1588,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                         <div style={styles.modalBody}>
                             {/* Banner de importação */}
                             <div style={styles.importedBox}>
-                                <span style={{ fontSize: '24px' }}>✅</span>
+                                <span style={{ fontSize: '24px' }}><i className="ti ti-circle-check" aria-hidden="true" /></span>
                                 <div>
                                     <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--status-success-text)' }}>
                                         Dados importados de {showModalConfirmar === 'pagamento' ? 'Pagamento' : showModalConfirmar === 'orcamento' ? 'Orçamento' : 'Cronograma'}
@@ -1636,7 +1601,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             {/* Campos preenchidos automaticamente */}
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📦 Descrição</label>
+                                <label style={styles.label}>Descrição</label>
                                 <input 
                                     type="text" 
                                     style={styles.inputDisabled}
@@ -1647,7 +1612,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <label style={styles.label}>Fornecedor</label>
                                     <input 
                                         type="text" 
                                         style={showModalConfirmar === 'pagamento' ? styles.inputDisabled : styles.input}
@@ -1658,7 +1623,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>💰 Valor</label>
+                                    <label style={styles.label}>Valor</label>
                                     <input 
                                         type="text" 
                                         style={styles.inputDisabled}
@@ -1670,7 +1635,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             {formImportar.observacoes && (
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📝 Informações Importadas</label>
+                                    <label style={styles.label}>Informações Importadas</label>
                                     <input 
                                         type="text" 
                                         style={styles.inputDisabled}
@@ -1682,10 +1647,10 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             {/* Campo obrigatório destacado */}
                             <div style={styles.highlightField}>
-                                <div style={styles.highlightLabel}>⚠️ Preencha a data</div>
+                                <div style={styles.highlightLabel}><i className="ti ti-alert-triangle" aria-hidden="true" /> Preencha a data</div>
                                 <div style={styles.formRow}>
                                     <div style={styles.formGroup}>
-                                        <label style={styles.label}>📅 Data *</label>
+                                        <label style={styles.label}>Data *</label>
                                         <input 
                                             type="date" 
                                             style={{ ...styles.input, borderColor: formImportar.data_prevista ? 'var(--status-success)' : 'var(--status-warning)' }}
@@ -1694,7 +1659,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                         />
                                     </div>
                                     <div style={styles.formGroup}>
-                                        <label style={styles.label}>🕐 Horário</label>
+                                        <label style={styles.label}>Horário</label>
                                         <input 
                                             type="time" 
                                             style={styles.input}
@@ -1705,7 +1670,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 </div>
                                 <div style={styles.formRow}>
                                     <div style={styles.formGroup}>
-                                        <label style={styles.label}>📞 Telefone</label>
+                                        <label style={styles.label}>Telefone</label>
                                         <input 
                                             type="text" 
                                             style={styles.input}
@@ -1734,7 +1699,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 onClick={criarDemandaImportada}
                                 disabled={!formImportar.data_prevista}
                             >
-                                ✅ Adicionar à Agenda
+                                <i className="ti ti-circle-check" aria-hidden="true" /> Adicionar à Agenda
                             </button>
                         </div>
                     </div>
@@ -1746,12 +1711,12 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                 <div style={styles.modalOverlay} onClick={() => setShowModalEditar(null)}>
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
                         <div style={styles.modalHeader}>
-                            <h2 style={styles.modalTitle}>✏️ Editar Demanda</h2>
+                            <h2 style={styles.modalTitle}><i className="ti ti-pencil" aria-hidden="true" /> Editar Demanda</h2>
                             <button style={styles.closeBtn} onClick={() => setShowModalEditar(null)}>×</button>
                         </div>
                         <div style={styles.modalBody}>
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📝 Descrição *</label>
+                                <label style={styles.label}>Descrição *</label>
                                 <input 
                                     type="text" 
                                     style={styles.input}
@@ -1761,22 +1726,22 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             </div>
 
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📋 Tipo</label>
+                                <label style={styles.label}>Tipo</label>
                                 <select 
                                     style={styles.input}
                                     value={showModalEditar.tipo || 'material'}
                                     onChange={(e) => setShowModalEditar({...showModalEditar, tipo: e.target.value})}
                                 >
-                                    <option value="material">📦 Material / Compra</option>
-                                    <option value="servico">🔧 Serviço Contratado</option>
-                                    <option value="visita">👷 Visita / Reunião</option>
-                                    <option value="outro">📋 Outro</option>
+                                    <option value="material">Material / Compra</option>
+                                    <option value="servico">Serviço Contratado</option>
+                                    <option value="visita">Visita / Reunião</option>
+                                    <option value="outro">Outro</option>
                                 </select>
                             </div>
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>👤 Fornecedor</label>
+                                    <label style={styles.label}>Fornecedor</label>
                                     <input 
                                         type="text" 
                                         style={styles.input}
@@ -1785,7 +1750,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📞 Telefone</label>
+                                    <label style={styles.label}>Telefone</label>
                                     <input 
                                         type="text" 
                                         style={styles.input}
@@ -1798,7 +1763,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>💰 Valor (R$)</label>
+                                    <label style={styles.label}>Valor (R$)</label>
                                     <input 
                                         type="number" 
                                         step="0.01"
@@ -1808,7 +1773,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>📅 Data *</label>
+                                    <label style={styles.label}>Data *</label>
                                     <input 
                                         type="date" 
                                         style={styles.input}
@@ -1820,7 +1785,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
 
                             <div style={styles.formRow}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>🕐 Horário</label>
+                                    <label style={styles.label}>Horário</label>
                                     <input 
                                         type="time" 
                                         style={styles.input}
@@ -1832,7 +1797,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                             </div>
 
                             <div style={styles.formGroup}>
-                                <label style={styles.label}>📝 Observações</label>
+                                <label style={styles.label}>Observações</label>
                                 <textarea 
                                     style={{...styles.input, minHeight: '80px', resize: 'vertical'}}
                                     value={showModalEditar.observacoes || ''}
@@ -1849,7 +1814,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                 color: 'var(--text-muted)',
                                 marginTop: '8px'
                             }}>
-                                <span>Origem: {showModalEditar.origem === 'manual' ? '✍️ Manual' : showModalEditar.origem === 'pagamento' ? '💳 Pagamento' : showModalEditar.origem === 'cronograma' ? '🔧 Cronograma' : '📋 Orçamento'}</span>
+                                <span>Origem: {showModalEditar.origem === 'manual' ? 'Manual' : showModalEditar.origem === 'pagamento' ? 'Pagamento' : showModalEditar.origem === 'cronograma' ? 'Cronograma' : 'Orçamento'}</span>
                                 {showModalEditar.created_at && (
                                     <span style={{ marginLeft: '16px' }}>Criado em: {formatDate(showModalEditar.created_at)}</span>
                                 )}
@@ -1865,7 +1830,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     }
                                 }}
                             >
-                                🗑️ Excluir
+                                <i className="ti ti-trash" aria-hidden="true" /> Excluir
                             </button>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button 
@@ -1878,7 +1843,7 @@ const AgendaDemandas = ({ obraId, apiUrl, obraNome }) => {
                                     style={{ ...styles.button, ...styles.buttonPrimary }}
                                     onClick={salvarEdicao}
                                 >
-                                    💾 Salvar
+                                    <i className="ti ti-device-floppy" aria-hidden="true" /> Salvar
                                 </button>
                             </div>
                         </div>
