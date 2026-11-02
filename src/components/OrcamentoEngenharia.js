@@ -646,7 +646,9 @@ const NovaEtapaModal = ({ onClose, onSave, etapaParaEditar = null }) => {
         <div style={styles.modalOverlay} onClick={onClose}>
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>{isEdicao ? '✏️ Editar Etapa' : '➕ Nova Etapa'}</h2>
+                    <h2 style={styles.modalTitle}>{isEdicao
+                        ? <><i className="ti ti-pencil" aria-hidden="true" /> Editar Etapa</>
+                        : <><i className="ti ti-plus" aria-hidden="true" /> Nova Etapa</>}</h2>
                     <button style={styles.closeBtn} onClick={onClose}>×</button>
                 </div>
                 <div style={styles.modalBody}>
@@ -697,7 +699,9 @@ const NovaEtapaModal = ({ onClose, onSave, etapaParaEditar = null }) => {
                         onClick={handleSalvar}
                         disabled={!nome.trim() || salvando}
                     >
-                        {salvando ? 'Salvando...' : (isEdicao ? '💾 Salvar Alterações' : '💾 Salvar Etapa')}
+                        {salvando ? 'Salvando...' : (
+                                <><i className="ti ti-device-floppy" aria-hidden="true" /> {isEdicao ? 'Salvar Alterações' : 'Salvar Etapa'}</>
+                            )}
                     </button>
                 </div>
             </div>
@@ -863,7 +867,9 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
         <div style={styles.modalOverlay} onClick={onClose}>
             <div style={{ ...styles.modal, maxWidth: '800px' }} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
-                    <h2 style={styles.modalTitle}>{isEdicao ? '✏️ Editar Item do Orçamento' : '➕ Novo Item do Orçamento'}</h2>
+                    <h2 style={styles.modalTitle}>{isEdicao
+                        ? <><i className="ti ti-pencil" aria-hidden="true" /> Editar Item do Orçamento</>
+                        : <><i className="ti ti-plus" aria-hidden="true" /> Novo Item do Orçamento</>}</h2>
                     <button style={styles.closeBtn} onClick={onClose}>×</button>
                 </div>
                 
@@ -949,7 +955,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 <div style={styles.autocompleteDropdown}>
                                     {autocomplete.results.usuario.length > 0 && (
                                         <>
-                                            <div style={styles.autocompleteSection}>📋 Meus Serviços</div>
+                                            <div style={styles.autocompleteSection}><i className="ti ti-clipboard-list" aria-hidden="true" /> Meus Serviços</div>
                                             {autocomplete.results.usuario.map(s => (
                                                 <div 
                                                     key={`u-${s.id}`}
@@ -971,7 +977,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                     )}
                                     {autocomplete.results.base.length > 0 && (
                                         <>
-                                            <div style={styles.autocompleteSection}>📚 Base de Referência</div>
+                                            <div style={styles.autocompleteSection}><i className="ti ti-books" aria-hidden="true" /> Base de Referência</div>
                                             {autocomplete.results.base.map(s => (
                                                 <div 
                                                     key={`b-${s.id}`}
@@ -998,7 +1004,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                     
                     {/* Tipo de Composição */}
                     <div style={styles.formGroup}>
-                        <label style={styles.formLabel}>💰 Tipo de Composição</label>
+                        <label style={styles.formLabel}><i className="ti ti-cash" aria-hidden="true" /> Tipo de Composição</label>
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                                 <input 
@@ -1196,9 +1202,9 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                                 marginBottom: '8px'
                             }}>
                                 {form.tipo_composicao === 'fornecimento' ? (
-                                    <>💡 Fornecimento/locação (ex: aluguel de andaime) é contabilizado como <strong>MATERIAL</strong> no orçamento — sem mão de obra própria da equipe</>
+                                    <><i className="ti ti-bulb" aria-hidden="true" /> Fornecimento/locação (ex: aluguel de andaime) é contabilizado como <strong>MATERIAL</strong> no orçamento — sem mão de obra própria da equipe</>
                                 ) : (
-                                    <>💡 Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)</>
+                                    <><i className="ti ti-bulb" aria-hidden="true" /> Itens compostos são contabilizados como <strong>SERVIÇO</strong> no orçamento (não são divididos em MO/Material)</>
                                 )}
                             </div>
                         </>
@@ -1213,7 +1219,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                         marginBottom: '16px'
                     }}>
                         <div style={{ fontSize: '12px', color: 'var(--status-success-text)', fontWeight: '600', marginBottom: '4px' }}>
-                            📊 TOTAL DO ITEM
+                            <i className="ti ti-chart-bar" aria-hidden="true" /> TOTAL DO ITEM
                         </div>
                         <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--status-success-text)' }}>
                             {formatCurrency(calcularTotal())}
@@ -1253,7 +1259,7 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                             onClick={() => handleSalvar(true)}
                             disabled={!form.etapa_id || !form.descricao || salvando}
                         >
-                            {salvando ? 'Salvando...' : '💾 Salvar e Adicionar Outro'}
+                            {salvando ? 'Salvando...' : <><i className="ti ti-device-floppy" aria-hidden="true" /> Salvar e Adicionar Outro</>}
                         </button>
                     )}
                     <button 
@@ -1261,7 +1267,9 @@ const NovoItemModal = ({ onClose, onSave, etapas, etapaId, apiUrl, itemParaEdita
                         onClick={() => handleSalvar(false)}
                         disabled={!form.etapa_id || !form.descricao || salvando}
                     >
-                        {salvando ? 'Salvando...' : isEdicao ? '💾 Salvar Alterações' : '💾 Salvar Item'}
+                        {salvando ? 'Salvando...' : (
+                                <><i className="ti ti-device-floppy" aria-hidden="true" /> {isEdicao ? 'Salvar Alterações' : 'Salvar Item'}</>
+                            )}
                     </button>
                 </div>
             </div>
@@ -2014,11 +2022,11 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
     const renderFonteBadge = (fonte) => {
         switch (fonte) {
             case 'base':
-                return <span style={{ ...uploadStyles.fonteBadge, ...uploadStyles.fonteBase }}>✓ Base</span>;
+                return <span style={{ ...uploadStyles.fonteBadge, ...uploadStyles.fonteBase }}><i className="ti ti-check" aria-hidden="true" /> Base</span>;
             case 'base_aproximado':
                 return <span style={{ ...uploadStyles.fonteBadge, ...uploadStyles.fonteAproximado }}>~ Aproximado</span>;
             default:
-                return <span style={{ ...uploadStyles.fonteBadge, ...uploadStyles.fonteNaoEncontrado }}>⚠ Sem preço</span>;
+                return <span style={{ ...uploadStyles.fonteBadge, ...uploadStyles.fonteNaoEncontrado }}><i className="ti ti-alert-triangle" aria-hidden="true" /> Sem preço</span>;
         }
     };
 
@@ -2032,7 +2040,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                     {/* Header */}
                     <div style={uploadStyles.modalHeader}>
                         <h2 style={uploadStyles.modalTitle}>
-                            🤖 Gerar Orçamento por Planta Baixa
+                            <i className="ti ti-robot" aria-hidden="true" /> Gerar Orçamento por Planta Baixa
                             {etapa === 'results' && <span style={{ fontSize: '14px', fontWeight: '400', color: 'var(--text-muted)' }}> - Revisão</span>}
                         </h2>
                         <button style={uploadStyles.closeBtn} onClick={onClose}>×</button>
@@ -2045,7 +2053,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                             <>
                                 {erro && (
                                     <div style={{ ...uploadStyles.warningBox, backgroundColor: 'var(--status-danger-bg)', borderColor: 'var(--status-danger)', color: 'var(--status-danger)' }}>
-                                        ⚠️ {erro}
+                                        <i className="ti ti-alert-triangle" aria-hidden="true" /> {erro}
                                     </div>
                                 )}
                                 
@@ -2061,7 +2069,9 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         onDrop={handleDrop}
                                         onClick={() => document.getElementById('fileInput').click()}
                                     >
-                                        <div style={uploadStyles.uploadIcon}>📐</div>
+                                        <div style={uploadStyles.uploadIcon}>
+                                                <i className="ti ti-ruler-measure" aria-hidden="true" />
+                                            </div>
                                         <div style={uploadStyles.uploadTitle}>Arraste a planta baixa aqui</div>
                                         <div style={uploadStyles.uploadSubtitle}>ou clique para selecionar o arquivo</div>
                                         <div style={uploadStyles.uploadFormats}>Formatos aceitos: JPG, PNG, WEBP, GIF, PDF (máx. 20MB)</div>
@@ -2086,13 +2096,13 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                 style={{ ...uploadStyles.button, ...uploadStyles.buttonSecondary, marginTop: '12px', width: '100%', justifyContent: 'center' }}
                                                 onClick={() => { setImagem(null); setImagemPreview(null); }}
                                             >
-                                                🔄 Trocar imagem
+                                                <i className="ti ti-refresh" aria-hidden="true" /> Trocar imagem
                                             </button>
                                         </div>
                                         
                                         <div style={uploadStyles.previewInfo}>
                                             <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: 'var(--text-primary)' }}>
-                                                📋 Informações adicionais (opcional)
+                                                <i className="ti ti-clipboard-list" aria-hidden="true" /> Informações adicionais (opcional)
                                             </h3>
                                             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
                                                 Essas informações ajudam a IA a gerar um orçamento mais preciso. Se não souber, deixe em branco.
@@ -2151,7 +2161,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                             </div>
                                             
                                             <div style={uploadStyles.warningBox}>
-                                                <span>💡</span>
+                                                <span><i className="ti ti-bulb" aria-hidden="true" /></span>
                                                 <div>
                                                     <strong>Como funciona:</strong>
                                                     <ul style={{ margin: '8px 0 0 0', paddingLeft: '18px', fontSize: '12px' }}>
@@ -2184,7 +2194,9 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                     idx === stepAtual ? uploadStyles.stepCurrent : 
                                                     uploadStyles.stepPending)
                                             }}>
-                                                {idx < stepAtual ? '✓' : idx === stepAtual ? '...' : '○'}
+                                                {idx < stepAtual
+                                                ? <i className="ti ti-check" aria-hidden="true" />
+                                                : idx === stepAtual ? '...' : '○'}
                                             </div>
                                             <span style={{ color: idx <= stepAtual ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                                                 {step}
@@ -2199,14 +2211,14 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                         {etapa === 'results' && resultado && (
                             <>
                                 <div style={uploadStyles.warningBox}>
-                                    <span>⚠️</span>
+                                    <span><i className="ti ti-alert-triangle" aria-hidden="true" /></span>
                                     <div>
                                         <strong>Atenção: Dados aproximados!</strong>
                                         <br />
                                         Os quantitativos foram estimados pela IA com base na análise visual da planta e <strong>devem ser conferidos</strong>.
                                         Este recurso agiliza a montagem inicial do orçamento, mas um engenheiro deve revisar e ajustar os valores.
                                         <br />
-                                        <span style={{ fontSize: '12px', color: 'var(--status-warning-text)' }}>💡 Clique na quantidade para editar antes de importar.</span>
+                                        <span style={{ fontSize: '12px', color: 'var(--status-warning-text)' }}><i className="ti ti-bulb" aria-hidden="true" /> Clique na quantidade para editar antes de importar.</span>
                                     </div>
                                 </div>
                                 
@@ -2263,13 +2275,13 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                 style={{ ...uploadStyles.button, ...uploadStyles.buttonSecondary, flex: 1, justifyContent: 'center', padding: '8px' }}
                                                 onClick={() => toggleTodos(true)}
                                             >
-                                                ✓ Todos
+                                                <i className="ti ti-check" aria-hidden="true" /> Todos
                                             </button>
                                             <button
                                                 style={{ ...uploadStyles.button, ...uploadStyles.buttonSecondary, flex: 1, justifyContent: 'center', padding: '8px' }}
                                                 onClick={() => toggleTodos(false)}
                                             >
-                                                ✗ Nenhum
+                                                <i className="ti ti-x" aria-hidden="true" /> Nenhum
                                             </button>
                                         </div>
                                     </div>
@@ -2279,7 +2291,9 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         <table style={uploadStyles.table}>
                                             <thead>
                                                 <tr>
-                                                    <th style={{ ...uploadStyles.th, width: '40px' }}>✓</th>
+                                                    <th style={{ ...uploadStyles.th, width: '40px' }} aria-label="Selecionar">
+                                                    <i className="ti ti-check" aria-hidden="true" />
+                                                </th>
                                                     <th style={{ ...uploadStyles.th, width: '60px' }}>Código</th>
                                                     <th style={uploadStyles.th}>Descrição</th>
                                                     <th style={{ ...uploadStyles.th, ...uploadStyles.thCenter, width: '50px' }}>Un.</th>
@@ -2331,7 +2345,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                                         </div>
                                                                         {item.justificativa && (
                                                                             <div style={uploadStyles.justificativa}>
-                                                                                💡 {item.justificativa}
+                                                                                <i className="ti ti-bulb" aria-hidden="true" /> {item.justificativa}
                                                                             </div>
                                                                         )}
                                                                     </td>
@@ -2363,7 +2377,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                                 {/* Total */}
                                                 <tr style={uploadStyles.totalRow}>
                                                     <td style={uploadStyles.totalTd} colSpan={6}>
-                                                        💰 TOTAL DO ORÇAMENTO
+                                                        <i className="ti ti-cash" aria-hidden="true" /> TOTAL DO ORÇAMENTO
                                                     </td>
                                                     <td style={{ ...uploadStyles.totalTd, textAlign: 'right', fontSize: '16px' }}>
                                                         {formatCurrency(totais.total)}
@@ -2381,7 +2395,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                     {/* Footer */}
                     <div style={uploadStyles.modalFooter}>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                            {etapa === 'upload' && imagem && '✓ Imagem carregada'}
+                            {etapa === 'upload' && imagem && <><i className="ti ti-check" aria-hidden="true" /> Imagem carregada</>}
                             {etapa === 'results' && `${totais.itens} itens selecionados`}
                         </div>
                         
@@ -2403,7 +2417,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         onClick={processarComIA}
                                         disabled={!imagem}
                                     >
-                                        🤖 Analisar com IA
+                                        <i className="ti ti-robot" aria-hidden="true" /> Analisar com IA
                                     </button>
                                 </>
                             )}
@@ -2425,7 +2439,7 @@ const UploadPlantaModal = ({ onClose, onImportar, obraId, apiUrl }) => {
                                         onClick={confirmarImportacao}
                                         disabled={totais.itens === 0}
                                     >
-                                        ✓ Importar {totais.itens} Itens
+                                        <i className="ti ti-check" aria-hidden="true" /> Importar {totais.itens} Itens
                                     </button>
                                 </>
                             )}
@@ -2479,7 +2493,7 @@ const DetalhePagamentosModal = ({ item, obraId, apiUrl, onClose }) => {
             <div style={styles.modal} onClick={e => e.stopPropagation()}>
                 <div style={styles.modalHeader}>
                     <div>
-                        <h2 style={styles.modalTitle}>💰 Pagamentos do item</h2>
+                        <h2 style={styles.modalTitle}><i className="ti ti-cash" aria-hidden="true" /> Pagamentos do item</h2>
                         <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
                             {item.codigo ? `${item.codigo} · ` : ''}{item.descricao}
                         </p>
@@ -2876,7 +2890,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     // Apagar todo o orçamento de engenharia
     const apagarOrcamentoCompleto = async () => {
         const confirmacao = window.prompt(
-            '⚠️ ATENÇÃO: Esta ação irá APAGAR TODO o orçamento de engenharia!\n\n' +
+            'ATENÇÃO: Esta ação irá APAGAR TODO o orçamento de engenharia!\n\n' +
             'Isso inclui:\n' +
             '- Todas as etapas\n' +
             '- Todos os itens\n' +
@@ -2914,9 +2928,13 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
     const renderStatus = (item) => {
         const percent = item.percentual_executado || 0;
         if (percent >= 100) {
-            return <span style={{ ...styles.statusBadge, ...styles.statusPago }}>✅ Pago</span>;
+            return (
+                <span style={{ ...styles.statusBadge, ...styles.statusPago }}>
+                    <i className="ti ti-circle-check" aria-hidden="true" /> Pago
+                </span>
+            );
         } else if (percent > 0) {
-            return <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}>🔄 {percent.toFixed(0)}%</span>;
+            return <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}><i className="ti ti-refresh" aria-hidden="true" /> {percent.toFixed(0)}%</span>;
         } else {
             return <span style={{ ...styles.statusBadge, ...styles.statusAFazer }}>⏳ A Fazer</span>;
         }
@@ -2945,7 +2963,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
         return (
             <div className="m-section-card" style={{ minHeight: '100%' }}>
                 <div style={styles.emptyState}>
-                    <p>❌ {error}</p>
+                    <p><i className="ti ti-circle-x" aria-hidden="true" /> {error}</p>
                     <button
                         style={{ ...styles.button, ...styles.buttonPrimary, marginTop: '12px' }}
                         onClick={carregarDados}
@@ -3200,7 +3218,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         title="Mover para cima"
                                                         disabled={dados.etapas.indexOf(etapa) === 0}
                                                     >
-                                                        ⬆️
+                                                        <i className="ti ti-arrow-up" aria-hidden="true" />
                                                     </button>
                                                     <button
                                                         style={{ ...styles.actionBtn, color: 'var(--text-on-dark)', opacity: dados.etapas.indexOf(etapa) === dados.etapas.length - 1 ? 0.3 : 1 }}
@@ -3211,7 +3229,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         title="Mover para baixo"
                                                         disabled={dados.etapas.indexOf(etapa) === dados.etapas.length - 1}
                                                     >
-                                                        ⬇️
+                                                        <i className="ti ti-arrow-down" aria-hidden="true" />
                                                     </button>
                                                     <button
                                                         style={{ ...styles.actionBtn, color: 'var(--text-on-dark)' }}
@@ -3222,7 +3240,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         }}
                                                         title="Adicionar item"
                                                     >
-                                                        ➕
+                                                        <i className="ti ti-plus" aria-hidden="true" />
                                                     </button>
                                                     <button
                                                         style={{ ...styles.actionBtn, color: 'var(--text-on-dark)' }}
@@ -3232,7 +3250,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         }}
                                                         title="Editar etapa"
                                                     >
-                                                        ✏️
+                                                        <i className="ti ti-pencil" aria-hidden="true" />
                                                     </button>
                                                     <button
                                                         style={{ ...styles.actionBtn, color: 'var(--status-danger)' }}
@@ -3242,7 +3260,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                         }}
                                                         title="Excluir etapa"
                                                     >
-                                                        🗑️
+                                                        <i className="ti ti-trash" aria-hidden="true" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -3344,14 +3362,14 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                                             onClick={() => abrirEdicaoItem(item)}
                                                             title="Editar item"
                                                         >
-                                                            ✏️
+                                                            <i className="ti ti-pencil" aria-hidden="true" />
                                                         </button>
                                                         <button
                                                             style={{ ...styles.actionBtn, color: 'var(--status-danger)' }}
                                                             onClick={() => deletarItem(item.id)}
                                                             title="Excluir item"
                                                         >
-                                                            🗑️
+                                                            <i className="ti ti-trash" aria-hidden="true" />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -3390,7 +3408,7 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
                                 
                                 {/* Total Geral */}
                                 <tr style={styles.totalRow}>
-                                    <td style={styles.totalTd} colSpan={6}>💰 TOTAL GERAL</td>
+                                    <td style={styles.totalTd} colSpan={6}><i className="ti ti-cash" aria-hidden="true" /> TOTAL GERAL</td>
                                     <td style={{ ...styles.totalTd, textAlign: 'right', fontSize: '16px' }}>
                                         {formatCurrency(resumoComBdi.total_geral)}
                                     </td>
@@ -3423,10 +3441,10 @@ const OrcamentoEngenharia = ({ obraId, obraNome, apiUrl, onClose }) => {
             }}>
                 <span style={{ fontWeight: '600' }}>Legenda:</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ ...styles.statusBadge, ...styles.statusPago }}>✅ Pago</span> 100%
+                    <span style={{ ...styles.statusBadge, ...styles.statusPago }}><i className="ti ti-circle-check" aria-hidden="true" /> Pago</span> 100%
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}>🔄 %</span> Em andamento
+                    <span style={{ ...styles.statusBadge, ...styles.statusEmAndamento }}><i className="ti ti-refresh" aria-hidden="true" /> %</span> Em andamento
                 </span>
             </div>
 
