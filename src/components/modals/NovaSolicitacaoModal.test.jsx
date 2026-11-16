@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NovaSolicitacaoModal from './NovaSolicitacaoModal';
 import { solicitacoesApi } from '../../screens/Solicitacoes/solicitacoesApi';
+import { notify } from '../../utils/notify';
 
 jest.mock('../../screens/Solicitacoes/solicitacoesApi', () => ({
     solicitacoesApi: {
@@ -109,5 +110,25 @@ describe('NovaSolicitacaoModal em modo de edição', () => {
         expect(screen.getByDisplayValue('10.51')).toBeInTheDocument();
         expect(screen.getByDisplayValue('Categoria: PVC Esgoto | Especificação: 50 mm - 2"')).toBeInTheDocument();
         expect(screen.getByText(/2 item\(ns\) preenchido\(s\) de materiais\.xlsx/)).toBeInTheDocument();
+    });
+
+    it('exige justificativa ao criar uma solicitação de material', () => {
+        render(
+            <NovaSolicitacaoModal
+                isOpen
+                obras={[{ id: 1, nome: 'Alphaville' }]}
+                onClose={jest.fn()}
+                onSaved={jest.fn()}
+            />
+        );
+
+        fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '1' } });
+        fireEvent.change(screen.getByPlaceholderText('Ex.: Cimento CP-II 50kg'), { target: { value: 'Cimento' } });
+        fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '10' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Criar solicitação' }));
+
+        expect(solicitacoesApi.criar).not.toHaveBeenCalled();
+        expect(notify.warning).toHaveBeenCalledWith('Informe a justificativa da solicitação de material.');
+        expect(screen.getByText('Justificativa *')).toBeInTheDocument();
     });
 });

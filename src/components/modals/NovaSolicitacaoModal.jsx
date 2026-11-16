@@ -90,6 +90,10 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
 
     const salvar = async () => {
         if (!form.obra_id) { notify.warning('Selecione a obra.'); return; }
+        if (form.tipo === 'Material' && !form.observacao.trim()) {
+            notify.warning('Informe a justificativa da solicitação de material.');
+            return;
+        }
         const itensValidos = itens.filter(i => i.descricao.trim());
         if (!itensValidos.length) { notify.warning('Informe ao menos um item.'); return; }
         if (itensValidos.some(i => !i.quantidade || Number(String(i.quantidade).replace(',', '.')) <= 0)) {
@@ -246,9 +250,18 @@ export default function NovaSolicitacaoModal({ isOpen, obras, onClose, onSaved, 
                     aria-label="Anexos da solicitação"
                     onChange={e => setArquivo(e.target.files?.[0] || null)} /></div>
 
-            <div className="solc-field"><label>Observação (opcional)</label>
-                <input className="solc-inp" placeholder="Ex.: entregar na portaria da obra"
-                    value={form.observacao} onChange={e => set('observacao', e.target.value)} /></div>
+            <div className="solc-field">
+                <label>{form.tipo === 'Material' ? 'Justificativa *' : 'Observação (opcional)'}</label>
+                <input
+                    className="solc-inp"
+                    required={form.tipo === 'Material'}
+                    placeholder={form.tipo === 'Material'
+                        ? 'Ex.: reposição do estoque para a etapa de alvenaria'
+                        : 'Ex.: entregar na portaria da obra'}
+                    value={form.observacao}
+                    onChange={e => set('observacao', e.target.value)}
+                />
+            </div>
         </Modal>
     );
 }

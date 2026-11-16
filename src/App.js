@@ -30,6 +30,7 @@ const MODULOS_BASE = ['obras', 'admin', 'rh', 'frota', 'solicitacoes', 'almoxari
 const MODULOS_DERIVADOS_DE_OBRAS = ['financeiro', 'planejamento'];
 const TODOS_MODULOS = ['obras', ...MODULOS_DERIVADOS_DE_OBRAS, 'admin', 'rh', 'frota', 'solicitacoes', 'almoxarifado'];
 const PAGINAS_FINANCEIRAS = new Set(['financeiro', 'pagamento', 'boletos', 'relatorios', 'caixa']);
+const APP_HISTORY_KEY = 'obralyAppScreen';
 
 // Módulos que o usuário pode ver: master → todos; lista null/ausente → todos.
 function getAllowedModules(user) {
@@ -131,12 +132,52 @@ function App() {
         loadAuth();
     }, []);
 
+    // Os módulos não têm URL própria. Registrar a ida ao módulo permite que
+    // o botão Voltar do mobile retorne ao seletor, sem usar o histórico de
+    // outro site/aba como se ele pertencesse ao Obraly.
+    useEffect(() => {
+        if (isLoading || !user || window.location.search) return;
+        if (!window.history.state?.[APP_HISTORY_KEY]) {
+            window.history.replaceState(
+                { ...(window.history.state || {}), [APP_HISTORY_KEY]: 'selector' },
+                '',
+                window.location.href,
+            );
+        }
+    }, [isLoading, user]);
+
+    useEffect(() => {
+        const handlePopState = event => {
+            const screen = event.state?.[APP_HISTORY_KEY];
+            if (screen === 'selector') {
+                setSelectedModule(null);
+                deleteToken('selectedModule').catch(() => {});
+            } else if (typeof screen === 'string' && screen.startsWith('module:')) {
+                const moduleId = screen.slice('module:'.length);
+                if (getAllowedModules(user).includes(moduleId)) {
+                    setSelectedModule(moduleId);
+                    storeToken('selectedModule', moduleId).catch(() => {});
+                }
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [user]);
+
     const handleSelectModule = async (moduleId) => {
         // Entrar em Obras pelo seletor deve sempre abrir a Dashboard nova —
         // um ?obra= preso na URL de uma sessão anterior faria cair na tela
         // antiga (ObraDetalhe/WindowsNavBar) sem essa limpeza.
         if (window.location.search) {
             window.history.replaceState(null, '', window.location.pathname);
+        }
+        const screen = `module:${moduleId}`;
+        if (window.history.state?.[APP_HISTORY_KEY] !== screen) {
+            window.history.pushState(
+                { ...(window.history.state || {}), [APP_HISTORY_KEY]: screen },
+                '',
+                window.location.href,
+            );
         }
         setSelectedModule(moduleId);
         await storeToken('selectedModule', moduleId);
@@ -147,6 +188,11 @@ function App() {
             window.history.replaceState(null, '', window.location.pathname);
         }
         setSelectedModule(null);
+        window.history.replaceState(
+            { ...(window.history.state || {}), [APP_HISTORY_KEY]: 'selector' },
+            '',
+            window.location.href,
+        );
         await deleteToken('selectedModule');
     };
 
@@ -166,6 +212,11 @@ function App() {
             } else {
                 window.location.assign(window.location.pathname);
             }
+            return;
+        }
+
+        if (window.history.state?.[APP_HISTORY_KEY]?.startsWith('module:')) {
+            window.history.back();
             return;
         }
 
