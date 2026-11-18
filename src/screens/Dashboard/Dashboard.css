@@ -79,6 +79,29 @@
     background: var(--surface-card);
 }
 
+.db-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.db-new-obra-btn {
+    height: 30px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--module-obras);
+    color: var(--text-on-dark);
+    font: var(--weight-semibold) var(--text-sm) var(--font-sans);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.db-new-obra-btn:hover { filter: brightness(.94); }
+
 .db-period-btn {
     padding: 5px 12px;
     font-size: var(--text-xs);
@@ -95,6 +118,10 @@
 .db-period-btn.active {
     background: var(--brand-primary);
     color: var(--surface-card);
+}
+
+@media (max-width: 560px) {
+    .db-header-actions { width: 100%; justify-content: space-between; }
 }
 
 /* KPI grid */

@@ -10,6 +10,7 @@ import ProgressBar from './components/ProgressBar';
 import ActivityItem from './components/ActivityItem';
 import DashboardHeader from './components/DashboardHeader';
 import ObraCardActions from './components/ObraCardActions';
+import NovaObraModal from '../../components/modals/NovaObraModal';
 import './Dashboard.css';
 
 // --- helpers ---
@@ -165,6 +166,8 @@ export default function Dashboard() {
     const [detalhamentoOpen, setDetalhamentoOpen] = useState(false);
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const [exportando, setExportando] = useState(false);
+    const [novaObraOpen, setNovaObraOpen] = useState(false);
+    const podeCadastrarObra = ['administrador', 'master'].includes(user?.role);
 
     const exportarPendenciasPdf = async (escopo) => {
         setExportMenuOpen(false);
@@ -324,6 +327,11 @@ export default function Dashboard() {
     return (
         <div className="db-root">
             <DashboardHeader />
+            <NovaObraModal
+                isOpen={novaObraOpen}
+                onClose={() => setNovaObraOpen(false)}
+                onSaved={loadData}
+            />
             {/* Hero header — saudação + competência */}
             <div className="db-header">
                 <div className="db-header-left">
@@ -336,11 +344,18 @@ export default function Dashboard() {
                         {vencidosQtd > 0 ? ` · ${vencidosQtd} pendência${vencidosQtd !== 1 ? 's' : ''} vencida${vencidosQtd !== 1 ? 's' : ''}` : ''}
                     </p>
                 </div>
-                <div className="db-period-toggle">
-                    <span className="db-period-btn active" style={{ cursor: 'default' }}>
-                        <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 4 }} />
-                        {mesAtualLabel()}
-                    </span>
+                <div className="db-header-actions">
+                    <div className="db-period-toggle">
+                        <span className="db-period-btn active" style={{ cursor: 'default' }}>
+                            <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 4 }} />
+                            {mesAtualLabel()}
+                        </span>
+                    </div>
+                    {podeCadastrarObra && (
+                        <button className="db-new-obra-btn" onClick={() => setNovaObraOpen(true)}>
+                            <i className="ti ti-plus" aria-hidden="true" /> Nova obra
+                        </button>
+                    )}
                 </div>
             </div>
 
